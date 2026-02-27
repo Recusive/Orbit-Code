@@ -943,7 +943,7 @@ mod tests {
             params: v1::InitializeParams {
                 client_info: v1::ClientInfo {
                     name: "codex_vscode".to_string(),
-                    title: Some("Codex VS Code Extension".to_string()),
+                    title: Some("Orbit CLI VS Code Extension".to_string()),
                     version: "0.1.0".to_string(),
                 },
                 capabilities: Some(v1::InitializeCapabilities {
@@ -963,7 +963,7 @@ mod tests {
                 "params": {
                     "clientInfo": {
                         "name": "codex_vscode",
-                        "title": "Codex VS Code Extension",
+                        "title": "Orbit CLI VS Code Extension",
                         "version": "0.1.0"
                     },
                     "capabilities": {
@@ -988,7 +988,7 @@ mod tests {
             "params": {
                 "clientInfo": {
                     "name": "codex_vscode",
-                    "title": "Codex VS Code Extension",
+                    "title": "Orbit CLI VS Code Extension",
                     "version": "0.1.0"
                 },
                 "capabilities": {
@@ -1008,7 +1008,7 @@ mod tests {
                 params: v1::InitializeParams {
                     client_info: v1::ClientInfo {
                         name: "codex_vscode".to_string(),
-                        title: Some("Codex VS Code Extension".to_string()),
+                        title: Some("Orbit CLI VS Code Extension".to_string()),
                         version: "0.1.0".to_string(),
                     },
                     capabilities: Some(v1::InitializeCapabilities {

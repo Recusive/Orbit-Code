@@ -9,8 +9,8 @@ on:
 jobs:
   gather-labels:
     name: Generate label suggestions
-    # Prevent runs on forks (requires OpenAI API key, wastes Actions minutes)
-    if: github.repository == 'openai/codex' && (github.event.action == 'opened' || (github.event.action == 'labeled' && github.event.label.name == 'codex-label'))
+    # Prevent runs on forks (requires API key, wastes Actions minutes)
+    if: github.repository == 'Recusive/Orbit-CLI' && (github.event.action == 'opened' || (github.event.action == 'labeled' && github.event.label.name == 'codex-label'))
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v6
 
       - id: codex
-        uses: openai/codex-action@main
+        uses: Recusive/Orbit-CLI-action@main
         with:
           openai-api-key: ${{ secrets.CODEX_OPENAI_API_KEY }}
           allow-users: "*"

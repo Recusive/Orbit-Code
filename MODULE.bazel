@@ -1,4 +1,4 @@
-module(name = "codex")
+module(name = "orbit-cli")
 
 bazel_dep(name = "platforms", version = "1.0.0")
 bazel_dep(name = "toolchains_llvm_bootstrapped", version = "0.5.6")

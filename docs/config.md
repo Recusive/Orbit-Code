@@ -1,16 +1,14 @@
 # Configuration
 
-For basic configuration instructions, see [this documentation](https://developers.openai.com/codex/config-basic).
+For basic configuration instructions, see the Orbit CLI documentation.
 
-For advanced configuration instructions, see [this documentation](https://developers.openai.com/codex/config-advanced).
+For advanced configuration instructions, see the Orbit CLI documentation.
 
-For a full configuration reference, see [this documentation](https://developers.openai.com/codex/config-reference).
+For a full configuration reference, see the Orbit CLI documentation.
 
 ## Connecting to MCP servers
 
-Codex can connect to MCP servers configured in `~/.codex/config.toml`. See the configuration reference for the latest MCP server options:
-
-- https://developers.openai.com/codex/config-reference
+Orbit CLI can connect to MCP servers configured in `~/.codex/config.toml`. See the configuration reference for the latest MCP server options.
 
 ## Apps (Connectors)
 
@@ -20,9 +18,7 @@ and are labeled as connected; others are marked as can be installed.
 
 ## Notify
 
-Codex can run a notification hook when the agent finishes a turn. See the configuration reference for the latest notification settings:
-
-- https://developers.openai.com/codex/config-reference
+Orbit CLI can run a notification hook when the agent finishes a turn. See the configuration reference for the latest notification settings.
 
 ## JSON Schema
 
@@ -30,13 +26,13 @@ The generated JSON Schema for `config.toml` lives at `codex-rs/core/config.schem
 
 ## SQLite State DB
 
-Codex stores the SQLite-backed state DB under `sqlite_home` (config key) or the
+Orbit CLI stores the SQLite-backed state DB under `sqlite_home` (config key) or the
 `CODEX_SQLITE_HOME` environment variable. When unset, WorkspaceWrite sandbox
 sessions default to a temp directory; other modes default to `CODEX_HOME`.
 
 ## Notices
 
-Codex stores "do not show again" flags for some UI prompts under the `[notice]` table.
+Orbit CLI stores "do not show again" flags for some UI prompts under the `[notice]` table.
 
 ## Plan mode defaults
 

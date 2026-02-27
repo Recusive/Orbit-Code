@@ -53,7 +53,7 @@ jobs:
           node-version-file: codex-rs/node-version.txt
 
       # Some integration tests rely on DotSlash being installed.
-      # See https://github.com/openai/codex/pull/7617.
+      # See https://github.com/Recusive/Orbit-CLI/pull/7617.
       - name: Install DotSlash
         uses: facebook/install-dotslash@v2
 
@@ -155,7 +155,7 @@ jobs:
             test
             //...
             --test_verbose_timeout_warnings
-            --build_metadata=REPO_URL=https://github.com/openai/codex.git
+            --build_metadata=REPO_URL=https://github.com/Recusive/Orbit-CLI.git
             --build_metadata=COMMIT_SHA=$(git rev-parse HEAD)
             --build_metadata=ROLE=CI
             --build_metadata=VISIBILITY=PUBLIC

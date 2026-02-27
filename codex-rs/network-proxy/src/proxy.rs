@@ -19,7 +19,7 @@ use tokio::task::JoinHandle;
 use tracing::warn;
 
 #[derive(Debug, Clone, Parser)]
-#[command(name = "codex-network-proxy", about = "Codex network sandbox proxy")]
+#[command(name = "codex-network-proxy", about = "Orbit CLI network sandbox proxy")]
 pub struct Args {}
 
 #[derive(Debug)]

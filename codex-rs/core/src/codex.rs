@@ -305,7 +305,7 @@ pub struct CodexSpawnOk {
 pub(crate) const INITIAL_SUBMIT_ID: &str = "";
 pub(crate) const SUBMISSION_CHANNEL_CAPACITY: usize = 512;
 const CYBER_VERIFY_URL: &str = "https://chatgpt.com/cyber";
-const CYBER_SAFETY_URL: &str = "https://developers.openai.com/codex/concepts/cyber-safety";
+const CYBER_SAFETY_URL: &str = "https://developers.recursive.com/orbit-cli/concepts/cyber-safety";
 
 impl Codex {
     /// Spawn a new [`Codex`] and initialize the session.
@@ -1709,7 +1709,7 @@ impl Session {
                         EventMsg::Warning(WarningEvent {
                             message: format!(
                                 "This session was recorded with model `{prev}` but is resuming with `{curr}`. \
-                         Consider switching back to `{prev}` as it may affect Codex performance."
+                         Consider switching back to `{prev}` as it may affect Orbit CLI performance."
                             ),
                         }),
                     )
@@ -4480,7 +4480,7 @@ mod handlers {
             .unified_exec_manager
             .terminate_all_processes()
             .await;
-        info!("Shutting down Codex instance");
+        info!("Shutting down Orbit CLI instance");
         let history = sess.clone_history().await;
         let turn_count = history
             .raw_items()

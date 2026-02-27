@@ -1,9 +1,9 @@
 ---
 name: test-tui
-description: Guide for testing Codex TUI interactively
+description: Guide for testing Orbit CLI TUI interactively
 ---
 
-You can start and use Codex TUI to verify changes. 
+You can start and use Orbit CLI TUI to verify changes. 
 
 Important notes:
 

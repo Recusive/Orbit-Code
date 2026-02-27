@@ -28,7 +28,7 @@ use super::textarea::TextArea;
 use super::textarea::TextAreaState;
 
 const BASE_BUG_ISSUE_URL: &str =
-    "https://github.com/openai/codex/issues/new?template=2-bug-report.yml";
+    "https://github.com/Recusive/Orbit-CLI/issues/new?template=2-bug-report.yml";
 /// Internal routing link for employee feedback follow-ups. This must not be shown to external users.
 const CODEX_FEEDBACK_INTERNAL_URL: &str = "http://go/codex-feedback-internal";
 
@@ -527,7 +527,7 @@ pub(crate) fn feedback_upload_consent_params(
             super::SelectionItem {
                 name: "Yes".to_string(),
                 description: Some(
-                    "Share the current Codex session logs with the team for troubleshooting."
+                    "Share the current Orbit CLI session logs with the team for troubleshooting."
                         .to_string(),
                 ),
                 actions: vec![yes_action],

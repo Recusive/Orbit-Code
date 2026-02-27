@@ -383,7 +383,7 @@ fn legacy_usage_notice(alias: &str, feature: Feature) -> (String, Option<String>
                 None
             } else {
                 Some(format!(
-                    "Enable it with `--enable {canonical}` or `[features].{canonical}` in config.toml. See https://developers.openai.com/codex/config-basic#feature-flags for details."
+                    "Enable it with `--enable {canonical}` or `[features].{canonical}` in config.toml. See https://developers.recursive.com/orbit-cli/config-basic#feature-flags for details."
                 ))
             };
             (summary, details)
@@ -464,7 +464,7 @@ pub const FEATURES: &[FeatureSpec] = &[
         stage: Stage::Experimental {
             name: "JavaScript REPL",
             menu_description: "Enable a persistent Node-backed JavaScript REPL for interactive website debugging and other inline JavaScript execution capabilities. Requires Node >= v22.22.0 installed.",
-            announcement: "NEW: JavaScript REPL is now available in /experimental. Enable it, then start a new chat or restart Codex to use it.",
+            announcement: "NEW: JavaScript REPL is now available in /experimental. Enable it, then start a new chat or restart Orbit CLI to use it.",
         },
         default_enabled: false,
     },
@@ -542,7 +542,7 @@ pub const FEATURES: &[FeatureSpec] = &[
         stage: Stage::Experimental {
             name: "Bubblewrap sandbox",
             menu_description: "Try the new linux sandbox based on bubblewrap.",
-            announcement: "NEW: Linux bubblewrap sandbox offers stronger filesystem and network controls than Landlock alone, including keeping .git and .codex read-only inside writable workspaces. Enable it in /experimental and restart Codex to try it.",
+            announcement: "NEW: Linux bubblewrap sandbox offers stronger filesystem and network controls than Landlock alone, including keeping .git and .codex read-only inside writable workspaces. Enable it in /experimental and restart Orbit CLI to try it.",
         },
         #[cfg(not(target_os = "linux"))]
         stage: Stage::UnderDevelopment,
@@ -595,8 +595,8 @@ pub const FEATURES: &[FeatureSpec] = &[
         key: "multi_agent",
         stage: Stage::Experimental {
             name: "Multi-agents",
-            menu_description: "Ask Codex to spawn multiple agents to parallelize the work and win in efficiency.",
-            announcement: "NEW: Multi-agents can now be spawned by Codex. Enable in /experimental and restart Codex!",
+            menu_description: "Ask Orbit CLI to spawn multiple agents to parallelize the work and win in efficiency.",
+            announcement: "NEW: Multi-agents can now be spawned by Orbit CLI. Enable in /experimental and restart Orbit CLI!",
         },
         default_enabled: false,
     },
@@ -605,8 +605,8 @@ pub const FEATURES: &[FeatureSpec] = &[
         key: "apps",
         stage: Stage::Experimental {
             name: "Apps",
-            menu_description: "Use a connected ChatGPT App using \"$\". Install Apps via /apps command. Restart Codex after enabling.",
-            announcement: "NEW: Use ChatGPT Apps (Connectors) in Codex via $ mentions. Enable in /experimental and restart Codex!",
+            menu_description: "Use a connected ChatGPT App using \"$\". Install Apps via /apps command. Restart Orbit CLI after enabling.",
+            announcement: "NEW: Use ChatGPT Apps (Connectors) in Orbit CLI via $ mentions. Enable in /experimental and restart Orbit CLI!",
         },
         default_enabled: false,
     },
@@ -674,7 +674,7 @@ pub const FEATURES: &[FeatureSpec] = &[
         )) {
             Stage::Experimental {
                 name: "Prevent sleep while running",
-                menu_description: "Keep your computer awake while Codex is running a thread.",
+                menu_description: "Keep your computer awake while Orbit CLI is running a thread.",
                 announcement: "NEW: Prevent sleep while running is now available in /experimental.",
             }
         } else {

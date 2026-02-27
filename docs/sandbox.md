@@ -1,3 +1,3 @@
 ## Sandbox & approvals
 
-For information about Codex sandboxing and approvals, see [this documentation](https://developers.openai.com/codex/security).
+For information about Orbit CLI sandboxing and approvals, see the Orbit CLI documentation.

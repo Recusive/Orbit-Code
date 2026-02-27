@@ -214,7 +214,7 @@ impl MessageProcessor {
 
         let server_info = Implementation {
             name: "codex-mcp-server".to_string(),
-            title: Some("Codex".to_string()),
+            title: Some("Orbit CLI".to_string()),
             version: env!("CARGO_PKG_VERSION").to_string(),
             description: None,
             icons: None,
@@ -363,7 +363,7 @@ impl MessageProcessor {
                     Err(e) => {
                         let result = CallToolResult {
                             content: vec![rmcp::model::Content::text(format!(
-                                "Failed to load Codex configuration from overrides: {e}"
+                                "Failed to load Orbit CLI configuration from overrides: {e}"
                             ))],
                             structured_content: None,
                             is_error: Some(true),
@@ -376,7 +376,7 @@ impl MessageProcessor {
                 Err(e) => {
                     let result = CallToolResult {
                         content: vec![rmcp::model::Content::text(format!(
-                            "Failed to parse configuration for Codex tool: {e}"
+                            "Failed to parse configuration for Orbit CLI tool: {e}"
                         ))],
                         structured_content: None,
                         is_error: Some(true),
@@ -434,10 +434,10 @@ impl MessageProcessor {
             Some(json_val) => match serde_json::from_value::<CodexToolCallReplyParam>(json_val) {
                 Ok(params) => params,
                 Err(e) => {
-                    tracing::error!("Failed to parse Codex tool call reply parameters: {e}");
+                    tracing::error!("Failed to parse Orbit CLI tool call reply parameters: {e}");
                     let result = CallToolResult {
                         content: vec![rmcp::model::Content::text(format!(
-                            "Failed to parse configuration for Codex tool: {e}"
+                            "Failed to parse configuration for Orbit CLI tool: {e}"
                         ))],
                         structured_content: None,
                         is_error: Some(true),
@@ -579,7 +579,7 @@ impl MessageProcessor {
             })
             .await
         {
-            tracing::error!("Failed to submit interrupt to Codex: {e}");
+            tracing::error!("Failed to submit interrupt to Orbit CLI: {e}");
             return;
         }
         // unregister the id so we don't keep it in the map

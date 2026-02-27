@@ -111,7 +111,7 @@ pub fn originator() -> Originator {
 pub fn is_first_party_originator(originator_value: &str) -> bool {
     originator_value == DEFAULT_ORIGINATOR
         || originator_value == "codex_vscode"
-        || originator_value.starts_with("Codex ")
+        || originator_value.starts_with("Orbit CLI ")
 }
 
 pub fn is_first_party_chat_originator(originator_value: &str) -> bool {
@@ -160,17 +160,17 @@ fn sanitize_user_agent(candidate: String, fallback: &str) -> String {
         .collect();
     if !sanitized.is_empty() && HeaderValue::from_str(sanitized.as_str()).is_ok() {
         tracing::warn!(
-            "Sanitized Codex user agent because provided suffix contained invalid header characters"
+            "Sanitized Orbit CLI user agent because provided suffix contained invalid header characters"
         );
         sanitized
     } else if HeaderValue::from_str(fallback).is_ok() {
         tracing::warn!(
-            "Falling back to base Codex user agent because provided suffix could not be sanitized"
+            "Falling back to base Orbit CLI user agent because provided suffix could not be sanitized"
         );
         fallback.to_string()
     } else {
         tracing::warn!(
-            "Falling back to default Codex originator because base user agent string is invalid"
+            "Falling back to default Orbit CLI originator because base user agent string is invalid"
         );
         originator().value
     }
@@ -233,7 +233,7 @@ mod tests {
     fn is_first_party_originator_matches_known_values() {
         assert_eq!(is_first_party_originator(DEFAULT_ORIGINATOR), true);
         assert_eq!(is_first_party_originator("codex_vscode"), true);
-        assert_eq!(is_first_party_originator("Codex Something Else"), true);
+        assert_eq!(is_first_party_originator("Orbit CLI Something Else"), true);
         assert_eq!(is_first_party_originator("codex_cli"), false);
         assert_eq!(is_first_party_originator("Other"), false);
     }

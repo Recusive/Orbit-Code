@@ -178,7 +178,7 @@ impl McpProcess {
                 },
                 "serverInfo": {
                     "name": "codex-mcp-server",
-                    "title": "Codex",
+                    "title": "Orbit CLI",
                     "version": "0.0.0",
                     "user_agent": user_agent
                 },

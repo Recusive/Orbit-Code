@@ -42,7 +42,7 @@ const DEFAULT_READ_TIMEOUT: std::time::Duration = std::time::Duration::from_secs
 async fn test_codex_jsonrpc_conversation_flow() -> Result<()> {
     if env::var(CODEX_SANDBOX_NETWORK_DISABLED_ENV_VAR).is_ok() {
         println!(
-            "Skipping test because it cannot execute when network is disabled in a Codex sandbox."
+            "Skipping test because it cannot execute when network is disabled in an Orbit CLI sandbox."
         );
         return Ok(());
     }
@@ -192,7 +192,7 @@ async fn test_codex_jsonrpc_conversation_flow() -> Result<()> {
 async fn test_send_user_turn_changes_approval_policy_behavior() -> Result<()> {
     if env::var(CODEX_SANDBOX_NETWORK_DISABLED_ENV_VAR).is_ok() {
         println!(
-            "Skipping test because it cannot execute when network is disabled in a Codex sandbox."
+            "Skipping test because it cannot execute when network is disabled in an Orbit CLI sandbox."
         );
         return Ok(());
     }
@@ -366,7 +366,7 @@ async fn test_send_user_turn_changes_approval_policy_behavior() -> Result<()> {
 async fn test_send_user_turn_updates_sandbox_and_cwd_between_turns() -> Result<()> {
     if env::var(CODEX_SANDBOX_NETWORK_DISABLED_ENV_VAR).is_ok() {
         println!(
-            "Skipping test because it cannot execute when network is disabled in a Codex sandbox."
+            "Skipping test because it cannot execute when network is disabled in an Orbit CLI sandbox."
         );
         return Ok(());
     }

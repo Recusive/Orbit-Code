@@ -1,5 +1,5 @@
-name: 🖥️ Codex App Bug
-description: Report an issue with the Codex App
+name: 🖥️ Orbit App Bug
+description: Report an issue with the Orbit App
 labels:
   - app
 body:
@@ -12,13 +12,7 @@ body:
   - type: input
     id: version
     attributes:
-      label: What version of the Codex App are you using (From “About Codex” dialog)?
-    validations:
-      required: true
-  - type: input
-    id: plan
-    attributes:
-      label: What subscription do you have?
+      label: What version of the Orbit App are you using?
     validations:
       required: true
   - type: input
@@ -39,7 +33,7 @@ body:
     id: steps
     attributes:
       label: What steps can reproduce the bug?
-      description: Explain the bug and provide a code snippet that can reproduce it. Please include session id, token limit usage, context window usage if applicable.
+      description: Explain the bug and provide a code snippet that can reproduce it.
     validations:
       required: true
   - type: textarea

@@ -140,7 +140,7 @@ async fn thread_status_changed_can_be_opted_out() -> Result<()> {
         mcp.initialize_with_capabilities(
             ClientInfo {
                 name: "codex_vscode".to_string(),
-                title: Some("Codex VS Code Extension".to_string()),
+                title: Some("Orbit CLI VS Code Extension".to_string()),
                 version: "0.1.0".to_string(),
             },
             Some(InitializeCapabilities {
