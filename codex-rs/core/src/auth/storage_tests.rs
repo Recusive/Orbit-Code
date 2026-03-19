@@ -228,7 +228,7 @@ fn keyring_auth_storage_load_falls_back_to_legacy_service_and_default_codex_path
     let legacy_codex_home = parent_home.path().join(".codex");
 
     let mock_keyring = MockKeyringStore::default();
-    let storage = KeyringAuthStorage::new(orbit_code_home.clone(), Arc::new(mock_keyring.clone()));
+    let storage = KeyringAuthStorage::new(orbit_code_home, Arc::new(mock_keyring.clone()));
     let expected = auth_with_prefix("legacy-service");
     let key = compute_store_key(&legacy_codex_home)?;
     let serialized = serde_json::to_string(&expected)?;
