@@ -3,10 +3,10 @@
 use anyhow::Context;
 use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
-use codex_core::auth::AuthCredentialsStoreMode;
-use codex_core::auth::load_auth_dot_json;
-use codex_login::ServerOptions;
-use codex_login::run_device_code_login;
+use orbit_code_core::auth::AuthCredentialsStoreMode;
+use orbit_code_core::auth::load_auth_dot_json;
+use orbit_code_login::ServerOptions;
+use orbit_code_login::run_device_code_login;
 use serde_json::json;
 use std::sync::Arc;
 use std::sync::atomic::AtomicUsize;
@@ -98,12 +98,12 @@ async fn mock_oauth_token_single(server: &MockServer, jwt: String) {
 }
 
 fn server_opts(
-    codex_home: &tempfile::TempDir,
+    orbit_code_home: &tempfile::TempDir,
     issuer: String,
     cli_auth_credentials_store_mode: AuthCredentialsStoreMode,
 ) -> ServerOptions {
     let mut opts = ServerOptions::new(
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
         "client-id".to_string(),
         None,
         cli_auth_credentials_store_mode,
@@ -117,7 +117,7 @@ fn server_opts(
 async fn device_code_login_integration_succeeds() -> anyhow::Result<()> {
     skip_if_no_network!(Ok(()));
 
-    let codex_home = tempdir().unwrap();
+    let orbit_code_home = tempdir().unwrap();
     let mock_server = MockServer::start().await;
 
     mock_usercode_success(&mock_server).await;
@@ -133,13 +133,13 @@ async fn device_code_login_integration_succeeds() -> anyhow::Result<()> {
     mock_oauth_token_single(&mock_server, jwt.clone()).await;
 
     let issuer = mock_server.uri();
-    let opts = server_opts(&codex_home, issuer, AuthCredentialsStoreMode::File);
+    let opts = server_opts(&orbit_code_home, issuer, AuthCredentialsStoreMode::File);
 
     run_device_code_login(opts)
         .await
         .expect("device code login integration should succeed");
 
-    let auth = load_auth_dot_json(codex_home.path(), AuthCredentialsStoreMode::File)
+    let auth = load_auth_dot_json(orbit_code_home.path(), AuthCredentialsStoreMode::File)
         .context("auth.json should load after login succeeds")?
         .context("auth.json written")?;
     // assert_eq!(auth.openai_api_key.as_deref(), Some("api-key-321"));
@@ -155,7 +155,7 @@ async fn device_code_login_integration_succeeds() -> anyhow::Result<()> {
 async fn device_code_login_rejects_workspace_mismatch() -> anyhow::Result<()> {
     skip_if_no_network!(Ok(()));
 
-    let codex_home = tempdir().unwrap();
+    let orbit_code_home = tempdir().unwrap();
     let mock_server = MockServer::start().await;
 
     mock_usercode_success(&mock_server).await;
@@ -172,7 +172,7 @@ async fn device_code_login_rejects_workspace_mismatch() -> anyhow::Result<()> {
     mock_oauth_token_single(&mock_server, jwt).await;
 
     let issuer = mock_server.uri();
-    let mut opts = server_opts(&codex_home, issuer, AuthCredentialsStoreMode::File);
+    let mut opts = server_opts(&orbit_code_home, issuer, AuthCredentialsStoreMode::File);
     opts.forced_chatgpt_workspace_id = Some("org-required".to_string());
 
     let err = run_device_code_login(opts)
@@ -180,7 +180,7 @@ async fn device_code_login_rejects_workspace_mismatch() -> anyhow::Result<()> {
         .expect_err("device code login should fail when workspace mismatches");
     assert_eq!(err.kind(), std::io::ErrorKind::PermissionDenied);
 
-    let auth = load_auth_dot_json(codex_home.path(), AuthCredentialsStoreMode::File)
+    let auth = load_auth_dot_json(orbit_code_home.path(), AuthCredentialsStoreMode::File)
         .context("auth.json should load after login fails")?;
     assert!(
         auth.is_none(),
@@ -193,14 +193,14 @@ async fn device_code_login_rejects_workspace_mismatch() -> anyhow::Result<()> {
 async fn device_code_login_integration_handles_usercode_http_failure() -> anyhow::Result<()> {
     skip_if_no_network!(Ok(()));
 
-    let codex_home = tempdir().unwrap();
+    let orbit_code_home = tempdir().unwrap();
     let mock_server = MockServer::start().await;
 
     mock_usercode_failure(&mock_server, 503).await;
 
     let issuer = mock_server.uri();
 
-    let opts = server_opts(&codex_home, issuer, AuthCredentialsStoreMode::File);
+    let opts = server_opts(&orbit_code_home, issuer, AuthCredentialsStoreMode::File);
 
     let err = run_device_code_login(opts)
         .await
@@ -211,7 +211,7 @@ async fn device_code_login_integration_handles_usercode_http_failure() -> anyhow
         "unexpected error: {err:?}"
     );
 
-    let auth = load_auth_dot_json(codex_home.path(), AuthCredentialsStoreMode::File)
+    let auth = load_auth_dot_json(orbit_code_home.path(), AuthCredentialsStoreMode::File)
         .context("auth.json should load after login fails")?;
     assert!(
         auth.is_none(),
@@ -225,7 +225,7 @@ async fn device_code_login_integration_persists_without_api_key_on_exchange_fail
 -> anyhow::Result<()> {
     skip_if_no_network!(Ok(()));
 
-    let codex_home = tempdir().unwrap();
+    let orbit_code_home = tempdir().unwrap();
 
     let mock_server = MockServer::start().await;
 
@@ -240,7 +240,7 @@ async fn device_code_login_integration_persists_without_api_key_on_exchange_fail
     let issuer = mock_server.uri();
 
     let mut opts = ServerOptions::new(
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
         "client-id".to_string(),
         None,
         AuthCredentialsStoreMode::File,
@@ -252,7 +252,7 @@ async fn device_code_login_integration_persists_without_api_key_on_exchange_fail
         .await
         .expect("device login should succeed without API key exchange");
 
-    let auth = load_auth_dot_json(codex_home.path(), AuthCredentialsStoreMode::File)
+    let auth = load_auth_dot_json(orbit_code_home.path(), AuthCredentialsStoreMode::File)
         .context("auth.json should load after login succeeds")?
         .context("auth.json written")?;
     assert!(auth.openai_api_key.is_none());
@@ -267,7 +267,7 @@ async fn device_code_login_integration_persists_without_api_key_on_exchange_fail
 async fn device_code_login_integration_handles_error_payload() -> anyhow::Result<()> {
     skip_if_no_network!(Ok(()));
 
-    let codex_home = tempdir().unwrap();
+    let orbit_code_home = tempdir().unwrap();
 
     // Start WireMock
     let mock_server = MockServer::start().await;
@@ -290,7 +290,7 @@ async fn device_code_login_integration_handles_error_payload() -> anyhow::Result
     let issuer = mock_server.uri();
 
     let mut opts = ServerOptions::new(
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
         "client-id".to_string(),
         None,
         AuthCredentialsStoreMode::File,
@@ -308,7 +308,7 @@ async fn device_code_login_integration_handles_error_payload() -> anyhow::Result
         "Expected an authorization_declined / 400 / 404 error, got {err:?}"
     );
 
-    let auth = load_auth_dot_json(codex_home.path(), AuthCredentialsStoreMode::File)
+    let auth = load_auth_dot_json(orbit_code_home.path(), AuthCredentialsStoreMode::File)
         .context("auth.json should load after login fails")?;
     assert!(
         auth.is_none(),

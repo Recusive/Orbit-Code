@@ -1,9 +1,9 @@
 use std::path::Path;
 
-use codex_app_server_protocol::AuthMode;
-use codex_app_server_protocol::ChatgptAuthTokensRefreshResponse;
-use codex_core::auth::AuthCredentialsStoreMode;
-use codex_core::auth::load_auth_dot_json;
+use orbit_code_app_server_protocol::AuthMode;
+use orbit_code_app_server_protocol::ChatgptAuthTokensRefreshResponse;
+use orbit_code_core::auth::AuthCredentialsStoreMode;
+use orbit_code_core::auth::load_auth_dot_json;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct LocalChatgptAuth {
@@ -23,11 +23,11 @@ impl LocalChatgptAuth {
 }
 
 pub(crate) fn load_local_chatgpt_auth(
-    codex_home: &Path,
+    orbit_code_home: &Path,
     auth_credentials_store_mode: AuthCredentialsStoreMode,
     forced_chatgpt_workspace_id: Option<&str>,
 ) -> Result<LocalChatgptAuth, String> {
-    let auth = load_auth_dot_json(codex_home, auth_credentials_store_mode)
+    let auth = load_auth_dot_json(orbit_code_home, auth_credentials_store_mode)
         .map_err(|err| format!("failed to load local auth: {err}"))?
         .ok_or_else(|| "no local auth available".to_string())?;
     if matches!(auth.auth_mode, Some(AuthMode::ApiKey)) || auth.openai_api_key.is_some() {
@@ -68,11 +68,11 @@ mod tests {
 
     use base64::Engine;
     use chrono::Utc;
-    use codex_app_server_protocol::AuthMode;
-    use codex_core::auth::AuthDotJson;
-    use codex_core::auth::login_with_chatgpt_auth_tokens;
-    use codex_core::auth::save_auth;
-    use codex_core::token_data::TokenData;
+    use orbit_code_app_server_protocol::AuthMode;
+    use orbit_code_core::auth::AuthDotJson;
+    use orbit_code_core::auth::login_with_chatgpt_auth_tokens;
+    use orbit_code_core::auth::save_auth;
+    use orbit_code_core::token_data::TokenData;
     use pretty_assertions::assert_eq;
     use serde::Serialize;
     use serde_json::json;
@@ -103,14 +103,14 @@ mod tests {
         format!("{header_b64}.{payload_b64}.{signature_b64}")
     }
 
-    fn write_chatgpt_auth(codex_home: &Path) {
+    fn write_chatgpt_auth(orbit_code_home: &Path) {
         let id_token = fake_jwt("user@example.com", "workspace-1", "business");
         let access_token = fake_jwt("user@example.com", "workspace-1", "business");
         let auth = AuthDotJson {
             auth_mode: Some(AuthMode::Chatgpt),
             openai_api_key: None,
             tokens: Some(TokenData {
-                id_token: codex_core::token_data::parse_chatgpt_jwt_claims(&id_token)
+                id_token: orbit_code_core::token_data::parse_chatgpt_jwt_claims(&id_token)
                     .expect("id token should parse"),
                 access_token,
                 refresh_token: "refresh-token".to_string(),
@@ -118,17 +118,17 @@ mod tests {
             }),
             last_refresh: Some(Utc::now()),
         };
-        save_auth(codex_home, &auth, AuthCredentialsStoreMode::File)
+        save_auth(orbit_code_home, &auth, AuthCredentialsStoreMode::File)
             .expect("chatgpt auth should save");
     }
 
     #[test]
     fn loads_local_chatgpt_auth_from_managed_auth() {
-        let codex_home = TempDir::new().expect("tempdir");
-        write_chatgpt_auth(codex_home.path());
+        let orbit_code_home = TempDir::new().expect("tempdir");
+        write_chatgpt_auth(orbit_code_home.path());
 
         let auth = load_local_chatgpt_auth(
-            codex_home.path(),
+            orbit_code_home.path(),
             AuthCredentialsStoreMode::File,
             Some("workspace-1"),
         )
@@ -141,19 +141,20 @@ mod tests {
 
     #[test]
     fn rejects_missing_local_auth() {
-        let codex_home = TempDir::new().expect("tempdir");
+        let orbit_code_home = TempDir::new().expect("tempdir");
 
-        let err = load_local_chatgpt_auth(codex_home.path(), AuthCredentialsStoreMode::File, None)
-            .expect_err("missing auth should fail");
+        let err =
+            load_local_chatgpt_auth(orbit_code_home.path(), AuthCredentialsStoreMode::File, None)
+                .expect_err("missing auth should fail");
 
         assert_eq!(err, "no local auth available");
     }
 
     #[test]
     fn rejects_api_key_auth() {
-        let codex_home = TempDir::new().expect("tempdir");
+        let orbit_code_home = TempDir::new().expect("tempdir");
         save_auth(
-            codex_home.path(),
+            orbit_code_home.path(),
             &AuthDotJson {
                 auth_mode: Some(AuthMode::ApiKey),
                 openai_api_key: Some("sk-test".to_string()),
@@ -164,18 +165,19 @@ mod tests {
         )
         .expect("api key auth should save");
 
-        let err = load_local_chatgpt_auth(codex_home.path(), AuthCredentialsStoreMode::File, None)
-            .expect_err("api key auth should fail");
+        let err =
+            load_local_chatgpt_auth(orbit_code_home.path(), AuthCredentialsStoreMode::File, None)
+                .expect_err("api key auth should fail");
 
         assert_eq!(err, "local auth is not a ChatGPT login");
     }
 
     #[test]
     fn prefers_managed_auth_over_external_ephemeral_tokens() {
-        let codex_home = TempDir::new().expect("tempdir");
-        write_chatgpt_auth(codex_home.path());
+        let orbit_code_home = TempDir::new().expect("tempdir");
+        write_chatgpt_auth(orbit_code_home.path());
         login_with_chatgpt_auth_tokens(
-            codex_home.path(),
+            orbit_code_home.path(),
             &fake_jwt("user@example.com", "workspace-2", "enterprise"),
             "workspace-2",
             Some("enterprise"),
@@ -183,7 +185,7 @@ mod tests {
         .expect("external auth should save");
 
         let auth = load_local_chatgpt_auth(
-            codex_home.path(),
+            orbit_code_home.path(),
             AuthCredentialsStoreMode::File,
             Some("workspace-1"),
         )

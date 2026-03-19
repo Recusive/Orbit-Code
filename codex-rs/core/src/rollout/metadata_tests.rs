@@ -3,16 +3,16 @@ use chrono::DateTime;
 use chrono::NaiveDateTime;
 use chrono::Timelike;
 use chrono::Utc;
-use codex_protocol::ThreadId;
-use codex_protocol::protocol::CompactedItem;
-use codex_protocol::protocol::GitInfo;
-use codex_protocol::protocol::RolloutItem;
-use codex_protocol::protocol::RolloutLine;
-use codex_protocol::protocol::SessionMeta;
-use codex_protocol::protocol::SessionMetaLine;
-use codex_protocol::protocol::SessionSource;
-use codex_state::BackfillStatus;
-use codex_state::ThreadMetadataBuilder;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::protocol::CompactedItem;
+use orbit_code_protocol::protocol::GitInfo;
+use orbit_code_protocol::protocol::RolloutItem;
+use orbit_code_protocol::protocol::RolloutLine;
+use orbit_code_protocol::protocol::SessionMeta;
+use orbit_code_protocol::protocol::SessionMetaLine;
+use orbit_code_protocol::protocol::SessionSource;
+use orbit_code_state::BackfillStatus;
+use orbit_code_state::ThreadMetadataBuilder;
 use pretty_assertions::assert_eq;
 use std::fs::File;
 use std::io::Write;
@@ -163,28 +163,30 @@ fn builder_from_items_falls_back_to_filename() {
 #[tokio::test]
 async fn backfill_sessions_resumes_from_watermark_and_marks_complete() {
     let dir = tempdir().expect("tempdir");
-    let codex_home = dir.path().to_path_buf();
+    let orbit_code_home = dir.path().to_path_buf();
     let first_uuid = Uuid::new_v4();
     let second_uuid = Uuid::new_v4();
     let first_path = write_rollout_in_sessions(
-        codex_home.as_path(),
+        orbit_code_home.as_path(),
         "2026-01-27T12-34-56",
         "2026-01-27T12:34:56Z",
         first_uuid,
         None,
     );
     let second_path = write_rollout_in_sessions(
-        codex_home.as_path(),
+        orbit_code_home.as_path(),
         "2026-01-27T12-35-56",
         "2026-01-27T12:35:56Z",
         second_uuid,
         None,
     );
 
-    let runtime = codex_state::StateRuntime::init(codex_home.clone(), "test-provider".to_string())
-        .await
-        .expect("initialize runtime");
-    let first_watermark = backfill_watermark_for_path(codex_home.as_path(), first_path.as_path());
+    let runtime =
+        orbit_code_state::StateRuntime::init(orbit_code_home.clone(), "test-provider".to_string())
+            .await
+            .expect("initialize runtime");
+    let first_watermark =
+        backfill_watermark_for_path(orbit_code_home.as_path(), first_path.as_path());
     runtime.mark_backfill_running().await.expect("mark running");
     runtime
         .checkpoint_backfill(first_watermark.as_str())
@@ -196,7 +198,7 @@ async fn backfill_sessions_resumes_from_watermark_and_marks_complete() {
     .await;
 
     let mut config = crate::config::test_config();
-    config.codex_home = codex_home.clone();
+    config.orbit_code_home = orbit_code_home.clone();
     config.model_provider_id = "test-provider".to_string();
     backfill_sessions(runtime.as_ref(), &config).await;
 
@@ -225,7 +227,7 @@ async fn backfill_sessions_resumes_from_watermark_and_marks_complete() {
     assert_eq!(
         state.last_watermark,
         Some(backfill_watermark_for_path(
-            codex_home.as_path(),
+            orbit_code_home.as_path(),
             second_path.as_path()
         ))
     );
@@ -235,10 +237,10 @@ async fn backfill_sessions_resumes_from_watermark_and_marks_complete() {
 #[tokio::test]
 async fn backfill_sessions_preserves_existing_git_branch_and_fills_missing_git_fields() {
     let dir = tempdir().expect("tempdir");
-    let codex_home = dir.path().to_path_buf();
+    let orbit_code_home = dir.path().to_path_buf();
     let thread_uuid = Uuid::new_v4();
     let rollout_path = write_rollout_in_sessions(
-        codex_home.as_path(),
+        orbit_code_home.as_path(),
         "2026-01-27T12-34-56",
         "2026-01-27T12:34:56Z",
         thread_uuid,
@@ -249,9 +251,10 @@ async fn backfill_sessions_preserves_existing_git_branch_and_fills_missing_git_f
         }),
     );
 
-    let runtime = codex_state::StateRuntime::init(codex_home.clone(), "test-provider".to_string())
-        .await
-        .expect("initialize runtime");
+    let runtime =
+        orbit_code_state::StateRuntime::init(orbit_code_home.clone(), "test-provider".to_string())
+            .await
+            .expect("initialize runtime");
     let thread_id = ThreadId::from_string(&thread_uuid.to_string()).expect("thread id");
     let mut existing = extract_metadata_from_rollout(&rollout_path, "test-provider")
         .await
@@ -266,7 +269,7 @@ async fn backfill_sessions_preserves_existing_git_branch_and_fills_missing_git_f
         .expect("existing metadata upsert");
 
     let mut config = crate::config::test_config();
-    config.codex_home = codex_home.clone();
+    config.orbit_code_home = orbit_code_home.clone();
     config.model_provider_id = "test-provider".to_string();
     backfill_sessions(runtime.as_ref(), &config).await;
 
@@ -286,11 +289,11 @@ async fn backfill_sessions_preserves_existing_git_branch_and_fills_missing_git_f
 #[tokio::test]
 async fn backfill_sessions_normalizes_cwd_before_upsert() {
     let dir = tempdir().expect("tempdir");
-    let codex_home = dir.path().to_path_buf();
+    let orbit_code_home = dir.path().to_path_buf();
     let thread_uuid = Uuid::new_v4();
-    let session_cwd = codex_home.join(".");
+    let session_cwd = orbit_code_home.join(".");
     let rollout_path = write_rollout_in_sessions_with_cwd(
-        codex_home.as_path(),
+        orbit_code_home.as_path(),
         "2026-01-27T12-34-56",
         "2026-01-27T12:34:56Z",
         thread_uuid,
@@ -298,12 +301,13 @@ async fn backfill_sessions_normalizes_cwd_before_upsert() {
         None,
     );
 
-    let runtime = codex_state::StateRuntime::init(codex_home.clone(), "test-provider".to_string())
-        .await
-        .expect("initialize runtime");
+    let runtime =
+        orbit_code_state::StateRuntime::init(orbit_code_home.clone(), "test-provider".to_string())
+            .await
+            .expect("initialize runtime");
 
     let mut config = crate::config::test_config();
-    config.codex_home = codex_home.clone();
+    config.orbit_code_home = orbit_code_home.clone();
     config.model_provider_id = "test-provider".to_string();
     backfill_sessions(runtime.as_ref(), &config).await;
 
@@ -319,24 +323,24 @@ async fn backfill_sessions_normalizes_cwd_before_upsert() {
 }
 
 fn write_rollout_in_sessions(
-    codex_home: &Path,
+    orbit_code_home: &Path,
     filename_ts: &str,
     event_ts: &str,
     thread_uuid: Uuid,
     git: Option<GitInfo>,
 ) -> PathBuf {
     write_rollout_in_sessions_with_cwd(
-        codex_home,
+        orbit_code_home,
         filename_ts,
         event_ts,
         thread_uuid,
-        codex_home.to_path_buf(),
+        orbit_code_home.to_path_buf(),
         git,
     )
 }
 
 fn write_rollout_in_sessions_with_cwd(
-    codex_home: &Path,
+    orbit_code_home: &Path,
     filename_ts: &str,
     event_ts: &str,
     thread_uuid: Uuid,
@@ -344,7 +348,7 @@ fn write_rollout_in_sessions_with_cwd(
     git: Option<GitInfo>,
 ) -> PathBuf {
     let id = ThreadId::from_string(&thread_uuid.to_string()).expect("thread id");
-    let sessions_dir = codex_home.join("sessions");
+    let sessions_dir = orbit_code_home.join("sessions");
     std::fs::create_dir_all(sessions_dir.as_path()).expect("create sessions dir");
     let path = sessions_dir.join(format!("rollout-{filename_ts}-{thread_uuid}.jsonl"));
     let session_meta = SessionMeta {

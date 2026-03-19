@@ -1,5 +1,5 @@
-use codex_execpolicy_legacy::PositiveExampleFailedCheck;
-use codex_execpolicy_legacy::get_default_policy;
+use orbit_code_execpolicy_legacy::PositiveExampleFailedCheck;
+use orbit_code_execpolicy_legacy::get_default_policy;
 
 #[test]
 fn verify_everything_in_good_list_is_allowed() {

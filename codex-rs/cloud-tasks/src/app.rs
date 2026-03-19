@@ -40,9 +40,9 @@ pub struct ApplyModalState {
 }
 
 use crate::scrollable_diff::ScrollableDiff;
-use codex_cloud_tasks_client::CloudBackend;
-use codex_cloud_tasks_client::TaskId;
-use codex_cloud_tasks_client::TaskSummary;
+use orbit_code_cloud_tasks_client::CloudBackend;
+use orbit_code_cloud_tasks_client::TaskId;
+use orbit_code_cloud_tasks_client::TaskSummary;
 #[derive(Default)]
 pub struct App {
     pub tasks: Vec<TaskSummary>,
@@ -152,7 +152,7 @@ pub struct DiffOverlay {
 #[derive(Clone, Debug, Default)]
 pub struct AttemptView {
     pub turn_id: Option<String>,
-    pub status: codex_cloud_tasks_client::AttemptStatus,
+    pub status: orbit_code_cloud_tasks_client::AttemptStatus,
     pub attempt_placement: Option<i64>,
     pub diff_lines: Vec<String>,
     pub text_lines: Vec<String>,
@@ -320,7 +320,7 @@ pub enum AppEvent {
         turn_id: Option<String>,
         sibling_turn_ids: Vec<String>,
         attempt_placement: Option<i64>,
-        attempt_status: codex_cloud_tasks_client::AttemptStatus,
+        attempt_status: orbit_code_cloud_tasks_client::AttemptStatus,
     },
     DetailsFailed {
         id: TaskId,
@@ -329,10 +329,10 @@ pub enum AppEvent {
     },
     AttemptsLoaded {
         id: TaskId,
-        attempts: Vec<codex_cloud_tasks_client::TurnAttempt>,
+        attempts: Vec<orbit_code_cloud_tasks_client::TurnAttempt>,
     },
     /// Background completion of new task submission
-    NewTaskSubmitted(Result<codex_cloud_tasks_client::CreatedTask, String>),
+    NewTaskSubmitted(Result<orbit_code_cloud_tasks_client::CreatedTask, String>),
     /// Background completion of apply preflight when opening modal or on demand
     ApplyPreflightFinished {
         id: TaskId,
@@ -345,7 +345,7 @@ pub enum AppEvent {
     /// Background completion of apply action (actual patch application)
     ApplyFinished {
         id: TaskId,
-        result: std::result::Result<codex_cloud_tasks_client::ApplyOutcome, String>,
+        result: std::result::Result<orbit_code_cloud_tasks_client::ApplyOutcome, String>,
     },
 }
 
@@ -354,7 +354,7 @@ pub enum AppEvent {
 mod tests {
     use super::*;
     use chrono::Utc;
-    use codex_cloud_tasks_client::CloudTaskError;
+    use orbit_code_cloud_tasks_client::CloudTaskError;
 
     struct FakeBackend {
         // maps env key to titles
@@ -362,13 +362,14 @@ mod tests {
     }
 
     #[async_trait::async_trait]
-    impl codex_cloud_tasks_client::CloudBackend for FakeBackend {
+    impl orbit_code_cloud_tasks_client::CloudBackend for FakeBackend {
         async fn list_tasks(
             &self,
             env: Option<&str>,
             limit: Option<i64>,
             cursor: Option<&str>,
-        ) -> codex_cloud_tasks_client::Result<codex_cloud_tasks_client::TaskListPage> {
+        ) -> orbit_code_cloud_tasks_client::Result<orbit_code_cloud_tasks_client::TaskListPage>
+        {
             let key = env.map(str::to_string);
             let titles = self
                 .by_env
@@ -380,11 +381,11 @@ mod tests {
                 out.push(TaskSummary {
                     id: TaskId(format!("T-{i}")),
                     title: t.to_string(),
-                    status: codex_cloud_tasks_client::TaskStatus::Ready,
+                    status: orbit_code_cloud_tasks_client::TaskStatus::Ready,
                     updated_at: Utc::now(),
                     environment_id: env.map(str::to_string),
                     environment_label: None,
-                    summary: codex_cloud_tasks_client::DiffSummary::default(),
+                    summary: orbit_code_cloud_tasks_client::DiffSummary::default(),
                     is_review: false,
                     attempt_total: Some(1),
                 });
@@ -398,7 +399,7 @@ mod tests {
                 }
                 limited.push(task);
             }
-            Ok(codex_cloud_tasks_client::TaskListPage {
+            Ok(orbit_code_cloud_tasks_client::TaskListPage {
                 tasks: limited,
                 cursor: cursor.map(str::to_string),
             })
@@ -407,7 +408,7 @@ mod tests {
         async fn get_task_summary(
             &self,
             id: TaskId,
-        ) -> codex_cloud_tasks_client::Result<TaskSummary> {
+        ) -> orbit_code_cloud_tasks_client::Result<TaskSummary> {
             self.list_tasks(None, None, None)
                 .await?
                 .tasks
@@ -419,29 +420,28 @@ mod tests {
         async fn get_task_diff(
             &self,
             _id: TaskId,
-        ) -> codex_cloud_tasks_client::Result<Option<String>> {
-            Err(codex_cloud_tasks_client::CloudTaskError::Unimplemented(
-                "not used in test",
-            ))
+        ) -> orbit_code_cloud_tasks_client::Result<Option<String>> {
+            Err(orbit_code_cloud_tasks_client::CloudTaskError::Unimplemented("not used in test"))
         }
 
         async fn get_task_messages(
             &self,
             _id: TaskId,
-        ) -> codex_cloud_tasks_client::Result<Vec<String>> {
+        ) -> orbit_code_cloud_tasks_client::Result<Vec<String>> {
             Ok(vec![])
         }
         async fn get_task_text(
             &self,
             _id: TaskId,
-        ) -> codex_cloud_tasks_client::Result<codex_cloud_tasks_client::TaskText> {
-            Ok(codex_cloud_tasks_client::TaskText {
+        ) -> orbit_code_cloud_tasks_client::Result<orbit_code_cloud_tasks_client::TaskText>
+        {
+            Ok(orbit_code_cloud_tasks_client::TaskText {
                 prompt: Some("Example prompt".to_string()),
                 messages: Vec::new(),
                 turn_id: Some("fake-turn".to_string()),
                 sibling_turn_ids: Vec::new(),
                 attempt_placement: Some(0),
-                attempt_status: codex_cloud_tasks_client::AttemptStatus::Completed,
+                attempt_status: orbit_code_cloud_tasks_client::AttemptStatus::Completed,
             })
         }
 
@@ -449,7 +449,8 @@ mod tests {
             &self,
             _task: TaskId,
             _turn_id: String,
-        ) -> codex_cloud_tasks_client::Result<Vec<codex_cloud_tasks_client::TurnAttempt>> {
+        ) -> orbit_code_cloud_tasks_client::Result<Vec<orbit_code_cloud_tasks_client::TurnAttempt>>
+        {
             Ok(Vec::new())
         }
 
@@ -457,20 +458,18 @@ mod tests {
             &self,
             _id: TaskId,
             _diff_override: Option<String>,
-        ) -> codex_cloud_tasks_client::Result<codex_cloud_tasks_client::ApplyOutcome> {
-            Err(codex_cloud_tasks_client::CloudTaskError::Unimplemented(
-                "not used in test",
-            ))
+        ) -> orbit_code_cloud_tasks_client::Result<orbit_code_cloud_tasks_client::ApplyOutcome>
+        {
+            Err(orbit_code_cloud_tasks_client::CloudTaskError::Unimplemented("not used in test"))
         }
 
         async fn apply_task_preflight(
             &self,
             _id: TaskId,
             _diff_override: Option<String>,
-        ) -> codex_cloud_tasks_client::Result<codex_cloud_tasks_client::ApplyOutcome> {
-            Err(codex_cloud_tasks_client::CloudTaskError::Unimplemented(
-                "not used in test",
-            ))
+        ) -> orbit_code_cloud_tasks_client::Result<orbit_code_cloud_tasks_client::ApplyOutcome>
+        {
+            Err(orbit_code_cloud_tasks_client::CloudTaskError::Unimplemented("not used in test"))
         }
 
         async fn create_task(
@@ -480,10 +479,9 @@ mod tests {
             _git_ref: &str,
             _qa_mode: bool,
             _best_of_n: usize,
-        ) -> codex_cloud_tasks_client::Result<codex_cloud_tasks_client::CreatedTask> {
-            Err(codex_cloud_tasks_client::CloudTaskError::Unimplemented(
-                "not used in test",
-            ))
+        ) -> orbit_code_cloud_tasks_client::Result<orbit_code_cloud_tasks_client::CreatedTask>
+        {
+            Err(orbit_code_cloud_tasks_client::CloudTaskError::Unimplemented("not used in test"))
         }
     }
 

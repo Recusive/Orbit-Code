@@ -1,6 +1,6 @@
 use super::*;
 use crate::skills::model::SkillDependencies;
-use codex_protocol::protocol::SkillScope;
+use orbit_code_protocol::protocol::SkillScope;
 use pretty_assertions::assert_eq;
 use std::path::PathBuf;
 

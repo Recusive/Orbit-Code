@@ -9,7 +9,7 @@ import subprocess
 from pathlib import Path
 from typing import List, Optional, Tuple
 
-def _resolve_codex_cmd() -> List[str]:
+def _resolve_orbit_code_cmd() -> List[str]:
     """Resolve the Codex CLI to invoke `codex sandbox windows`.
 
     Prefer local builds (debug first), then fall back to PATH.
@@ -44,8 +44,8 @@ def _resolve_codex_cmd() -> List[str]:
         "  cargo build -p codex-cli\n"
     )
 
-CODEX_CMD = _resolve_codex_cmd()
-print(CODEX_CMD)
+ORBIT_CMD = _resolve_orbit_code_cmd()
+print(ORBIT_CMD)
 TIMEOUT_SEC = 20
 
 WS_ROOT = Path(os.environ["USERPROFILE"]) / "sbx_ws_tests"
@@ -83,7 +83,7 @@ def run_sbx(
             f'sandbox_workspace_write.writable_roots=["{additional_root.as_posix()}"]',
         ]
 
-    argv = [*CODEX_CMD, "sandbox", "windows", *policy_flags, *overrides, "--", *cmd_argv]
+    argv = [*ORBIT_CMD, "sandbox", "windows", *policy_flags, *overrides, "--", *cmd_argv]
     print(cmd_argv)
     cp = subprocess.run(argv, cwd=str(cwd), env=env,
                         stdout=subprocess.PIPE, stderr=subprocess.PIPE,
@@ -361,7 +361,7 @@ def main() -> int:
     rc, out, err = run_sbx("workspace-write", ["cmd", "/c", "type \\\\.\\PhysicalDrive0"], WS_ROOT)
     add("WS: raw device access denied", rc != 0, f"rc={rc}")
 
-    rc, out, err = run_sbx("workspace-write", ["cmd", "/c", "echo hi > \\\\.\\pipe\\codex_testpipe"], WS_ROOT)
+    rc, out, err = run_sbx("workspace-write", ["cmd", "/c", "echo hi > \\\\.\\pipe\\orbit_code_testpipe"], WS_ROOT)
     add("WS: named pipe creation denied", rc != 0, f"rc={rc}")
 
     # 32. WS: ADS/long-path escape denied
@@ -382,8 +382,8 @@ def main() -> int:
     add("WS: protected path case-variation denied", rc != 0 and assert_not_exists(git_variation), f"rc={rc}")
 
     # 34. WS: policy tamper (.codex artifacts) denied
-    codex_home = Path(os.environ["USERPROFILE"]) / ".codex"
-    cap_sid_target = codex_home / "cap_sid"
+    orbit_code_home = Path(os.environ["USERPROFILE"]) / ".codex"
+    cap_sid_target = orbit_code_home / "cap_sid"
     rc, out, err = run_sbx(
         "workspace-write",
         ["cmd", "/c", f"echo tamper > \"{cap_sid_target}\""],
@@ -443,7 +443,7 @@ def main() -> int:
     # Simulate workspace replaced by symlink to C:\; expect writes to be denied.
     fake_root = WS_ROOT / "fake_root"
     if make_symlink(fake_root, Path("C:/")):
-        rc, out, err = run_sbx("workspace-write", ["cmd", "/c", "echo owned > codex_escape.txt"], fake_root)
+        rc, out, err = run_sbx("workspace-write", ["cmd", "/c", "echo owned > orbit_code_escape.txt"], fake_root)
         add("WS: workspace-root symlink poisoning denied", rc != 0, f"rc={rc}")
     else:
         add("WS: workspace-root symlink poisoning denied (setup skipped)", True, "symlink creation failed")

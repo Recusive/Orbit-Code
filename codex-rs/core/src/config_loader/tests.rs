@@ -15,13 +15,13 @@ use crate::config_loader::ConfigRequirementsWithSources;
 use crate::config_loader::RequirementSource;
 use crate::config_loader::load_requirements_toml;
 use crate::config_loader::version_for_toml;
-use codex_config::CONFIG_TOML_FILE;
-use codex_protocol::config_types::TrustLevel;
-use codex_protocol::config_types::WebSearchMode;
-use codex_protocol::protocol::AskForApproval;
+use orbit_code_config::CONFIG_TOML_FILE;
+use orbit_code_protocol::config_types::TrustLevel;
+use orbit_code_protocol::config_types::WebSearchMode;
+use orbit_code_protocol::protocol::AskForApproval;
 #[cfg(target_os = "macos")]
-use codex_protocol::protocol::SandboxPolicy;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use orbit_code_protocol::protocol::SandboxPolicy;
+use orbit_code_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use std::collections::BTreeMap;
 use std::collections::HashMap;
@@ -37,13 +37,13 @@ fn config_error_from_io(err: &std::io::Error) -> &super::ConfigError {
 }
 
 async fn make_config_for_test(
-    codex_home: &Path,
+    orbit_code_home: &Path,
     project_path: &Path,
     trust_level: TrustLevel,
     project_root_markers: Option<Vec<String>>,
 ) -> std::io::Result<()> {
     tokio::fs::write(
-        codex_home.join(CONFIG_TOML_FILE),
+        orbit_code_home.join(CONFIG_TOML_FILE),
         toml::to_string(&ConfigToml {
             projects: Some(HashMap::from([(
                 project_path.to_string_lossy().to_string(),
@@ -61,12 +61,12 @@ async fn make_config_for_test(
 
 #[tokio::test]
 async fn cli_overrides_resolve_relative_paths_against_cwd() -> std::io::Result<()> {
-    let codex_home = tempdir().expect("tempdir");
+    let orbit_code_home = tempdir().expect("tempdir");
     let cwd_dir = tempdir().expect("tempdir");
     let cwd_path = cwd_dir.path().to_path_buf();
 
     let config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
+        .orbit_code_home(orbit_code_home.path().to_path_buf())
         .cli_overrides(vec![(
             "log_dir".to_string(),
             TomlValue::String("run-logs".to_string()),
@@ -146,16 +146,16 @@ async fn returns_config_error_for_schema_error_in_user_config() {
     std::fs::write(&config_path, contents).expect("write config");
 
     let err = ConfigBuilder::default()
-        .codex_home(tmp.path().to_path_buf())
+        .orbit_code_home(tmp.path().to_path_buf())
         .fallback_cwd(Some(tmp.path().to_path_buf()))
         .build()
         .await
         .expect_err("expected error");
 
     let config_error = config_error_from_io(&err);
-    let _guard = codex_utils_absolute_path::AbsolutePathBufGuard::new(tmp.path());
+    let _guard = orbit_code_utils_absolute_path::AbsolutePathBufGuard::new(tmp.path());
     let expected_config_error =
-        codex_config::config_error_from_typed_toml::<ConfigToml>(&config_path, contents)
+        orbit_code_config::config_error_from_typed_toml::<ConfigToml>(&config_path, contents)
             .expect("schema error");
     assert_eq!(config_error, &expected_config_error);
 }
@@ -167,9 +167,10 @@ fn schema_error_points_to_feature_value() {
     let config_path = tmp.path().join(CONFIG_TOML_FILE);
     std::fs::write(&config_path, contents).expect("write config");
 
-    let _guard = codex_utils_absolute_path::AbsolutePathBufGuard::new(tmp.path());
-    let error = codex_config::config_error_from_typed_toml::<ConfigToml>(&config_path, contents)
-        .expect("schema error");
+    let _guard = orbit_code_utils_absolute_path::AbsolutePathBufGuard::new(tmp.path());
+    let error =
+        orbit_code_config::config_error_from_typed_toml::<ConfigToml>(&config_path, contents)
+            .expect("schema error");
 
     let value_line = contents.lines().nth(1).expect("value line");
     let value_column = value_line.find("\"true\"").expect("value") + 1;
@@ -260,7 +261,7 @@ async fn returns_empty_when_all_layers_missing() {
     .expect("load layers");
     let user_layer = layers
         .get_user_layer()
-        .expect("expected a user layer even when CODEX_HOME/config.toml does not exist");
+        .expect("expected a user layer even when ORBIT_HOME/config.toml does not exist");
     assert_eq!(
         &ConfigLayerEntry {
             name: super::ConfigLayerSource::User {
@@ -686,8 +687,8 @@ allowed_approval_policies = ["on-request"]
 #[tokio::test]
 async fn load_config_layers_includes_cloud_requirements() -> anyhow::Result<()> {
     let tmp = tempdir()?;
-    let codex_home = tmp.path().join("home");
-    tokio::fs::create_dir_all(&codex_home).await?;
+    let orbit_code_home = tmp.path().join("home");
+    tokio::fs::create_dir_all(&orbit_code_home).await?;
     let cwd = AbsolutePathBuf::from_absolute_path(tmp.path())?;
 
     let requirements = ConfigRequirementsToml {
@@ -706,7 +707,7 @@ async fn load_config_layers_includes_cloud_requirements() -> anyhow::Result<()> 
     let cloud_requirements = CloudRequirementsLoader::new(async move { Ok(Some(requirements)) });
 
     let layers = load_config_layers_state(
-        &codex_home,
+        &orbit_code_home,
         Some(cwd),
         &[] as &[(String, TomlValue)],
         LoaderOverrides::default(),
@@ -737,18 +738,18 @@ async fn load_config_layers_includes_cloud_requirements() -> anyhow::Result<()> 
 #[tokio::test]
 async fn load_config_layers_fails_when_cloud_requirements_loader_fails() -> anyhow::Result<()> {
     let tmp = tempdir()?;
-    let codex_home = tmp.path().join("home");
-    tokio::fs::create_dir_all(&codex_home).await?;
+    let orbit_code_home = tmp.path().join("home");
+    tokio::fs::create_dir_all(&orbit_code_home).await?;
     let cwd = AbsolutePathBuf::from_absolute_path(tmp.path())?;
 
     let err = load_config_layers_state(
-        &codex_home,
+        &orbit_code_home,
         Some(cwd),
         &[] as &[(String, TomlValue)],
         LoaderOverrides::default(),
         CloudRequirementsLoader::new(async {
             Err(CloudRequirementsLoadError::new(
-                codex_config::CloudRequirementsLoadErrorCode::RequestFailed,
+                orbit_code_config::CloudRequirementsLoadErrorCode::RequestFailed,
                 None,
                 "cloud requirements failed",
             ))
@@ -783,12 +784,12 @@ async fn project_layers_prefer_closest_cwd() -> std::io::Result<()> {
     )
     .await?;
 
-    let codex_home = tmp.path().join("home");
-    tokio::fs::create_dir_all(&codex_home).await?;
-    make_config_for_test(&codex_home, &project_root, TrustLevel::Trusted, None).await?;
+    let orbit_code_home = tmp.path().join("home");
+    tokio::fs::create_dir_all(&orbit_code_home).await?;
+    make_config_for_test(&orbit_code_home, &project_root, TrustLevel::Trusted, None).await?;
     let cwd = AbsolutePathBuf::from_absolute_path(&nested)?;
     let layers = load_config_layers_state(
-        &codex_home,
+        &orbit_code_home,
         Some(cwd),
         &[] as &[(String, TomlValue)],
         LoaderOverrides::default(),
@@ -800,7 +801,9 @@ async fn project_layers_prefer_closest_cwd() -> std::io::Result<()> {
         .layers_high_to_low()
         .into_iter()
         .filter_map(|layer| match &layer.name {
-            super::ConfigLayerSource::Project { dot_codex_folder } => Some(dot_codex_folder),
+            super::ConfigLayerSource::Project {
+                dot_orbit_code_folder,
+            } => Some(dot_orbit_code_folder),
             _ => None,
         })
         .collect();
@@ -821,8 +824,8 @@ async fn project_layers_prefer_closest_cwd() -> std::io::Result<()> {
 }
 
 #[tokio::test]
-async fn project_paths_resolve_relative_to_dot_codex_and_override_in_order() -> std::io::Result<()>
-{
+async fn project_paths_resolve_relative_to_dot_orbit_code_and_override_in_order()
+-> std::io::Result<()> {
     let tmp = tempdir()?;
     let project_root = tmp.path().join("project");
     let nested = project_root.join("child");
@@ -849,12 +852,12 @@ model_instructions_file = "child.txt"
     )
     .await?;
 
-    let codex_home = tmp.path().join("home");
-    tokio::fs::create_dir_all(&codex_home).await?;
-    make_config_for_test(&codex_home, &project_root, TrustLevel::Trusted, None).await?;
+    let orbit_code_home = tmp.path().join("home");
+    tokio::fs::create_dir_all(&orbit_code_home).await?;
+    make_config_for_test(&orbit_code_home, &project_root, TrustLevel::Trusted, None).await?;
 
     let config = ConfigBuilder::default()
-        .codex_home(codex_home)
+        .orbit_code_home(orbit_code_home)
         .harness_overrides(ConfigOverrides {
             cwd: Some(nested.clone()),
             ..ConfigOverrides::default()
@@ -873,9 +876,9 @@ model_instructions_file = "child.txt"
 #[tokio::test]
 async fn cli_override_model_instructions_file_sets_base_instructions() -> std::io::Result<()> {
     let tmp = tempdir()?;
-    let codex_home = tmp.path().join("home");
-    tokio::fs::create_dir_all(&codex_home).await?;
-    tokio::fs::write(codex_home.join(CONFIG_TOML_FILE), "").await?;
+    let orbit_code_home = tmp.path().join("home");
+    tokio::fs::create_dir_all(&orbit_code_home).await?;
+    tokio::fs::write(orbit_code_home.join(CONFIG_TOML_FILE), "").await?;
 
     let cwd = tmp.path().join("work");
     tokio::fs::create_dir_all(&cwd).await?;
@@ -889,7 +892,7 @@ async fn cli_override_model_instructions_file_sets_base_instructions() -> std::i
     )];
 
     let config = ConfigBuilder::default()
-        .codex_home(codex_home)
+        .orbit_code_home(orbit_code_home)
         .cli_overrides(cli_overrides)
         .harness_overrides(ConfigOverrides {
             cwd: Some(cwd),
@@ -907,7 +910,8 @@ async fn cli_override_model_instructions_file_sets_base_instructions() -> std::i
 }
 
 #[tokio::test]
-async fn project_layer_is_added_when_dot_codex_exists_without_config_toml() -> std::io::Result<()> {
+async fn project_layer_is_added_when_dot_orbit_code_exists_without_config_toml()
+-> std::io::Result<()> {
     let tmp = tempdir()?;
     let project_root = tmp.path().join("project");
     let nested = project_root.join("child");
@@ -915,12 +919,12 @@ async fn project_layer_is_added_when_dot_codex_exists_without_config_toml() -> s
     tokio::fs::create_dir_all(project_root.join(".codex")).await?;
     tokio::fs::write(project_root.join(".git"), "gitdir: here").await?;
 
-    let codex_home = tmp.path().join("home");
-    tokio::fs::create_dir_all(&codex_home).await?;
-    make_config_for_test(&codex_home, &project_root, TrustLevel::Trusted, None).await?;
+    let orbit_code_home = tmp.path().join("home");
+    tokio::fs::create_dir_all(&orbit_code_home).await?;
+    make_config_for_test(&orbit_code_home, &project_root, TrustLevel::Trusted, None).await?;
     let cwd = AbsolutePathBuf::from_absolute_path(&nested)?;
     let layers = load_config_layers_state(
-        &codex_home,
+        &orbit_code_home,
         Some(cwd),
         &[] as &[(String, TomlValue)],
         LoaderOverrides::default(),
@@ -936,7 +940,9 @@ async fn project_layer_is_added_when_dot_codex_exists_without_config_toml() -> s
     assert_eq!(
         vec![&ConfigLayerEntry {
             name: super::ConfigLayerSource::Project {
-                dot_codex_folder: AbsolutePathBuf::from_absolute_path(project_root.join(".codex"))?,
+                dot_orbit_code_folder: AbsolutePathBuf::from_absolute_path(
+                    project_root.join(".codex")
+                )?,
             },
             config: TomlValue::Table(toml::map::Map::new()),
             raw_toml: None,
@@ -950,16 +956,16 @@ async fn project_layer_is_added_when_dot_codex_exists_without_config_toml() -> s
 }
 
 #[tokio::test]
-async fn codex_home_is_not_loaded_as_project_layer_from_home_dir() -> std::io::Result<()> {
+async fn orbit_code_home_is_not_loaded_as_project_layer_from_home_dir() -> std::io::Result<()> {
     let tmp = tempdir()?;
     let home_dir = tmp.path().join("home");
-    let codex_home = home_dir.join(".codex");
-    tokio::fs::create_dir_all(&codex_home).await?;
-    tokio::fs::write(codex_home.join(CONFIG_TOML_FILE), "foo = \"user\"\n").await?;
+    let orbit_code_home = home_dir.join(".codex");
+    tokio::fs::create_dir_all(&orbit_code_home).await?;
+    tokio::fs::write(orbit_code_home.join(CONFIG_TOML_FILE), "foo = \"user\"\n").await?;
 
     let cwd = AbsolutePathBuf::from_absolute_path(&home_dir)?;
     let layers = load_config_layers_state(
-        &codex_home,
+        &orbit_code_home,
         Some(cwd),
         &[] as &[(String, TomlValue)],
         LoaderOverrides::default(),
@@ -986,7 +992,7 @@ async fn codex_home_is_not_loaded_as_project_layer_from_home_dir() -> std::io::R
 }
 
 #[tokio::test]
-async fn codex_home_within_project_tree_is_not_double_loaded() -> std::io::Result<()> {
+async fn orbit_code_home_within_project_tree_is_not_double_loaded() -> std::io::Result<()> {
     let tmp = tempdir()?;
     let project_root = tmp.path().join("project");
     let nested = project_root.join("child");
@@ -1030,7 +1036,7 @@ async fn codex_home_within_project_tree_is_not_double_loaded() -> std::io::Resul
     assert_eq!(
         vec![&ConfigLayerEntry {
             name: super::ConfigLayerSource::Project {
-                dot_codex_folder: AbsolutePathBuf::from_absolute_path(&nested_dot_codex)?,
+                dot_orbit_code_folder: AbsolutePathBuf::from_absolute_path(&nested_dot_codex)?,
             },
             config: child_config.clone(),
             raw_toml: None,
@@ -1061,16 +1067,16 @@ async fn project_layers_disabled_when_untrusted_or_unknown() -> std::io::Result<
 
     let cwd = AbsolutePathBuf::from_absolute_path(&nested)?;
 
-    let codex_home_untrusted = tmp.path().join("home_untrusted");
-    tokio::fs::create_dir_all(&codex_home_untrusted).await?;
+    let orbit_code_home_untrusted = tmp.path().join("home_untrusted");
+    tokio::fs::create_dir_all(&orbit_code_home_untrusted).await?;
     make_config_for_test(
-        &codex_home_untrusted,
+        &orbit_code_home_untrusted,
         &project_root,
         TrustLevel::Untrusted,
         None,
     )
     .await?;
-    let untrusted_config_path = codex_home_untrusted.join(CONFIG_TOML_FILE);
+    let untrusted_config_path = orbit_code_home_untrusted.join(CONFIG_TOML_FILE);
     let untrusted_config_contents = tokio::fs::read_to_string(&untrusted_config_path).await?;
     tokio::fs::write(
         &untrusted_config_path,
@@ -1079,7 +1085,7 @@ async fn project_layers_disabled_when_untrusted_or_unknown() -> std::io::Result<
     .await?;
 
     let layers_untrusted = load_config_layers_state(
-        &codex_home_untrusted,
+        &orbit_code_home_untrusted,
         Some(cwd.clone()),
         &[] as &[(String, TomlValue)],
         LoaderOverrides::default(),
@@ -1108,16 +1114,16 @@ async fn project_layers_disabled_when_untrusted_or_unknown() -> std::io::Result<
         Some(&TomlValue::String("user".to_string()))
     );
 
-    let codex_home_unknown = tmp.path().join("home_unknown");
-    tokio::fs::create_dir_all(&codex_home_unknown).await?;
+    let orbit_code_home_unknown = tmp.path().join("home_unknown");
+    tokio::fs::create_dir_all(&orbit_code_home_unknown).await?;
     tokio::fs::write(
-        codex_home_unknown.join(CONFIG_TOML_FILE),
+        orbit_code_home_unknown.join(CONFIG_TOML_FILE),
         "foo = \"user\"\n",
     )
     .await?;
 
     let layers_unknown = load_config_layers_state(
-        &codex_home_unknown,
+        &orbit_code_home_unknown,
         Some(cwd),
         &[] as &[(String, TomlValue)],
         LoaderOverrides::default(),
@@ -1156,10 +1162,10 @@ async fn cli_override_can_update_project_local_mcp_server_when_project_is_truste
     let project_root = tmp.path().join("project");
     let nested = project_root.join("child");
     let dot_codex = project_root.join(".codex");
-    let codex_home = tmp.path().join("home");
+    let orbit_code_home = tmp.path().join("home");
     tokio::fs::create_dir_all(&nested).await?;
     tokio::fs::create_dir_all(&dot_codex).await?;
-    tokio::fs::create_dir_all(&codex_home).await?;
+    tokio::fs::create_dir_all(&orbit_code_home).await?;
     tokio::fs::write(project_root.join(".git"), "gitdir: here").await?;
     tokio::fs::write(
         dot_codex.join(CONFIG_TOML_FILE),
@@ -1170,10 +1176,10 @@ enabled = false
 "#,
     )
     .await?;
-    make_config_for_test(&codex_home, &project_root, TrustLevel::Trusted, None).await?;
+    make_config_for_test(&orbit_code_home, &project_root, TrustLevel::Trusted, None).await?;
 
     let config = ConfigBuilder::default()
-        .codex_home(codex_home)
+        .orbit_code_home(orbit_code_home)
         .cli_overrides(vec![(
             "mcp_servers.sentry.enabled".to_string(),
             TomlValue::Boolean(true),
@@ -1199,10 +1205,10 @@ async fn cli_override_for_disabled_project_local_mcp_server_returns_invalid_tran
     let project_root = tmp.path().join("project");
     let nested = project_root.join("child");
     let dot_codex = project_root.join(".codex");
-    let codex_home = tmp.path().join("home");
+    let orbit_code_home = tmp.path().join("home");
     tokio::fs::create_dir_all(&nested).await?;
     tokio::fs::create_dir_all(&dot_codex).await?;
-    tokio::fs::create_dir_all(&codex_home).await?;
+    tokio::fs::create_dir_all(&orbit_code_home).await?;
     tokio::fs::write(project_root.join(".git"), "gitdir: here").await?;
     tokio::fs::write(
         dot_codex.join(CONFIG_TOML_FILE),
@@ -1215,7 +1221,7 @@ enabled = false
     .await?;
 
     let err = ConfigBuilder::default()
-        .codex_home(codex_home)
+        .orbit_code_home(orbit_code_home)
         .cli_overrides(vec![(
             "mcp_servers.sentry.enabled".to_string(),
             TomlValue::Boolean(true),
@@ -1250,12 +1256,12 @@ async fn invalid_project_config_ignored_when_untrusted_or_unknown() -> std::io::
     ];
 
     for (name, trust_level) in cases {
-        let codex_home = tmp.path().join(format!("home_{name}"));
-        tokio::fs::create_dir_all(&codex_home).await?;
-        let config_path = codex_home.join(CONFIG_TOML_FILE);
+        let orbit_code_home = tmp.path().join(format!("home_{name}"));
+        tokio::fs::create_dir_all(&orbit_code_home).await?;
+        let config_path = orbit_code_home.join(CONFIG_TOML_FILE);
 
         if let Some(trust_level) = trust_level {
-            make_config_for_test(&codex_home, &project_root, trust_level, None).await?;
+            make_config_for_test(&orbit_code_home, &project_root, trust_level, None).await?;
             let config_contents = tokio::fs::read_to_string(&config_path).await?;
             tokio::fs::write(&config_path, format!("foo = \"user\"\n{config_contents}")).await?;
         } else {
@@ -1263,7 +1269,7 @@ async fn invalid_project_config_ignored_when_untrusted_or_unknown() -> std::io::
         }
 
         let layers = load_config_layers_state(
-            &codex_home,
+            &orbit_code_home,
             Some(cwd.clone()),
             &[] as &[(String, TomlValue)],
             LoaderOverrides::default(),
@@ -1308,9 +1314,9 @@ async fn cli_overrides_with_relative_paths_do_not_break_trust_check() -> std::io
     tokio::fs::create_dir_all(&nested).await?;
     tokio::fs::write(project_root.join(".git"), "gitdir: here").await?;
 
-    let codex_home = tmp.path().join("home");
-    tokio::fs::create_dir_all(&codex_home).await?;
-    make_config_for_test(&codex_home, &project_root, TrustLevel::Trusted, None).await?;
+    let orbit_code_home = tmp.path().join("home");
+    tokio::fs::create_dir_all(&orbit_code_home).await?;
+    make_config_for_test(&orbit_code_home, &project_root, TrustLevel::Trusted, None).await?;
 
     let cwd = AbsolutePathBuf::from_absolute_path(&nested)?;
     let cli_overrides = vec![(
@@ -1319,7 +1325,7 @@ async fn cli_overrides_with_relative_paths_do_not_break_trust_check() -> std::io
     )];
 
     load_config_layers_state(
-        &codex_home,
+        &orbit_code_home,
         Some(cwd),
         &cli_overrides,
         LoaderOverrides::default(),
@@ -1349,10 +1355,10 @@ async fn project_root_markers_supports_alternate_markers() -> std::io::Result<()
     )
     .await?;
 
-    let codex_home = tmp.path().join("home");
-    tokio::fs::create_dir_all(&codex_home).await?;
+    let orbit_code_home = tmp.path().join("home");
+    tokio::fs::create_dir_all(&orbit_code_home).await?;
     make_config_for_test(
-        &codex_home,
+        &orbit_code_home,
         &project_root,
         TrustLevel::Trusted,
         Some(vec![".hg".to_string()]),
@@ -1361,7 +1367,7 @@ async fn project_root_markers_supports_alternate_markers() -> std::io::Result<()
 
     let cwd = AbsolutePathBuf::from_absolute_path(&nested)?;
     let layers = load_config_layers_state(
-        &codex_home,
+        &orbit_code_home,
         Some(cwd),
         &[] as &[(String, TomlValue)],
         LoaderOverrides::default(),
@@ -1373,7 +1379,9 @@ async fn project_root_markers_supports_alternate_markers() -> std::io::Result<()
         .layers_high_to_low()
         .into_iter()
         .filter_map(|layer| match &layer.name {
-            super::ConfigLayerSource::Project { dot_codex_folder } => Some(dot_codex_folder),
+            super::ConfigLayerSource::Project {
+                dot_orbit_code_folder,
+            } => Some(dot_orbit_code_folder),
             _ => None,
         })
         .collect();
@@ -1402,16 +1410,16 @@ mod requirements_exec_policy_tests {
     use crate::config_loader::ConfigRequirementsWithSources;
     use crate::config_loader::RequirementSource;
     use crate::exec_policy::load_exec_policy;
-    use codex_app_server_protocol::ConfigLayerSource;
-    use codex_config::RequirementsExecPolicyDecisionToml;
-    use codex_config::RequirementsExecPolicyParseError;
-    use codex_config::RequirementsExecPolicyPatternTokenToml;
-    use codex_config::RequirementsExecPolicyPrefixRuleToml;
-    use codex_config::RequirementsExecPolicyToml;
-    use codex_execpolicy::Decision;
-    use codex_execpolicy::Evaluation;
-    use codex_execpolicy::RuleMatch;
-    use codex_utils_absolute_path::AbsolutePathBuf;
+    use orbit_code_app_server_protocol::ConfigLayerSource;
+    use orbit_code_config::RequirementsExecPolicyDecisionToml;
+    use orbit_code_config::RequirementsExecPolicyParseError;
+    use orbit_code_config::RequirementsExecPolicyPatternTokenToml;
+    use orbit_code_config::RequirementsExecPolicyPrefixRuleToml;
+    use orbit_code_config::RequirementsExecPolicyToml;
+    use orbit_code_execpolicy::Decision;
+    use orbit_code_execpolicy::Evaluation;
+    use orbit_code_execpolicy::RuleMatch;
+    use orbit_code_utils_absolute_path::AbsolutePathBuf;
     use pretty_assertions::assert_eq;
     use std::path::Path;
     use tempfile::tempdir;
@@ -1426,14 +1434,16 @@ mod requirements_exec_policy_tests {
         panic!("rule should match so heuristic should not be called");
     }
 
-    fn config_stack_for_dot_codex_folder_with_requirements(
-        dot_codex_folder: &Path,
+    fn config_stack_for_dot_orbit_code_folder_with_requirements(
+        dot_orbit_code_folder: &Path,
         requirements: ConfigRequirements,
     ) -> ConfigLayerStack {
-        let dot_codex_folder = AbsolutePathBuf::from_absolute_path(dot_codex_folder)
-            .expect("absolute dot_codex_folder");
+        let dot_orbit_code_folder = AbsolutePathBuf::from_absolute_path(dot_orbit_code_folder)
+            .expect("absolute dot_orbit_code_folder");
         let layer = ConfigLayerEntry::new(
-            ConfigLayerSource::Project { dot_codex_folder },
+            ConfigLayerSource::Project {
+                dot_orbit_code_folder,
+            },
             TomlValue::Table(Default::default()),
         );
         ConfigLayerStack::new(vec![layer], requirements, ConfigRequirementsToml::default())
@@ -1647,7 +1657,7 @@ prefix_rules = []
             "#,
         );
         let config_stack =
-            config_stack_for_dot_codex_folder_with_requirements(temp_dir.path(), requirements);
+            config_stack_for_dot_orbit_code_folder_with_requirements(temp_dir.path(), requirements);
 
         let policy = load_exec_policy(&config_stack).await?;
 
@@ -1686,7 +1696,7 @@ prefix_rules = []
             "#,
         );
         let config_stack =
-            config_stack_for_dot_codex_folder_with_requirements(temp_dir.path(), requirements);
+            config_stack_for_dot_orbit_code_folder_with_requirements(temp_dir.path(), requirements);
 
         let policy = load_exec_policy(&config_stack).await?;
 

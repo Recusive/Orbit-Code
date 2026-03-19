@@ -37,55 +37,55 @@ use crate::resume_picker::SessionSelection;
 use crate::tui;
 use crate::tui::TuiEvent;
 use crate::update_action::UpdateAction;
-use crate::version::CODEX_CLI_VERSION;
-use codex_ansi_escape::ansi_escape_line;
-use codex_app_server_protocol::ConfigLayerSource;
-use codex_core::AuthManager;
-use codex_core::CodexAuth;
-use codex_core::ThreadManager;
-use codex_core::config::Config;
-use codex_core::config::ConfigBuilder;
-use codex_core::config::ConfigOverrides;
-use codex_core::config::edit::ConfigEdit;
-use codex_core::config::edit::ConfigEditsBuilder;
-use codex_core::config::types::ApprovalsReviewer;
-use codex_core::config::types::ModelAvailabilityNuxConfig;
-use codex_core::config_loader::ConfigLayerStackOrdering;
-use codex_core::features::Feature;
-use codex_core::models_manager::collaboration_mode_presets::CollaborationModesConfig;
-use codex_core::models_manager::manager::RefreshStrategy;
-use codex_core::models_manager::model_presets::HIDE_GPT_5_1_CODEX_MAX_MIGRATION_PROMPT_CONFIG;
-use codex_core::models_manager::model_presets::HIDE_GPT5_1_MIGRATION_PROMPT_CONFIG;
-#[cfg(target_os = "windows")]
-use codex_core::windows_sandbox::WindowsSandboxLevelExt;
-use codex_otel::SessionTelemetry;
-use codex_otel::TelemetryAuthMode;
-use codex_protocol::ThreadId;
-use codex_protocol::config_types::Personality;
-#[cfg(target_os = "windows")]
-use codex_protocol::config_types::WindowsSandboxLevel;
-use codex_protocol::items::TurnItem;
-use codex_protocol::openai_models::ModelAvailabilityNux;
-use codex_protocol::openai_models::ModelPreset;
-use codex_protocol::openai_models::ModelUpgrade;
-use codex_protocol::openai_models::ReasoningEffort as ReasoningEffortConfig;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::Event;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::FinalOutput;
-use codex_protocol::protocol::ListSkillsResponseEvent;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::SandboxPolicy;
-use codex_protocol::protocol::SessionConfiguredEvent;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::SkillErrorInfo;
-use codex_protocol::protocol::TokenUsage;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use crate::version::ORBIT_CLI_VERSION;
 use color_eyre::eyre::Result;
 use color_eyre::eyre::WrapErr;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyEventKind;
+use orbit_code_ansi_escape::ansi_escape_line;
+use orbit_code_app_server_protocol::ConfigLayerSource;
+use orbit_code_core::AuthManager;
+use orbit_code_core::CodexAuth;
+use orbit_code_core::ThreadManager;
+use orbit_code_core::config::Config;
+use orbit_code_core::config::ConfigBuilder;
+use orbit_code_core::config::ConfigOverrides;
+use orbit_code_core::config::edit::ConfigEdit;
+use orbit_code_core::config::edit::ConfigEditsBuilder;
+use orbit_code_core::config::types::ApprovalsReviewer;
+use orbit_code_core::config::types::ModelAvailabilityNuxConfig;
+use orbit_code_core::config_loader::ConfigLayerStackOrdering;
+use orbit_code_core::features::Feature;
+use orbit_code_core::models_manager::collaboration_mode_presets::CollaborationModesConfig;
+use orbit_code_core::models_manager::manager::RefreshStrategy;
+use orbit_code_core::models_manager::model_presets::HIDE_GPT_5_1_ORBIT_MAX_MIGRATION_PROMPT_CONFIG;
+use orbit_code_core::models_manager::model_presets::HIDE_GPT5_1_MIGRATION_PROMPT_CONFIG;
+#[cfg(target_os = "windows")]
+use orbit_code_core::windows_sandbox::WindowsSandboxLevelExt;
+use orbit_code_otel::SessionTelemetry;
+use orbit_code_otel::TelemetryAuthMode;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::config_types::Personality;
+#[cfg(target_os = "windows")]
+use orbit_code_protocol::config_types::WindowsSandboxLevel;
+use orbit_code_protocol::items::TurnItem;
+use orbit_code_protocol::openai_models::ModelAvailabilityNux;
+use orbit_code_protocol::openai_models::ModelPreset;
+use orbit_code_protocol::openai_models::ModelUpgrade;
+use orbit_code_protocol::openai_models::ReasoningEffort as ReasoningEffortConfig;
+use orbit_code_protocol::protocol::AskForApproval;
+use orbit_code_protocol::protocol::Event;
+use orbit_code_protocol::protocol::EventMsg;
+use orbit_code_protocol::protocol::FinalOutput;
+use orbit_code_protocol::protocol::ListSkillsResponseEvent;
+use orbit_code_protocol::protocol::Op;
+use orbit_code_protocol::protocol::SandboxPolicy;
+use orbit_code_protocol::protocol::SessionConfiguredEvent;
+use orbit_code_protocol::protocol::SessionSource;
+use orbit_code_protocol::protocol::SkillErrorInfo;
+use orbit_code_protocol::protocol::TokenUsage;
+use orbit_code_utils_absolute_path::AbsolutePathBuf;
 use ratatui::style::Stylize;
 use ratatui::text::Line;
 use ratatui::widgets::Paragraph;
@@ -195,7 +195,7 @@ fn session_summary(
     }
 
     let usage_line = FinalOutput::from(token_usage).to_string();
-    let resume_command = codex_core::util::resume_command(thread_name.as_deref(), thread_id);
+    let resume_command = orbit_code_core::util::resume_command(thread_name.as_deref(), thread_id);
     Some(SessionSummary {
         usage_line,
         resume_command,
@@ -239,14 +239,17 @@ fn emit_project_config_warnings(app_event_tx: &AppEventSender, config: &Config) 
         ConfigLayerStackOrdering::LowestPrecedenceFirst,
         /*include_disabled*/ true,
     ) {
-        let ConfigLayerSource::Project { dot_codex_folder } = &layer.name else {
+        let ConfigLayerSource::Project {
+            dot_orbit_code_folder,
+        } = &layer.name
+        else {
             continue;
         };
         if layer.disabled_reason.is_none() {
             continue;
         }
         disabled_folders.push((
-            dot_codex_folder.as_path().display().to_string(),
+            dot_orbit_code_folder.as_path().display().to_string(),
             layer
                 .disabled_reason
                 .as_ref()
@@ -276,7 +279,7 @@ fn emit_project_config_warnings(app_event_tx: &AppEventSender, config: &Config) 
 }
 
 fn emit_missing_system_bwrap_warning(app_event_tx: &AppEventSender) {
-    let Some(message) = codex_core::config::missing_system_bwrap_warning() else {
+    let Some(message) = orbit_code_core::config::missing_system_bwrap_warning() else {
         return;
     };
 
@@ -285,9 +288,12 @@ fn emit_missing_system_bwrap_warning(app_event_tx: &AppEventSender) {
     )));
 }
 
-async fn emit_custom_prompt_deprecation_notice(app_event_tx: &AppEventSender, codex_home: &Path) {
-    let prompts_dir = codex_home.join("prompts");
-    let prompt_count = codex_core::custom_prompts::discover_prompts_in(&prompts_dir)
+async fn emit_custom_prompt_deprecation_notice(
+    app_event_tx: &AppEventSender,
+    orbit_code_home: &Path,
+) {
+    let prompts_dir = orbit_code_home.join("prompts");
+    let prompt_count = orbit_code_core::custom_prompts::discover_prompts_in(&prompts_dir)
         .await
         .len();
     if prompt_count == 0 {
@@ -300,7 +306,7 @@ async fn emit_custom_prompt_deprecation_notice(app_event_tx: &AppEventSender, co
         "prompts"
     };
     let details = format!(
-        "Detected {prompt_count} custom {prompt_label} in `$CODEX_HOME/prompts`. Use the `$skill-creator` skill to convert each custom prompt into a skill."
+        "Detected {prompt_count} custom {prompt_label} in `$ORBIT_HOME/prompts`. Use the `$skill-creator` skill to convert each custom prompt into a skill."
     );
 
     app_event_tx.send(AppEvent::InsertHistoryCell(Box::new(
@@ -505,9 +511,9 @@ fn should_show_model_migration_prompt(
 
 fn migration_prompt_hidden(config: &Config, migration_config_key: &str) -> bool {
     match migration_config_key {
-        HIDE_GPT_5_1_CODEX_MAX_MIGRATION_PROMPT_CONFIG => config
+        HIDE_GPT_5_1_ORBIT_MAX_MIGRATION_PROMPT_CONFIG => config
             .notices
-            .hide_gpt_5_1_codex_max_migration_prompt
+            .hide_gpt_5_1_orbit_code_max_migration_prompt
             .unwrap_or(false),
         HIDE_GPT5_1_MIGRATION_PROMPT_CONFIG => {
             config.notices.hide_gpt5_1_migration_prompt.unwrap_or(false)
@@ -573,7 +579,7 @@ async fn prepare_startup_tooltip_override(
     let mut updated_shown_count = config.model_availability_nux.shown_count.clone();
     updated_shown_count.insert(tooltip_override.model_slug.clone(), next_count);
 
-    if let Err(err) = ConfigEditsBuilder::new(&config.codex_home)
+    if let Err(err) = ConfigEditsBuilder::new(&config.orbit_code_home)
         .set_model_availability_nux_count(&updated_shown_count)
         .apply()
         .await
@@ -732,7 +738,7 @@ pub(crate) struct App {
     /// This is used after a confirmed thread rollback to ensure scrollback reflects the trimmed
     /// transcript cells.
     pub(crate) backtrack_render_pending: bool,
-    pub(crate) feedback: codex_feedback::CodexFeedback,
+    pub(crate) feedback: orbit_code_feedback::CodexFeedback,
     feedback_audience: FeedbackAudience,
     /// Set when the user confirms an update; propagated on exit.
     pub(crate) pending_update_action: Option<UpdateAction>,
@@ -793,7 +799,7 @@ impl App {
     pub fn chatwidget_init_for_forked_or_resumed_thread(
         &self,
         tui: &mut tui::Tui,
-        cfg: codex_core::config::Config,
+        cfg: orbit_code_core::config::Config,
     ) -> crate::chatwidget::ChatWidgetInit {
         crate::chatwidget::ChatWidgetInit {
             config: cfg,
@@ -819,7 +825,7 @@ impl App {
         overrides.cwd = Some(cwd.clone());
         let cwd_display = cwd.display().to_string();
         ConfigBuilder::default()
-            .codex_home(self.config.codex_home.clone())
+            .orbit_code_home(self.config.orbit_code_home.clone())
             .cli_overrides(self.cli_kv_overrides.clone())
             .harness_overrides(overrides)
             .build()
@@ -973,7 +979,7 @@ impl App {
             (root_blocks_disable, profile_configured)
         };
         let mut permissions_history_label: Option<&'static str> = None;
-        let mut builder = ConfigEditsBuilder::new(&self.config.codex_home)
+        let mut builder = ConfigEditsBuilder::new(&self.config.orbit_code_home)
             .with_profile(self.active_profile.as_deref());
 
         for (feature, enabled) in updates {
@@ -1199,7 +1205,7 @@ impl App {
     }
 
     fn clear_ui_header_lines(&self, width: u16) -> Vec<Line<'static>> {
-        self.clear_ui_header_lines_with_version(width, CODEX_CLI_VERSION)
+        self.clear_ui_header_lines_with_version(width, ORBIT_CLI_VERSION)
     }
 
     fn queue_clear_ui_header(&mut self, tui: &mut tui::Tui) {
@@ -1777,13 +1783,13 @@ impl App {
         self.active_thread_rx = Some(receiver);
 
         let init = self.chatwidget_init_for_forked_or_resumed_thread(tui, self.config.clone());
-        let codex_op_tx = if let Some(thread) = live_thread {
+        let orbit_code_op_tx = if let Some(thread) = live_thread {
             crate::chatwidget::spawn_op_forwarder(thread)
         } else {
             let (tx, _rx) = unbounded_channel();
             tx
         };
-        self.chat_widget = ChatWidget::new_with_op_sender(init, codex_op_tx);
+        self.chat_widget = ChatWidget::new_with_op_sender(init, orbit_code_op_tx);
         self.sync_active_agent_label();
 
         self.reset_for_thread_switch(tui)?;
@@ -1892,7 +1898,7 @@ impl App {
         let mut disconnected = false;
         loop {
             match rx.try_recv() {
-                Ok(event) => self.handle_codex_event_now(event),
+                Ok(event) => self.handle_orbit_code_event_now(event),
                 Err(TryRecvError::Empty) => break,
                 Err(TryRecvError::Disconnected) => {
                     disconnected = true;
@@ -1942,14 +1948,14 @@ impl App {
         resume_restored_queue: bool,
     ) {
         if let Some(event) = snapshot.session_configured {
-            self.handle_codex_event_replay(event);
+            self.handle_orbit_code_event_replay(event);
         }
         self.chat_widget
             .set_queue_autosend_suppressed(/*suppressed*/ true);
         self.chat_widget
             .restore_thread_input_state(snapshot.input_state);
         for event in snapshot.events {
-            self.handle_codex_event_replay(event);
+            self.handle_orbit_code_event_replay(event);
         }
         self.chat_widget
             .set_queue_autosend_suppressed(/*suppressed*/ false);
@@ -1991,7 +1997,7 @@ impl App {
         initial_prompt: Option<String>,
         initial_images: Vec<PathBuf>,
         session_selection: SessionSelection,
-        feedback: codex_feedback::CodexFeedback,
+        feedback: orbit_code_feedback::CodexFeedback,
         is_first_run: bool,
         should_prompt_windows_sandbox_nux_at_startup: bool,
     ) -> Result<AppExitInfo> {
@@ -2000,7 +2006,7 @@ impl App {
         let app_event_tx = AppEventSender::new(app_event_tx);
         emit_project_config_warnings(&app_event_tx, &config);
         emit_missing_system_bwrap_warning(&app_event_tx);
-        emit_custom_prompt_deprecation_notice(&app_event_tx, &config.codex_home).await;
+        emit_custom_prompt_deprecation_notice(&app_event_tx, &config.orbit_code_home).await;
         tui.set_notification_method(config.tui_notification_method);
 
         let harness_overrides =
@@ -2064,9 +2070,9 @@ impl App {
             auth_ref.and_then(CodexAuth::get_account_id),
             auth_ref.and_then(CodexAuth::get_account_email),
             auth_mode,
-            codex_core::default_client::originator().value,
+            orbit_code_core::default_client::originator().value,
             config.otel.log_user_prompt,
-            codex_core::terminal::user_agent(),
+            orbit_code_core::terminal::user_agent(),
             SessionSource::Cli,
         );
         if config
@@ -2242,8 +2248,8 @@ impl App {
                 != WindowsSandboxLevel::Disabled
                 && matches!(
                     app.config.permissions.sandbox_policy.get(),
-                    codex_protocol::protocol::SandboxPolicy::WorkspaceWrite { .. }
-                        | codex_protocol::protocol::SandboxPolicy::ReadOnly { .. }
+                    orbit_code_protocol::protocol::SandboxPolicy::WorkspaceWrite { .. }
+                        | orbit_code_protocol::protocol::SandboxPolicy::ReadOnly { .. }
                 )
                 && !app
                     .config
@@ -2254,7 +2260,7 @@ impl App {
                 let cwd = app.config.cwd.clone();
                 let env_map: std::collections::HashMap<String, String> = std::env::vars().collect();
                 let tx = app.app_event_tx.clone();
-                let logs_base_dir = app.config.codex_home.clone();
+                let logs_base_dir = app.config.orbit_code_home.clone();
                 let sandbox_policy = app.config.permissions.sandbox_policy.get().clone();
                 Self::spawn_world_writable_scan(cwd, env_map, logs_base_dir, sandbox_policy, tx);
             }
@@ -2850,13 +2856,14 @@ impl App {
                     let command_cwd = policy_cwd.clone();
                     let env_map: std::collections::HashMap<String, String> =
                         std::env::vars().collect();
-                    let codex_home = self.config.codex_home.clone();
+                    let orbit_code_home = self.config.orbit_code_home.clone();
                     let tx = self.app_event_tx.clone();
 
                     // If the elevated setup already ran on this machine, don't prompt for
                     // elevation again - just flip the config to use the elevated path.
-                    if codex_core::windows_sandbox::sandbox_setup_is_complete(codex_home.as_path())
-                    {
+                    if orbit_code_core::windows_sandbox::sandbox_setup_is_complete(
+                        orbit_code_home.as_path(),
+                    ) {
                         tx.send(AppEvent::EnableWindowsSandboxForAgentMode {
                             preset,
                             mode: WindowsSandboxEnableMode::Elevated,
@@ -2868,12 +2875,12 @@ impl App {
                     self.windows_sandbox.setup_started_at = Some(Instant::now());
                     let session_telemetry = self.session_telemetry.clone();
                     tokio::task::spawn_blocking(move || {
-                        let result = codex_core::windows_sandbox::run_elevated_setup(
+                        let result = orbit_code_core::windows_sandbox::run_elevated_setup(
                             &policy,
                             policy_cwd.as_path(),
                             command_cwd.as_path(),
                             &env_map,
-                            codex_home.as_path(),
+                            orbit_code_home.as_path(),
                         );
                         let event = match result {
                             Ok(()) => {
@@ -2891,7 +2898,7 @@ impl App {
                                 let mut code_tag: Option<String> = None;
                                 let mut message_tag: Option<String> = None;
                                 if let Some((code, message)) =
-                                    codex_core::windows_sandbox::elevated_setup_failure_details(
+                                    orbit_code_core::windows_sandbox::elevated_setup_failure_details(
                                         &err,
                                     )
                                 {
@@ -2906,7 +2913,7 @@ impl App {
                                     tags.push(("message", message));
                                 }
                                 session_telemetry.counter(
-                                    codex_core::windows_sandbox::elevated_setup_failure_metric_name(
+                                    orbit_code_core::windows_sandbox::elevated_setup_failure_metric_name(
                                         &err,
                                     ),
                                     1,
@@ -2935,19 +2942,21 @@ impl App {
                     let command_cwd = policy_cwd.clone();
                     let env_map: std::collections::HashMap<String, String> =
                         std::env::vars().collect();
-                    let codex_home = self.config.codex_home.clone();
+                    let orbit_code_home = self.config.orbit_code_home.clone();
                     let tx = self.app_event_tx.clone();
                     let session_telemetry = self.session_telemetry.clone();
 
                     self.chat_widget.show_windows_sandbox_setup_status();
                     tokio::task::spawn_blocking(move || {
-                        if let Err(err) = codex_core::windows_sandbox::run_legacy_setup_preflight(
-                            &policy,
-                            policy_cwd.as_path(),
-                            command_cwd.as_path(),
-                            &env_map,
-                            codex_home.as_path(),
-                        ) {
+                        if let Err(err) =
+                            orbit_code_core::windows_sandbox::run_legacy_setup_preflight(
+                                &policy,
+                                policy_cwd.as_path(),
+                                command_cwd.as_path(),
+                                &env_map,
+                                orbit_code_home.as_path(),
+                            )
+                        {
                             session_telemetry.counter(
                                 "codex.windows_sandbox.legacy_setup_preflight_failed",
                                 1,
@@ -2983,17 +2992,17 @@ impl App {
                     let command_cwd = self.config.cwd.clone();
                     let env_map: std::collections::HashMap<String, String> =
                         std::env::vars().collect();
-                    let codex_home = self.config.codex_home.clone();
+                    let orbit_code_home = self.config.orbit_code_home.clone();
                     let tx = self.app_event_tx.clone();
 
                     tokio::task::spawn_blocking(move || {
                         let requested_path = PathBuf::from(path);
-                        let event = match codex_core::windows_sandbox_read_grants::grant_read_root_non_elevated(
+                        let event = match orbit_code_core::windows_sandbox_read_grants::grant_read_root_non_elevated(
                             &policy,
                             policy_cwd.as_path(),
                             command_cwd.as_path(),
                             &env_map,
-                            codex_home.as_path(),
+                            orbit_code_home.as_path(),
                             requested_path.as_path(),
                         ) {
                             Ok(canonical_path) => AppEvent::WindowsSandboxGrantReadRootCompleted {
@@ -3039,7 +3048,7 @@ impl App {
                     }
                     let profile = self.active_profile.as_deref();
                     let elevated_enabled = matches!(mode, WindowsSandboxEnableMode::Elevated);
-                    let builder = ConfigEditsBuilder::new(&self.config.codex_home)
+                    let builder = ConfigEditsBuilder::new(&self.config.orbit_code_home)
                         .with_profile(profile)
                         .set_windows_sandbox_mode(if elevated_enabled {
                             "elevated"
@@ -3136,7 +3145,7 @@ impl App {
             }
             AppEvent::PersistModelSelection { model, effort } => {
                 let profile = self.active_profile.as_deref();
-                match ConfigEditsBuilder::new(&self.config.codex_home)
+                match ConfigEditsBuilder::new(&self.config.orbit_code_home)
                     .with_profile(profile)
                     .set_model(Some(model.as_str()), effort)
                     .apply()
@@ -3177,7 +3186,7 @@ impl App {
             }
             AppEvent::PersistPersonalitySelection { personality } => {
                 let profile = self.active_profile.as_deref();
-                match ConfigEditsBuilder::new(&self.config.codex_home)
+                match ConfigEditsBuilder::new(&self.config.orbit_code_home)
                     .with_profile(profile)
                     .set_personality(Some(personality))
                     .apply()
@@ -3213,7 +3222,7 @@ impl App {
             AppEvent::PersistServiceTierSelection { service_tier } => {
                 self.refresh_status_line();
                 let profile = self.active_profile.as_deref();
-                match ConfigEditsBuilder::new(&self.config.codex_home)
+                match ConfigEditsBuilder::new(&self.config.orbit_code_home)
                     .with_profile(profile)
                     .set_service_tier(service_tier)
                     .apply()
@@ -3246,11 +3255,11 @@ impl App {
             AppEvent::PersistRealtimeAudioDeviceSelection { kind, name } => {
                 let builder = match kind {
                     RealtimeAudioDeviceKind::Microphone => {
-                        ConfigEditsBuilder::new(&self.config.codex_home)
+                        ConfigEditsBuilder::new(&self.config.orbit_code_home)
                             .set_realtime_microphone(name.as_deref())
                     }
                     RealtimeAudioDeviceKind::Speaker => {
-                        ConfigEditsBuilder::new(&self.config.codex_home)
+                        ConfigEditsBuilder::new(&self.config.orbit_code_home)
                             .set_realtime_speaker(name.as_deref())
                     }
                 };
@@ -3313,8 +3322,8 @@ impl App {
                 #[cfg(target_os = "windows")]
                 let policy_is_workspace_write_or_ro = matches!(
                     &policy,
-                    codex_protocol::protocol::SandboxPolicy::WorkspaceWrite { .. }
-                        | codex_protocol::protocol::SandboxPolicy::ReadOnly { .. }
+                    orbit_code_protocol::protocol::SandboxPolicy::WorkspaceWrite { .. }
+                        | orbit_code_protocol::protocol::SandboxPolicy::ReadOnly { .. }
                 );
                 let policy_for_chat = policy.clone();
 
@@ -3355,7 +3364,7 @@ impl App {
                         let env_map: std::collections::HashMap<String, String> =
                             std::env::vars().collect();
                         let tx = self.app_event_tx.clone();
-                        let logs_base_dir = self.config.codex_home.clone();
+                        let logs_base_dir = self.config.orbit_code_home.clone();
                         let sandbox_policy = self.config.permissions.sandbox_policy.get().clone();
                         Self::spawn_world_writable_scan(
                             cwd,
@@ -3380,7 +3389,7 @@ impl App {
                 } else {
                     vec!["approvals_reviewer".to_string()]
                 };
-                if let Err(err) = ConfigEditsBuilder::new(&self.config.codex_home)
+                if let Err(err) = ConfigEditsBuilder::new(&self.config.orbit_code_home)
                     .with_profile(profile)
                     .with_edits([ConfigEdit::SetPath {
                         segments,
@@ -3419,7 +3428,7 @@ impl App {
                 self.refresh_status_line();
             }
             AppEvent::PersistFullAccessWarningAcknowledged => {
-                if let Err(err) = ConfigEditsBuilder::new(&self.config.codex_home)
+                if let Err(err) = ConfigEditsBuilder::new(&self.config.orbit_code_home)
                     .set_hide_full_access_warning(/*acknowledged*/ true)
                     .apply()
                     .await
@@ -3434,7 +3443,7 @@ impl App {
                 }
             }
             AppEvent::PersistWorldWritableWarningAcknowledged => {
-                if let Err(err) = ConfigEditsBuilder::new(&self.config.codex_home)
+                if let Err(err) = ConfigEditsBuilder::new(&self.config.orbit_code_home)
                     .set_hide_world_writable_warning(/*acknowledged*/ true)
                     .apply()
                     .await
@@ -3449,7 +3458,7 @@ impl App {
                 }
             }
             AppEvent::PersistRateLimitSwitchPromptHidden => {
-                if let Err(err) = ConfigEditsBuilder::new(&self.config.codex_home)
+                if let Err(err) = ConfigEditsBuilder::new(&self.config.orbit_code_home)
                     .set_hide_rate_limit_model_nudge(/*acknowledged*/ true)
                     .apply()
                     .await
@@ -3482,7 +3491,7 @@ impl App {
                 } else {
                     ConfigEdit::ClearPath { segments }
                 };
-                if let Err(err) = ConfigEditsBuilder::new(&self.config.codex_home)
+                if let Err(err) = ConfigEditsBuilder::new(&self.config.orbit_code_home)
                     .with_edits([edit])
                     .apply()
                     .await
@@ -3506,7 +3515,7 @@ impl App {
                 from_model,
                 to_model,
             } => {
-                if let Err(err) = ConfigEditsBuilder::new(&self.config.codex_home)
+                if let Err(err) = ConfigEditsBuilder::new(&self.config.orbit_code_home)
                     .record_model_migration_seen(from_model.as_str(), to_model.as_str())
                     .apply()
                     .await
@@ -3540,7 +3549,7 @@ impl App {
                     path: path.clone(),
                     enabled,
                 }];
-                match ConfigEditsBuilder::new(&self.config.codex_home)
+                match ConfigEditsBuilder::new(&self.config.orbit_code_home)
                     .with_edits(edits)
                     .apply()
                     .await
@@ -3592,7 +3601,7 @@ impl App {
                         },
                     ]
                 };
-                match ConfigEditsBuilder::new(&self.config.codex_home)
+                match ConfigEditsBuilder::new(&self.config.orbit_code_home)
                     .with_edits(edits)
                     .apply()
                     .await
@@ -3711,8 +3720,8 @@ impl App {
             }
             AppEvent::StatusLineSetup { items } => {
                 let ids = items.iter().map(ToString::to_string).collect::<Vec<_>>();
-                let edit = codex_core::config::edit::status_line_items_edit(&ids);
-                let apply_result = ConfigEditsBuilder::new(&self.config.codex_home)
+                let edit = orbit_code_core::config::edit::status_line_items_edit(&ids);
+                let apply_result = ConfigEditsBuilder::new(&self.config.orbit_code_home)
                     .with_edits([edit])
                     .apply()
                     .await;
@@ -3736,8 +3745,8 @@ impl App {
                 self.chat_widget.cancel_status_line_setup();
             }
             AppEvent::SyntaxThemeSelected { name } => {
-                let edit = codex_core::config::edit::syntax_theme_edit(&name);
-                let apply_result = ConfigEditsBuilder::new(&self.config.codex_home)
+                let edit = orbit_code_core::config::edit::syntax_theme_edit(&name);
+                let apply_result = ConfigEditsBuilder::new(&self.config.orbit_code_home)
                     .with_edits([edit])
                     .apply()
                     .await;
@@ -3749,7 +3758,7 @@ impl App {
                         // navigating, the runtime theme must still be applied.
                         if let Some(theme) = crate::render::highlight::resolve_theme_by_name(
                             &name,
-                            Some(&self.config.codex_home),
+                            Some(&self.config.orbit_code_home),
                         ) {
                             crate::render::highlight::set_syntax_theme(theme);
                         }
@@ -3788,7 +3797,7 @@ impl App {
         }
     }
 
-    fn handle_codex_event_now(&mut self, event: Event) {
+    fn handle_orbit_code_event_now(&mut self, event: Event) {
         let needs_refresh = matches!(
             event.msg,
             EventMsg::SessionConfigured(_) | EventMsg::TurnStarted(_) | EventMsg::TokenCount(_)
@@ -3806,15 +3815,15 @@ impl App {
             emit_skill_load_warnings(&self.app_event_tx, &errors);
         }
         self.handle_backtrack_event(&event.msg);
-        self.chat_widget.handle_codex_event(event);
+        self.chat_widget.handle_orbit_code_event(event);
 
         if needs_refresh {
             self.refresh_status_line();
         }
     }
 
-    fn handle_codex_event_replay(&mut self, event: Event) {
-        self.chat_widget.handle_codex_event_replay(event);
+    fn handle_orbit_code_event_replay(&mut self, event: Event) {
+        self.chat_widget.handle_orbit_code_event_replay(event);
     }
 
     /// Handles an event emitted by the currently active thread.
@@ -3862,7 +3871,7 @@ impl App {
             // thread, so unrelated shutdowns cannot consume this marker.
             self.pending_shutdown_exit_thread_id = None;
         }
-        self.handle_codex_event_now(event);
+        self.handle_orbit_code_event_now(event);
         if self.backtrack_render_pending {
             tui.frame_requester().schedule_frame();
         }
@@ -3947,7 +3956,7 @@ impl App {
         (!model.starts_with("codex-auto-")).then(|| Self::reasoning_label(reasoning_effort))
     }
 
-    pub(crate) fn token_usage(&self) -> codex_protocol::protocol::TokenUsage {
+    pub(crate) fn token_usage(&self) -> orbit_code_protocol::protocol::TokenUsage {
         self.chat_widget.token_usage()
     }
 
@@ -3970,8 +3979,10 @@ impl App {
 
     fn restore_runtime_theme_from_config(&self) {
         if let Some(name) = self.config.tui_theme.as_deref()
-            && let Some(theme) =
-                crate::render::highlight::resolve_theme_by_name(name, Some(&self.config.codex_home))
+            && let Some(theme) = crate::render::highlight::resolve_theme_by_name(
+                name,
+                Some(&self.config.orbit_code_home),
+            )
         {
             crate::render::highlight::set_syntax_theme(theme);
             return;
@@ -3980,7 +3991,7 @@ impl App {
         let auto_theme_name = crate::render::highlight::adaptive_default_theme_name();
         if let Some(theme) = crate::render::highlight::resolve_theme_by_name(
             auto_theme_name,
-            Some(&self.config.codex_home),
+            Some(&self.config.orbit_code_home),
         ) {
             crate::render::highlight::set_syntax_theme(theme);
         }
@@ -4199,11 +4210,11 @@ impl App {
         cwd: PathBuf,
         env_map: std::collections::HashMap<String, String>,
         logs_base_dir: PathBuf,
-        sandbox_policy: codex_protocol::protocol::SandboxPolicy,
+        sandbox_policy: orbit_code_protocol::protocol::SandboxPolicy,
         tx: AppEventSender,
     ) {
         tokio::task::spawn_blocking(move || {
-            let result = codex_windows_sandbox::apply_world_writable_scan_and_denies(
+            let result = orbit_code_windows_sandbox::apply_world_writable_scan_and_denies(
                 &logs_base_dir,
                 &cwd,
                 &env_map,
@@ -4238,34 +4249,34 @@ mod tests {
     use crate::history_cell::new_session_info;
     use crate::multi_agents::AgentPickerThreadEntry;
     use assert_matches::assert_matches;
-    use codex_core::CodexAuth;
-    use codex_core::config::ConfigBuilder;
-    use codex_core::config::ConfigOverrides;
-    use codex_core::config::types::ModelAvailabilityNuxConfig;
-    use codex_otel::SessionTelemetry;
-    use codex_protocol::ThreadId;
-    use codex_protocol::config_types::CollaborationMode;
-    use codex_protocol::config_types::CollaborationModeMask;
-    use codex_protocol::config_types::ModeKind;
-    use codex_protocol::config_types::Settings;
-    use codex_protocol::openai_models::ModelAvailabilityNux;
-    use codex_protocol::protocol::AgentMessageDeltaEvent;
-    use codex_protocol::protocol::AskForApproval;
-    use codex_protocol::protocol::Event;
-    use codex_protocol::protocol::EventMsg;
-    use codex_protocol::protocol::SandboxPolicy;
-    use codex_protocol::protocol::SessionConfiguredEvent;
-    use codex_protocol::protocol::SessionSource;
-    use codex_protocol::protocol::ThreadRolledBackEvent;
-    use codex_protocol::protocol::TurnAbortReason;
-    use codex_protocol::protocol::TurnAbortedEvent;
-    use codex_protocol::protocol::TurnCompleteEvent;
-    use codex_protocol::protocol::TurnStartedEvent;
-    use codex_protocol::protocol::UserMessageEvent;
-    use codex_protocol::user_input::TextElement;
-    use codex_protocol::user_input::UserInput;
     use crossterm::event::KeyModifiers;
     use insta::assert_snapshot;
+    use orbit_code_core::CodexAuth;
+    use orbit_code_core::config::ConfigBuilder;
+    use orbit_code_core::config::ConfigOverrides;
+    use orbit_code_core::config::types::ModelAvailabilityNuxConfig;
+    use orbit_code_otel::SessionTelemetry;
+    use orbit_code_protocol::ThreadId;
+    use orbit_code_protocol::config_types::CollaborationMode;
+    use orbit_code_protocol::config_types::CollaborationModeMask;
+    use orbit_code_protocol::config_types::ModeKind;
+    use orbit_code_protocol::config_types::Settings;
+    use orbit_code_protocol::openai_models::ModelAvailabilityNux;
+    use orbit_code_protocol::protocol::AgentMessageDeltaEvent;
+    use orbit_code_protocol::protocol::AskForApproval;
+    use orbit_code_protocol::protocol::Event;
+    use orbit_code_protocol::protocol::EventMsg;
+    use orbit_code_protocol::protocol::SandboxPolicy;
+    use orbit_code_protocol::protocol::SessionConfiguredEvent;
+    use orbit_code_protocol::protocol::SessionSource;
+    use orbit_code_protocol::protocol::ThreadRolledBackEvent;
+    use orbit_code_protocol::protocol::TurnAbortReason;
+    use orbit_code_protocol::protocol::TurnAbortedEvent;
+    use orbit_code_protocol::protocol::TurnCompleteEvent;
+    use orbit_code_protocol::protocol::TurnStartedEvent;
+    use orbit_code_protocol::protocol::UserMessageEvent;
+    use orbit_code_protocol::user_input::TextElement;
+    use orbit_code_protocol::user_input::UserInput;
     use pretty_assertions::assert_eq;
     use ratatui::prelude::Line;
     use std::path::PathBuf;
@@ -4361,15 +4372,15 @@ mod tests {
 
     #[tokio::test]
     async fn startup_custom_prompt_deprecation_notice_emits_when_prompts_exist() -> Result<()> {
-        let codex_home = tempdir()?;
-        let prompts_dir = codex_home.path().join("prompts");
+        let orbit_code_home = tempdir()?;
+        let prompts_dir = orbit_code_home.path().join("prompts");
         std::fs::create_dir_all(&prompts_dir)?;
         std::fs::write(prompts_dir.join("review.md"), "# Review\n")?;
 
         let (tx_raw, mut rx) = unbounded_channel();
         let app_event_tx = AppEventSender::new(tx_raw);
 
-        emit_custom_prompt_deprecation_notice(&app_event_tx, codex_home.path()).await;
+        emit_custom_prompt_deprecation_notice(&app_event_tx, orbit_code_home.path()).await;
 
         let cell = match rx.try_recv() {
             Ok(AppEvent::InsertHistoryCell(cell)) => cell,
@@ -4384,11 +4395,11 @@ mod tests {
 
     #[tokio::test]
     async fn startup_custom_prompt_deprecation_notice_skips_missing_prompts_dir() -> Result<()> {
-        let codex_home = tempdir()?;
+        let orbit_code_home = tempdir()?;
         let (tx_raw, mut rx) = unbounded_channel();
         let app_event_tx = AppEventSender::new(tx_raw);
 
-        emit_custom_prompt_deprecation_notice(&app_event_tx, codex_home.path()).await;
+        emit_custom_prompt_deprecation_notice(&app_event_tx, orbit_code_home.path()).await;
 
         assert!(rx.try_recv().is_err(), "expected no startup notice");
         Ok(())
@@ -4396,12 +4407,12 @@ mod tests {
 
     #[tokio::test]
     async fn startup_custom_prompt_deprecation_notice_skips_empty_prompts_dir() -> Result<()> {
-        let codex_home = tempdir()?;
-        std::fs::create_dir_all(codex_home.path().join("prompts"))?;
+        let orbit_code_home = tempdir()?;
+        std::fs::create_dir_all(orbit_code_home.path().join("prompts"))?;
         let (tx_raw, mut rx) = unbounded_channel();
         let app_event_tx = AppEventSender::new(tx_raw);
 
-        emit_custom_prompt_deprecation_notice(&app_event_tx, codex_home.path()).await;
+        emit_custom_prompt_deprecation_notice(&app_event_tx, orbit_code_home.path()).await;
 
         assert!(rx.try_recv().is_err(), "expected no startup notice");
         Ok(())
@@ -4439,7 +4450,7 @@ mod tests {
         let approval_event = Event {
             id: "approval-event".to_string(),
             msg: EventMsg::ExecApprovalRequest(
-                codex_protocol::protocol::ExecApprovalRequestEvent {
+                orbit_code_protocol::protocol::ExecApprovalRequestEvent {
                     call_id: "call-1".to_string(),
                     approval_id: None,
                     turn_id: "turn-1".to_string(),
@@ -4498,8 +4509,8 @@ mod tests {
         assert!(matches!(first_event.msg, EventMsg::SessionConfigured(_)));
         assert!(matches!(second_event.msg, EventMsg::ExecApprovalRequest(_)));
 
-        app.handle_codex_event_now(first_event);
-        app.handle_codex_event_now(second_event);
+        app.handle_orbit_code_event_now(first_event);
+        app.handle_orbit_code_event_now(second_event);
         app.chat_widget
             .handle_key_event(KeyEvent::new(KeyCode::Char('y'), KeyModifiers::NONE));
 
@@ -4729,8 +4740,8 @@ mod tests {
             }),
         };
         app.chat_widget
-            .handle_codex_event(session_configured.clone());
-        app.chat_widget.handle_codex_event(Event {
+            .handle_orbit_code_event(session_configured.clone());
+        app.chat_widget.handle_orbit_code_event(Event {
             id: "turn-started".to_string(),
             msg: EventMsg::TurnStarted(TurnStartedEvent {
                 turn_id: "turn-1".to_string(),
@@ -4738,7 +4749,7 @@ mod tests {
                 collaboration_mode_kind: Default::default(),
             }),
         });
-        app.chat_widget.handle_codex_event(Event {
+        app.chat_widget.handle_orbit_code_event(Event {
             id: "agent-delta".to_string(),
             msg: EventMsg::AgentMessageDelta(AgentMessageDeltaEvent {
                 delta: "streaming".to_string(),
@@ -4756,7 +4767,7 @@ mod tests {
         let (chat_widget, _app_event_tx, _rx, mut new_op_rx) =
             make_chatwidget_manual_with_sender().await;
         app.chat_widget = chat_widget;
-        app.chat_widget.handle_codex_event(session_configured);
+        app.chat_widget.handle_orbit_code_event(session_configured);
         while new_op_rx.try_recv().is_ok() {}
         app.replay_thread_snapshot(
             ThreadEventSnapshot {
@@ -4811,8 +4822,8 @@ mod tests {
             }),
         };
         app.chat_widget
-            .handle_codex_event(session_configured.clone());
-        app.chat_widget.handle_codex_event(Event {
+            .handle_orbit_code_event(session_configured.clone());
+        app.chat_widget.handle_orbit_code_event(Event {
             id: "turn-started".to_string(),
             msg: EventMsg::TurnStarted(TurnStartedEvent {
                 turn_id: "turn-1".to_string(),
@@ -4820,7 +4831,7 @@ mod tests {
                 collaboration_mode_kind: Default::default(),
             }),
         });
-        app.chat_widget.handle_codex_event(Event {
+        app.chat_widget.handle_orbit_code_event(Event {
             id: "agent-delta".to_string(),
             msg: EventMsg::AgentMessageDelta(AgentMessageDeltaEvent {
                 delta: "streaming".to_string(),
@@ -4838,7 +4849,7 @@ mod tests {
         let (chat_widget, _app_event_tx, _rx, mut new_op_rx) =
             make_chatwidget_manual_with_sender().await;
         app.chat_widget = chat_widget;
-        app.chat_widget.handle_codex_event(session_configured);
+        app.chat_widget.handle_orbit_code_event(session_configured);
         while new_op_rx.try_recv().is_ok() {}
 
         app.replay_thread_snapshot(
@@ -4892,8 +4903,8 @@ mod tests {
             }),
         };
         app.chat_widget
-            .handle_codex_event(session_configured.clone());
-        app.chat_widget.handle_codex_event(Event {
+            .handle_orbit_code_event(session_configured.clone());
+        app.chat_widget.handle_orbit_code_event(Event {
             id: "turn-started".to_string(),
             msg: EventMsg::TurnStarted(TurnStartedEvent {
                 turn_id: "turn-1".to_string(),
@@ -4901,7 +4912,7 @@ mod tests {
                 collaboration_mode_kind: Default::default(),
             }),
         });
-        app.chat_widget.handle_codex_event(Event {
+        app.chat_widget.handle_orbit_code_event(Event {
             id: "agent-delta".to_string(),
             msg: EventMsg::AgentMessageDelta(AgentMessageDeltaEvent {
                 delta: "streaming".to_string(),
@@ -4919,7 +4930,7 @@ mod tests {
         let (chat_widget, _app_event_tx, _rx, mut new_op_rx) =
             make_chatwidget_manual_with_sender().await;
         app.chat_widget = chat_widget;
-        app.chat_widget.handle_codex_event(session_configured);
+        app.chat_widget.handle_orbit_code_event(session_configured);
         while new_op_rx.try_recv().is_ok() {}
 
         app.replay_thread_snapshot(
@@ -4967,8 +4978,8 @@ mod tests {
             }),
         };
         app.chat_widget
-            .handle_codex_event(session_configured.clone());
-        app.chat_widget.handle_codex_event(Event {
+            .handle_orbit_code_event(session_configured.clone());
+        app.chat_widget.handle_orbit_code_event(Event {
             id: "turn-started".to_string(),
             msg: EventMsg::TurnStarted(TurnStartedEvent {
                 turn_id: "turn-1".to_string(),
@@ -4976,7 +4987,7 @@ mod tests {
                 collaboration_mode_kind: Default::default(),
             }),
         });
-        app.chat_widget.handle_codex_event(Event {
+        app.chat_widget.handle_orbit_code_event(Event {
             id: "agent-delta".to_string(),
             msg: EventMsg::AgentMessageDelta(AgentMessageDeltaEvent {
                 delta: "streaming".to_string(),
@@ -4994,7 +5005,7 @@ mod tests {
         let (chat_widget, _app_event_tx, _rx, mut new_op_rx) =
             make_chatwidget_manual_with_sender().await;
         app.chat_widget = chat_widget;
-        app.chat_widget.handle_codex_event(session_configured);
+        app.chat_widget.handle_orbit_code_event(session_configured);
         while new_op_rx.try_recv().is_ok() {}
 
         app.replay_thread_snapshot(
@@ -5031,7 +5042,7 @@ mod tests {
             vec!["queued follow-up".to_string()]
         );
 
-        app.chat_widget.handle_codex_event(Event {
+        app.chat_widget.handle_orbit_code_event(Event {
             id: "latest-turn-complete".to_string(),
             msg: EventMsg::TurnComplete(TurnCompleteEvent {
                 turn_id: "turn-1".to_string(),
@@ -5151,7 +5162,7 @@ mod tests {
             }),
         };
         app.chat_widget
-            .handle_codex_event(session_configured.clone());
+            .handle_orbit_code_event(session_configured.clone());
         app.chat_widget
             .set_reasoning_effort(Some(ReasoningEffortConfig::High));
         app.chat_widget
@@ -5172,7 +5183,7 @@ mod tests {
         let (chat_widget, _app_event_tx, _rx, mut new_op_rx) =
             make_chatwidget_manual_with_sender().await;
         app.chat_widget = chat_widget;
-        app.chat_widget.handle_codex_event(session_configured);
+        app.chat_widget.handle_orbit_code_event(session_configured);
         app.chat_widget
             .set_reasoning_effort(Some(ReasoningEffortConfig::Low));
         app.chat_widget
@@ -5255,7 +5266,7 @@ mod tests {
             }),
         };
         app.chat_widget
-            .handle_codex_event(session_configured.clone());
+            .handle_orbit_code_event(session_configured.clone());
         app.chat_widget
             .set_reasoning_effort(Some(ReasoningEffortConfig::High));
         app.chat_widget
@@ -5274,7 +5285,7 @@ mod tests {
         let (chat_widget, _app_event_tx, _rx, _new_op_rx) =
             make_chatwidget_manual_with_sender().await;
         app.chat_widget = chat_widget;
-        app.chat_widget.handle_codex_event(session_configured);
+        app.chat_widget.handle_orbit_code_event(session_configured);
         app.chat_widget
             .set_reasoning_effort(Some(ReasoningEffortConfig::Low));
         app.chat_widget
@@ -5332,8 +5343,8 @@ mod tests {
             }),
         };
         app.chat_widget
-            .handle_codex_event(session_configured.clone());
-        app.chat_widget.handle_codex_event(Event {
+            .handle_orbit_code_event(session_configured.clone());
+        app.chat_widget.handle_orbit_code_event(Event {
             id: "turn-started".to_string(),
             msg: EventMsg::TurnStarted(TurnStartedEvent {
                 turn_id: "turn-1".to_string(),
@@ -5341,7 +5352,7 @@ mod tests {
                 collaboration_mode_kind: Default::default(),
             }),
         });
-        app.chat_widget.handle_codex_event(Event {
+        app.chat_widget.handle_orbit_code_event(Event {
             id: "agent-delta".to_string(),
             msg: EventMsg::AgentMessageDelta(AgentMessageDeltaEvent {
                 delta: "streaming".to_string(),
@@ -5359,7 +5370,7 @@ mod tests {
         let (chat_widget, _app_event_tx, _rx, mut new_op_rx) =
             make_chatwidget_manual_with_sender().await;
         app.chat_widget = chat_widget;
-        app.chat_widget.handle_codex_event(session_configured);
+        app.chat_widget.handle_orbit_code_event(session_configured);
         while new_op_rx.try_recv().is_ok() {}
 
         app.replay_thread_snapshot(
@@ -5396,7 +5407,7 @@ mod tests {
 
         assert_eq!(app.chat_widget.status_line_text(), None);
 
-        app.handle_codex_event_now(Event {
+        app.handle_orbit_code_event_now(Event {
             id: "turn-started".to_string(),
             msg: EventMsg::TurnStarted(TurnStartedEvent {
                 turn_id: "turn-1".to_string(),
@@ -5490,8 +5501,8 @@ mod tests {
     #[tokio::test]
     async fn update_feature_flags_enabling_guardian_selects_guardian_approvals() -> Result<()> {
         let (mut app, mut app_event_rx, mut op_rx) = make_test_app_with_channels().await;
-        let codex_home = tempdir()?;
-        app.config.codex_home = codex_home.path().to_path_buf();
+        let orbit_code_home = tempdir()?;
+        app.config.orbit_code_home = orbit_code_home.path().to_path_buf();
         let guardian_approvals = guardian_approvals_mode();
 
         app.update_feature_flags(vec![(Feature::GuardianApproval, true)])
@@ -5562,7 +5573,7 @@ mod tests {
             .join("\n");
         assert!(rendered.contains("Permissions updated to Guardian Approvals"));
 
-        let config = std::fs::read_to_string(codex_home.path().join("config.toml"))?;
+        let config = std::fs::read_to_string(orbit_code_home.path().join("config.toml"))?;
         assert!(config.contains("guardian_approval = true"));
         assert!(config.contains("approvals_reviewer = \"guardian_subagent\""));
         assert!(config.contains("approval_policy = \"on-request\""));
@@ -5574,9 +5585,10 @@ mod tests {
     async fn update_feature_flags_disabling_guardian_clears_review_policy_and_restores_default()
     -> Result<()> {
         let (mut app, mut app_event_rx, mut op_rx) = make_test_app_with_channels().await;
-        let codex_home = tempdir()?;
-        app.config.codex_home = codex_home.path().to_path_buf();
-        let config_toml_path = AbsolutePathBuf::try_from(codex_home.path().join("config.toml"))?;
+        let orbit_code_home = tempdir()?;
+        app.config.orbit_code_home = orbit_code_home.path().to_path_buf();
+        let config_toml_path =
+            AbsolutePathBuf::try_from(orbit_code_home.path().join("config.toml"))?;
         let config_toml = "approvals_reviewer = \"guardian_subagent\"\napproval_policy = \"on-request\"\nsandbox_mode = \"workspace-write\"\n\n[features]\nguardian_approval = true\n";
         std::fs::write(config_toml_path.as_path(), config_toml)?;
         let user_config = toml::from_str::<TomlValue>(config_toml)?;
@@ -5653,7 +5665,7 @@ mod tests {
             .join("\n");
         assert!(rendered.contains("Permissions updated to Default"));
 
-        let config = std::fs::read_to_string(codex_home.path().join("config.toml"))?;
+        let config = std::fs::read_to_string(orbit_code_home.path().join("config.toml"))?;
         assert!(!config.contains("guardian_approval = true"));
         assert!(!config.contains("approvals_reviewer ="));
         assert!(config.contains("approval_policy = \"on-request\""));
@@ -5665,10 +5677,11 @@ mod tests {
     async fn update_feature_flags_enabling_guardian_overrides_explicit_manual_review_policy()
     -> Result<()> {
         let (mut app, _app_event_rx, mut op_rx) = make_test_app_with_channels().await;
-        let codex_home = tempdir()?;
-        app.config.codex_home = codex_home.path().to_path_buf();
+        let orbit_code_home = tempdir()?;
+        app.config.orbit_code_home = orbit_code_home.path().to_path_buf();
         let guardian_approvals = guardian_approvals_mode();
-        let config_toml_path = AbsolutePathBuf::try_from(codex_home.path().join("config.toml"))?;
+        let config_toml_path =
+            AbsolutePathBuf::try_from(orbit_code_home.path().join("config.toml"))?;
         let config_toml = "approvals_reviewer = \"user\"\n";
         std::fs::write(config_toml_path.as_path(), config_toml)?;
         let user_config = toml::from_str::<TomlValue>(config_toml)?;
@@ -5721,7 +5734,7 @@ mod tests {
             })
         );
 
-        let config = std::fs::read_to_string(codex_home.path().join("config.toml"))?;
+        let config = std::fs::read_to_string(orbit_code_home.path().join("config.toml"))?;
         assert!(config.contains("approvals_reviewer = \"guardian_subagent\""));
         assert!(config.contains("guardian_approval = true"));
         assert!(config.contains("approval_policy = \"on-request\""));
@@ -5733,9 +5746,10 @@ mod tests {
     async fn update_feature_flags_disabling_guardian_clears_manual_review_policy_without_history()
     -> Result<()> {
         let (mut app, mut app_event_rx, mut op_rx) = make_test_app_with_channels().await;
-        let codex_home = tempdir()?;
-        app.config.codex_home = codex_home.path().to_path_buf();
-        let config_toml_path = AbsolutePathBuf::try_from(codex_home.path().join("config.toml"))?;
+        let orbit_code_home = tempdir()?;
+        app.config.orbit_code_home = orbit_code_home.path().to_path_buf();
+        let config_toml_path =
+            AbsolutePathBuf::try_from(orbit_code_home.path().join("config.toml"))?;
         let config_toml = "approvals_reviewer = \"user\"\napproval_policy = \"on-request\"\nsandbox_mode = \"workspace-write\"\n\n[features]\nguardian_approval = true\n";
         std::fs::write(config_toml_path.as_path(), config_toml)?;
         let user_config = toml::from_str::<TomlValue>(config_toml)?;
@@ -5782,7 +5796,7 @@ mod tests {
             "manual review should not emit a permissions history update when the effective state stays default"
         );
 
-        let config = std::fs::read_to_string(codex_home.path().join("config.toml"))?;
+        let config = std::fs::read_to_string(orbit_code_home.path().join("config.toml"))?;
         assert!(!config.contains("guardian_approval = true"));
         assert!(!config.contains("approvals_reviewer ="));
         Ok(())
@@ -5792,11 +5806,12 @@ mod tests {
     async fn update_feature_flags_enabling_guardian_in_profile_sets_profile_auto_review_policy()
     -> Result<()> {
         let (mut app, _app_event_rx, mut op_rx) = make_test_app_with_channels().await;
-        let codex_home = tempdir()?;
-        app.config.codex_home = codex_home.path().to_path_buf();
+        let orbit_code_home = tempdir()?;
+        app.config.orbit_code_home = orbit_code_home.path().to_path_buf();
         let guardian_approvals = guardian_approvals_mode();
         app.active_profile = Some("guardian".to_string());
-        let config_toml_path = AbsolutePathBuf::try_from(codex_home.path().join("config.toml"))?;
+        let config_toml_path =
+            AbsolutePathBuf::try_from(orbit_code_home.path().join("config.toml"))?;
         let config_toml = "profile = \"guardian\"\napprovals_reviewer = \"user\"\n";
         std::fs::write(config_toml_path.as_path(), config_toml)?;
         let user_config = toml::from_str::<TomlValue>(config_toml)?;
@@ -5837,7 +5852,7 @@ mod tests {
             })
         );
 
-        let config = std::fs::read_to_string(codex_home.path().join("config.toml"))?;
+        let config = std::fs::read_to_string(orbit_code_home.path().join("config.toml"))?;
         let config_value = toml::from_str::<TomlValue>(&config)?;
         let profile_config = config_value
             .as_table()
@@ -5863,10 +5878,11 @@ mod tests {
     async fn update_feature_flags_disabling_guardian_in_profile_allows_inherited_user_reviewer()
     -> Result<()> {
         let (mut app, mut app_event_rx, mut op_rx) = make_test_app_with_channels().await;
-        let codex_home = tempdir()?;
-        app.config.codex_home = codex_home.path().to_path_buf();
+        let orbit_code_home = tempdir()?;
+        app.config.orbit_code_home = orbit_code_home.path().to_path_buf();
         app.active_profile = Some("guardian".to_string());
-        let config_toml_path = AbsolutePathBuf::try_from(codex_home.path().join("config.toml"))?;
+        let config_toml_path =
+            AbsolutePathBuf::try_from(orbit_code_home.path().join("config.toml"))?;
         let config_toml = r#"
 profile = "guardian"
 approvals_reviewer = "user"
@@ -5935,7 +5951,7 @@ guardian_approval = true
             .join("\n");
         assert!(rendered.contains("Permissions updated to Default"));
 
-        let config = std::fs::read_to_string(codex_home.path().join("config.toml"))?;
+        let config = std::fs::read_to_string(orbit_code_home.path().join("config.toml"))?;
         assert!(!config.contains("guardian_approval = true"));
         assert!(!config.contains("guardian_subagent"));
         assert_eq!(
@@ -5951,10 +5967,11 @@ guardian_approval = true
     async fn update_feature_flags_disabling_guardian_in_profile_keeps_inherited_non_user_reviewer_enabled()
     -> Result<()> {
         let (mut app, mut app_event_rx, mut op_rx) = make_test_app_with_channels().await;
-        let codex_home = tempdir()?;
-        app.config.codex_home = codex_home.path().to_path_buf();
+        let orbit_code_home = tempdir()?;
+        app.config.orbit_code_home = orbit_code_home.path().to_path_buf();
         app.active_profile = Some("guardian".to_string());
-        let config_toml_path = AbsolutePathBuf::try_from(codex_home.path().join("config.toml"))?;
+        let config_toml_path =
+            AbsolutePathBuf::try_from(orbit_code_home.path().join("config.toml"))?;
         let config_toml = "profile = \"guardian\"\napprovals_reviewer = \"guardian_subagent\"\n\n[features]\nguardian_approval = true\n";
         std::fs::write(config_toml_path.as_path(), config_toml)?;
         let user_config = toml::from_str::<TomlValue>(config_toml)?;
@@ -6005,7 +6022,7 @@ guardian_approval = true
             "blocking disable with inherited guardian review should not emit a permissions history update: {app_events:?}"
         );
 
-        let config = std::fs::read_to_string(codex_home.path().join("config.toml"))?;
+        let config = std::fs::read_to_string(orbit_code_home.path().join("config.toml"))?;
         assert!(config.contains("guardian_approval = true"));
         assert_eq!(
             toml::from_str::<TomlValue>(&config)?
@@ -6054,7 +6071,7 @@ guardian_approval = true
             store.push_event(Event {
                 id: "ev-1".to_string(),
                 msg: EventMsg::ExecApprovalRequest(
-                    codex_protocol::protocol::ExecApprovalRequestEvent {
+                    orbit_code_protocol::protocol::ExecApprovalRequestEvent {
                         call_id: "call-1".to_string(),
                         approval_id: None,
                         turn_id: "turn-1".to_string(),
@@ -6143,7 +6160,7 @@ guardian_approval = true
             Event {
                 id: "ev-approval".to_string(),
                 msg: EventMsg::ExecApprovalRequest(
-                    codex_protocol::protocol::ExecApprovalRequestEvent {
+                    orbit_code_protocol::protocol::ExecApprovalRequestEvent {
                         call_id: "call-approval".to_string(),
                         approval_id: None,
                         turn_id: "turn-approval".to_string(),
@@ -6418,7 +6435,7 @@ guardian_approval = true
         app.chat_widget
             .set_reasoning_effort(Some(ReasoningEffortConfig::XHigh));
         app.chat_widget
-            .set_service_tier(Some(codex_protocol::config_types::ServiceTier::Fast));
+            .set_service_tier(Some(orbit_code_protocol::config_types::ServiceTier::Fast));
         set_chatgpt_auth(&mut app.chat_widget);
 
         let rendered = app
@@ -6440,16 +6457,16 @@ guardian_approval = true
         let (chat_widget, app_event_tx, _rx, _op_rx) = make_chatwidget_manual_with_sender().await;
         let config = chat_widget.config_ref().clone();
         let server = Arc::new(
-            codex_core::test_support::thread_manager_with_models_provider(
+            orbit_code_core::test_support::thread_manager_with_models_provider(
                 CodexAuth::from_api_key("Test API Key"),
                 config.model_provider.clone(),
             ),
         );
-        let auth_manager = codex_core::test_support::auth_manager_from_auth(
+        let auth_manager = orbit_code_core::test_support::auth_manager_from_auth(
             CodexAuth::from_api_key("Test API Key"),
         );
         let file_search = FileSearchManager::new(config.cwd.clone(), app_event_tx.clone());
-        let model = codex_core::test_support::get_model_offline(config.model.as_deref());
+        let model = orbit_code_core::test_support::get_model_offline(config.model.as_deref());
         let session_telemetry = test_session_telemetry(&config, model.as_str());
 
         App {
@@ -6474,7 +6491,7 @@ guardian_approval = true
             status_line_invalid_items_warned: Arc::new(AtomicBool::new(false)),
             backtrack: BacktrackState::default(),
             backtrack_render_pending: false,
-            feedback: codex_feedback::CodexFeedback::new(),
+            feedback: orbit_code_feedback::CodexFeedback::new(),
             feedback_audience: FeedbackAudience::External,
             pending_update_action: None,
             suppress_shutdown_complete: false,
@@ -6499,16 +6516,16 @@ guardian_approval = true
         let (chat_widget, app_event_tx, rx, op_rx) = make_chatwidget_manual_with_sender().await;
         let config = chat_widget.config_ref().clone();
         let server = Arc::new(
-            codex_core::test_support::thread_manager_with_models_provider(
+            orbit_code_core::test_support::thread_manager_with_models_provider(
                 CodexAuth::from_api_key("Test API Key"),
                 config.model_provider.clone(),
             ),
         );
-        let auth_manager = codex_core::test_support::auth_manager_from_auth(
+        let auth_manager = orbit_code_core::test_support::auth_manager_from_auth(
             CodexAuth::from_api_key("Test API Key"),
         );
         let file_search = FileSearchManager::new(config.cwd.clone(), app_event_tx.clone());
-        let model = codex_core::test_support::get_model_offline(config.model.as_deref());
+        let model = orbit_code_core::test_support::get_model_offline(config.model.as_deref());
         let session_telemetry = test_session_telemetry(&config, model.as_str());
 
         (
@@ -6534,7 +6551,7 @@ guardian_approval = true
                 status_line_invalid_items_warned: Arc::new(AtomicBool::new(false)),
                 backtrack: BacktrackState::default(),
                 backtrack_render_pending: false,
-                feedback: codex_feedback::CodexFeedback::new(),
+                feedback: orbit_code_feedback::CodexFeedback::new(),
                 feedback_audience: FeedbackAudience::External,
                 pending_update_action: None,
                 suppress_shutdown_complete: false,
@@ -6566,7 +6583,7 @@ guardian_approval = true
     }
 
     fn test_session_telemetry(config: &Config, model: &str) -> SessionTelemetry {
-        let model_info = codex_core::test_support::construct_model_info_offline(model, config);
+        let model_info = orbit_code_core::test_support::construct_model_info_offline(model, config);
         SessionTelemetry::new(
             ThreadId::new(),
             model,
@@ -6595,7 +6612,7 @@ guardian_approval = true
     }
 
     fn all_model_presets() -> Vec<ModelPreset> {
-        codex_core::test_support::all_model_presets().clone()
+        orbit_code_core::test_support::all_model_presets().clone()
     }
 
     fn model_availability_nux_config(shown_count: &[(&str, u32)]) -> ModelAvailabilityNuxConfig {
@@ -6841,9 +6858,9 @@ guardian_approval = true
 
     #[tokio::test]
     async fn model_migration_prompt_shows_for_hidden_model() {
-        let codex_home = tempdir().expect("temp codex home");
+        let orbit_code_home = tempdir().expect("temp codex home");
         let config = ConfigBuilder::default()
-            .codex_home(codex_home.path().to_path_buf())
+            .orbit_code_home(orbit_code_home.path().to_path_buf())
             .build()
             .await
             .expect("config");
@@ -6921,13 +6938,13 @@ guardian_approval = true
     #[tokio::test]
     async fn refresh_in_memory_config_from_disk_loads_latest_apps_state() -> Result<()> {
         let mut app = make_test_app().await;
-        let codex_home = tempdir()?;
-        app.config.codex_home = codex_home.path().to_path_buf();
+        let orbit_code_home = tempdir()?;
+        app.config.orbit_code_home = orbit_code_home.path().to_path_buf();
         let app_id = "unit_test_refresh_in_memory_config_connector".to_string();
 
         assert_eq!(app_enabled_in_effective_config(&app.config, &app_id), None);
 
-        ConfigEditsBuilder::new(&app.config.codex_home)
+        ConfigEditsBuilder::new(&app.config.orbit_code_home)
             .with_edits([
                 ConfigEdit::SetPath {
                     segments: vec!["apps".to_string(), app_id.clone(), "enabled".to_string()],
@@ -6961,9 +6978,9 @@ guardian_approval = true
     async fn refresh_in_memory_config_from_disk_best_effort_keeps_current_config_on_error()
     -> Result<()> {
         let mut app = make_test_app().await;
-        let codex_home = tempdir()?;
-        app.config.codex_home = codex_home.path().to_path_buf();
-        std::fs::write(codex_home.path().join("config.toml"), "[broken")?;
+        let orbit_code_home = tempdir()?;
+        app.config.orbit_code_home = orbit_code_home.path().to_path_buf();
+        std::fs::write(orbit_code_home.path().join("config.toml"), "[broken")?;
         let original_config = app.config.clone();
 
         app.refresh_in_memory_config_from_disk_best_effort("starting a new thread")
@@ -6980,7 +6997,7 @@ guardian_approval = true
         let next_cwd_tmp = tempdir()?;
         let next_cwd = next_cwd_tmp.path().to_path_buf();
 
-        app.chat_widget.handle_codex_event(Event {
+        app.chat_widget.handle_orbit_code_event(Event {
             id: String::new(),
             msg: EventMsg::SessionConfigured(SessionConfiguredEvent {
                 session_id: ThreadId::new(),
@@ -7015,9 +7032,9 @@ guardian_approval = true
     async fn rebuild_config_for_resume_or_fallback_uses_current_config_on_same_cwd_error()
     -> Result<()> {
         let mut app = make_test_app().await;
-        let codex_home = tempdir()?;
-        app.config.codex_home = codex_home.path().to_path_buf();
-        std::fs::write(codex_home.path().join("config.toml"), "[broken")?;
+        let orbit_code_home = tempdir()?;
+        app.config.orbit_code_home = orbit_code_home.path().to_path_buf();
+        std::fs::write(orbit_code_home.path().join("config.toml"), "[broken")?;
         let current_config = app.config.clone();
         let current_cwd = current_config.cwd.clone();
 
@@ -7032,9 +7049,9 @@ guardian_approval = true
     #[tokio::test]
     async fn rebuild_config_for_resume_or_fallback_errors_when_cwd_changes() -> Result<()> {
         let mut app = make_test_app().await;
-        let codex_home = tempdir()?;
-        app.config.codex_home = codex_home.path().to_path_buf();
-        std::fs::write(codex_home.path().join("config.toml"), "[broken")?;
+        let orbit_code_home = tempdir()?;
+        app.config.orbit_code_home = orbit_code_home.path().to_path_buf();
+        std::fs::write(orbit_code_home.path().join("config.toml"), "[broken")?;
         let current_cwd = app.config.cwd.clone();
         let next_cwd_tmp = tempdir()?;
         let next_cwd = next_cwd_tmp.path().to_path_buf();
@@ -7064,13 +7081,13 @@ guardian_approval = true
     async fn fresh_session_config_uses_current_service_tier() {
         let mut app = make_test_app().await;
         app.chat_widget
-            .set_service_tier(Some(codex_protocol::config_types::ServiceTier::Fast));
+            .set_service_tier(Some(orbit_code_protocol::config_types::ServiceTier::Fast));
 
         let config = app.fresh_session_config();
 
         assert_eq!(
             config.service_tier,
-            Some(codex_protocol::config_types::ServiceTier::Fast)
+            Some(orbit_code_protocol::config_types::ServiceTier::Fast)
         );
     }
 
@@ -7156,7 +7173,7 @@ guardian_approval = true
         assert_eq!(user_count(&app.transcript_cells), 2);
 
         let base_id = ThreadId::new();
-        app.chat_widget.handle_codex_event(Event {
+        app.chat_widget.handle_orbit_code_event(Event {
             id: String::new(),
             msg: EventMsg::SessionConfigured(SessionConfiguredEvent {
                 session_id: base_id,
@@ -7249,7 +7266,7 @@ guardian_approval = true
         let (mut app, _app_event_rx, mut op_rx) = make_test_app_with_channels().await;
 
         let thread_id = ThreadId::new();
-        app.chat_widget.handle_codex_event(Event {
+        app.chat_widget.handle_orbit_code_event(Event {
             id: String::new(),
             msg: EventMsg::SessionConfigured(SessionConfiguredEvent {
                 session_id: thread_id,
@@ -7315,7 +7332,7 @@ guardian_approval = true
         let (mut app, mut app_event_rx, _op_rx) = make_test_app_with_channels().await;
 
         let session_id = ThreadId::new();
-        app.handle_codex_event_replay(Event {
+        app.handle_orbit_code_event_replay(Event {
             id: String::new(),
             msg: EventMsg::SessionConfigured(SessionConfiguredEvent {
                 session_id,
@@ -7396,7 +7413,7 @@ guardian_approval = true
         let (mut app, mut app_event_rx, _op_rx) = make_test_app_with_channels().await;
 
         let session_id = ThreadId::new();
-        app.handle_codex_event_replay(Event {
+        app.handle_orbit_code_event_replay(Event {
             id: String::new(),
             msg: EventMsg::SessionConfigured(SessionConfiguredEvent {
                 session_id,
@@ -7432,7 +7449,7 @@ guardian_approval = true
         });
 
         // Simulate a live rollback arriving before queued replay inserts are drained.
-        app.handle_codex_event_now(Event {
+        app.handle_orbit_code_event_now(Event {
             id: "live-rollback".to_string(),
             msg: EventMsg::ThreadRolledBack(ThreadRolledBackEvent { num_turns: 1 }),
         });
@@ -7545,7 +7562,7 @@ guardian_approval = true
             rollout_path: Some(PathBuf::new()),
         };
 
-        app.chat_widget.handle_codex_event(Event {
+        app.chat_widget.handle_orbit_code_event(Event {
             id: String::new(),
             msg: EventMsg::SessionConfigured(event),
         });
@@ -7594,7 +7611,7 @@ guardian_approval = true
     async fn clear_only_ui_reset_preserves_chat_session_state() {
         let mut app = make_test_app().await;
         let thread_id = ThreadId::new();
-        app.chat_widget.handle_codex_event(Event {
+        app.chat_widget.handle_orbit_code_event(Event {
             id: String::new(),
             msg: EventMsg::SessionConfigured(SessionConfiguredEvent {
                 session_id: thread_id,
@@ -7667,7 +7684,7 @@ guardian_approval = true
         );
         assert_eq!(
             summary.resume_command,
-            Some("codex resume 123e4567-e89b-12d3-a456-426614174000".to_string())
+            Some("orbit-code resume 123e4567-e89b-12d3-a456-426614174000".to_string())
         );
     }
 
@@ -7685,7 +7702,7 @@ guardian_approval = true
             .expect("summary");
         assert_eq!(
             summary.resume_command,
-            Some("codex resume my-session".to_string())
+            Some("orbit-code resume my-session".to_string())
         );
     }
 }

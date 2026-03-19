@@ -1,5 +1,5 @@
-use codex_core::config::Config;
-use codex_core::default_client::create_client;
+use orbit_code_core::config::Config;
+use orbit_code_core::default_client::create_client;
 
 use crate::chatgpt_token::get_chatgpt_token_data;
 use crate::chatgpt_token::init_chatgpt_token_from_auth;
@@ -22,8 +22,11 @@ pub(crate) async fn chatgpt_get_request_with_timeout<T: DeserializeOwned>(
     timeout: Option<Duration>,
 ) -> anyhow::Result<T> {
     let chatgpt_base_url = &config.chatgpt_base_url;
-    init_chatgpt_token_from_auth(&config.codex_home, config.cli_auth_credentials_store_mode)
-        .await?;
+    init_chatgpt_token_from_auth(
+        &config.orbit_code_home,
+        config.cli_auth_credentials_store_mode,
+    )
+    .await?;
 
     // Make direct HTTP request to ChatGPT backend API with the token
     let client = create_client();

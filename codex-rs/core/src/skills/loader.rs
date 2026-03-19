@@ -13,16 +13,16 @@ use crate::skills::model::SkillMetadata;
 use crate::skills::model::SkillPolicy;
 use crate::skills::model::SkillToolDependency;
 use crate::skills::system::system_cache_root_dir;
-use codex_app_server_protocol::ConfigLayerSource;
-use codex_protocol::models::FileSystemPermissions;
-use codex_protocol::models::MacOsSeatbeltProfileExtensions;
-use codex_protocol::models::NetworkPermissions;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::protocol::Product;
-use codex_protocol::protocol::SkillScope;
-use codex_utils_absolute_path::AbsolutePathBufGuard;
 use dirs::home_dir;
 use dunce::canonicalize as canonicalize_path;
+use orbit_code_app_server_protocol::ConfigLayerSource;
+use orbit_code_protocol::models::FileSystemPermissions;
+use orbit_code_protocol::models::MacOsSeatbeltProfileExtensions;
+use orbit_code_protocol::models::NetworkPermissions;
+use orbit_code_protocol::models::PermissionProfile;
+use orbit_code_protocol::protocol::Product;
+use orbit_code_protocol::protocol::SkillScope;
+use orbit_code_utils_absolute_path::AbsolutePathBufGuard;
 use serde::Deserialize;
 use std::collections::HashSet;
 use std::collections::VecDeque;
@@ -266,12 +266,19 @@ fn skill_roots_from_layer_stack_inner(
                 });
             }
             ConfigLayerSource::User { .. } => {
-                // Deprecated user skills location (`$CODEX_HOME/skills`), kept for backward
-                // compatibility.
+                // Primary user skills location (`$ORBIT_HOME/skills`).
                 roots.push(SkillRoot {
                     path: config_folder.as_path().join(SKILLS_DIR_NAME),
                     scope: SkillScope::User,
                 });
+                if let Some(parent) = config_folder.as_path().parent()
+                    && config_folder.as_path().file_name() == Some(std::ffi::OsStr::new(".orbit"))
+                {
+                    roots.push(SkillRoot {
+                        path: parent.join(".codex").join(SKILLS_DIR_NAME),
+                        scope: SkillScope::User,
+                    });
+                }
 
                 // `$HOME/.agents/skills` (user-installed skills).
                 if let Some(home_dir) = home_dir {
@@ -281,7 +288,7 @@ fn skill_roots_from_layer_stack_inner(
                     });
                 }
 
-                // Embedded system skills are cached under `$CODEX_HOME/skills/.system` and are a
+                // Embedded system skills are cached under `$ORBIT_HOME/skills/.system` and are a
                 // special case (not a config layer).
                 roots.push(SkillRoot {
                     path: system_cache_root_dir(config_folder.as_path()),
@@ -289,8 +296,8 @@ fn skill_roots_from_layer_stack_inner(
                 });
             }
             ConfigLayerSource::System { .. } => {
-                // The system config layer lives under `/etc/codex/` on Unix, so treat
-                // `/etc/codex/skills` as admin-scoped skills.
+                // The system config layer lives under `/etc/orbit/` on Unix, so treat
+                // `/etc/orbit/skills` as admin-scoped skills.
                 roots.push(SkillRoot {
                     path: config_folder.as_path().join(SKILLS_DIR_NAME),
                     scope: SkillScope::Admin,

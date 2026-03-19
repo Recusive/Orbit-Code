@@ -1,6 +1,6 @@
-use codex_app_server_protocol::JSONRPCMessage;
-use codex_app_server_protocol::JSONRPCNotification;
-use codex_app_server_protocol::JSONRPCRequest;
+use orbit_code_app_server_protocol::JSONRPCMessage;
+use orbit_code_app_server_protocol::JSONRPCNotification;
+use orbit_code_app_server_protocol::JSONRPCRequest;
 use tracing::debug;
 
 use crate::connection::JsonRpcConnection;

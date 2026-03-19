@@ -1,5 +1,5 @@
 [package]
-name = "codex-rmcp-client"
+name = "orbit-code-rmcp-client"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -13,11 +13,11 @@ axum = { workspace = true, default-features = false, features = [
     "http1",
     "tokio",
 ] }
-codex-client = { workspace = true }
-codex-keyring-store = { workspace = true }
-codex-protocol = { workspace = true }
-codex-utils-pty = { workspace = true }
-codex-utils-home-dir = { workspace = true }
+orbit-code-client = { workspace = true }
+orbit-code-keyring-store = { workspace = true }
+orbit-code-protocol = { workspace = true }
+orbit-code-utils-pty = { workspace = true }
+orbit-code-utils-home-dir = { workspace = true }
 futures = { workspace = true, default-features = false, features = ["std"] }
 keyring = { workspace = true, features = ["crypto-rust"] }
 oauth2 = "5"
@@ -59,7 +59,7 @@ webbrowser = { workspace = true }
 which = { workspace = true }
 
 [dev-dependencies]
-codex-utils-cargo-bin = { workspace = true }
+orbit-code-utils-cargo-bin = { workspace = true }
 pretty_assertions = { workspace = true }
 serial_test = { workspace = true }
 tempfile = { workspace = true }

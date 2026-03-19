@@ -3,18 +3,18 @@ use app_test_support::McpProcess;
 use app_test_support::create_final_assistant_message_sse_response;
 use app_test_support::create_mock_responses_server_sequence_unchecked;
 use app_test_support::to_response;
-use codex_app_server_protocol::JSONRPCResponse;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::ThreadItem;
-use codex_app_server_protocol::ThreadResumeParams;
-use codex_app_server_protocol::ThreadResumeResponse;
-use codex_app_server_protocol::ThreadRollbackParams;
-use codex_app_server_protocol::ThreadRollbackResponse;
-use codex_app_server_protocol::ThreadStartParams;
-use codex_app_server_protocol::ThreadStartResponse;
-use codex_app_server_protocol::ThreadStatus;
-use codex_app_server_protocol::TurnStartParams;
-use codex_app_server_protocol::UserInput as V2UserInput;
+use orbit_code_app_server_protocol::JSONRPCResponse;
+use orbit_code_app_server_protocol::RequestId;
+use orbit_code_app_server_protocol::ThreadItem;
+use orbit_code_app_server_protocol::ThreadResumeParams;
+use orbit_code_app_server_protocol::ThreadResumeResponse;
+use orbit_code_app_server_protocol::ThreadRollbackParams;
+use orbit_code_app_server_protocol::ThreadRollbackResponse;
+use orbit_code_app_server_protocol::ThreadStartParams;
+use orbit_code_app_server_protocol::ThreadStartResponse;
+use orbit_code_app_server_protocol::ThreadStatus;
+use orbit_code_app_server_protocol::TurnStartParams;
+use orbit_code_app_server_protocol::UserInput as V2UserInput;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 use tempfile::TempDir;
@@ -32,10 +32,10 @@ async fn thread_rollback_drops_last_turns_and_persists_to_rollout() -> Result<()
     ];
     let server = create_mock_responses_server_sequence_unchecked(responses).await;
 
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path(), &server.uri())?;
+    let orbit_code_home = TempDir::new()?;
+    create_config_toml(orbit_code_home.path(), &server.uri())?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     // Start a thread.
@@ -174,8 +174,8 @@ async fn thread_rollback_drops_last_turns_and_persists_to_rollout() -> Result<()
     Ok(())
 }
 
-fn create_config_toml(codex_home: &std::path::Path, server_uri: &str) -> std::io::Result<()> {
-    let config_toml = codex_home.join("config.toml");
+fn create_config_toml(orbit_code_home: &std::path::Path, server_uri: &str) -> std::io::Result<()> {
+    let config_toml = orbit_code_home.join("config.toml");
     std::fs::write(
         config_toml,
         format!(

@@ -5,11 +5,11 @@ use crate::config::ConfigBuilder;
 use crate::model_provider_info::WireApi;
 use base64::Engine as _;
 use chrono::Utc;
-use codex_api::TransportError;
-use codex_protocol::openai_models::ModelsResponse;
 use core_test_support::responses::mount_models_once;
 use http::HeaderMap;
 use http::StatusCode;
+use orbit_code_api::TransportError;
+use orbit_code_protocol::openai_models::ModelsResponse;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use std::collections::BTreeMap;
@@ -135,15 +135,15 @@ where
 
 #[tokio::test]
 async fn get_model_info_tracks_fallback_usage() {
-    let codex_home = tempdir().expect("temp dir");
+    let orbit_code_home = tempdir().expect("temp dir");
     let config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
+        .orbit_code_home(orbit_code_home.path().to_path_buf())
         .build()
         .await
         .expect("load default test config");
     let auth_manager = AuthManager::from_auth_for_testing(CodexAuth::from_api_key("Test API Key"));
     let manager = ModelsManager::new(
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
         auth_manager,
         None,
         CollaborationModesConfig::default(),
@@ -169,9 +169,9 @@ async fn get_model_info_tracks_fallback_usage() {
 
 #[tokio::test]
 async fn get_model_info_uses_custom_catalog() {
-    let codex_home = tempdir().expect("temp dir");
+    let orbit_code_home = tempdir().expect("temp dir");
     let config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
+        .orbit_code_home(orbit_code_home.path().to_path_buf())
         .build()
         .await
         .expect("load default test config");
@@ -180,7 +180,7 @@ async fn get_model_info_uses_custom_catalog() {
 
     let auth_manager = AuthManager::from_auth_for_testing(CodexAuth::from_api_key("Test API Key"));
     let manager = ModelsManager::new(
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
         auth_manager,
         Some(ModelsResponse {
             models: vec![overlay],
@@ -202,9 +202,9 @@ async fn get_model_info_uses_custom_catalog() {
 
 #[tokio::test]
 async fn get_model_info_matches_namespaced_suffix() {
-    let codex_home = tempdir().expect("temp dir");
+    let orbit_code_home = tempdir().expect("temp dir");
     let config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
+        .orbit_code_home(orbit_code_home.path().to_path_buf())
         .build()
         .await
         .expect("load default test config");
@@ -212,7 +212,7 @@ async fn get_model_info_matches_namespaced_suffix() {
     remote.supports_image_detail_original = true;
     let auth_manager = AuthManager::from_auth_for_testing(CodexAuth::from_api_key("Test API Key"));
     let manager = ModelsManager::new(
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
         auth_manager,
         Some(ModelsResponse {
             models: vec![remote],
@@ -230,15 +230,15 @@ async fn get_model_info_matches_namespaced_suffix() {
 
 #[tokio::test]
 async fn get_model_info_rejects_multi_segment_namespace_suffix_matching() {
-    let codex_home = tempdir().expect("temp dir");
+    let orbit_code_home = tempdir().expect("temp dir");
     let config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
+        .orbit_code_home(orbit_code_home.path().to_path_buf())
         .build()
         .await
         .expect("load default test config");
     let auth_manager = AuthManager::from_auth_for_testing(CodexAuth::from_api_key("Test API Key"));
     let manager = ModelsManager::new(
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
         auth_manager,
         None,
         CollaborationModesConfig::default(),
@@ -273,12 +273,12 @@ async fn refresh_available_models_sorts_by_priority() {
     )
     .await;
 
-    let codex_home = tempdir().expect("temp dir");
+    let orbit_code_home = tempdir().expect("temp dir");
     let auth_manager =
         AuthManager::from_auth_for_testing(CodexAuth::create_dummy_chatgpt_auth_for_testing());
     let provider = provider_for(server.uri());
     let manager = ModelsManager::with_provider_for_tests(
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
         auth_manager,
         provider,
     );
@@ -322,12 +322,12 @@ async fn refresh_available_models_uses_cache_when_fresh() {
     )
     .await;
 
-    let codex_home = tempdir().expect("temp dir");
+    let orbit_code_home = tempdir().expect("temp dir");
     let auth_manager =
         AuthManager::from_auth_for_testing(CodexAuth::create_dummy_chatgpt_auth_for_testing());
     let provider = provider_for(server.uri());
     let manager = ModelsManager::with_provider_for_tests(
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
         auth_manager,
         provider,
     );
@@ -363,12 +363,12 @@ async fn refresh_available_models_refetches_when_cache_stale() {
     )
     .await;
 
-    let codex_home = tempdir().expect("temp dir");
+    let orbit_code_home = tempdir().expect("temp dir");
     let auth_manager =
         AuthManager::from_auth_for_testing(CodexAuth::create_dummy_chatgpt_auth_for_testing());
     let provider = provider_for(server.uri());
     let manager = ModelsManager::with_provider_for_tests(
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
         auth_manager,
         provider,
     );
@@ -426,12 +426,12 @@ async fn refresh_available_models_refetches_when_version_mismatch() {
     )
     .await;
 
-    let codex_home = tempdir().expect("temp dir");
+    let orbit_code_home = tempdir().expect("temp dir");
     let auth_manager =
         AuthManager::from_auth_for_testing(CodexAuth::create_dummy_chatgpt_auth_for_testing());
     let provider = provider_for(server.uri());
     let manager = ModelsManager::with_provider_for_tests(
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
         auth_manager,
         provider,
     );
@@ -489,12 +489,12 @@ async fn refresh_available_models_drops_removed_remote_models() {
     )
     .await;
 
-    let codex_home = tempdir().expect("temp dir");
+    let orbit_code_home = tempdir().expect("temp dir");
     let auth_manager =
         AuthManager::from_auth_for_testing(CodexAuth::create_dummy_chatgpt_auth_for_testing());
     let provider = provider_for(server.uri());
     let mut manager = ModelsManager::with_provider_for_tests(
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
         auth_manager,
         provider,
     );
@@ -555,15 +555,15 @@ async fn refresh_available_models_skips_network_without_chatgpt_auth() {
     )
     .await;
 
-    let codex_home = tempdir().expect("temp dir");
+    let orbit_code_home = tempdir().expect("temp dir");
     let auth_manager = Arc::new(AuthManager::new(
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
         false,
         AuthCredentialsStoreMode::File,
     ));
     let provider = provider_for(server.uri());
     let manager = ModelsManager::with_provider_for_tests(
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
         auth_manager,
         provider,
     );
@@ -599,8 +599,8 @@ fn models_request_telemetry_emits_auth_env_feedback_tags_on_failure() {
         auth_header_name: Some("authorization"),
         auth_env: crate::auth_env_telemetry::AuthEnvTelemetry {
             openai_api_key_env_present: false,
-            codex_api_key_env_present: false,
-            codex_api_key_env_enabled: false,
+            orbit_code_api_key_env_present: false,
+            orbit_code_api_key_env_enabled: false,
             provider_env_key_name: Some("configured".to_string()),
             provider_env_key_present: Some(false),
             refresh_token_url_override_present: false,
@@ -659,12 +659,12 @@ fn models_request_telemetry_emits_auth_env_feedback_tags_on_failure() {
         Some("false")
     );
     assert_eq!(
-        tags.get("auth_env_codex_api_key_present")
+        tags.get("auth_env_orbit_code_api_key_present")
             .map(String::as_str),
         Some("false")
     );
     assert_eq!(
-        tags.get("auth_env_codex_api_key_enabled")
+        tags.get("auth_env_orbit_code_api_key_enabled")
             .map(String::as_str),
         Some("false")
     );
@@ -686,11 +686,11 @@ fn models_request_telemetry_emits_auth_env_feedback_tags_on_failure() {
 
 #[test]
 fn build_available_models_picks_default_after_hiding_hidden_models() {
-    let codex_home = tempdir().expect("temp dir");
+    let orbit_code_home = tempdir().expect("temp dir");
     let auth_manager = AuthManager::from_auth_for_testing(CodexAuth::from_api_key("Test API Key"));
     let provider = provider_for("http://example.test".to_string());
     let manager = ModelsManager::with_provider_for_tests(
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
         auth_manager,
         provider,
     );

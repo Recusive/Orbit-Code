@@ -1,8 +1,8 @@
-use codex_protocol::config_types::SandboxMode;
-use codex_protocol::config_types::WebSearchMode;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::SandboxPolicy;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use orbit_code_protocol::config_types::SandboxMode;
+use orbit_code_protocol::config_types::WebSearchMode;
+use orbit_code_protocol::protocol::AskForApproval;
+use orbit_code_protocol::protocol::SandboxPolicy;
+use orbit_code_utils_absolute_path::AbsolutePathBuf;
 use serde::Deserialize;
 use serde::Serialize;
 use std::collections::BTreeMap;
@@ -695,11 +695,11 @@ impl TryFrom<ConfigRequirementsWithSources> for ConfigRequirements {
 mod tests {
     use super::*;
     use anyhow::Result;
-    use codex_execpolicy::Decision;
-    use codex_execpolicy::Evaluation;
-    use codex_execpolicy::RuleMatch;
-    use codex_protocol::protocol::NetworkAccess;
-    use codex_utils_absolute_path::AbsolutePathBuf;
+    use orbit_code_execpolicy::Decision;
+    use orbit_code_execpolicy::Evaluation;
+    use orbit_code_execpolicy::RuleMatch;
+    use orbit_code_protocol::protocol::NetworkAccess;
+    use orbit_code_utils_absolute_path::AbsolutePathBuf;
     use pretty_assertions::assert_eq;
     use toml::from_str;
 

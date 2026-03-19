@@ -3,32 +3,32 @@ use clap::CommandFactory;
 use clap::Parser;
 use clap_complete::Shell;
 use clap_complete::generate;
-use codex_arg0::Arg0DispatchPaths;
-use codex_arg0::arg0_dispatch_or_else;
-use codex_chatgpt::apply_command::ApplyCommand;
-use codex_chatgpt::apply_command::run_apply_command;
-use codex_cli::LandlockCommand;
-use codex_cli::SeatbeltCommand;
-use codex_cli::WindowsCommand;
-use codex_cli::login::read_api_key_from_stdin;
-use codex_cli::login::run_login_status;
-use codex_cli::login::run_login_with_api_key;
-use codex_cli::login::run_login_with_chatgpt;
-use codex_cli::login::run_login_with_device_code;
-use codex_cli::login::run_logout;
-use codex_cloud_tasks::Cli as CloudTasksCli;
-use codex_exec::Cli as ExecCli;
-use codex_exec::Command as ExecCommand;
-use codex_exec::ReviewArgs;
-use codex_execpolicy::ExecPolicyCheckCommand;
-use codex_responses_api_proxy::Args as ResponsesApiProxyArgs;
-use codex_state::StateRuntime;
-use codex_state::state_db_path;
-use codex_tui::AppExitInfo;
-use codex_tui::Cli as TuiCli;
-use codex_tui::ExitReason;
-use codex_tui::update_action::UpdateAction;
-use codex_utils_cli::CliConfigOverrides;
+use orbit_code_arg0::Arg0DispatchPaths;
+use orbit_code_arg0::arg0_dispatch_or_else;
+use orbit_code_chatgpt::apply_command::ApplyCommand;
+use orbit_code_chatgpt::apply_command::run_apply_command;
+use orbit_code_cli::LandlockCommand;
+use orbit_code_cli::SeatbeltCommand;
+use orbit_code_cli::WindowsCommand;
+use orbit_code_cli::login::read_api_key_from_stdin;
+use orbit_code_cli::login::run_login_status;
+use orbit_code_cli::login::run_login_with_api_key;
+use orbit_code_cli::login::run_login_with_chatgpt;
+use orbit_code_cli::login::run_login_with_device_code;
+use orbit_code_cli::login::run_logout;
+use orbit_code_cloud_tasks::Cli as CloudTasksCli;
+use orbit_code_exec::Cli as ExecCli;
+use orbit_code_exec::Command as ExecCommand;
+use orbit_code_exec::ReviewArgs;
+use orbit_code_execpolicy::ExecPolicyCheckCommand;
+use orbit_code_responses_api_proxy::Args as ResponsesApiProxyArgs;
+use orbit_code_state::StateRuntime;
+use orbit_code_state::state_db_path;
+use orbit_code_tui::AppExitInfo;
+use orbit_code_tui::Cli as TuiCli;
+use orbit_code_tui::ExitReason;
+use orbit_code_tui::update_action::UpdateAction;
+use orbit_code_utils_cli::CliConfigOverrides;
 use owo_colors::OwoColorize;
 use std::io::IsTerminal;
 use std::path::PathBuf;
@@ -44,13 +44,13 @@ mod wsl_paths;
 
 use crate::mcp_cmd::McpCli;
 
-use codex_core::config::Config;
-use codex_core::config::ConfigOverrides;
-use codex_core::config::edit::ConfigEditsBuilder;
-use codex_core::config::find_codex_home;
-use codex_core::features::Stage;
-use codex_core::features::is_known_feature_key;
-use codex_core::terminal::TerminalName;
+use orbit_code_core::config::Config;
+use orbit_code_core::config::ConfigOverrides;
+use orbit_code_core::config::edit::ConfigEditsBuilder;
+use orbit_code_core::config::find_orbit_code_home;
+use orbit_code_core::features::Stage;
+use orbit_code_core::features::is_known_feature_key;
+use orbit_code_core::terminal::TerminalName;
 
 /// Codex CLI
 ///
@@ -64,8 +64,8 @@ use codex_core::terminal::TerminalName;
     // The executable is sometimes invoked via a platform‑specific name like
     // `codex-x86_64-unknown-linux-musl`, but the help output should always use
     // the generic `codex` command name that users run.
-    bin_name = "codex",
-    override_usage = "codex [OPTIONS] [PROMPT]\n       codex [OPTIONS] <COMMAND> [ARGS]"
+    bin_name = "orbit-code",
+    override_usage = "orbit-code [OPTIONS] [PROMPT]\n       orbit-code [OPTIONS] <COMMAND> [ARGS]"
 )]
 struct MultitoolCli {
     #[clap(flatten)]
@@ -327,9 +327,9 @@ struct AppServerCommand {
     #[arg(
         long = "listen",
         value_name = "URL",
-        default_value = codex_app_server::AppServerTransport::DEFAULT_LISTEN_URL
+        default_value = orbit_code_app_server::AppServerTransport::DEFAULT_LISTEN_URL
     )]
-    listen: codex_app_server::AppServerTransport,
+    listen: orbit_code_app_server::AppServerTransport,
 
     /// Controls whether analytics are enabled by default.
     ///
@@ -418,11 +418,11 @@ fn format_exit_messages(exit_info: AppExitInfo, color_enabled: bool) -> Vec<Stri
 
     let mut lines = vec![format!(
         "{}",
-        codex_protocol::protocol::FinalOutput::from(token_usage)
+        orbit_code_protocol::protocol::FinalOutput::from(token_usage)
     )];
 
     if let Some(resume_cmd) =
-        codex_core::util::resume_command(thread_name.as_deref(), conversation_id)
+        orbit_code_core::util::resume_command(thread_name.as_deref(), conversation_id)
     {
         let command = if color_enabled {
             resume_cmd.cyan().to_string()
@@ -497,9 +497,14 @@ fn run_execpolicycheck(cmd: ExecPolicyCheckCommand) -> anyhow::Result<()> {
 async fn run_debug_app_server_command(cmd: DebugAppServerCommand) -> anyhow::Result<()> {
     match cmd.subcommand {
         DebugAppServerSubcommand::SendMessageV2(cmd) => {
-            let codex_bin = std::env::current_exe()?;
-            codex_app_server_test_client::send_message_v2(&codex_bin, &[], cmd.user_message, &None)
-                .await
+            let orbit_code_bin = std::env::current_exe()?;
+            orbit_code_app_server_test_client::send_message_v2(
+                &orbit_code_bin,
+                &[],
+                cmd.user_message,
+                &None,
+            )
+            .await
         }
     }
 }
@@ -569,8 +574,8 @@ struct FeatureSetArgs {
     feature: String,
 }
 
-fn stage_str(stage: codex_core::features::Stage) -> &'static str {
-    use codex_core::features::Stage;
+fn stage_str(stage: orbit_code_core::features::Stage) -> &'static str {
+    use orbit_code_core::features::Stage;
     match stage {
         Stage::UnderDevelopment => "under development",
         Stage::Experimental { .. } => "experimental",
@@ -617,21 +622,21 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
                 &mut exec_cli.config_overrides,
                 root_config_overrides.clone(),
             );
-            codex_exec::run_main(exec_cli, arg0_paths.clone()).await?;
+            orbit_code_exec::run_main(exec_cli, arg0_paths.clone()).await?;
         }
         Some(Subcommand::Review(review_args)) => {
             reject_remote_mode_for_subcommand(root_remote.as_deref(), "review")?;
-            let mut exec_cli = ExecCli::try_parse_from(["codex", "exec"])?;
+            let mut exec_cli = ExecCli::try_parse_from(["orbit-code", "exec"])?;
             exec_cli.command = Some(ExecCommand::Review(review_args));
             prepend_config_flags(
                 &mut exec_cli.config_overrides,
                 root_config_overrides.clone(),
             );
-            codex_exec::run_main(exec_cli, arg0_paths.clone()).await?;
+            orbit_code_exec::run_main(exec_cli, arg0_paths.clone()).await?;
         }
         Some(Subcommand::McpServer) => {
             reject_remote_mode_for_subcommand(root_remote.as_deref(), "mcp-server")?;
-            codex_mcp_server::run_main(arg0_paths.clone(), root_config_overrides).await?;
+            orbit_code_mcp_server::run_main(arg0_paths.clone(), root_config_overrides).await?;
         }
         Some(Subcommand::Mcp(mut mcp_cli)) => {
             reject_remote_mode_for_subcommand(root_remote.as_deref(), "mcp")?;
@@ -643,10 +648,10 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
             None => {
                 reject_remote_mode_for_subcommand(root_remote.as_deref(), "app-server")?;
                 let transport = app_server_cli.listen;
-                codex_app_server::run_main_with_transport(
+                orbit_code_app_server::run_main_with_transport(
                     arg0_paths.clone(),
                     root_config_overrides,
-                    codex_core::config_loader::LoaderOverrides::default(),
+                    orbit_code_core::config_loader::LoaderOverrides::default(),
                     app_server_cli.analytics_default_enabled,
                     transport,
                 )
@@ -657,11 +662,11 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
                     root_remote.as_deref(),
                     "app-server generate-ts",
                 )?;
-                let options = codex_app_server_protocol::GenerateTsOptions {
+                let options = orbit_code_app_server_protocol::GenerateTsOptions {
                     experimental_api: gen_cli.experimental,
                     ..Default::default()
                 };
-                codex_app_server_protocol::generate_ts_with_options(
+                orbit_code_app_server_protocol::generate_ts_with_options(
                     &gen_cli.out_dir,
                     gen_cli.prettier.as_deref(),
                     options,
@@ -672,13 +677,13 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
                     root_remote.as_deref(),
                     "app-server generate-json-schema",
                 )?;
-                codex_app_server_protocol::generate_json_with_experimental(
+                orbit_code_app_server_protocol::generate_json_with_experimental(
                     &gen_cli.out_dir,
                     gen_cli.experimental,
                 )?;
             }
             Some(AppServerSubcommand::GenerateInternalJsonSchema(gen_cli)) => {
-                codex_app_server_protocol::generate_internal_json_schema(&gen_cli.out_dir)?;
+                orbit_code_app_server_protocol::generate_internal_json_schema(&gen_cli.out_dir)?;
             }
         },
         #[cfg(target_os = "macos")]
@@ -782,8 +787,11 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
                 &mut cloud_cli.config_overrides,
                 root_config_overrides.clone(),
             );
-            codex_cloud_tasks::run_main(cloud_cli, arg0_paths.codex_linux_sandbox_exe.clone())
-                .await?;
+            orbit_code_cloud_tasks::run_main(
+                cloud_cli,
+                arg0_paths.orbit_code_linux_sandbox_exe.clone(),
+            )
+            .await?;
         }
         Some(Subcommand::Sandbox(sandbox_args)) => match sandbox_args.cmd {
             SandboxCommand::Macos(mut seatbelt_cli) => {
@@ -792,9 +800,9 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
                     &mut seatbelt_cli.config_overrides,
                     root_config_overrides.clone(),
                 );
-                codex_cli::debug_sandbox::run_command_under_seatbelt(
+                orbit_code_cli::debug_sandbox::run_command_under_seatbelt(
                     seatbelt_cli,
-                    arg0_paths.codex_linux_sandbox_exe.clone(),
+                    arg0_paths.orbit_code_linux_sandbox_exe.clone(),
                 )
                 .await?;
             }
@@ -804,9 +812,9 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
                     &mut landlock_cli.config_overrides,
                     root_config_overrides.clone(),
                 );
-                codex_cli::debug_sandbox::run_command_under_landlock(
+                orbit_code_cli::debug_sandbox::run_command_under_landlock(
                     landlock_cli,
-                    arg0_paths.codex_linux_sandbox_exe.clone(),
+                    arg0_paths.orbit_code_linux_sandbox_exe.clone(),
                 )
                 .await?;
             }
@@ -816,9 +824,9 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
                     &mut windows_cli.config_overrides,
                     root_config_overrides.clone(),
                 );
-                codex_cli::debug_sandbox::run_command_under_windows(
+                orbit_code_cli::debug_sandbox::run_command_under_windows(
                     windows_cli,
-                    arg0_paths.codex_linux_sandbox_exe.clone(),
+                    arg0_paths.orbit_code_linux_sandbox_exe.clone(),
                 )
                 .await?;
             }
@@ -849,14 +857,16 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
         }
         Some(Subcommand::ResponsesApiProxy(args)) => {
             reject_remote_mode_for_subcommand(root_remote.as_deref(), "responses-api-proxy")?;
-            tokio::task::spawn_blocking(move || codex_responses_api_proxy::run_main(args))
+            tokio::task::spawn_blocking(move || orbit_code_responses_api_proxy::run_main(args))
                 .await??;
         }
         Some(Subcommand::StdioToUds(cmd)) => {
             reject_remote_mode_for_subcommand(root_remote.as_deref(), "stdio-to-uds")?;
             let socket_path = cmd.socket_path;
-            tokio::task::spawn_blocking(move || codex_stdio_to_uds::run(socket_path.as_path()))
-                .await??;
+            tokio::task::spawn_blocking(move || {
+                orbit_code_stdio_to_uds::run(socket_path.as_path())
+            })
+            .await??;
         }
         Some(Subcommand::Features(FeaturesCli { sub })) => match sub {
             FeaturesSubcommand::List => {
@@ -885,10 +895,10 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
                     overrides,
                 )
                 .await?;
-                let mut rows = Vec::with_capacity(codex_core::features::FEATURES.len());
+                let mut rows = Vec::with_capacity(orbit_code_core::features::FEATURES.len());
                 let mut name_width = 0;
                 let mut stage_width = 0;
-                for def in codex_core::features::FEATURES.iter() {
+                for def in orbit_code_core::features::FEATURES.iter() {
                     let name = def.key;
                     let stage = stage_str(def.stage);
                     let enabled = config.features.enabled(def.id);
@@ -918,21 +928,21 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
 
 async fn enable_feature_in_config(interactive: &TuiCli, feature: &str) -> anyhow::Result<()> {
     FeatureToggles::validate_feature(feature)?;
-    let codex_home = find_codex_home()?;
-    ConfigEditsBuilder::new(&codex_home)
+    let orbit_code_home = find_orbit_code_home()?;
+    ConfigEditsBuilder::new(&orbit_code_home)
         .with_profile(interactive.config_profile.as_deref())
         .set_feature_enabled(feature, /*enabled*/ true)
         .apply()
         .await?;
     println!("Enabled feature `{feature}` in config.toml.");
-    maybe_print_under_development_feature_warning(&codex_home, interactive, feature);
+    maybe_print_under_development_feature_warning(&orbit_code_home, interactive, feature);
     Ok(())
 }
 
 async fn disable_feature_in_config(interactive: &TuiCli, feature: &str) -> anyhow::Result<()> {
     FeatureToggles::validate_feature(feature)?;
-    let codex_home = find_codex_home()?;
-    ConfigEditsBuilder::new(&codex_home)
+    let orbit_code_home = find_orbit_code_home()?;
+    ConfigEditsBuilder::new(&orbit_code_home)
         .with_profile(interactive.config_profile.as_deref())
         .set_feature_enabled(feature, /*enabled*/ false)
         .apply()
@@ -942,7 +952,7 @@ async fn disable_feature_in_config(interactive: &TuiCli, feature: &str) -> anyho
 }
 
 fn maybe_print_under_development_feature_warning(
-    codex_home: &std::path::Path,
+    orbit_code_home: &std::path::Path,
     interactive: &TuiCli,
     feature: &str,
 ) {
@@ -950,7 +960,7 @@ fn maybe_print_under_development_feature_warning(
         return;
     }
 
-    let Some(spec) = codex_core::features::FEATURES
+    let Some(spec) = orbit_code_core::features::FEATURES
         .iter()
         .find(|spec| spec.key == feature)
     else {
@@ -960,7 +970,7 @@ fn maybe_print_under_development_feature_warning(
         return;
     }
 
-    let config_path = codex_home.join(codex_config::CONFIG_TOML_FILE);
+    let config_path = orbit_code_home.join(orbit_code_config::CONFIG_TOML_FILE);
     eprintln!(
         "Under-development features enabled: {feature}. Under-development features are incomplete and may behave unpredictably. To suppress this warning, set `suppress_unstable_features_warning = true` in {}.",
         config_path.display()
@@ -991,7 +1001,7 @@ async fn run_debug_clear_memories_command(
         cleared_state_db = true;
     }
 
-    let memory_root = config.codex_home.join("memories");
+    let memory_root = config.orbit_code_home.join("memories");
     let removed_memory_root = match tokio::fs::remove_dir_all(&memory_root).await {
         Ok(()) => true,
         Err(err) if err.kind() == std::io::ErrorKind::NotFound => false,
@@ -1032,7 +1042,7 @@ fn prepend_config_flags(
 fn reject_remote_mode_for_subcommand(remote: Option<&str>, subcommand: &str) -> anyhow::Result<()> {
     if let Some(remote) = remote {
         anyhow::bail!(
-            "`--remote {remote}` is only supported for interactive TUI commands, not `codex {subcommand}`"
+            "`--remote {remote}` is only supported for interactive TUI commands, not `orbit-code {subcommand}`"
         );
     }
     Ok(())
@@ -1048,7 +1058,7 @@ async fn run_interactive_tui(
         interactive.prompt = Some(prompt.replace("\r\n", "\n").replace('\r', "\n"));
     }
 
-    let terminal_info = codex_core::terminal::terminal_info();
+    let terminal_info = orbit_code_core::terminal::terminal_info();
     if terminal_info.name == TerminalName::Dumb {
         if !(std::io::stdin().is_terminal() && std::io::stderr().is_terminal()) {
             return Ok(AppExitInfo::fatal(
@@ -1066,10 +1076,10 @@ async fn run_interactive_tui(
         }
     }
 
-    let use_app_server_tui = codex_tui::should_use_app_server_tui(&interactive).await?;
+    let use_app_server_tui = orbit_code_tui::should_use_app_server_tui(&interactive).await?;
     let normalized_remote = remote
         .as_deref()
-        .map(codex_tui_app_server::normalize_remote_addr)
+        .map(orbit_code_tui_app_server::normalize_remote_addr)
         .transpose()
         .map_err(std::io::Error::other)?;
     if normalized_remote.is_some() && !use_app_server_tui {
@@ -1078,26 +1088,26 @@ async fn run_interactive_tui(
         ));
     }
     if use_app_server_tui {
-        codex_tui_app_server::run_main(
+        orbit_code_tui_app_server::run_main(
             into_app_server_tui_cli(interactive),
             arg0_paths,
-            codex_core::config_loader::LoaderOverrides::default(),
+            orbit_code_core::config_loader::LoaderOverrides::default(),
             normalized_remote,
         )
         .await
         .map(into_legacy_app_exit_info)
     } else {
-        codex_tui::run_main(
+        orbit_code_tui::run_main(
             interactive,
             arg0_paths,
-            codex_core::config_loader::LoaderOverrides::default(),
+            orbit_code_core::config_loader::LoaderOverrides::default(),
         )
         .await
     }
 }
 
-fn into_app_server_tui_cli(cli: TuiCli) -> codex_tui_app_server::Cli {
-    codex_tui_app_server::Cli {
+fn into_app_server_tui_cli(cli: TuiCli) -> orbit_code_tui_app_server::Cli {
+    orbit_code_tui_app_server::Cli {
         prompt: cli.prompt,
         images: cli.images,
         resume_picker: cli.resume_picker,
@@ -1125,27 +1135,29 @@ fn into_app_server_tui_cli(cli: TuiCli) -> codex_tui_app_server::Cli {
 }
 
 fn into_legacy_update_action(
-    action: codex_tui_app_server::update_action::UpdateAction,
+    action: orbit_code_tui_app_server::update_action::UpdateAction,
 ) -> UpdateAction {
     match action {
-        codex_tui_app_server::update_action::UpdateAction::NpmGlobalLatest => {
+        orbit_code_tui_app_server::update_action::UpdateAction::NpmGlobalLatest => {
             UpdateAction::NpmGlobalLatest
         }
-        codex_tui_app_server::update_action::UpdateAction::BunGlobalLatest => {
+        orbit_code_tui_app_server::update_action::UpdateAction::BunGlobalLatest => {
             UpdateAction::BunGlobalLatest
         }
-        codex_tui_app_server::update_action::UpdateAction::BrewUpgrade => UpdateAction::BrewUpgrade,
+        orbit_code_tui_app_server::update_action::UpdateAction::BrewUpgrade => {
+            UpdateAction::BrewUpgrade
+        }
     }
 }
 
-fn into_legacy_exit_reason(reason: codex_tui_app_server::ExitReason) -> ExitReason {
+fn into_legacy_exit_reason(reason: orbit_code_tui_app_server::ExitReason) -> ExitReason {
     match reason {
-        codex_tui_app_server::ExitReason::UserRequested => ExitReason::UserRequested,
-        codex_tui_app_server::ExitReason::Fatal(message) => ExitReason::Fatal(message),
+        orbit_code_tui_app_server::ExitReason::UserRequested => ExitReason::UserRequested,
+        orbit_code_tui_app_server::ExitReason::Fatal(message) => ExitReason::Fatal(message),
     }
 }
 
-fn into_legacy_app_exit_info(exit_info: codex_tui_app_server::AppExitInfo) -> AppExitInfo {
+fn into_legacy_app_exit_info(exit_info: orbit_code_tui_app_server::AppExitInfo) -> AppExitInfo {
     AppExitInfo {
         token_usage: exit_info.token_usage,
         thread_id: exit_info.thread_id,
@@ -1164,7 +1176,7 @@ fn confirm(prompt: &str) -> std::io::Result<bool> {
     Ok(answer.eq_ignore_ascii_case("y") || answer.eq_ignore_ascii_case("yes"))
 }
 
-/// Build the final `TuiCli` for a `codex resume` invocation.
+/// Build the final `TuiCli` for a `orbit-code resume` invocation.
 fn finalize_resume_interactive(
     mut interactive: TuiCli,
     root_config_overrides: CliConfigOverrides,
@@ -1190,7 +1202,7 @@ fn finalize_resume_interactive(
     interactive
 }
 
-/// Build the final `TuiCli` for a `codex fork` invocation.
+/// Build the final `TuiCli` for a `orbit-code fork` invocation.
 fn finalize_fork_interactive(
     mut interactive: TuiCli,
     root_config_overrides: CliConfigOverrides,
@@ -1216,7 +1228,7 @@ fn finalize_fork_interactive(
     interactive
 }
 
-/// Merge flags provided to `codex resume`/`codex fork` so they take precedence over any
+/// Merge flags provided to `orbit-code resume`/`orbit-code fork` so they take precedence over any
 /// root-level flags. Only overrides fields explicitly set on the subcommand-scoped
 /// CLI. Also appends `-c key=value` overrides with highest precedence.
 fn merge_interactive_cli_flags(interactive: &mut TuiCli, subcommand_cli: TuiCli) {
@@ -1266,7 +1278,7 @@ fn merge_interactive_cli_flags(interactive: &mut TuiCli, subcommand_cli: TuiCli)
 
 fn print_completion(cmd: CompletionCommand) {
     let mut app = MultitoolCli::command();
-    let name = "codex";
+    let name = "orbit-code";
     generate(cmd.shell, &mut app, name, &mut std::io::stdout());
 }
 
@@ -1274,8 +1286,8 @@ fn print_completion(cmd: CompletionCommand) {
 mod tests {
     use super::*;
     use assert_matches::assert_matches;
-    use codex_protocol::ThreadId;
-    use codex_protocol::protocol::TokenUsage;
+    use orbit_code_protocol::ThreadId;
+    use orbit_code_protocol::protocol::TokenUsage;
     use pretty_assertions::assert_eq;
 
     fn finalize_resume_from_args(args: &[&str]) -> TuiCli {
@@ -1335,14 +1347,20 @@ mod tests {
 
     #[test]
     fn exec_resume_last_accepts_prompt_positional() {
-        let cli =
-            MultitoolCli::try_parse_from(["codex", "exec", "--json", "resume", "--last", "2+2"])
-                .expect("parse should succeed");
+        let cli = MultitoolCli::try_parse_from([
+            "orbit-code",
+            "exec",
+            "--json",
+            "resume",
+            "--last",
+            "2+2",
+        ])
+        .expect("parse should succeed");
 
         let Some(Subcommand::Exec(exec)) = cli.subcommand else {
             panic!("expected exec subcommand");
         };
-        let Some(codex_exec::Command::Resume(args)) = exec.command else {
+        let Some(orbit_code_exec::Command::Resume(args)) = exec.command else {
             panic!("expected exec resume");
         };
 
@@ -1354,7 +1372,7 @@ mod tests {
     #[test]
     fn exec_resume_accepts_output_last_message_flag_after_subcommand() {
         let cli = MultitoolCli::try_parse_from([
-            "codex",
+            "orbit-code",
             "exec",
             "resume",
             "session-123",
@@ -1367,7 +1385,7 @@ mod tests {
         let Some(Subcommand::Exec(exec)) = cli.subcommand else {
             panic!("expected exec subcommand");
         };
-        let Some(codex_exec::Command::Resume(args)) = exec.command else {
+        let Some(orbit_code_exec::Command::Resume(args)) = exec.command else {
             panic!("expected exec resume");
         };
 
@@ -1425,7 +1443,7 @@ mod tests {
             lines,
             vec![
                 "Token usage: total=2 input=0 output=2".to_string(),
-                "To continue this session, run codex resume 123e4567-e89b-12d3-a456-426614174000"
+                "To continue this session, run orbit-code resume 123e4567-e89b-12d3-a456-426614174000"
                     .to_string(),
             ]
         );
@@ -1450,7 +1468,7 @@ mod tests {
             lines,
             vec![
                 "Token usage: total=2 input=0 output=2".to_string(),
-                "To continue this session, run codex resume my-thread".to_string(),
+                "To continue this session, run orbit-code resume my-thread".to_string(),
             ]
         );
     }
@@ -1458,7 +1476,7 @@ mod tests {
     #[test]
     fn resume_model_flag_applies_when_no_root_flags() {
         let interactive =
-            finalize_resume_from_args(["codex", "resume", "-m", "gpt-5.1-test"].as_ref());
+            finalize_resume_from_args(["orbit-code", "resume", "-m", "gpt-5.1-test"].as_ref());
 
         assert_eq!(interactive.model.as_deref(), Some("gpt-5.1-test"));
         assert!(interactive.resume_picker);
@@ -1468,7 +1486,7 @@ mod tests {
 
     #[test]
     fn resume_picker_logic_none_and_not_last() {
-        let interactive = finalize_resume_from_args(["codex", "resume"].as_ref());
+        let interactive = finalize_resume_from_args(["orbit-code", "resume"].as_ref());
         assert!(interactive.resume_picker);
         assert!(!interactive.resume_last);
         assert_eq!(interactive.resume_session_id, None);
@@ -1477,7 +1495,7 @@ mod tests {
 
     #[test]
     fn resume_picker_logic_last() {
-        let interactive = finalize_resume_from_args(["codex", "resume", "--last"].as_ref());
+        let interactive = finalize_resume_from_args(["orbit-code", "resume", "--last"].as_ref());
         assert!(!interactive.resume_picker);
         assert!(interactive.resume_last);
         assert_eq!(interactive.resume_session_id, None);
@@ -1486,7 +1504,7 @@ mod tests {
 
     #[test]
     fn resume_picker_logic_with_session_id() {
-        let interactive = finalize_resume_from_args(["codex", "resume", "1234"].as_ref());
+        let interactive = finalize_resume_from_args(["orbit-code", "resume", "1234"].as_ref());
         assert!(!interactive.resume_picker);
         assert!(!interactive.resume_last);
         assert_eq!(interactive.resume_session_id.as_deref(), Some("1234"));
@@ -1495,7 +1513,7 @@ mod tests {
 
     #[test]
     fn resume_all_flag_sets_show_all() {
-        let interactive = finalize_resume_from_args(["codex", "resume", "--all"].as_ref());
+        let interactive = finalize_resume_from_args(["orbit-code", "resume", "--all"].as_ref());
         assert!(interactive.resume_picker);
         assert!(interactive.resume_show_all);
     }
@@ -1504,7 +1522,7 @@ mod tests {
     fn resume_merges_option_flags_and_full_auto() {
         let interactive = finalize_resume_from_args(
             [
-                "codex",
+                "orbit-code",
                 "resume",
                 "sid",
                 "--oss",
@@ -1531,11 +1549,11 @@ mod tests {
         assert_eq!(interactive.config_profile.as_deref(), Some("my-profile"));
         assert_matches!(
             interactive.sandbox_mode,
-            Some(codex_utils_cli::SandboxModeCliArg::WorkspaceWrite)
+            Some(orbit_code_utils_cli::SandboxModeCliArg::WorkspaceWrite)
         );
         assert_matches!(
             interactive.approval_policy,
-            Some(codex_utils_cli::ApprovalModeCliArg::OnRequest)
+            Some(orbit_code_utils_cli::ApprovalModeCliArg::OnRequest)
         );
         assert!(interactive.full_auto);
         assert_eq!(
@@ -1561,7 +1579,7 @@ mod tests {
     fn resume_merges_dangerously_bypass_flag() {
         let interactive = finalize_resume_from_args(
             [
-                "codex",
+                "orbit-code",
                 "resume",
                 "--dangerously-bypass-approvals-and-sandbox",
             ]
@@ -1575,7 +1593,7 @@ mod tests {
 
     #[test]
     fn fork_picker_logic_none_and_not_last() {
-        let interactive = finalize_fork_from_args(["codex", "fork"].as_ref());
+        let interactive = finalize_fork_from_args(["orbit-code", "fork"].as_ref());
         assert!(interactive.fork_picker);
         assert!(!interactive.fork_last);
         assert_eq!(interactive.fork_session_id, None);
@@ -1584,7 +1602,7 @@ mod tests {
 
     #[test]
     fn fork_picker_logic_last() {
-        let interactive = finalize_fork_from_args(["codex", "fork", "--last"].as_ref());
+        let interactive = finalize_fork_from_args(["orbit-code", "fork", "--last"].as_ref());
         assert!(!interactive.fork_picker);
         assert!(interactive.fork_last);
         assert_eq!(interactive.fork_session_id, None);
@@ -1593,7 +1611,7 @@ mod tests {
 
     #[test]
     fn fork_picker_logic_with_session_id() {
-        let interactive = finalize_fork_from_args(["codex", "fork", "1234"].as_ref());
+        let interactive = finalize_fork_from_args(["orbit-code", "fork", "1234"].as_ref());
         assert!(!interactive.fork_picker);
         assert!(!interactive.fork_last);
         assert_eq!(interactive.fork_session_id.as_deref(), Some("1234"));
@@ -1602,40 +1620,45 @@ mod tests {
 
     #[test]
     fn fork_all_flag_sets_show_all() {
-        let interactive = finalize_fork_from_args(["codex", "fork", "--all"].as_ref());
+        let interactive = finalize_fork_from_args(["orbit-code", "fork", "--all"].as_ref());
         assert!(interactive.fork_picker);
         assert!(interactive.fork_show_all);
     }
 
     #[test]
     fn app_server_analytics_default_disabled_without_flag() {
-        let app_server = app_server_from_args(["codex", "app-server"].as_ref());
+        let app_server = app_server_from_args(["orbit-code", "app-server"].as_ref());
         assert!(!app_server.analytics_default_enabled);
         assert_eq!(
             app_server.listen,
-            codex_app_server::AppServerTransport::Stdio
+            orbit_code_app_server::AppServerTransport::Stdio
         );
     }
 
     #[test]
     fn app_server_analytics_default_enabled_with_flag() {
-        let app_server =
-            app_server_from_args(["codex", "app-server", "--analytics-default-enabled"].as_ref());
+        let app_server = app_server_from_args(
+            ["orbit-code", "app-server", "--analytics-default-enabled"].as_ref(),
+        );
         assert!(app_server.analytics_default_enabled);
     }
 
     #[test]
     fn remote_flag_parses_for_interactive_root() {
-        let cli = MultitoolCli::try_parse_from(["codex", "--remote", "ws://127.0.0.1:4500"])
+        let cli = MultitoolCli::try_parse_from(["orbit-code", "--remote", "ws://127.0.0.1:4500"])
             .expect("parse");
         assert_eq!(cli.remote.remote.as_deref(), Some("ws://127.0.0.1:4500"));
     }
 
     #[test]
     fn remote_flag_parses_for_resume_subcommand() {
-        let cli =
-            MultitoolCli::try_parse_from(["codex", "resume", "--remote", "ws://127.0.0.1:4500"])
-                .expect("parse");
+        let cli = MultitoolCli::try_parse_from([
+            "orbit-code",
+            "resume",
+            "--remote",
+            "ws://127.0.0.1:4500",
+        ])
+        .expect("parse");
         let Subcommand::Resume(ResumeCommand { remote, .. }) =
             cli.subcommand.expect("resume present")
         else {
@@ -1657,11 +1680,17 @@ mod tests {
     #[test]
     fn app_server_listen_websocket_url_parses() {
         let app_server = app_server_from_args(
-            ["codex", "app-server", "--listen", "ws://127.0.0.1:4500"].as_ref(),
+            [
+                "orbit-code",
+                "app-server",
+                "--listen",
+                "ws://127.0.0.1:4500",
+            ]
+            .as_ref(),
         );
         assert_eq!(
             app_server.listen,
-            codex_app_server::AppServerTransport::WebSocket {
+            orbit_code_app_server::AppServerTransport::WebSocket {
                 bind_address: "127.0.0.1:4500".parse().expect("valid socket address"),
             }
         );
@@ -1670,24 +1699,25 @@ mod tests {
     #[test]
     fn app_server_listen_stdio_url_parses() {
         let app_server =
-            app_server_from_args(["codex", "app-server", "--listen", "stdio://"].as_ref());
+            app_server_from_args(["orbit-code", "app-server", "--listen", "stdio://"].as_ref());
         assert_eq!(
             app_server.listen,
-            codex_app_server::AppServerTransport::Stdio
+            orbit_code_app_server::AppServerTransport::Stdio
         );
     }
 
     #[test]
     fn app_server_listen_invalid_url_fails_to_parse() {
         let parse_result =
-            MultitoolCli::try_parse_from(["codex", "app-server", "--listen", "http://foo"]);
+            MultitoolCli::try_parse_from(["orbit-code", "app-server", "--listen", "http://foo"]);
         assert!(parse_result.is_err());
     }
 
     #[test]
     fn features_enable_parses_feature_name() {
-        let cli = MultitoolCli::try_parse_from(["codex", "features", "enable", "unified_exec"])
-            .expect("parse should succeed");
+        let cli =
+            MultitoolCli::try_parse_from(["orbit-code", "features", "enable", "unified_exec"])
+                .expect("parse should succeed");
         let Some(Subcommand::Features(FeaturesCli { sub })) = cli.subcommand else {
             panic!("expected features subcommand");
         };
@@ -1699,7 +1729,7 @@ mod tests {
 
     #[test]
     fn features_disable_parses_feature_name() {
-        let cli = MultitoolCli::try_parse_from(["codex", "features", "disable", "shell_tool"])
+        let cli = MultitoolCli::try_parse_from(["orbit-code", "features", "disable", "shell_tool"])
             .expect("parse should succeed");
         let Some(Subcommand::Features(FeaturesCli { sub })) = cli.subcommand else {
             panic!("expected features subcommand");

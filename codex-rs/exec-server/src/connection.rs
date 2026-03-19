@@ -1,6 +1,6 @@
-use codex_app_server_protocol::JSONRPCMessage;
 use futures::SinkExt;
 use futures::StreamExt;
+use orbit_code_app_server_protocol::JSONRPCMessage;
 use tokio::io::AsyncRead;
 use tokio::io::AsyncWrite;
 use tokio::sync::mpsc;

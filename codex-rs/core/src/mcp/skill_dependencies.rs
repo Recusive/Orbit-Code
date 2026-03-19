@@ -1,13 +1,13 @@
 use std::collections::HashMap;
 use std::collections::HashSet;
 
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::SandboxPolicy;
-use codex_protocol::request_user_input::RequestUserInputArgs;
-use codex_protocol::request_user_input::RequestUserInputQuestion;
-use codex_protocol::request_user_input::RequestUserInputQuestionOption;
-use codex_protocol::request_user_input::RequestUserInputResponse;
-use codex_rmcp_client::perform_oauth_login;
+use orbit_code_protocol::protocol::AskForApproval;
+use orbit_code_protocol::protocol::SandboxPolicy;
+use orbit_code_protocol::request_user_input::RequestUserInputArgs;
+use orbit_code_protocol::request_user_input::RequestUserInputQuestion;
+use orbit_code_protocol::request_user_input::RequestUserInputQuestionOption;
+use orbit_code_protocol::request_user_input::RequestUserInputResponse;
+use orbit_code_rmcp_client::perform_oauth_login;
 use tokio_util::sync::CancellationToken;
 use tracing::warn;
 
@@ -181,14 +181,14 @@ pub(crate) async fn maybe_install_mcp_dependencies(
         return;
     }
 
-    let codex_home = config.codex_home.clone();
+    let orbit_code_home = config.orbit_code_home.clone();
     let installed = sess.services.mcp_manager.configured_servers(config);
     let missing = collect_missing_mcp_dependencies(mentioned_skills, &installed);
     if missing.is_empty() {
         return;
     }
 
-    let mut servers = match load_global_mcp_servers(&codex_home).await {
+    let mut servers = match load_global_mcp_servers(&orbit_code_home).await {
         Ok(servers) => servers,
         Err(err) => {
             warn!("failed to load MCP servers while installing skill dependencies: {err}");
@@ -211,7 +211,7 @@ pub(crate) async fn maybe_install_mcp_dependencies(
         return;
     }
 
-    if let Err(err) = ConfigEditsBuilder::new(&codex_home)
+    if let Err(err) = ConfigEditsBuilder::new(&orbit_code_home)
         .replace_mcp_servers(&servers)
         .apply()
         .await

@@ -67,7 +67,7 @@ def _is_server_overloaded(data: Any) -> bool:
 
     if isinstance(data, dict):
         direct = (
-            data.get("codex_error_info")
+            data.get("orbit_code_error_info")
             or data.get("codexErrorInfo")
             or data.get("errorInfo")
         )

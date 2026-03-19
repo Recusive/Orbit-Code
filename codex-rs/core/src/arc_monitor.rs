@@ -10,12 +10,12 @@ use crate::codex::TurnContext;
 use crate::compact::content_items_to_text;
 use crate::default_client::build_reqwest_client;
 use crate::event_mapping::is_contextual_user_message_content;
-use codex_protocol::models::MessagePhase;
-use codex_protocol::models::ResponseItem;
+use orbit_code_protocol::models::MessagePhase;
+use orbit_code_protocol::models::ResponseItem;
 
 const ARC_MONITOR_TIMEOUT: Duration = Duration::from_secs(30);
-const CODEX_ARC_MONITOR_ENDPOINT_OVERRIDE: &str = "CODEX_ARC_MONITOR_ENDPOINT_OVERRIDE";
-const CODEX_ARC_MONITOR_TOKEN: &str = "CODEX_ARC_MONITOR_TOKEN";
+const ORBIT_ARC_MONITOR_ENDPOINT_OVERRIDE: &str = "ORBIT_ARC_MONITOR_ENDPOINT_OVERRIDE";
+const ORBIT_ARC_MONITOR_TOKEN: &str = "ORBIT_ARC_MONITOR_TOKEN";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum ArcMonitorOutcome {
@@ -62,8 +62,8 @@ struct ArcMonitorPolicies {
 #[derive(Debug, Serialize, PartialEq)]
 #[serde(deny_unknown_fields)]
 struct ArcMonitorMetadata {
-    codex_thread_id: String,
-    codex_turn_id: String,
+    orbit_code_thread_id: String,
+    orbit_code_turn_id: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     conversation_id: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -107,7 +107,7 @@ pub(crate) async fn monitor_action(
         },
         None => None,
     };
-    let token = if let Some(token) = read_non_empty_env_var(CODEX_ARC_MONITOR_TOKEN) {
+    let token = if let Some(token) = read_non_empty_env_var(ORBIT_ARC_MONITOR_TOKEN) {
         token
     } else {
         let Some(auth) = auth.as_ref() else {
@@ -125,7 +125,7 @@ pub(crate) async fn monitor_action(
         }
     };
 
-    let url = read_non_empty_env_var(CODEX_ARC_MONITOR_ENDPOINT_OVERRIDE).unwrap_or_else(|| {
+    let url = read_non_empty_env_var(ORBIT_ARC_MONITOR_ENDPOINT_OVERRIDE).unwrap_or_else(|| {
         format!(
             "{}/codex/safety/arc",
             turn_context.config.chatgpt_base_url.trim_end_matches('/')
@@ -251,8 +251,8 @@ async fn build_arc_monitor_request(
     let conversation_id = sess.conversation_id.to_string();
     ArcMonitorRequest {
         metadata: ArcMonitorMetadata {
-            codex_thread_id: conversation_id.clone(),
-            codex_turn_id: turn_context.sub_id.clone(),
+            orbit_code_thread_id: conversation_id.clone(),
+            orbit_code_turn_id: turn_context.sub_id.clone(),
             conversation_id: Some(conversation_id),
             protection_client_callsite: None,
         },

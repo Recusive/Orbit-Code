@@ -1,11 +1,11 @@
 use std::cell::RefCell;
 use std::path::PathBuf;
 
-use codex_feedback::feedback_diagnostics::FEEDBACK_DIAGNOSTICS_ATTACHMENT_FILENAME;
-use codex_feedback::feedback_diagnostics::FeedbackDiagnostics;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyModifiers;
+use orbit_code_feedback::feedback_diagnostics::FEEDBACK_DIAGNOSTICS_ATTACHMENT_FILENAME;
+use orbit_code_feedback::feedback_diagnostics::FeedbackDiagnostics;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::style::Stylize;
@@ -21,7 +21,7 @@ use crate::app_event::FeedbackCategory;
 use crate::app_event_sender::AppEventSender;
 use crate::history_cell;
 use crate::render::renderable::Renderable;
-use codex_protocol::protocol::SessionSource;
+use orbit_code_protocol::protocol::SessionSource;
 
 use super::CancellationEvent;
 use super::bottom_pane_view::BottomPaneView;
@@ -32,7 +32,7 @@ use super::textarea::TextAreaState;
 const BASE_CLI_BUG_ISSUE_URL: &str =
     "https://github.com/openai/codex/issues/new?template=3-cli.yml";
 /// Internal routing link for employee feedback follow-ups. This must not be shown to external users.
-const CODEX_FEEDBACK_INTERNAL_URL: &str = "http://go/codex-feedback-internal";
+const ORBIT_FEEDBACK_INTERNAL_URL: &str = "http://go/codex-feedback-internal";
 
 /// The target audience for feedback follow-up instructions.
 ///
@@ -48,7 +48,7 @@ pub(crate) enum FeedbackAudience {
 /// both logs and rollout with classification + metadata.
 pub(crate) struct FeedbackNoteView {
     category: FeedbackCategory,
-    snapshot: codex_feedback::FeedbackSnapshot,
+    snapshot: orbit_code_feedback::FeedbackSnapshot,
     rollout_path: Option<PathBuf>,
     app_event_tx: AppEventSender,
     include_logs: bool,
@@ -63,7 +63,7 @@ pub(crate) struct FeedbackNoteView {
 impl FeedbackNoteView {
     pub(crate) fn new(
         category: FeedbackCategory,
-        snapshot: codex_feedback::FeedbackSnapshot,
+        snapshot: orbit_code_feedback::FeedbackSnapshot,
         rollout_path: Option<PathBuf>,
         app_event_tx: AppEventSender,
         include_logs: bool,
@@ -419,7 +419,7 @@ fn issue_url_for_category(
 /// We accept a `thread_id` so the call site stays symmetric with the external
 /// path, but we currently point to a fixed channel without prefilling text.
 fn slack_feedback_url(_thread_id: &str) -> String {
-    CODEX_FEEDBACK_INTERNAL_URL.to_string()
+    ORBIT_FEEDBACK_INTERNAL_URL.to_string()
 }
 
 // Build the selection popup params for feedback categories.
@@ -592,7 +592,7 @@ mod tests {
     use super::*;
     use crate::app_event::AppEvent;
     use crate::app_event_sender::AppEventSender;
-    use codex_feedback::feedback_diagnostics::FeedbackDiagnostic;
+    use orbit_code_feedback::feedback_diagnostics::FeedbackDiagnostic;
     use pretty_assertions::assert_eq;
 
     fn render(view: &FeedbackNoteView, width: u16) -> String {
@@ -628,7 +628,7 @@ mod tests {
     fn make_view(category: FeedbackCategory) -> FeedbackNoteView {
         let (tx_raw, _rx) = tokio::sync::mpsc::unbounded_channel::<AppEvent>();
         let tx = AppEventSender::new(tx_raw);
-        let snapshot = codex_feedback::CodexFeedback::new().snapshot(None);
+        let snapshot = orbit_code_feedback::CodexFeedback::new().snapshot(None);
         FeedbackNoteView::new(
             category,
             snapshot,
@@ -689,7 +689,7 @@ mod tests {
                 details: vec!["OPENAI_BASE_URL = https://example.com/v1".to_string()],
             },
         ]);
-        let snapshot = codex_feedback::CodexFeedback::new()
+        let snapshot = orbit_code_feedback::CodexFeedback::new()
             .snapshot(None)
             .with_feedback_diagnostics(diagnostics);
         let view = FeedbackNoteView::new(

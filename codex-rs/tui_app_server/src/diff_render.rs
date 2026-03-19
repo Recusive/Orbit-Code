@@ -92,10 +92,10 @@ use crate::terminal_palette::default_bg;
 use crate::terminal_palette::indexed_color;
 use crate::terminal_palette::rgb_color;
 use crate::terminal_palette::stdout_color_level;
-use codex_core::git_info::get_git_repo_root;
-use codex_core::terminal::TerminalName;
-use codex_core::terminal::terminal_info;
-use codex_protocol::protocol::FileChange;
+use orbit_code_core::git_info::get_git_repo_root;
+use orbit_code_core::terminal::TerminalName;
+use orbit_code_core::terminal::terminal_info;
+use orbit_code_protocol::protocol::FileChange;
 
 /// Classifies a diff line for gutter sign rendering and style selection.
 ///

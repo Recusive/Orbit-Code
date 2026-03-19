@@ -5,16 +5,16 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use anyhow::anyhow;
-use codex_protocol::config_types::Personality;
-use codex_protocol::config_types::ReasoningSummary as ReasoningSummaryConfig;
-use codex_protocol::openai_models::ReasoningEffort as ReasoningEffortConfig;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::InitialHistory;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::RolloutItem;
-use codex_protocol::protocol::SubAgentSource;
-use codex_protocol::user_input::UserInput;
+use orbit_code_protocol::config_types::Personality;
+use orbit_code_protocol::config_types::ReasoningSummary as ReasoningSummaryConfig;
+use orbit_code_protocol::openai_models::ReasoningEffort as ReasoningEffortConfig;
+use orbit_code_protocol::protocol::AskForApproval;
+use orbit_code_protocol::protocol::EventMsg;
+use orbit_code_protocol::protocol::InitialHistory;
+use orbit_code_protocol::protocol::Op;
+use orbit_code_protocol::protocol::RolloutItem;
+use orbit_code_protocol::protocol::SubAgentSource;
+use orbit_code_protocol::user_input::UserInput;
 use serde_json::Value;
 use tokio::sync::Mutex;
 use tokio_util::sync::CancellationToken;
@@ -23,7 +23,6 @@ use tracing::warn;
 use crate::codex::Codex;
 use crate::codex::Session;
 use crate::codex::TurnContext;
-use crate::codex_delegate::run_codex_thread_interactive;
 use crate::config::Config;
 use crate::config::Constrained;
 use crate::config::ManagedFeatures;
@@ -32,6 +31,7 @@ use crate::config::Permissions;
 use crate::config::types::McpServerConfig;
 use crate::features::Feature;
 use crate::model_provider_info::ModelProviderInfo;
+use crate::orbit_code_delegate::run_orbit_code_thread_interactive;
 use crate::protocol::SandboxPolicy;
 use crate::rollout::recorder::RolloutRecorder;
 
@@ -104,7 +104,7 @@ struct GuardianReviewSessionReuseKey {
     compact_prompt: Option<String>,
     cwd: PathBuf,
     mcp_servers: Constrained<HashMap<String, McpServerConfig>>,
-    codex_linux_sandbox_exe: Option<PathBuf>,
+    orbit_code_linux_sandbox_exe: Option<PathBuf>,
     main_execve_wrapper_exe: Option<PathBuf>,
     js_repl_node_path: Option<PathBuf>,
     js_repl_node_module_dirs: Vec<PathBuf>,
@@ -131,7 +131,7 @@ impl GuardianReviewSessionReuseKey {
             compact_prompt: spawn_config.compact_prompt.clone(),
             cwd: spawn_config.cwd.clone(),
             mcp_servers: spawn_config.mcp_servers.clone(),
-            codex_linux_sandbox_exe: spawn_config.codex_linux_sandbox_exe.clone(),
+            orbit_code_linux_sandbox_exe: spawn_config.orbit_code_linux_sandbox_exe.clone(),
             main_execve_wrapper_exe: spawn_config.main_execve_wrapper_exe.clone(),
             js_repl_node_path: spawn_config.js_repl_node_path.clone(),
             js_repl_node_module_dirs: spawn_config.js_repl_node_module_dirs.clone(),
@@ -450,7 +450,7 @@ async fn spawn_guardian_review_session(
     cancel_token: CancellationToken,
     initial_history: Option<InitialHistory>,
 ) -> anyhow::Result<GuardianReviewSession> {
-    let codex = run_codex_thread_interactive(
+    let codex = run_orbit_code_thread_interactive(
         spawn_config,
         params.parent_session.services.auth_manager.clone(),
         params.parent_session.services.models_manager.clone(),
@@ -585,9 +585,9 @@ async fn wait_for_guardian_review(
 
 pub(crate) fn build_guardian_review_session_config(
     parent_config: &Config,
-    live_network_config: Option<codex_network_proxy::NetworkProxyConfig>,
+    live_network_config: Option<orbit_code_network_proxy::NetworkProxyConfig>,
     active_model: &str,
-    reasoning_effort: Option<codex_protocol::openai_models::ReasoningEffort>,
+    reasoning_effort: Option<orbit_code_protocol::openai_models::ReasoningEffort>,
 ) -> anyhow::Result<Config> {
     let mut guardian_config = parent_config.clone();
     guardian_config.model = Some(active_model.to_string());

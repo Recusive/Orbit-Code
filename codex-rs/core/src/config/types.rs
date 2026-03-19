@@ -4,13 +4,13 @@
 // definitions that do not contain business logic.
 
 use crate::config_loader::RequirementSource;
-pub use codex_protocol::config_types::AltScreenMode;
-pub use codex_protocol::config_types::ApprovalsReviewer;
-pub use codex_protocol::config_types::ModeKind;
-pub use codex_protocol::config_types::Personality;
-pub use codex_protocol::config_types::ServiceTier;
-pub use codex_protocol::config_types::WebSearchMode;
-use codex_utils_absolute_path::AbsolutePathBuf;
+pub use orbit_code_protocol::config_types::AltScreenMode;
+pub use orbit_code_protocol::config_types::ApprovalsReviewer;
+pub use orbit_code_protocol::config_types::ModeKind;
+pub use orbit_code_protocol::config_types::Personality;
+pub use orbit_code_protocol::config_types::ServiceTier;
+pub use orbit_code_protocol::config_types::WebSearchMode;
+use orbit_code_utils_absolute_path::AbsolutePathBuf;
 use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::fmt;
@@ -755,7 +755,7 @@ pub struct Tui {
     /// Syntax highlighting theme name (kebab-case).
     ///
     /// When set, overrides automatic light/dark theme detection.
-    /// Use `/theme` in the TUI or see `$CODEX_HOME/themes` for custom themes.
+    /// Use `/theme` in the TUI or see `$ORBIT_HOME/themes` for custom themes.
     #[serde(default)]
     pub theme: Option<String>,
 
@@ -783,7 +783,7 @@ pub struct Notice {
     pub hide_gpt5_1_migration_prompt: Option<bool>,
     /// Tracks whether the user has seen the gpt-5.1-codex-max migration prompt
     #[serde(rename = "hide_gpt-5.1-codex-max_migration_prompt")]
-    pub hide_gpt_5_1_codex_max_migration_prompt: Option<bool>,
+    pub hide_gpt_5_1_orbit_code_max_migration_prompt: Option<bool>,
     /// Tracks acknowledged model migrations as old->new model slug mappings.
     #[serde(default)]
     pub model_migrations: BTreeMap<String, String>,
@@ -844,7 +844,7 @@ pub struct SandboxWorkspaceWrite {
     pub exclude_slash_tmp: bool,
 }
 
-impl From<SandboxWorkspaceWrite> for codex_app_server_protocol::SandboxSettings {
+impl From<SandboxWorkspaceWrite> for orbit_code_app_server_protocol::SandboxSettings {
     fn from(sandbox_workspace_write: SandboxWorkspaceWrite) -> Self {
         Self {
             writable_roots: sandbox_workspace_write.writable_roots,

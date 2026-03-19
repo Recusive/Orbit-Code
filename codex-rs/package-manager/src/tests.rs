@@ -163,7 +163,7 @@ async fn ensure_installed_downloads_and_extracts_zip_package() {
         .mount(&server)
         .await;
 
-    let codex_home = TempDir::new().unwrap_or_else(|error| panic!("{error}"));
+    let orbit_code_home = TempDir::new().unwrap_or_else(|error| panic!("{error}"));
     let package = TestPackage {
         base_url: Url::parse(&format!("{}/", server.uri()))
             .unwrap_or_else(|error| panic!("{error}")),
@@ -171,7 +171,7 @@ async fn ensure_installed_downloads_and_extracts_zip_package() {
         fail_on_final_install_dir: false,
     };
     let manager = PackageManager::new(PackageManagerConfig::new(
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
         package,
     ));
 
@@ -185,7 +185,7 @@ async fn ensure_installed_downloads_and_extracts_zip_package() {
         TestInstalledPackage {
             version: version.to_string(),
             platform,
-            root_dir: codex_home
+            root_dir: orbit_code_home
                 .path()
                 .join("packages")
                 .join("test-package")
@@ -207,8 +207,8 @@ async fn ensure_installed_downloads_and_extracts_zip_package() {
 #[tokio::test]
 async fn resolve_cached_uses_custom_cache_root() {
     let platform = PackagePlatform::detect_current().unwrap_or_else(|error| panic!("{error}"));
-    let codex_home = TempDir::new().unwrap_or_else(|error| panic!("{error}"));
-    let cache_root = codex_home.path().join("custom-cache");
+    let orbit_code_home = TempDir::new().unwrap_or_else(|error| panic!("{error}"));
+    let cache_root = orbit_code_home.path().join("custom-cache");
     let install_dir = cache_root.join("0.1.0").join(platform.as_str());
     std::fs::create_dir_all(&install_dir).unwrap_or_else(|error| panic!("{error}"));
     std::fs::write(install_dir.join("manifest.json"), "0.1.0")
@@ -216,7 +216,7 @@ async fn resolve_cached_uses_custom_cache_root() {
 
     let manager = PackageManager::new(
         PackageManagerConfig::new(
-            codex_home.path().to_path_buf(),
+            orbit_code_home.path().to_path_buf(),
             TestPackage {
                 base_url: Url::parse("https://example.test/")
                     .unwrap_or_else(|error| panic!("{error}")),
@@ -272,8 +272,8 @@ async fn ensure_installed_replaces_invalid_cached_install() {
         .mount(&server)
         .await;
 
-    let codex_home = TempDir::new().unwrap_or_else(|error| panic!("{error}"));
-    let install_dir = codex_home
+    let orbit_code_home = TempDir::new().unwrap_or_else(|error| panic!("{error}"));
+    let install_dir = orbit_code_home
         .path()
         .join("packages")
         .join("test-package")
@@ -284,7 +284,7 @@ async fn ensure_installed_replaces_invalid_cached_install() {
         .unwrap_or_else(|error| panic!("{error}"));
 
     let manager = PackageManager::new(PackageManagerConfig::new(
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
         TestPackage {
             base_url: Url::parse(&format!("{}/", server.uri()))
                 .unwrap_or_else(|error| panic!("{error}")),
@@ -326,9 +326,9 @@ async fn ensure_installed_rejects_manifest_version_mismatch() {
         .mount(&server)
         .await;
 
-    let codex_home = TempDir::new().unwrap_or_else(|error| panic!("{error}"));
+    let orbit_code_home = TempDir::new().unwrap_or_else(|error| panic!("{error}"));
     let manager = PackageManager::new(PackageManagerConfig::new(
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
         TestPackage {
             base_url: Url::parse(&format!("{}/", server.uri()))
                 .unwrap_or_else(|error| panic!("{error}")),
@@ -380,9 +380,9 @@ async fn ensure_installed_serializes_concurrent_installs() {
         .mount(&server)
         .await;
 
-    let codex_home = TempDir::new().unwrap_or_else(|error| panic!("{error}"));
+    let orbit_code_home = TempDir::new().unwrap_or_else(|error| panic!("{error}"));
     let config = PackageManagerConfig::new(
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
         TestPackage {
             base_url: Url::parse(&format!("{}/", server.uri()))
                 .unwrap_or_else(|error| panic!("{error}")),
@@ -444,9 +444,9 @@ async fn ensure_installed_rejects_unexpected_archive_size() {
         .mount(&server)
         .await;
 
-    let codex_home = TempDir::new().unwrap_or_else(|error| panic!("{error}"));
+    let orbit_code_home = TempDir::new().unwrap_or_else(|error| panic!("{error}"));
     let manager = PackageManager::new(PackageManagerConfig::new(
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
         TestPackage {
             base_url: Url::parse(&format!("{}/", server.uri()))
                 .unwrap_or_else(|error| panic!("{error}")),
@@ -527,8 +527,8 @@ async fn ensure_installed_restores_previous_install_when_final_validation_fails(
         .mount(&server)
         .await;
 
-    let codex_home = TempDir::new().unwrap_or_else(|error| panic!("{error}"));
-    let install_dir = codex_home
+    let orbit_code_home = TempDir::new().unwrap_or_else(|error| panic!("{error}"));
+    let install_dir = orbit_code_home
         .path()
         .join("packages")
         .join("test-package")
@@ -539,7 +539,7 @@ async fn ensure_installed_restores_previous_install_when_final_validation_fails(
         .unwrap_or_else(|error| panic!("{error}"));
 
     let error = PackageManager::new(PackageManagerConfig::new(
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
         TestPackage {
             base_url: Url::parse(&format!("{}/", server.uri()))
                 .unwrap_or_else(|error| panic!("{error}")),

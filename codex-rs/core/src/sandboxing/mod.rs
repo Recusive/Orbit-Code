@@ -24,25 +24,25 @@ use crate::seatbelt::create_seatbelt_command_args_for_policies_with_extensions;
 use crate::spawn::CODEX_SANDBOX_ENV_VAR;
 use crate::spawn::CODEX_SANDBOX_NETWORK_DISABLED_ENV_VAR;
 use crate::tools::sandboxing::SandboxablePreference;
-use codex_network_proxy::NetworkProxy;
-use codex_protocol::config_types::WindowsSandboxLevel;
-use codex_protocol::models::FileSystemPermissions;
-use codex_protocol::models::MacOsSeatbeltProfileExtensions;
-use codex_protocol::models::NetworkPermissions;
-use codex_protocol::models::PermissionProfile;
-pub use codex_protocol::models::SandboxPermissions;
-use codex_protocol::permissions::FileSystemAccessMode;
-use codex_protocol::permissions::FileSystemPath;
-use codex_protocol::permissions::FileSystemSandboxEntry;
-use codex_protocol::permissions::FileSystemSandboxKind;
-use codex_protocol::permissions::FileSystemSandboxPolicy;
-use codex_protocol::permissions::NetworkSandboxPolicy;
-use codex_protocol::protocol::NetworkAccess;
-use codex_protocol::protocol::ReadOnlyAccess;
-use codex_utils_absolute_path::AbsolutePathBuf;
 use dunce::canonicalize;
 use macos_permissions::intersect_macos_seatbelt_profile_extensions;
 use macos_permissions::merge_macos_seatbelt_profile_extensions;
+use orbit_code_network_proxy::NetworkProxy;
+use orbit_code_protocol::config_types::WindowsSandboxLevel;
+use orbit_code_protocol::models::FileSystemPermissions;
+use orbit_code_protocol::models::MacOsSeatbeltProfileExtensions;
+use orbit_code_protocol::models::NetworkPermissions;
+use orbit_code_protocol::models::PermissionProfile;
+pub use orbit_code_protocol::models::SandboxPermissions;
+use orbit_code_protocol::permissions::FileSystemAccessMode;
+use orbit_code_protocol::permissions::FileSystemPath;
+use orbit_code_protocol::permissions::FileSystemSandboxEntry;
+use orbit_code_protocol::permissions::FileSystemSandboxKind;
+use orbit_code_protocol::permissions::FileSystemSandboxPolicy;
+use orbit_code_protocol::permissions::NetworkSandboxPolicy;
+use orbit_code_protocol::protocol::NetworkAccess;
+use orbit_code_protocol::protocol::ReadOnlyAccess;
+use orbit_code_utils_absolute_path::AbsolutePathBuf;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::path::Path;
@@ -94,7 +94,7 @@ pub(crate) struct SandboxTransformRequest<'a> {
     pub sandbox_policy_cwd: &'a Path,
     #[cfg(target_os = "macos")]
     pub macos_seatbelt_profile_extensions: Option<&'a MacOsSeatbeltProfileExtensions>,
-    pub codex_linux_sandbox_exe: Option<&'a PathBuf>,
+    pub orbit_code_linux_sandbox_exe: Option<&'a PathBuf>,
     pub use_legacy_landlock: bool,
     pub windows_sandbox_level: WindowsSandboxLevel,
     pub windows_sandbox_private_desktop: bool,
@@ -592,7 +592,7 @@ impl SandboxManager {
             sandbox_policy_cwd,
             #[cfg(target_os = "macos")]
             macos_seatbelt_profile_extensions,
-            codex_linux_sandbox_exe,
+            orbit_code_linux_sandbox_exe,
             use_legacy_landlock,
             windows_sandbox_level,
             windows_sandbox_private_desktop,
@@ -667,7 +667,7 @@ impl SandboxManager {
             #[cfg(not(target_os = "macos"))]
             SandboxType::MacosSeatbelt => return Err(SandboxTransformError::SeatbeltUnavailable),
             SandboxType::LinuxSeccomp => {
-                let exe = codex_linux_sandbox_exe
+                let exe = orbit_code_linux_sandbox_exe
                     .ok_or(SandboxTransformError::MissingLinuxSandboxExecutable)?;
                 let allow_proxy_network = allow_network_for_proxy(enforce_managed_network);
                 let mut args = create_linux_sandbox_command_args_for_policies(

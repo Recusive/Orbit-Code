@@ -1,20 +1,20 @@
-use codex_protocol::items::AgentMessageContent;
-use codex_protocol::items::AgentMessageItem;
-use codex_protocol::items::ReasoningItem;
-use codex_protocol::items::TurnItem;
-use codex_protocol::items::UserMessageItem;
-use codex_protocol::items::WebSearchItem;
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::MessagePhase;
-use codex_protocol::models::ReasoningItemContent;
-use codex_protocol::models::ReasoningItemReasoningSummary;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::models::WebSearchAction;
-use codex_protocol::models::is_image_close_tag_text;
-use codex_protocol::models::is_image_open_tag_text;
-use codex_protocol::models::is_local_image_close_tag_text;
-use codex_protocol::models::is_local_image_open_tag_text;
-use codex_protocol::user_input::UserInput;
+use orbit_code_protocol::items::AgentMessageContent;
+use orbit_code_protocol::items::AgentMessageItem;
+use orbit_code_protocol::items::ReasoningItem;
+use orbit_code_protocol::items::TurnItem;
+use orbit_code_protocol::items::UserMessageItem;
+use orbit_code_protocol::items::WebSearchItem;
+use orbit_code_protocol::models::ContentItem;
+use orbit_code_protocol::models::MessagePhase;
+use orbit_code_protocol::models::ReasoningItemContent;
+use orbit_code_protocol::models::ReasoningItemReasoningSummary;
+use orbit_code_protocol::models::ResponseItem;
+use orbit_code_protocol::models::WebSearchAction;
+use orbit_code_protocol::models::is_image_close_tag_text;
+use orbit_code_protocol::models::is_image_open_tag_text;
+use orbit_code_protocol::models::is_local_image_close_tag_text;
+use orbit_code_protocol::models::is_local_image_open_tag_text;
+use orbit_code_protocol::user_input::UserInput;
 use tracing::warn;
 use uuid::Uuid;
 
@@ -153,7 +153,7 @@ pub fn parse_turn_item(item: &ResponseItem) -> Option<TurnItem> {
             revised_prompt,
             result,
         } => Some(TurnItem::ImageGeneration(
-            codex_protocol::items::ImageGenerationItem {
+            orbit_code_protocol::items::ImageGenerationItem {
                 id: id.clone(),
                 status: status.clone(),
                 revised_prompt: revised_prompt.clone(),

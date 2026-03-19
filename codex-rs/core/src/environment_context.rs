@@ -1,9 +1,9 @@
 use crate::codex::TurnContext;
 use crate::contextual_user_message::ENVIRONMENT_CONTEXT_FRAGMENT;
 use crate::shell::Shell;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::protocol::TurnContextItem;
-use codex_protocol::protocol::TurnContextNetworkItem;
+use orbit_code_protocol::models::ResponseItem;
+use orbit_code_protocol::protocol::TurnContextItem;
+use orbit_code_protocol::protocol::TurnContextNetworkItem;
 use serde::Deserialize;
 use serde::Serialize;
 use std::path::PathBuf;

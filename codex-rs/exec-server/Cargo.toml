@@ -1,5 +1,5 @@
 [package]
-name = "codex-exec-server"
+name = "orbit-code-exec-server"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -8,7 +8,7 @@ license.workspace = true
 doctest = false
 
 [[bin]]
-name = "codex-exec-server"
+name = "orbit-code-exec-server"
 path = "src/bin/codex-exec-server.rs"
 
 [lints]
@@ -16,7 +16,7 @@ workspace = true
 
 [dependencies]
 clap = { workspace = true, features = ["derive"] }
-codex-app-server-protocol = { workspace = true }
+orbit-code-app-server-protocol = { workspace = true }
 futures = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
@@ -36,5 +36,5 @@ tracing = { workspace = true }
 
 [dev-dependencies]
 anyhow = { workspace = true }
-codex-utils-cargo-bin = { workspace = true }
+orbit-code-utils-cargo-bin = { workspace = true }
 pretty_assertions = { workspace = true }

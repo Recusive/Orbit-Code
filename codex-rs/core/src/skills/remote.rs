@@ -181,7 +181,7 @@ pub async fn export_remote_skill(
         anyhow::bail!("Downloaded remote skill payload is not a zip archive");
     }
 
-    let output_dir = config.codex_home.join("skills").join(skill_id);
+    let output_dir = config.orbit_code_home.join("skills").join(skill_id);
     tokio::fs::create_dir_all(&output_dir)
         .await
         .context("Failed to create downloaded skills directory")?;

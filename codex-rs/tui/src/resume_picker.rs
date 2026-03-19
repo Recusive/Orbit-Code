@@ -12,20 +12,20 @@ use crate::tui::Tui;
 use crate::tui::TuiEvent;
 use chrono::DateTime;
 use chrono::Utc;
-use codex_core::Cursor;
-use codex_core::INTERACTIVE_SESSION_SOURCES;
-use codex_core::RolloutRecorder;
-use codex_core::ThreadItem;
-use codex_core::ThreadSortKey;
-use codex_core::ThreadsPage;
-use codex_core::config::Config;
-use codex_core::find_thread_names_by_ids;
-use codex_core::path_utils;
-use codex_protocol::ThreadId;
 use color_eyre::eyre::Result;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyEventKind;
+use orbit_code_core::Cursor;
+use orbit_code_core::INTERACTIVE_SESSION_SOURCES;
+use orbit_code_core::RolloutRecorder;
+use orbit_code_core::ThreadItem;
+use orbit_code_core::ThreadSortKey;
+use orbit_code_core::ThreadsPage;
+use orbit_code_core::config::Config;
+use orbit_code_core::find_thread_names_by_ids;
+use orbit_code_core::path_utils;
+use orbit_code_protocol::ThreadId;
 use ratatui::layout::Constraint;
 use ratatui::layout::Layout;
 use ratatui::layout::Rect;
@@ -145,7 +145,7 @@ async fn run_session_picker(
     let (bg_tx, bg_rx) = mpsc::unbounded_channel();
 
     let default_provider = config.model_provider_id.to_string();
-    let codex_home = config.codex_home.as_path();
+    let orbit_code_home = config.orbit_code_home.as_path();
     let filter_cwd = if show_all {
         None
     } else {
@@ -179,7 +179,7 @@ async fn run_session_picker(
     });
 
     let mut state = PickerState::new(
-        codex_home.to_path_buf(),
+        orbit_code_home.to_path_buf(),
         alt.tui.frame_requester(),
         page_loader,
         default_provider.clone(),
@@ -254,7 +254,7 @@ impl Drop for AltScreenGuard<'_> {
 }
 
 struct PickerState {
-    codex_home: PathBuf,
+    orbit_code_home: PathBuf,
     requester: FrameRequester,
     pagination: PaginationState,
     all_rows: Vec<Row>,
@@ -358,7 +358,7 @@ impl Row {
 
 impl PickerState {
     fn new(
-        codex_home: PathBuf,
+        orbit_code_home: PathBuf,
         requester: FrameRequester,
         page_loader: PageLoader,
         default_provider: String,
@@ -367,7 +367,7 @@ impl PickerState {
         action: SessionPickerAction,
     ) -> Self {
         Self {
-            codex_home,
+            orbit_code_home,
             requester,
             pagination: PaginationState {
                 next_cursor: None,
@@ -597,7 +597,7 @@ impl PickerState {
             return;
         }
 
-        let names = find_thread_names_by_ids(&self.codex_home, &missing_ids)
+        let names = find_thread_names_by_ids(&self.orbit_code_home, &missing_ids)
             .await
             .unwrap_or_default();
         for thread_id in missing_ids {
@@ -1344,7 +1344,7 @@ fn column_visibility(
 mod tests {
     use super::*;
     use chrono::Duration;
-    use codex_protocol::ThreadId;
+    use orbit_code_protocol::ThreadId;
 
     use crossterm::event::KeyCode;
     use crossterm::event::KeyEvent;
@@ -1772,7 +1772,7 @@ mod tests {
     //     );
     //
     //     let page = RolloutRecorder::list_threads(
-    //         &state.codex_home,
+    //         &state.orbit_code_home,
     //         PAGE_SIZE,
     //         None,
     //         ThreadSortKey::CreatedAt,

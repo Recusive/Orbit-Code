@@ -14,7 +14,7 @@
 //! keystore that always encrypts secrets when they are transferred across the bus. If DBus isn't installed the keystore will fall back to the json
 //! file because we don't use the "vendored" feature.
 //!
-//! If the keyring is not available or fails, we fall back to CODEX_HOME/.credentials.json which is consistent with other coding CLI agents.
+//! If the keyring is not available or fails, we fall back to ORBIT_HOME/.credentials.json which is consistent with other coding CLI agents.
 
 use anyhow::Context;
 use anyhow::Error;
@@ -43,12 +43,12 @@ use std::time::SystemTime;
 use std::time::UNIX_EPOCH;
 use tracing::warn;
 
-use codex_keyring_store::DefaultKeyringStore;
-use codex_keyring_store::KeyringStore;
+use orbit_code_keyring_store::DefaultKeyringStore;
+use orbit_code_keyring_store::KeyringStore;
 use rmcp::transport::auth::AuthorizationManager;
 use tokio::sync::Mutex;
 
-use codex_utils_home_dir::find_codex_home;
+use orbit_code_utils_home_dir::find_orbit_code_home;
 
 const KEYRING_SERVICE: &str = "Codex MCP Credentials";
 const REFRESH_SKEW_MILLIS: u64 = 30_000;
@@ -71,7 +71,7 @@ pub enum OAuthCredentialsStoreMode {
     /// Credentials stored in the keyring will only be readable by Codex unless the user explicitly grants access via OS-level keyring access.
     #[default]
     Auto,
-    /// CODEX_HOME/.credentials.json
+    /// ORBIT_HOME/.credentials.json
     /// This file will be readable to Codex and other applications running as the same user.
     File,
     /// Keyring when available, otherwise fail.
@@ -535,7 +535,7 @@ fn compute_store_key(server_name: &str, server_url: &str) -> Result<String> {
 }
 
 fn fallback_file_path() -> Result<PathBuf> {
-    let mut path = find_codex_home()?;
+    let mut path = find_orbit_code_home()?;
     path.push(FALLBACK_FILENAME);
     Ok(path)
 }
@@ -612,7 +612,7 @@ mod tests {
     use std::sync::PoisonError;
     use tempfile::tempdir;
 
-    use codex_keyring_store::tests::MockKeyringStore;
+    use orbit_code_keyring_store::tests::MockKeyringStore;
 
     struct TempCodexHome {
         _guard: MutexGuard<'static, ()>,
@@ -626,9 +626,9 @@ mod tests {
                 .get_or_init(Mutex::default)
                 .lock()
                 .unwrap_or_else(PoisonError::into_inner);
-            let dir = tempdir().expect("create CODEX_HOME temp dir");
+            let dir = tempdir().expect("create ORBIT_HOME temp dir");
             unsafe {
-                std::env::set_var("CODEX_HOME", dir.path());
+                std::env::set_var("ORBIT_HOME", dir.path());
             }
             Self {
                 _guard: guard,
@@ -640,7 +640,7 @@ mod tests {
     impl Drop for TempCodexHome {
         fn drop(&mut self) {
             unsafe {
-                std::env::remove_var("CODEX_HOME");
+                std::env::remove_var("ORBIT_HOME");
             }
         }
     }

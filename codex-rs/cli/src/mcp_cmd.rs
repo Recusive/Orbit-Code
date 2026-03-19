@@ -6,31 +6,31 @@ use anyhow::Result;
 use anyhow::anyhow;
 use anyhow::bail;
 use clap::ArgGroup;
-use codex_core::config::Config;
-use codex_core::config::edit::ConfigEditsBuilder;
-use codex_core::config::find_codex_home;
-use codex_core::config::load_global_mcp_servers;
-use codex_core::config::types::McpServerConfig;
-use codex_core::config::types::McpServerTransportConfig;
-use codex_core::mcp::McpManager;
-use codex_core::mcp::auth::McpOAuthLoginSupport;
-use codex_core::mcp::auth::ResolvedMcpOAuthScopes;
-use codex_core::mcp::auth::compute_auth_statuses;
-use codex_core::mcp::auth::discover_supported_scopes;
-use codex_core::mcp::auth::oauth_login_support;
-use codex_core::mcp::auth::resolve_oauth_scopes;
-use codex_core::mcp::auth::should_retry_without_scopes;
-use codex_core::plugins::PluginsManager;
-use codex_protocol::protocol::McpAuthStatus;
-use codex_rmcp_client::delete_oauth_tokens;
-use codex_rmcp_client::perform_oauth_login;
-use codex_utils_cli::CliConfigOverrides;
-use codex_utils_cli::format_env_display::format_env_display;
+use orbit_code_core::config::Config;
+use orbit_code_core::config::edit::ConfigEditsBuilder;
+use orbit_code_core::config::find_orbit_code_home;
+use orbit_code_core::config::load_global_mcp_servers;
+use orbit_code_core::config::types::McpServerConfig;
+use orbit_code_core::config::types::McpServerTransportConfig;
+use orbit_code_core::mcp::McpManager;
+use orbit_code_core::mcp::auth::McpOAuthLoginSupport;
+use orbit_code_core::mcp::auth::ResolvedMcpOAuthScopes;
+use orbit_code_core::mcp::auth::compute_auth_statuses;
+use orbit_code_core::mcp::auth::discover_supported_scopes;
+use orbit_code_core::mcp::auth::oauth_login_support;
+use orbit_code_core::mcp::auth::resolve_oauth_scopes;
+use orbit_code_core::mcp::auth::should_retry_without_scopes;
+use orbit_code_core::plugins::PluginsManager;
+use orbit_code_protocol::protocol::McpAuthStatus;
+use orbit_code_rmcp_client::delete_oauth_tokens;
+use orbit_code_rmcp_client::perform_oauth_login;
+use orbit_code_utils_cli::CliConfigOverrides;
+use orbit_code_utils_cli::format_env_display::format_env_display;
 
 /// Subcommands:
 /// - `list`   — list configured servers (with `--json`)
 /// - `get`    — show a single server (with `--json`)
-/// - `add`    — add a server launcher entry to `~/.codex/config.toml`
+/// - `add`    — add a server launcher entry to `~/.orbit/config.toml`
 /// - `remove` — delete a server entry
 /// - `login`  — authenticate with MCP server using OAuth
 /// - `logout` — remove OAuth credentials for MCP server
@@ -71,7 +71,7 @@ pub struct GetArgs {
 }
 
 #[derive(Debug, clap::Parser)]
-#[command(override_usage = "codex mcp add [OPTIONS] <NAME> (--url <URL> | -- <COMMAND>...)")]
+#[command(override_usage = "orbit-code mcp add [OPTIONS] <NAME> (--url <URL> | -- <COMMAND>...)")]
 pub struct AddArgs {
     /// Name for the MCP server configuration.
     pub name: String,
@@ -194,7 +194,7 @@ impl McpCli {
 async fn perform_oauth_login_retry_without_scopes(
     name: &str,
     url: &str,
-    store_mode: codex_rmcp_client::OAuthCredentialsStoreMode,
+    store_mode: orbit_code_rmcp_client::OAuthCredentialsStoreMode,
     http_headers: Option<HashMap<String, String>>,
     env_http_headers: Option<HashMap<String, String>>,
     resolved_scopes: &ResolvedMcpOAuthScopes,
@@ -251,10 +251,15 @@ async fn run_add(config_overrides: &CliConfigOverrides, add_args: AddArgs) -> Re
 
     validate_server_name(&name)?;
 
-    let codex_home = find_codex_home().context("failed to resolve CODEX_HOME")?;
-    let mut servers = load_global_mcp_servers(&codex_home)
+    let orbit_code_home = find_orbit_code_home().context("failed to resolve ORBIT_HOME")?;
+    let mut servers = load_global_mcp_servers(&orbit_code_home)
         .await
-        .with_context(|| format!("failed to load MCP servers from {}", codex_home.display()))?;
+        .with_context(|| {
+            format!(
+                "failed to load MCP servers from {}",
+                orbit_code_home.display()
+            )
+        })?;
 
     let transport = match transport_args {
         AddMcpTransportArgs {
@@ -310,11 +315,16 @@ async fn run_add(config_overrides: &CliConfigOverrides, add_args: AddArgs) -> Re
 
     servers.insert(name.clone(), new_entry);
 
-    ConfigEditsBuilder::new(&codex_home)
+    ConfigEditsBuilder::new(&orbit_code_home)
         .replace_mcp_servers(&servers)
         .apply()
         .await
-        .with_context(|| format!("failed to write MCP servers to {}", codex_home.display()))?;
+        .with_context(|| {
+            format!(
+                "failed to write MCP servers to {}",
+                orbit_code_home.display()
+            )
+        })?;
 
     println!("Added global MCP server '{name}'.");
 
@@ -342,7 +352,7 @@ async fn run_add(config_overrides: &CliConfigOverrides, add_args: AddArgs) -> Re
         }
         McpOAuthLoginSupport::Unsupported => {}
         McpOAuthLoginSupport::Unknown(_) => println!(
-            "MCP server may or may not require login. Run `codex mcp login {name}` to login."
+            "MCP server may or may not require login. Run `orbit-code mcp login {name}` to login."
         ),
     }
 
@@ -358,19 +368,29 @@ async fn run_remove(config_overrides: &CliConfigOverrides, remove_args: RemoveAr
 
     validate_server_name(&name)?;
 
-    let codex_home = find_codex_home().context("failed to resolve CODEX_HOME")?;
-    let mut servers = load_global_mcp_servers(&codex_home)
+    let orbit_code_home = find_orbit_code_home().context("failed to resolve ORBIT_HOME")?;
+    let mut servers = load_global_mcp_servers(&orbit_code_home)
         .await
-        .with_context(|| format!("failed to load MCP servers from {}", codex_home.display()))?;
+        .with_context(|| {
+            format!(
+                "failed to load MCP servers from {}",
+                orbit_code_home.display()
+            )
+        })?;
 
     let removed = servers.remove(&name).is_some();
 
     if removed {
-        ConfigEditsBuilder::new(&codex_home)
+        ConfigEditsBuilder::new(&orbit_code_home)
             .replace_mcp_servers(&servers)
             .apply()
             .await
-            .with_context(|| format!("failed to write MCP servers to {}", codex_home.display()))?;
+            .with_context(|| {
+                format!(
+                    "failed to write MCP servers to {}",
+                    orbit_code_home.display()
+                )
+            })?;
     }
 
     if removed {
@@ -389,7 +409,9 @@ async fn run_login(config_overrides: &CliConfigOverrides, login_args: LoginArgs)
     let config = Config::load_with_cli_overrides(overrides)
         .await
         .context("failed to load configuration")?;
-    let mcp_manager = McpManager::new(Arc::new(PluginsManager::new(config.codex_home.clone())));
+    let mcp_manager = McpManager::new(Arc::new(PluginsManager::new(
+        config.orbit_code_home.clone(),
+    )));
     let mcp_servers = mcp_manager.effective_servers(&config, /*auth*/ None);
 
     let LoginArgs { name, scopes } = login_args;
@@ -440,7 +462,9 @@ async fn run_logout(config_overrides: &CliConfigOverrides, logout_args: LogoutAr
     let config = Config::load_with_cli_overrides(overrides)
         .await
         .context("failed to load configuration")?;
-    let mcp_manager = McpManager::new(Arc::new(PluginsManager::new(config.codex_home.clone())));
+    let mcp_manager = McpManager::new(Arc::new(PluginsManager::new(
+        config.orbit_code_home.clone(),
+    )));
     let mcp_servers = mcp_manager.effective_servers(&config, /*auth*/ None);
 
     let LogoutArgs { name } = logout_args;
@@ -470,7 +494,9 @@ async fn run_list(config_overrides: &CliConfigOverrides, list_args: ListArgs) ->
     let config = Config::load_with_cli_overrides(overrides)
         .await
         .context("failed to load configuration")?;
-    let mcp_manager = McpManager::new(Arc::new(PluginsManager::new(config.codex_home.clone())));
+    let mcp_manager = McpManager::new(Arc::new(PluginsManager::new(
+        config.orbit_code_home.clone(),
+    )));
     let mcp_servers = mcp_manager.effective_servers(&config, /*auth*/ None);
 
     let mut entries: Vec<_> = mcp_servers.iter().collect();
@@ -538,7 +564,7 @@ async fn run_list(config_overrides: &CliConfigOverrides, list_args: ListArgs) ->
     }
 
     if entries.is_empty() {
-        println!("No MCP servers configured yet. Try `codex mcp add my-tool -- my-command`.");
+        println!("No MCP servers configured yet. Try `orbit-code mcp add my-tool -- my-command`.");
         return Ok(());
     }
 
@@ -719,7 +745,9 @@ async fn run_get(config_overrides: &CliConfigOverrides, get_args: GetArgs) -> Re
     let config = Config::load_with_cli_overrides(overrides)
         .await
         .context("failed to load configuration")?;
-    let mcp_manager = McpManager::new(Arc::new(PluginsManager::new(config.codex_home.clone())));
+    let mcp_manager = McpManager::new(Arc::new(PluginsManager::new(
+        config.orbit_code_home.clone(),
+    )));
     let mcp_servers = mcp_manager.effective_servers(&config, /*auth*/ None);
 
     let Some(server) = mcp_servers.get(&get_args.name) else {
@@ -868,7 +896,7 @@ async fn run_get(config_overrides: &CliConfigOverrides, get_args: GetArgs) -> Re
     if let Some(timeout) = server.tool_timeout_sec {
         println!("  tool_timeout_sec: {}", timeout.as_secs_f64());
     }
-    println!("  remove: codex mcp remove {}", get_args.name);
+    println!("  remove: orbit-code mcp remove {}", get_args.name);
 
     Ok(())
 }

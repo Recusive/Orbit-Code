@@ -8,8 +8,8 @@ use crate::memories::raw_memories_file;
 use crate::memories::rollout_summaries_dir;
 use chrono::TimeZone;
 use chrono::Utc;
-use codex_protocol::ThreadId;
-use codex_state::Stage1Output;
+use orbit_code_protocol::ThreadId;
+use orbit_code_state::Stage1Output;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 use std::path::PathBuf;
@@ -18,8 +18,11 @@ use tempfile::tempdir;
 #[test]
 fn memory_root_uses_shared_global_path() {
     let dir = tempdir().expect("tempdir");
-    let codex_home = dir.path().join("codex");
-    assert_eq!(memory_root(&codex_home), codex_home.join("memories"));
+    let orbit_code_home = dir.path().join("codex");
+    assert_eq!(
+        memory_root(&orbit_code_home),
+        orbit_code_home.join("memories")
+    );
 }
 
 #[test]
@@ -426,15 +429,15 @@ mod phase2 {
     use crate::memories::raw_memories_file;
     use crate::memories::rollout_summaries_dir;
     use chrono::Utc;
-    use codex_config::Constrained;
-    use codex_protocol::ThreadId;
-    use codex_protocol::protocol::AskForApproval;
-    use codex_protocol::protocol::Op;
-    use codex_protocol::protocol::SandboxPolicy;
-    use codex_protocol::protocol::SessionSource;
-    use codex_state::Phase2JobClaimOutcome;
-    use codex_state::Stage1Output;
-    use codex_state::ThreadMetadataBuilder;
+    use orbit_code_config::Constrained;
+    use orbit_code_protocol::ThreadId;
+    use orbit_code_protocol::protocol::AskForApproval;
+    use orbit_code_protocol::protocol::Op;
+    use orbit_code_protocol::protocol::SandboxPolicy;
+    use orbit_code_protocol::protocol::SessionSource;
+    use orbit_code_state::Phase2JobClaimOutcome;
+    use orbit_code_state::Stage1Output;
+    use orbit_code_state::ThreadMetadataBuilder;
     use std::path::PathBuf;
     use std::sync::Arc;
     use tempfile::TempDir;
@@ -456,23 +459,23 @@ mod phase2 {
     }
 
     struct DispatchHarness {
-        _codex_home: TempDir,
+        _orbit_code_home: TempDir,
         config: Arc<Config>,
         session: Arc<Session>,
         manager: ThreadManager,
-        state_db: Arc<codex_state::StateRuntime>,
+        state_db: Arc<orbit_code_state::StateRuntime>,
     }
 
     impl DispatchHarness {
         async fn new() -> Self {
-            let codex_home = tempfile::tempdir().expect("create temp codex home");
+            let orbit_code_home = tempfile::tempdir().expect("create temp codex home");
             let mut config = test_config();
-            config.codex_home = codex_home.path().to_path_buf();
-            config.cwd = config.codex_home.clone();
+            config.orbit_code_home = orbit_code_home.path().to_path_buf();
+            config.cwd = config.orbit_code_home.clone();
             let config = Arc::new(config);
 
-            let state_db = codex_state::StateRuntime::init(
-                config.codex_home.clone(),
+            let state_db = orbit_code_state::StateRuntime::init(
+                config.orbit_code_home.clone(),
                 config.model_provider_id.clone(),
             )
             .await
@@ -481,14 +484,14 @@ mod phase2 {
             let manager = ThreadManager::with_models_provider_and_home_for_tests(
                 CodexAuth::from_api_key("dummy"),
                 config.model_provider.clone(),
-                config.codex_home.clone(),
+                config.orbit_code_home.clone(),
             );
             let (mut session, _turn_context) = make_session_and_context().await;
             session.services.state_db = Some(Arc::clone(&state_db));
             session.services.agent_control = manager.agent_control();
 
             Self {
-                _codex_home: codex_home,
+                _orbit_code_home: orbit_code_home,
                 config,
                 session: Arc::new(session),
                 manager,
@@ -501,7 +504,7 @@ mod phase2 {
             let mut metadata_builder = ThreadMetadataBuilder::new(
                 thread_id,
                 self.config
-                    .codex_home
+                    .orbit_code_home
                     .join(format!("rollout-{thread_id}.jsonl")),
                 Utc::now(),
                 SessionSource::Cli,
@@ -527,7 +530,9 @@ mod phase2 {
                 .await
                 .expect("claim stage-1 job");
             let ownership_token = match claim {
-                codex_state::Stage1JobClaimOutcome::Claimed { ownership_token } => ownership_token,
+                orbit_code_state::Stage1JobClaimOutcome::Claimed { ownership_token } => {
+                    ownership_token
+                }
                 other => panic!("unexpected stage-1 claim outcome: {other:?}"),
             };
             assert!(
@@ -670,14 +675,17 @@ mod phase2 {
             .expect("get consolidation thread");
         let config_snapshot = subagent.config_snapshot().await;
         pretty_assertions::assert_eq!(config_snapshot.approval_policy, AskForApproval::Never);
-        pretty_assertions::assert_eq!(config_snapshot.cwd, memory_root(&harness.config.codex_home));
+        pretty_assertions::assert_eq!(
+            config_snapshot.cwd,
+            memory_root(&harness.config.orbit_code_home)
+        );
         match config_snapshot.sandbox_policy {
             SandboxPolicy::WorkspaceWrite { writable_roots, .. } => {
                 assert!(
                     writable_roots
                         .iter()
-                        .any(|root| root.as_path() == harness.config.codex_home.as_path()),
-                    "consolidation subagent should have codex_home as writable root"
+                        .any(|root| root.as_path() == harness.config.orbit_code_home.as_path()),
+                    "consolidation subagent should have orbit_code_home as writable root"
                 );
             }
             other => panic!("unexpected sandbox policy: {other:?}"),
@@ -689,7 +697,7 @@ mod phase2 {
     #[tokio::test]
     async fn dispatch_with_empty_stage1_outputs_rebuilds_local_artifacts() {
         let harness = DispatchHarness::new().await;
-        let root = memory_root(&harness.config.codex_home);
+        let root = memory_root(&harness.config.orbit_code_home);
         let summaries_dir = rollout_summaries_dir(&root);
         tokio::fs::create_dir_all(&summaries_dir)
             .await
@@ -807,7 +815,7 @@ mod phase2 {
     async fn dispatch_marks_job_for_retry_when_syncing_artifacts_fails() {
         let harness = DispatchHarness::new().await;
         harness.seed_stage1_output(100).await;
-        let root = memory_root(&harness.config.codex_home);
+        let root = memory_root(&harness.config.orbit_code_home);
         tokio::fs::write(&root, "not a directory")
             .await
             .expect("create file at memory root");
@@ -829,7 +837,7 @@ mod phase2 {
     async fn dispatch_marks_job_for_retry_when_rebuilding_raw_memories_fails() {
         let harness = DispatchHarness::new().await;
         harness.seed_stage1_output(100).await;
-        let root = memory_root(&harness.config.codex_home);
+        let root = memory_root(&harness.config.orbit_code_home);
         tokio::fs::create_dir_all(raw_memories_file(&root))
             .await
             .expect("create raw_memories.md as a directory");
@@ -849,14 +857,14 @@ mod phase2 {
 
     #[tokio::test]
     async fn dispatch_marks_job_for_retry_when_spawn_agent_fails() {
-        let codex_home = tempfile::tempdir().expect("create temp codex home");
+        let orbit_code_home = tempfile::tempdir().expect("create temp codex home");
         let mut config = test_config();
-        config.codex_home = codex_home.path().to_path_buf();
-        config.cwd = config.codex_home.clone();
+        config.orbit_code_home = orbit_code_home.path().to_path_buf();
+        config.cwd = config.orbit_code_home.clone();
         let config = Arc::new(config);
 
-        let state_db = codex_state::StateRuntime::init(
-            config.codex_home.clone(),
+        let state_db = orbit_code_state::StateRuntime::init(
+            config.orbit_code_home.clone(),
             config.model_provider_id.clone(),
         )
         .await
@@ -870,7 +878,9 @@ mod phase2 {
         let thread_id = ThreadId::new();
         let mut metadata_builder = ThreadMetadataBuilder::new(
             thread_id,
-            config.codex_home.join(format!("rollout-{thread_id}.jsonl")),
+            config
+                .orbit_code_home
+                .join(format!("rollout-{thread_id}.jsonl")),
             Utc::now(),
             SessionSource::Cli,
         );
@@ -887,7 +897,7 @@ mod phase2 {
             .await
             .expect("claim stage-1 job");
         let ownership_token = match claim {
-            codex_state::Stage1JobClaimOutcome::Claimed { ownership_token } => ownership_token,
+            orbit_code_state::Stage1JobClaimOutcome::Claimed { ownership_token } => ownership_token,
             other => panic!("unexpected stage-1 claim outcome: {other:?}"),
         };
         assert!(

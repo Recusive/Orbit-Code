@@ -5,24 +5,24 @@ use std::time::Duration;
 use anyhow::Result;
 use async_trait::async_trait;
 use bytes::Bytes;
-use codex_api::AuthProvider;
-use codex_api::Provider;
-use codex_api::ResponsesApiRequest;
-use codex_api::ResponsesClient;
-use codex_api::ResponsesOptions;
-use codex_api::requests::responses::Compression;
-use codex_client::HttpTransport;
-use codex_client::Request;
-use codex_client::Response;
-use codex_client::StreamResponse;
-use codex_client::TransportError;
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::SubAgentSource;
 use http::HeaderMap;
 use http::HeaderValue;
 use http::StatusCode;
+use orbit_code_api::AuthProvider;
+use orbit_code_api::Provider;
+use orbit_code_api::ResponsesApiRequest;
+use orbit_code_api::ResponsesClient;
+use orbit_code_api::ResponsesOptions;
+use orbit_code_api::requests::responses::Compression;
+use orbit_code_client::HttpTransport;
+use orbit_code_client::Request;
+use orbit_code_client::Response;
+use orbit_code_client::StreamResponse;
+use orbit_code_client::TransportError;
+use orbit_code_protocol::models::ContentItem;
+use orbit_code_protocol::models::ResponseItem;
+use orbit_code_protocol::protocol::SessionSource;
+use orbit_code_protocol::protocol::SubAgentSource;
 use pretty_assertions::assert_eq;
 
 fn assert_path_ends_with(requests: &[Request], suffix: &str) {
@@ -126,7 +126,7 @@ fn provider(name: &str) -> Provider {
         base_url: "https://example.com/v1".to_string(),
         query_params: None,
         headers: HeaderMap::new(),
-        retry: codex_api::provider::RetryConfig {
+        retry: orbit_code_api::provider::RetryConfig {
             max_attempts: 1,
             base_delay: Duration::from_millis(1),
             retry_429: false,

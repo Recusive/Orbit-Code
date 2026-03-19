@@ -1,6 +1,6 @@
-load("//:defs.bzl", "codex_rust_crate")
+load("//:defs.bzl", "orbit_code_rust_crate")
 
-codex_rust_crate(
+orbit_code_rust_crate(
     name = "ansi-escape",
-    crate_name = "codex_ansi_escape",
+    crate_name = "orbit_code_ansi_escape",
 )

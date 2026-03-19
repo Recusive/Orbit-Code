@@ -2,18 +2,6 @@
 #![cfg(unix)]
 
 use anyhow::Result;
-use codex_protocol::models::FileSystemPermissions;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::ExecApprovalRequestEvent;
-use codex_protocol::protocol::ExecApprovalRequestSkillMetadata;
-use codex_protocol::protocol::GranularApprovalConfig;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::ReviewDecision;
-use codex_protocol::protocol::SandboxPolicy;
-use codex_protocol::user_input::UserInput;
-use codex_utils_absolute_path::AbsolutePathBuf;
 use core_test_support::responses::mount_function_call_agent_response;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
@@ -23,6 +11,18 @@ use core_test_support::wait_for_event_match;
 use core_test_support::zsh_fork::build_zsh_fork_test;
 use core_test_support::zsh_fork::restrictive_workspace_write_policy;
 use core_test_support::zsh_fork::zsh_fork_runtime;
+use orbit_code_protocol::models::FileSystemPermissions;
+use orbit_code_protocol::models::PermissionProfile;
+use orbit_code_protocol::protocol::AskForApproval;
+use orbit_code_protocol::protocol::EventMsg;
+use orbit_code_protocol::protocol::ExecApprovalRequestEvent;
+use orbit_code_protocol::protocol::ExecApprovalRequestSkillMetadata;
+use orbit_code_protocol::protocol::GranularApprovalConfig;
+use orbit_code_protocol::protocol::Op;
+use orbit_code_protocol::protocol::ReviewDecision;
+use orbit_code_protocol::protocol::SandboxPolicy;
+use orbit_code_protocol::user_input::UserInput;
+use orbit_code_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use std::fs;
@@ -122,7 +122,7 @@ description: {name} skill
 
 fn skill_script_command(test: &TestCodex, script_name: &str) -> Result<(String, String)> {
     let script_path = fs::canonicalize(
-        test.codex_home_path()
+        test.orbit_code_home_path()
             .join("skills/mbolin-test-skill/scripts")
             .join(script_name),
     )?;
@@ -232,11 +232,13 @@ permissions:
         Some(PermissionProfile {
             file_system: Some(FileSystemPermissions {
                 read: Some(vec![absolute_path(
-                    &test.codex_home_path().join("skills/mbolin-test-skill/data"),
+                    &test
+                        .orbit_code_home_path()
+                        .join("skills/mbolin-test-skill/data"),
                 )]),
                 write: Some(vec![absolute_path(
                     &test
-                        .codex_home_path()
+                        .orbit_code_home_path()
                         .join("skills/mbolin-test-skill/output"),
                 )]),
             }),
@@ -247,7 +249,7 @@ permissions:
         approval.skill_metadata,
         Some(ExecApprovalRequestSkillMetadata {
             path_to_skills_md: test
-                .codex_home_path()
+                .orbit_code_home_path()
                 .join("skills/mbolin-test-skill/agents/openai.yaml"),
         })
     );

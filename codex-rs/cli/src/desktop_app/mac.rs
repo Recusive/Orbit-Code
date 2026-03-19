@@ -8,33 +8,33 @@ pub async fn run_mac_app_open_or_install(
     workspace: PathBuf,
     download_url: String,
 ) -> anyhow::Result<()> {
-    if let Some(app_path) = find_existing_codex_app_path() {
+    if let Some(app_path) = find_existing_orbit_code_app_path() {
         eprintln!(
             "Opening Codex Desktop at {app_path}...",
             app_path = app_path.display()
         );
-        open_codex_app(&app_path, &workspace).await?;
+        open_orbit_code_app(&app_path, &workspace).await?;
         return Ok(());
     }
     eprintln!("Codex Desktop not found; downloading installer...");
-    let installed_app = download_and_install_codex_to_user_applications(&download_url)
+    let installed_app = download_and_install_orbit_code_to_user_applications(&download_url)
         .await
         .context("failed to download/install Codex Desktop")?;
     eprintln!(
         "Launching Codex Desktop from {installed_app}...",
         installed_app = installed_app.display()
     );
-    open_codex_app(&installed_app, &workspace).await?;
+    open_orbit_code_app(&installed_app, &workspace).await?;
     Ok(())
 }
 
-fn find_existing_codex_app_path() -> Option<PathBuf> {
-    candidate_codex_app_paths()
+fn find_existing_orbit_code_app_path() -> Option<PathBuf> {
+    candidate_orbit_code_app_paths()
         .into_iter()
         .find(|candidate| candidate.is_dir())
 }
 
-fn candidate_codex_app_paths() -> Vec<PathBuf> {
+fn candidate_orbit_code_app_paths() -> Vec<PathBuf> {
     let mut paths = vec![PathBuf::from("/Applications/Codex.app")];
     if let Some(home) = std::env::var_os("HOME") {
         paths.push(PathBuf::from(home).join("Applications").join("Codex.app"));
@@ -42,7 +42,7 @@ fn candidate_codex_app_paths() -> Vec<PathBuf> {
     paths
 }
 
-async fn open_codex_app(app_path: &Path, workspace: &Path) -> anyhow::Result<()> {
+async fn open_orbit_code_app(app_path: &Path, workspace: &Path) -> anyhow::Result<()> {
     eprintln!(
         "Opening workspace {workspace}...",
         workspace = workspace.display()
@@ -66,7 +66,9 @@ async fn open_codex_app(app_path: &Path, workspace: &Path) -> anyhow::Result<()>
     );
 }
 
-async fn download_and_install_codex_to_user_applications(dmg_url: &str) -> anyhow::Result<PathBuf> {
+async fn download_and_install_orbit_code_to_user_applications(
+    dmg_url: &str,
+) -> anyhow::Result<PathBuf> {
     let temp_dir = Builder::new()
         .prefix("codex-app-installer-")
         .tempdir()
@@ -84,9 +86,9 @@ async fn download_and_install_codex_to_user_applications(dmg_url: &str) -> anyho
         mount_point = mount_point.display()
     );
     let result = async {
-        let app_in_volume = find_codex_app_in_mount(&mount_point)
+        let app_in_volume = find_orbit_code_app_in_mount(&mount_point)
             .context("failed to locate Codex.app in mounted dmg")?;
-        install_codex_app_bundle(&app_in_volume).await
+        install_orbit_code_app_bundle(&app_in_volume).await
     }
     .await;
 
@@ -101,7 +103,7 @@ async fn download_and_install_codex_to_user_applications(dmg_url: &str) -> anyho
     result
 }
 
-async fn install_codex_app_bundle(app_in_volume: &Path) -> anyhow::Result<PathBuf> {
+async fn install_orbit_code_app_bundle(app_in_volume: &Path) -> anyhow::Result<PathBuf> {
     for applications_dir in candidate_applications_dirs()? {
         eprintln!(
             "Installing Codex Desktop into {applications_dir}...",
@@ -198,7 +200,7 @@ async fn detach_dmg(mount_point: &Path) -> anyhow::Result<()> {
     anyhow::bail!("hdiutil detach failed with {status}");
 }
 
-fn find_codex_app_in_mount(mount_point: &Path) -> anyhow::Result<PathBuf> {
+fn find_orbit_code_app_in_mount(mount_point: &Path) -> anyhow::Result<PathBuf> {
     let direct = mount_point.join("Codex.app");
     if direct.is_dir() {
         return Ok(direct);

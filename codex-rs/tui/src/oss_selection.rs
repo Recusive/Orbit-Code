@@ -1,11 +1,6 @@
 use std::io;
 use std::sync::LazyLock;
 
-use codex_core::DEFAULT_LMSTUDIO_PORT;
-use codex_core::DEFAULT_OLLAMA_PORT;
-use codex_core::LMSTUDIO_OSS_PROVIDER_ID;
-use codex_core::OLLAMA_OSS_PROVIDER_ID;
-use codex_core::config::set_default_oss_provider;
 use crossterm::event::Event;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
@@ -16,6 +11,11 @@ use crossterm::terminal::EnterAlternateScreen;
 use crossterm::terminal::LeaveAlternateScreen;
 use crossterm::terminal::disable_raw_mode;
 use crossterm::terminal::enable_raw_mode;
+use orbit_code_core::DEFAULT_LMSTUDIO_PORT;
+use orbit_code_core::DEFAULT_OLLAMA_PORT;
+use orbit_code_core::LMSTUDIO_OSS_PROVIDER_ID;
+use orbit_code_core::OLLAMA_OSS_PROVIDER_ID;
+use orbit_code_core::config::set_default_oss_provider;
 use ratatui::Terminal;
 use ratatui::backend::CrosstermBackend;
 use ratatui::buffer::Buffer;
@@ -287,7 +287,7 @@ fn get_status_symbol_and_color(status: &ProviderStatus) -> (&'static str, Color)
     }
 }
 
-pub async fn select_oss_provider(codex_home: &std::path::Path) -> io::Result<String> {
+pub async fn select_oss_provider(orbit_code_home: &std::path::Path) -> io::Result<String> {
     // Check provider statuses first
     let lmstudio_status = check_lmstudio_status().await;
     let ollama_status = check_ollama_status().await;
@@ -334,7 +334,7 @@ pub async fn select_oss_provider(codex_home: &std::path::Path) -> io::Result<Str
     // If the user manually selected an OSS provider, we save it as the
     // default one to use later.
     if let Ok(ref provider) = result
-        && let Err(e) = set_default_oss_provider(codex_home, provider)
+        && let Err(e) = set_default_oss_provider(orbit_code_home, provider)
     {
         tracing::warn!("Failed to save OSS provider preference: {e}");
     }

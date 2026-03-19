@@ -33,13 +33,13 @@ use crate::spawn::StdioPolicy;
 use crate::spawn::spawn_child_async;
 use crate::text_encoding::bytes_to_string_smart;
 use crate::tools::sandboxing::SandboxablePreference;
-use codex_network_proxy::NetworkProxy;
+use orbit_code_network_proxy::NetworkProxy;
 #[cfg(any(target_os = "windows", test))]
-use codex_protocol::permissions::FileSystemSandboxKind;
-use codex_protocol::permissions::FileSystemSandboxPolicy;
-use codex_protocol::permissions::NetworkSandboxPolicy;
-use codex_utils_pty::DEFAULT_OUTPUT_BYTES_CAP;
-use codex_utils_pty::process_group::kill_child_process_group;
+use orbit_code_protocol::permissions::FileSystemSandboxKind;
+use orbit_code_protocol::permissions::FileSystemSandboxPolicy;
+use orbit_code_protocol::permissions::NetworkSandboxPolicy;
+use orbit_code_utils_pty::DEFAULT_OUTPUT_BYTES_CAP;
+use orbit_code_utils_pty::process_group::kill_child_process_group;
 
 pub const DEFAULT_EXEC_COMMAND_TIMEOUT_MS: u64 = 10_000;
 
@@ -81,7 +81,7 @@ pub struct ExecParams {
     pub env: HashMap<String, String>,
     pub network: Option<NetworkProxy>,
     pub sandbox_permissions: SandboxPermissions,
-    pub windows_sandbox_level: codex_protocol::config_types::WindowsSandboxLevel,
+    pub windows_sandbox_level: orbit_code_protocol::config_types::WindowsSandboxLevel,
     pub windows_sandbox_private_desktop: bool,
     pub justification: Option<String>,
     pub arg0: Option<String>,
@@ -90,7 +90,7 @@ pub struct ExecParams {
 fn select_process_exec_tool_sandbox_type(
     file_system_sandbox_policy: &FileSystemSandboxPolicy,
     network_sandbox_policy: NetworkSandboxPolicy,
-    windows_sandbox_level: codex_protocol::config_types::WindowsSandboxLevel,
+    windows_sandbox_level: orbit_code_protocol::config_types::WindowsSandboxLevel,
     enforce_managed_network: bool,
 ) -> SandboxType {
     SandboxManager::new().select_initial(
@@ -186,7 +186,7 @@ pub async fn process_exec_tool_call(
     file_system_sandbox_policy: &FileSystemSandboxPolicy,
     network_sandbox_policy: NetworkSandboxPolicy,
     sandbox_cwd: &Path,
-    codex_linux_sandbox_exe: &Option<PathBuf>,
+    orbit_code_linux_sandbox_exe: &Option<PathBuf>,
     use_legacy_landlock: bool,
     stdout_stream: Option<StdoutStream>,
 ) -> Result<ExecToolCallOutput> {
@@ -196,7 +196,7 @@ pub async fn process_exec_tool_call(
         file_system_sandbox_policy,
         network_sandbox_policy,
         sandbox_cwd,
-        codex_linux_sandbox_exe,
+        orbit_code_linux_sandbox_exe,
         use_legacy_landlock,
     )?;
 
@@ -212,7 +212,7 @@ pub fn build_exec_request(
     file_system_sandbox_policy: &FileSystemSandboxPolicy,
     network_sandbox_policy: NetworkSandboxPolicy,
     sandbox_cwd: &Path,
-    codex_linux_sandbox_exe: &Option<PathBuf>,
+    orbit_code_linux_sandbox_exe: &Option<PathBuf>,
     use_legacy_landlock: bool,
 ) -> Result<ExecRequest> {
     let windows_sandbox_level = params.windows_sandbox_level;
@@ -271,7 +271,7 @@ pub fn build_exec_request(
             sandbox_policy_cwd: sandbox_cwd,
             #[cfg(target_os = "macos")]
             macos_seatbelt_profile_extensions: None,
-            codex_linux_sandbox_exe: codex_linux_sandbox_exe.as_ref(),
+            orbit_code_linux_sandbox_exe: orbit_code_linux_sandbox_exe.as_ref(),
             use_legacy_landlock,
             windows_sandbox_level,
             windows_sandbox_private_desktop,
@@ -363,7 +363,7 @@ fn windowsapps_path_kind(path: &str) -> &'static str {
 #[cfg(target_os = "windows")]
 fn record_windows_sandbox_spawn_failure(
     command_path: Option<&str>,
-    windows_sandbox_level: codex_protocol::config_types::WindowsSandboxLevel,
+    windows_sandbox_level: orbit_code_protocol::config_types::WindowsSandboxLevel,
     err: &str,
 ) {
     let Some(error_code) = extract_create_process_as_user_error_code(err) else {
@@ -378,13 +378,13 @@ fn record_windows_sandbox_spawn_failure(
     let path_kind = windowsapps_path_kind(path);
     let level = if matches!(
         windows_sandbox_level,
-        codex_protocol::config_types::WindowsSandboxLevel::Elevated
+        orbit_code_protocol::config_types::WindowsSandboxLevel::Elevated
     ) {
         "elevated"
     } else {
         "legacy"
     };
-    if let Some(metrics) = codex_otel::metrics::global() {
+    if let Some(metrics) = orbit_code_otel::metrics::global() {
         let _ = metrics.counter(
             "codex.windows_sandbox.createprocessasuserw_failed",
             1,
@@ -403,10 +403,10 @@ async fn exec_windows_sandbox(
     params: ExecParams,
     sandbox_policy: &SandboxPolicy,
 ) -> Result<RawExecToolCallOutput> {
-    use crate::config::find_codex_home;
-    use codex_protocol::config_types::WindowsSandboxLevel;
-    use codex_windows_sandbox::run_windows_sandbox_capture;
-    use codex_windows_sandbox::run_windows_sandbox_capture_elevated;
+    use crate::config::find_orbit_code_home;
+    use orbit_code_protocol::config_types::WindowsSandboxLevel;
+    use orbit_code_windows_sandbox::run_windows_sandbox_capture;
+    use orbit_code_windows_sandbox::run_windows_sandbox_capture_elevated;
 
     let ExecParams {
         command,
@@ -432,9 +432,9 @@ async fn exec_windows_sandbox(
         )))
     })?;
     let sandbox_cwd = cwd.clone();
-    let codex_home = find_codex_home().map_err(|err| {
+    let orbit_code_home = find_orbit_code_home().map_err(|err| {
         CodexErr::Io(io::Error::other(format!(
-            "windows sandbox: failed to resolve codex_home: {err}"
+            "windows sandbox: failed to resolve orbit_code_home: {err}"
         )))
     })?;
     let command_path = command.first().cloned();
@@ -445,7 +445,7 @@ async fn exec_windows_sandbox(
             run_windows_sandbox_capture_elevated(
                 policy_str.as_str(),
                 &sandbox_cwd,
-                codex_home.as_ref(),
+                orbit_code_home.as_ref(),
                 command,
                 &cwd,
                 env,
@@ -456,7 +456,7 @@ async fn exec_windows_sandbox(
             run_windows_sandbox_capture(
                 policy_str.as_str(),
                 &sandbox_cwd,
-                codex_home.as_ref(),
+                orbit_code_home.as_ref(),
                 command,
                 &cwd,
                 env,
@@ -829,7 +829,7 @@ struct WindowsRestrictedTokenSandboxSupport {
 #[cfg(any(target_os = "windows", test))]
 fn windows_restricted_token_sandbox_support(
     sandbox: SandboxType,
-    windows_sandbox_level: codex_protocol::config_types::WindowsSandboxLevel,
+    windows_sandbox_level: orbit_code_protocol::config_types::WindowsSandboxLevel,
     sandbox_policy: &SandboxPolicy,
     file_system_sandbox_policy: &FileSystemSandboxPolicy,
     network_sandbox_policy: NetworkSandboxPolicy,
@@ -852,7 +852,7 @@ fn windows_restricted_token_sandbox_support(
         )
         && (matches!(
             windows_sandbox_level,
-            codex_protocol::config_types::WindowsSandboxLevel::Elevated
+            orbit_code_protocol::config_types::WindowsSandboxLevel::Elevated
         ) || sandbox_policy.has_full_disk_read_access());
 
     let unsupported_reason = if should_use {

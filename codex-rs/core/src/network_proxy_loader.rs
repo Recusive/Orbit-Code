@@ -1,6 +1,6 @@
 use crate::config::NetworkToml;
 use crate::config::PermissionsToml;
-use crate::config::find_codex_home;
+use crate::config::find_orbit_code_home;
 use crate::config::resolve_permission_profile;
 use crate::config_loader::CloudRequirementsLoader;
 use crate::config_loader::ConfigLayerStack;
@@ -13,17 +13,17 @@ use crate::exec_policy::load_exec_policy;
 use anyhow::Context;
 use anyhow::Result;
 use async_trait::async_trait;
-use codex_app_server_protocol::ConfigLayerSource;
-use codex_config::CONFIG_TOML_FILE;
-use codex_network_proxy::ConfigReloader;
-use codex_network_proxy::ConfigState;
-use codex_network_proxy::NetworkProxyConfig;
-use codex_network_proxy::NetworkProxyConstraintError;
-use codex_network_proxy::NetworkProxyConstraints;
-use codex_network_proxy::NetworkProxyState;
-use codex_network_proxy::build_config_state;
-use codex_network_proxy::normalize_host;
-use codex_network_proxy::validate_policy_against_constraints;
+use orbit_code_app_server_protocol::ConfigLayerSource;
+use orbit_code_config::CONFIG_TOML_FILE;
+use orbit_code_network_proxy::ConfigReloader;
+use orbit_code_network_proxy::ConfigState;
+use orbit_code_network_proxy::NetworkProxyConfig;
+use orbit_code_network_proxy::NetworkProxyConstraintError;
+use orbit_code_network_proxy::NetworkProxyConstraints;
+use orbit_code_network_proxy::NetworkProxyState;
+use orbit_code_network_proxy::build_config_state;
+use orbit_code_network_proxy::normalize_host;
+use orbit_code_network_proxy::validate_policy_against_constraints;
 use serde::Deserialize;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -41,11 +41,11 @@ pub async fn build_network_proxy_state_and_reloader() -> Result<(ConfigState, Mt
 }
 
 async fn build_config_state_with_mtimes() -> Result<(ConfigState, Vec<LayerMtime>)> {
-    let codex_home = find_codex_home().context("failed to resolve CODEX_HOME")?;
+    let orbit_code_home = find_orbit_code_home().context("failed to resolve ORBIT_HOME")?;
     let cli_overrides = Vec::new();
     let overrides = LoaderOverrides::default();
     let config_layer_stack = load_config_layers_state(
-        &codex_home,
+        &orbit_code_home,
         /*cwd*/ None,
         &cli_overrides,
         overrides,
@@ -57,7 +57,7 @@ async fn build_config_state_with_mtimes() -> Result<(ConfigState, Vec<LayerMtime
     let (exec_policy, warning) = match load_exec_policy(&config_layer_stack).await {
         Ok(policy) => (policy, None),
         Err(err @ ExecPolicyError::ParsePolicy { .. }) => {
-            (codex_execpolicy::Policy::empty(), Some(err))
+            (orbit_code_execpolicy::Policy::empty(), Some(err))
         }
         Err(err) => return Err(err.into()),
     };
@@ -87,7 +87,9 @@ fn collect_layer_mtimes(stack: &ConfigLayerStack) -> Vec<LayerMtime> {
             let path = match &layer.name {
                 ConfigLayerSource::System { file } => Some(file.as_path().to_path_buf()),
                 ConfigLayerSource::User { file } => Some(file.as_path().to_path_buf()),
-                ConfigLayerSource::Project { dot_codex_folder } => dot_codex_folder
+                ConfigLayerSource::Project {
+                    dot_orbit_code_folder,
+                } => dot_orbit_code_folder
                     .join(CONFIG_TOML_FILE)
                     .ok()
                     .map(|p| p.as_path().to_path_buf()),
@@ -199,7 +201,7 @@ fn apply_network_tables(config: &mut NetworkProxyConfig, parsed: NetworkTablesTo
 
 fn config_from_layers(
     layers: &ConfigLayerStack,
-    exec_policy: &codex_execpolicy::Policy,
+    exec_policy: &orbit_code_execpolicy::Policy,
 ) -> Result<NetworkProxyConfig> {
     let mut config = NetworkProxyConfig::default();
     for layer in layers.get_layers(
@@ -215,7 +217,7 @@ fn config_from_layers(
 
 fn apply_exec_policy_network_rules(
     config: &mut NetworkProxyConfig,
-    exec_policy: &codex_execpolicy::Policy,
+    exec_policy: &orbit_code_execpolicy::Policy,
 ) {
     let (allowed_domains, denied_domains) = exec_policy.compiled_network_domains();
     for host in allowed_domains {

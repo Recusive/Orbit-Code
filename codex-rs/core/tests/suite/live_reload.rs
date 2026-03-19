@@ -6,13 +6,6 @@ use std::path::PathBuf;
 use std::time::Duration;
 
 use anyhow::Result;
-use codex_core::config::ProjectConfig;
-use codex_protocol::config_types::TrustLevel;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::SandboxPolicy;
-use codex_protocol::user_input::UserInput;
 use core_test_support::responses;
 use core_test_support::responses::ResponsesRequest;
 use core_test_support::responses::mount_sse_sequence;
@@ -20,9 +13,16 @@ use core_test_support::responses::start_mock_server;
 use core_test_support::test_codex::TestCodex;
 use core_test_support::test_codex::test_codex;
 use core_test_support::wait_for_event;
+use orbit_code_core::config::ProjectConfig;
+use orbit_code_protocol::config_types::TrustLevel;
+use orbit_code_protocol::protocol::AskForApproval;
+use orbit_code_protocol::protocol::EventMsg;
+use orbit_code_protocol::protocol::Op;
+use orbit_code_protocol::protocol::SandboxPolicy;
+use orbit_code_protocol::user_input::UserInput;
 use tokio::time::timeout;
 
-fn enable_trusted_project(config: &mut codex_core::config::Config) {
+fn enable_trusted_project(config: &mut orbit_code_core::config::Config) {
     config.active_project = ProjectConfig {
         trust_level: Some(TrustLevel::Trusted),
     };
@@ -101,7 +101,7 @@ async fn live_skills_reload_refreshes_skill_cache_after_skill_change() -> Result
         });
     let test = builder.build(&server).await?;
 
-    let skill_path = dunce::canonicalize(test.codex_home_path().join("skills/demo/SKILL.md"))?;
+    let skill_path = dunce::canonicalize(test.orbit_code_home_path().join("skills/demo/SKILL.md"))?;
 
     submit_skill_turn(&test, skill_path.clone(), "please use $demo").await?;
     let first_request = responses
@@ -114,7 +114,7 @@ async fn live_skills_reload_refreshes_skill_cache_after_skill_change() -> Result
         "expected initial skill body in request"
     );
 
-    write_skill(test.codex_home_path(), "demo", "demo skill", skill_v2);
+    write_skill(test.orbit_code_home_path(), "demo", "demo skill", skill_v2);
 
     let saw_skills_update = timeout(Duration::from_secs(5), async {
         loop {

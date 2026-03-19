@@ -4,13 +4,13 @@ use anyhow::Context;
 use anyhow::Result;
 use app_test_support::McpProcess;
 use app_test_support::to_response;
-use codex_app_server_protocol::JSONRPCResponse;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::SkillsChangedNotification;
-use codex_app_server_protocol::SkillsListExtraRootsForCwd;
-use codex_app_server_protocol::SkillsListParams;
-use codex_app_server_protocol::SkillsListResponse;
-use codex_app_server_protocol::ThreadStartParams;
+use orbit_code_app_server_protocol::JSONRPCResponse;
+use orbit_code_app_server_protocol::RequestId;
+use orbit_code_app_server_protocol::SkillsChangedNotification;
+use orbit_code_app_server_protocol::SkillsListExtraRootsForCwd;
+use orbit_code_app_server_protocol::SkillsListParams;
+use orbit_code_app_server_protocol::SkillsListResponse;
+use orbit_code_app_server_protocol::ThreadStartParams;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 use tokio::time::timeout;
@@ -28,12 +28,12 @@ fn write_skill(root: &TempDir, name: &str) -> Result<()> {
 
 #[tokio::test]
 async fn skills_list_includes_skills_from_per_cwd_extra_user_roots() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let cwd = TempDir::new()?;
     let extra_root = TempDir::new()?;
     write_skill(&extra_root, "extra-skill")?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_TIMEOUT, mcp.initialize()).await??;
 
     let request_id = mcp
@@ -66,10 +66,10 @@ async fn skills_list_includes_skills_from_per_cwd_extra_user_roots() -> Result<(
 
 #[tokio::test]
 async fn skills_list_rejects_relative_extra_user_roots() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let cwd = TempDir::new()?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_TIMEOUT, mcp.initialize()).await??;
 
     let request_id = mcp
@@ -100,13 +100,13 @@ async fn skills_list_rejects_relative_extra_user_roots() -> Result<()> {
 
 #[tokio::test]
 async fn skills_list_ignores_per_cwd_extra_roots_for_unknown_cwd() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let requested_cwd = TempDir::new()?;
     let unknown_cwd = TempDir::new()?;
     let extra_root = TempDir::new()?;
     write_skill(&extra_root, "ignored-extra-skill")?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_TIMEOUT, mcp.initialize()).await??;
 
     let request_id = mcp
@@ -139,12 +139,12 @@ async fn skills_list_ignores_per_cwd_extra_roots_for_unknown_cwd() -> Result<()>
 
 #[tokio::test]
 async fn skills_list_uses_cached_result_until_force_reload() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let cwd = TempDir::new()?;
     let extra_root = TempDir::new()?;
     write_skill(&extra_root, "late-extra-skill")?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_TIMEOUT, mcp.initialize()).await??;
 
     // Seed the cwd cache first without extra roots.
@@ -221,10 +221,10 @@ async fn skills_list_uses_cached_result_until_force_reload() -> Result<()> {
 
 #[tokio::test]
 async fn skills_changed_notification_is_emitted_after_skill_change() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    write_skill(&codex_home, "demo")?;
+    let orbit_code_home = TempDir::new()?;
+    write_skill(&orbit_code_home, "demo")?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_TIMEOUT, mcp.initialize()).await??;
     let thread_start_request_id = mcp
         .send_thread_start_request(ThreadStartParams {
@@ -253,7 +253,7 @@ async fn skills_changed_notification_is_emitted_after_skill_change() -> Result<(
     )
     .await??;
 
-    let skill_path = codex_home
+    let skill_path = orbit_code_home
         .path()
         .join("skills")
         .join("demo")

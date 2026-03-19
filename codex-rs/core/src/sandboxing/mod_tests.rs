@@ -13,26 +13,26 @@ use crate::protocol::NetworkAccess;
 use crate::protocol::ReadOnlyAccess;
 use crate::protocol::SandboxPolicy;
 use crate::tools::sandboxing::SandboxablePreference;
-use codex_protocol::config_types::WindowsSandboxLevel;
-use codex_protocol::models::FileSystemPermissions;
-#[cfg(target_os = "macos")]
-use codex_protocol::models::MacOsAutomationPermission;
-#[cfg(target_os = "macos")]
-use codex_protocol::models::MacOsContactsPermission;
-#[cfg(target_os = "macos")]
-use codex_protocol::models::MacOsPreferencesPermission;
-#[cfg(target_os = "macos")]
-use codex_protocol::models::MacOsSeatbeltProfileExtensions;
-use codex_protocol::models::NetworkPermissions;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::permissions::FileSystemAccessMode;
-use codex_protocol::permissions::FileSystemPath;
-use codex_protocol::permissions::FileSystemSandboxEntry;
-use codex_protocol::permissions::FileSystemSandboxPolicy;
-use codex_protocol::permissions::FileSystemSpecialPath;
-use codex_protocol::permissions::NetworkSandboxPolicy;
-use codex_utils_absolute_path::AbsolutePathBuf;
 use dunce::canonicalize;
+use orbit_code_protocol::config_types::WindowsSandboxLevel;
+use orbit_code_protocol::models::FileSystemPermissions;
+#[cfg(target_os = "macos")]
+use orbit_code_protocol::models::MacOsAutomationPermission;
+#[cfg(target_os = "macos")]
+use orbit_code_protocol::models::MacOsContactsPermission;
+#[cfg(target_os = "macos")]
+use orbit_code_protocol::models::MacOsPreferencesPermission;
+#[cfg(target_os = "macos")]
+use orbit_code_protocol::models::MacOsSeatbeltProfileExtensions;
+use orbit_code_protocol::models::NetworkPermissions;
+use orbit_code_protocol::models::PermissionProfile;
+use orbit_code_protocol::permissions::FileSystemAccessMode;
+use orbit_code_protocol::permissions::FileSystemPath;
+use orbit_code_protocol::permissions::FileSystemSandboxEntry;
+use orbit_code_protocol::permissions::FileSystemSandboxPolicy;
+use orbit_code_protocol::permissions::FileSystemSpecialPath;
+use orbit_code_protocol::permissions::NetworkSandboxPolicy;
+use orbit_code_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use std::collections::HashMap;
 #[cfg(unix)]
@@ -173,7 +173,7 @@ fn transform_preserves_unrestricted_file_system_policy_for_restricted_network() 
             sandbox_policy_cwd: cwd.as_path(),
             #[cfg(target_os = "macos")]
             macos_seatbelt_profile_extensions: None,
-            codex_linux_sandbox_exe: None,
+            orbit_code_linux_sandbox_exe: None,
             use_legacy_landlock: false,
             windows_sandbox_level: WindowsSandboxLevel::Disabled,
             windows_sandbox_private_desktop: false,
@@ -542,7 +542,7 @@ fn transform_additional_permissions_enable_network_for_external_sandbox() {
             sandbox_policy_cwd: cwd.as_path(),
             #[cfg(target_os = "macos")]
             macos_seatbelt_profile_extensions: None,
-            codex_linux_sandbox_exe: None,
+            orbit_code_linux_sandbox_exe: None,
             use_legacy_landlock: false,
             windows_sandbox_level: WindowsSandboxLevel::Disabled,
             windows_sandbox_private_desktop: false,
@@ -615,7 +615,7 @@ fn transform_additional_permissions_preserves_denied_entries() {
             sandbox_policy_cwd: cwd.as_path(),
             #[cfg(target_os = "macos")]
             macos_seatbelt_profile_extensions: None,
-            codex_linux_sandbox_exe: None,
+            orbit_code_linux_sandbox_exe: None,
             use_legacy_landlock: false,
             windows_sandbox_level: WindowsSandboxLevel::Disabled,
             windows_sandbox_private_desktop: false,

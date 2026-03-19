@@ -1,47 +1,3 @@
-use codex_core::CodexAuth;
-use codex_core::ModelClient;
-use codex_core::ModelProviderInfo;
-use codex_core::NewThread;
-use codex_core::Prompt;
-use codex_core::ResponseEvent;
-use codex_core::ThreadManager;
-use codex_core::WireApi;
-use codex_core::auth::AuthCredentialsStoreMode;
-use codex_core::built_in_model_providers;
-use codex_core::default_client::originator;
-use codex_core::error::CodexErr;
-use codex_core::features::Feature;
-use codex_core::models_manager::collaboration_mode_presets::CollaborationModesConfig;
-use codex_otel::SessionTelemetry;
-use codex_otel::TelemetryAuthMode;
-use codex_protocol::ThreadId;
-use codex_protocol::config_types::CollaborationMode;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::config_types::ReasoningSummary;
-use codex_protocol::config_types::Settings;
-use codex_protocol::config_types::Verbosity;
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::FunctionCallOutputContentItem;
-use codex_protocol::models::FunctionCallOutputPayload;
-use codex_protocol::models::ImageDetail;
-use codex_protocol::models::LocalShellAction;
-use codex_protocol::models::LocalShellExecAction;
-use codex_protocol::models::LocalShellStatus;
-use codex_protocol::models::MessagePhase;
-use codex_protocol::models::ReasoningItemContent;
-use codex_protocol::models::ReasoningItemReasoningSummary;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::models::WebSearchAction;
-use codex_protocol::openai_models::ModelsResponse;
-use codex_protocol::openai_models::ReasoningEffort;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::RolloutItem;
-use codex_protocol::protocol::RolloutLine;
-use codex_protocol::protocol::SessionMeta;
-use codex_protocol::protocol::SessionMetaLine;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::user_input::UserInput;
 use core_test_support::apps_test_server::AppsTestServer;
 use core_test_support::load_default_config_for_test;
 use core_test_support::responses::ev_completed;
@@ -60,6 +16,50 @@ use core_test_support::test_codex::test_codex;
 use core_test_support::wait_for_event;
 use dunce::canonicalize as normalize_path;
 use futures::StreamExt;
+use orbit_code_core::CodexAuth;
+use orbit_code_core::ModelClient;
+use orbit_code_core::ModelProviderInfo;
+use orbit_code_core::NewThread;
+use orbit_code_core::Prompt;
+use orbit_code_core::ResponseEvent;
+use orbit_code_core::ThreadManager;
+use orbit_code_core::WireApi;
+use orbit_code_core::auth::AuthCredentialsStoreMode;
+use orbit_code_core::built_in_model_providers;
+use orbit_code_core::default_client::originator;
+use orbit_code_core::error::CodexErr;
+use orbit_code_core::features::Feature;
+use orbit_code_core::models_manager::collaboration_mode_presets::CollaborationModesConfig;
+use orbit_code_otel::SessionTelemetry;
+use orbit_code_otel::TelemetryAuthMode;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::config_types::CollaborationMode;
+use orbit_code_protocol::config_types::ModeKind;
+use orbit_code_protocol::config_types::ReasoningSummary;
+use orbit_code_protocol::config_types::Settings;
+use orbit_code_protocol::config_types::Verbosity;
+use orbit_code_protocol::models::ContentItem;
+use orbit_code_protocol::models::FunctionCallOutputContentItem;
+use orbit_code_protocol::models::FunctionCallOutputPayload;
+use orbit_code_protocol::models::ImageDetail;
+use orbit_code_protocol::models::LocalShellAction;
+use orbit_code_protocol::models::LocalShellExecAction;
+use orbit_code_protocol::models::LocalShellStatus;
+use orbit_code_protocol::models::MessagePhase;
+use orbit_code_protocol::models::ReasoningItemContent;
+use orbit_code_protocol::models::ReasoningItemReasoningSummary;
+use orbit_code_protocol::models::ResponseItem;
+use orbit_code_protocol::models::WebSearchAction;
+use orbit_code_protocol::openai_models::ModelsResponse;
+use orbit_code_protocol::openai_models::ReasoningEffort;
+use orbit_code_protocol::protocol::EventMsg;
+use orbit_code_protocol::protocol::Op;
+use orbit_code_protocol::protocol::RolloutItem;
+use orbit_code_protocol::protocol::RolloutLine;
+use orbit_code_protocol::protocol::SessionMeta;
+use orbit_code_protocol::protocol::SessionMetaLine;
+use orbit_code_protocol::protocol::SessionSource;
+use orbit_code_protocol::user_input::UserInput;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use std::io::Write;
@@ -90,11 +90,11 @@ fn message_input_texts(item: &serde_json::Value) -> Vec<&str> {
         .collect()
 }
 
-/// Writes an `auth.json` into the provided `codex_home` with the specified parameters.
+/// Writes an `auth.json` into the provided `orbit_code_home` with the specified parameters.
 /// Returns the fake JWT string written to `tokens.id_token`.
 #[expect(clippy::unwrap_used)]
 fn write_auth_json(
-    codex_home: &TempDir,
+    orbit_code_home: &TempDir,
     openai_api_key: Option<&str>,
     chatgpt_plan_type: &str,
     access_token: &str,
@@ -134,7 +134,7 @@ fn write_auth_json(
     });
 
     std::fs::write(
-        codex_home.path().join("auth.json"),
+        orbit_code_home.path().join("auth.json"),
         serde_json::to_string_pretty(&auth_json).unwrap(),
     )
     .unwrap();
@@ -171,10 +171,10 @@ async fn resume_includes_initial_messages_and_sends_prior_items() {
     .unwrap();
 
     // Prior item: user message (should be delivered)
-    let prior_user = codex_protocol::models::ResponseItem::Message {
+    let prior_user = orbit_code_protocol::models::ResponseItem::Message {
         id: None,
         role: "user".to_string(),
-        content: vec![codex_protocol::models::ContentItem::InputText {
+        content: vec![orbit_code_protocol::models::ContentItem::InputText {
             text: "resumed user message".to_string(),
         }],
         end_turn: None,
@@ -193,10 +193,10 @@ async fn resume_includes_initial_messages_and_sends_prior_items() {
     .unwrap();
 
     // Prior item: system message (excluded from API history)
-    let prior_system = codex_protocol::models::ResponseItem::Message {
+    let prior_system = orbit_code_protocol::models::ResponseItem::Message {
         id: None,
         role: "system".to_string(),
-        content: vec![codex_protocol::models::ContentItem::OutputText {
+        content: vec![orbit_code_protocol::models::ContentItem::OutputText {
             text: "resumed system instruction".to_string(),
         }],
         end_turn: None,
@@ -215,10 +215,10 @@ async fn resume_includes_initial_messages_and_sends_prior_items() {
     .unwrap();
 
     // Prior item: assistant message
-    let prior_item = codex_protocol::models::ResponseItem::Message {
+    let prior_item = orbit_code_protocol::models::ResponseItem::Message {
         id: None,
         role: "assistant".to_string(),
-        content: vec![codex_protocol::models::ContentItem::OutputText {
+        content: vec![orbit_code_protocol::models::ContentItem::OutputText {
             text: "resumed assistant message".to_string(),
         }],
         end_turn: None,
@@ -246,15 +246,15 @@ async fn resume_includes_initial_messages_and_sends_prior_items() {
     .await;
 
     // Configure Codex to resume from our file
-    let codex_home = Arc::new(TempDir::new().unwrap());
+    let orbit_code_home = Arc::new(TempDir::new().unwrap());
     let mut builder = test_codex()
-        .with_home(codex_home.clone())
+        .with_home(orbit_code_home.clone())
         .with_config(|config| {
             // Ensure user instructions are NOT delivered on resume.
             config.user_instructions = Some("be nice".to_string());
         });
     let test = builder
-        .resume(&server, codex_home, session_path.clone())
+        .resume(&server, orbit_code_home, session_path.clone())
         .await
         .expect("resume conversation");
     let codex = test.codex.clone();
@@ -423,10 +423,10 @@ async fn resume_replays_legacy_js_repl_image_rollout_shapes() {
     )
     .await;
 
-    let codex_home = Arc::new(TempDir::new().unwrap());
+    let orbit_code_home = Arc::new(TempDir::new().unwrap());
     let mut builder = test_codex().with_model("gpt-5.1");
     let test = builder
-        .resume(&server, codex_home, session_path.clone())
+        .resume(&server, orbit_code_home, session_path.clone())
         .await
         .expect("resume conversation");
     test.submit_turn("after resume").await.unwrap();
@@ -574,10 +574,10 @@ async fn resume_replays_image_tool_outputs_with_detail() {
     )
     .await;
 
-    let codex_home = Arc::new(TempDir::new().unwrap());
+    let orbit_code_home = Arc::new(TempDir::new().unwrap());
     let mut builder = test_codex().with_model("gpt-5.1");
     let test = builder
-        .resume(&server, codex_home, session_path.clone())
+        .resume(&server, orbit_code_home, session_path.clone())
         .await
         .expect("resume conversation");
     test.submit_turn("after resume").await.unwrap();
@@ -721,7 +721,7 @@ async fn chatgpt_auth_sends_correct_request() {
     model_provider.base_url = Some(format!("{}/api/codex", server.uri()));
     model_provider.supports_websockets = false;
     let mut builder = test_codex()
-        .with_auth(create_dummy_codex_auth())
+        .with_auth(create_dummy_orbit_code_auth())
         .with_config(move |config| {
             config.model_provider = model_provider;
         });
@@ -799,26 +799,28 @@ async fn prefers_apikey_when_config_prefers_apikey_even_with_chatgpt_tokens() {
     };
 
     // Init session
-    let codex_home = TempDir::new().unwrap();
+    let orbit_code_home = TempDir::new().unwrap();
     // Write auth.json that contains both API key and ChatGPT tokens for a plan that should prefer ChatGPT,
     // but config will force API key preference.
     let _jwt = write_auth_json(
-        &codex_home,
+        &orbit_code_home,
         Some("sk-test-key"),
         "pro",
         "Access-123",
         Some("acc-123"),
     );
 
-    let mut config = load_default_config_for_test(&codex_home).await;
+    let mut config = load_default_config_for_test(&orbit_code_home).await;
     config.model_provider = model_provider;
 
-    let auth_manager =
-        match CodexAuth::from_auth_storage(codex_home.path(), AuthCredentialsStoreMode::File) {
-            Ok(Some(auth)) => codex_core::test_support::auth_manager_from_auth(auth),
-            Ok(None) => panic!("No CodexAuth found in codex_home"),
-            Err(e) => panic!("Failed to load CodexAuth: {e}"),
-        };
+    let auth_manager = match CodexAuth::from_auth_storage(
+        orbit_code_home.path(),
+        AuthCredentialsStoreMode::File,
+    ) {
+        Ok(Some(auth)) => orbit_code_core::test_support::auth_manager_from_auth(auth),
+        Ok(None) => panic!("No CodexAuth found in orbit_code_home"),
+        Err(e) => panic!("Failed to load CodexAuth: {e}"),
+    };
     let thread_manager = ThreadManager::new(
         &config,
         auth_manager,
@@ -941,7 +943,7 @@ async fn includes_apps_guidance_as_developer_message_for_chatgpt_auth() {
     .await;
 
     let mut builder = test_codex()
-        .with_auth(create_dummy_codex_auth())
+        .with_auth(create_dummy_orbit_code_auth())
         .with_config(move |config| {
             config
                 .features
@@ -1091,8 +1093,8 @@ async fn skills_append_to_developer_message() {
     )
     .await;
 
-    let codex_home = Arc::new(TempDir::new().unwrap());
-    let skill_dir = codex_home.path().join("skills/demo");
+    let orbit_code_home = Arc::new(TempDir::new().unwrap());
+    let skill_dir = orbit_code_home.path().join("skills/demo");
     std::fs::create_dir_all(&skill_dir).expect("create skill dir");
     std::fs::write(
         skill_dir.join("SKILL.md"),
@@ -1100,12 +1102,12 @@ async fn skills_append_to_developer_message() {
     )
     .expect("write skill");
 
-    let codex_home_path = codex_home.path().to_path_buf();
+    let orbit_code_home_path = orbit_code_home.path().to_path_buf();
     let mut builder = test_codex()
-        .with_home(codex_home.clone())
+        .with_home(orbit_code_home.clone())
         .with_auth(CodexAuth::from_api_key("Test API Key"))
         .with_config(move |config| {
-            config.cwd = codex_home_path;
+            config.cwd = orbit_code_home_path;
         });
     let codex = builder
         .build(&server)
@@ -1143,7 +1145,7 @@ async fn skills_append_to_developer_message() {
         developer_text.contains(&expected_path_str),
         "expected path {expected_path_str} in developer message: {developer_messages:?}"
     );
-    let _codex_home_guard = codex_home;
+    let _orbit_code_home_guard = orbit_code_home;
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
@@ -1801,20 +1803,21 @@ async fn azure_responses_request_includes_store_and_reasoning_ids() {
         supports_websockets: false,
     };
 
-    let codex_home = TempDir::new().unwrap();
-    let mut config = load_default_config_for_test(&codex_home).await;
+    let orbit_code_home = TempDir::new().unwrap();
+    let mut config = load_default_config_for_test(&orbit_code_home).await;
     config.model_provider_id = provider.name.clone();
     config.model_provider = provider.clone();
     let effort = config.model_reasoning_effort;
     let summary = config.model_reasoning_summary;
-    let model = codex_core::test_support::get_model_offline(config.model.as_deref());
+    let model = orbit_code_core::test_support::get_model_offline(config.model.as_deref());
     config.model = Some(model.clone());
     let config = Arc::new(config);
     let model_info =
-        codex_core::test_support::construct_model_info_offline(model.as_str(), &config);
+        orbit_code_core::test_support::construct_model_info_offline(model.as_str(), &config);
     let conversation_id = ThreadId::new();
-    let auth_manager =
-        codex_core::test_support::auth_manager_from_auth(CodexAuth::from_api_key("Test API Key"));
+    let auth_manager = orbit_code_core::test_support::auth_manager_from_auth(
+        CodexAuth::from_api_key("Test API Key"),
+    );
     let session_telemetry = SessionTelemetry::new(
         conversation_id,
         model.as_str(),
@@ -2130,8 +2133,8 @@ async fn usage_limit_error_emits_rate_limit_event() -> anyhow::Result<()> {
         .await;
 
     let mut builder = test_codex();
-    let codex_fixture = builder.build(&server).await?;
-    let codex = codex_fixture.codex.clone();
+    let orbit_code_fixture = builder.build(&server).await?;
+    let codex = orbit_code_fixture.codex.clone();
 
     let expected_limits = json!({
         "limit_id": "codex",
@@ -2406,7 +2409,7 @@ async fn azure_overrides_assign_properties_used_for_responses_url() {
 
     // Init session
     let mut builder = test_codex()
-        .with_auth(create_dummy_codex_auth())
+        .with_auth(create_dummy_orbit_code_auth())
         .with_config(move |config| {
             config.model_provider = provider;
         });
@@ -2491,7 +2494,7 @@ async fn env_var_overrides_loaded_auth() {
 
     // Init session
     let mut builder = test_codex()
-        .with_auth(create_dummy_codex_auth())
+        .with_auth(create_dummy_orbit_code_auth())
         .with_config(move |config| {
             config.model_provider = provider;
         });
@@ -2515,7 +2518,7 @@ async fn env_var_overrides_loaded_auth() {
     wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
 }
 
-fn create_dummy_codex_auth() -> CodexAuth {
+fn create_dummy_orbit_code_auth() -> CodexAuth {
     CodexAuth::create_dummy_chatgpt_auth_for_testing()
 }
 

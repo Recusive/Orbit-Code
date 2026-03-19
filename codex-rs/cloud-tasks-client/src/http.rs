@@ -14,8 +14,8 @@ use crate::api::TaskText;
 use chrono::DateTime;
 use chrono::Utc;
 
-use codex_backend_client as backend;
-use codex_backend_client::CodeTaskDetailsResponseExt;
+use orbit_code_backend_client as backend;
+use orbit_code_backend_client::CodeTaskDetailsResponseExt;
 
 #[derive(Clone)]
 pub struct HttpClient {
@@ -328,7 +328,7 @@ mod api {
                 "content": [{ "content_type": "text", "text": prompt }]
             }));
 
-            if let Ok(diff) = std::env::var("CODEX_STARTING_DIFF")
+            if let Ok(diff) = std::env::var("ORBIT_STARTING_DIFF")
                 && !diff.is_empty()
             {
                 input_items.push(serde_json::json!({
@@ -459,13 +459,13 @@ mod api {
                 });
             }
 
-            let req = codex_git::ApplyGitRequest {
+            let req = orbit_code_git::ApplyGitRequest {
                 cwd: std::env::current_dir().unwrap_or_else(|_| std::env::temp_dir()),
                 diff: diff.clone(),
                 revert: false,
                 preflight,
             };
-            let r = codex_git::apply_git_patch(&req)
+            let r = orbit_code_git::apply_git_patch(&req)
                 .map_err(|e| CloudTaskError::Io(format!("git apply failed to run: {e}")))?;
 
             let status = if r.exit_code == 0 {

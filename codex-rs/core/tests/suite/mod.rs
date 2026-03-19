@@ -1,56 +1,56 @@
 // Aggregates all former standalone integration tests as modules.
 use std::ffi::OsString;
 
-use codex_arg0::Arg0PathEntryGuard;
-use codex_arg0::arg0_dispatch;
 use ctor::ctor;
+use orbit_code_arg0::Arg0PathEntryGuard;
+use orbit_code_arg0::arg0_dispatch;
 use tempfile::TempDir;
 
 struct TestCodexAliasesGuard {
-    _codex_home: TempDir,
+    _orbit_code_home: TempDir,
     _arg0: Arg0PathEntryGuard,
-    _previous_codex_home: Option<OsString>,
+    _previous_orbit_code_home: Option<OsString>,
 }
 
-const CODEX_HOME_ENV_VAR: &str = "CODEX_HOME";
+const ORBIT_HOME_ENV_VAR: &str = "ORBIT_HOME";
 
 // This code runs before any other tests are run.
 // It allows the test binary to behave like codex and dispatch to apply_patch and codex-linux-sandbox
 // based on the arg0.
 // NOTE: this doesn't work on ARM
 #[ctor]
-pub static CODEX_ALIASES_TEMP_DIR: TestCodexAliasesGuard = unsafe {
+pub static ORBIT_ALIASES_TEMP_DIR: TestCodexAliasesGuard = unsafe {
     #[allow(clippy::unwrap_used)]
-    let codex_home = tempfile::Builder::new()
+    let orbit_code_home = tempfile::Builder::new()
         .prefix("codex-core-tests")
         .tempdir()
         .unwrap();
-    let previous_codex_home = std::env::var_os(CODEX_HOME_ENV_VAR);
-    // arg0_dispatch() creates helper links under CODEX_HOME/tmp. Point it at a
+    let previous_orbit_code_home = std::env::var_os(ORBIT_HOME_ENV_VAR);
+    // arg0_dispatch() creates helper links under ORBIT_HOME/tmp. Point it at a
     // test-owned temp dir so startup never mutates the developer's real ~/.codex.
     //
     // Safety: #[ctor] runs before tests start, so no test threads exist yet.
     unsafe {
-        std::env::set_var(CODEX_HOME_ENV_VAR, codex_home.path());
+        std::env::set_var(ORBIT_HOME_ENV_VAR, orbit_code_home.path());
     }
 
     #[allow(clippy::unwrap_used)]
     let arg0 = arg0_dispatch().unwrap();
     // Restore the process environment immediately so later tests observe the
-    // same CODEX_HOME state they started with.
-    match previous_codex_home.as_ref() {
+    // same ORBIT_HOME state they started with.
+    match previous_orbit_code_home.as_ref() {
         Some(value) => unsafe {
-            std::env::set_var(CODEX_HOME_ENV_VAR, value);
+            std::env::set_var(ORBIT_HOME_ENV_VAR, value);
         },
         None => unsafe {
-            std::env::remove_var(CODEX_HOME_ENV_VAR);
+            std::env::remove_var(ORBIT_HOME_ENV_VAR);
         },
     }
 
     TestCodexAliasesGuard {
-        _codex_home: codex_home,
+        _orbit_code_home: orbit_code_home,
         _arg0: arg0,
-        _previous_codex_home: previous_codex_home,
+        _previous_orbit_code_home: previous_orbit_code_home,
     }
 };
 
@@ -66,7 +66,6 @@ mod cli_stream;
 mod client;
 mod client_websockets;
 mod code_mode;
-mod codex_delegate;
 mod collaboration_instructions;
 mod compact;
 mod compact_remote;
@@ -93,6 +92,7 @@ mod model_switching;
 mod model_visible_layout;
 mod models_cache_ttl;
 mod models_etag_responses;
+mod orbit_code_delegate;
 mod otel;
 mod pending_input;
 mod permissions_messages;

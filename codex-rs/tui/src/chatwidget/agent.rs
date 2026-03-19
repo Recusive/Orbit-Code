@@ -1,12 +1,12 @@
 use std::sync::Arc;
 
-use codex_core::CodexThread;
-use codex_core::NewThread;
-use codex_core::ThreadManager;
-use codex_core::config::Config;
-use codex_protocol::protocol::Event;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::Op;
+use orbit_code_core::CodexThread;
+use orbit_code_core::NewThread;
+use orbit_code_core::ThreadManager;
+use orbit_code_core::config::Config;
+use orbit_code_protocol::protocol::Event;
+use orbit_code_protocol::protocol::EventMsg;
+use orbit_code_protocol::protocol::Op;
 use tokio::sync::mpsc::UnboundedSender;
 use tokio::sync::mpsc::unbounded_channel;
 
@@ -31,7 +31,7 @@ pub(crate) fn spawn_agent(
     app_event_tx: AppEventSender,
     server: Arc<ThreadManager>,
 ) -> UnboundedSender<Op> {
-    let (codex_op_tx, mut codex_op_rx) = unbounded_channel::<Op>();
+    let (orbit_code_op_tx, mut orbit_code_op_rx) = unbounded_channel::<Op>();
 
     let app_event_tx_clone = app_event_tx;
     tokio::spawn(async move {
@@ -56,16 +56,16 @@ pub(crate) fn spawn_agent(
         initialize_app_server_client_name(thread.as_ref()).await;
 
         // Forward the captured `SessionConfigured` event so it can be rendered in the UI.
-        let ev = codex_protocol::protocol::Event {
+        let ev = orbit_code_protocol::protocol::Event {
             // The `id` does not matter for rendering, so we can use a fake value.
             id: "".to_string(),
-            msg: codex_protocol::protocol::EventMsg::SessionConfigured(session_configured),
+            msg: orbit_code_protocol::protocol::EventMsg::SessionConfigured(session_configured),
         };
         app_event_tx_clone.send(AppEvent::CodexEvent(ev));
 
         let thread_clone = thread.clone();
         tokio::spawn(async move {
-            while let Some(op) = codex_op_rx.recv().await {
+            while let Some(op) = orbit_code_op_rx.recv().await {
                 let id = thread_clone.submit(op).await;
                 if let Err(e) = id {
                     tracing::error!("failed to submit op: {e}");
@@ -84,7 +84,7 @@ pub(crate) fn spawn_agent(
         }
     });
 
-    codex_op_tx
+    orbit_code_op_tx
 }
 
 /// Spawn agent loops for an existing thread (e.g., a forked thread).
@@ -92,25 +92,25 @@ pub(crate) fn spawn_agent(
 /// events and accepts Ops for submission.
 pub(crate) fn spawn_agent_from_existing(
     thread: std::sync::Arc<CodexThread>,
-    session_configured: codex_protocol::protocol::SessionConfiguredEvent,
+    session_configured: orbit_code_protocol::protocol::SessionConfiguredEvent,
     app_event_tx: AppEventSender,
 ) -> UnboundedSender<Op> {
-    let (codex_op_tx, mut codex_op_rx) = unbounded_channel::<Op>();
+    let (orbit_code_op_tx, mut orbit_code_op_rx) = unbounded_channel::<Op>();
 
     let app_event_tx_clone = app_event_tx;
     tokio::spawn(async move {
         initialize_app_server_client_name(thread.as_ref()).await;
 
         // Forward the captured `SessionConfigured` event so it can be rendered in the UI.
-        let ev = codex_protocol::protocol::Event {
+        let ev = orbit_code_protocol::protocol::Event {
             id: "".to_string(),
-            msg: codex_protocol::protocol::EventMsg::SessionConfigured(session_configured),
+            msg: orbit_code_protocol::protocol::EventMsg::SessionConfigured(session_configured),
         };
         app_event_tx_clone.send(AppEvent::CodexEvent(ev));
 
         let thread_clone = thread.clone();
         tokio::spawn(async move {
-            while let Some(op) = codex_op_rx.recv().await {
+            while let Some(op) = orbit_code_op_rx.recv().await {
                 let id = thread_clone.submit(op).await;
                 if let Err(e) = id {
                     tracing::error!("failed to submit op: {e}");
@@ -129,21 +129,21 @@ pub(crate) fn spawn_agent_from_existing(
         }
     });
 
-    codex_op_tx
+    orbit_code_op_tx
 }
 
 /// Spawn an op-forwarding loop for an existing thread without subscribing to events.
 pub(crate) fn spawn_op_forwarder(thread: std::sync::Arc<CodexThread>) -> UnboundedSender<Op> {
-    let (codex_op_tx, mut codex_op_rx) = unbounded_channel::<Op>();
+    let (orbit_code_op_tx, mut orbit_code_op_rx) = unbounded_channel::<Op>();
 
     tokio::spawn(async move {
         initialize_app_server_client_name(thread.as_ref()).await;
-        while let Some(op) = codex_op_rx.recv().await {
+        while let Some(op) = orbit_code_op_rx.recv().await {
             if let Err(e) = thread.submit(op).await {
                 tracing::error!("failed to submit op: {e}");
             }
         }
     });
 
-    codex_op_tx
+    orbit_code_op_tx
 }

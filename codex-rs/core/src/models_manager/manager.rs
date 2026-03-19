@@ -18,16 +18,16 @@ use crate::response_debug_context::extract_response_debug_context;
 use crate::response_debug_context::telemetry_transport_error_message;
 use crate::util::FeedbackRequestTags;
 use crate::util::emit_feedback_request_tags_with_auth_env;
-use codex_api::ModelsClient;
-use codex_api::RequestTelemetry;
-use codex_api::ReqwestTransport;
-use codex_api::TransportError;
-use codex_otel::TelemetryAuthMode;
-use codex_protocol::config_types::CollaborationModeMask;
-use codex_protocol::openai_models::ModelInfo;
-use codex_protocol::openai_models::ModelPreset;
-use codex_protocol::openai_models::ModelsResponse;
 use http::HeaderMap;
+use orbit_code_api::ModelsClient;
+use orbit_code_api::RequestTelemetry;
+use orbit_code_api::ReqwestTransport;
+use orbit_code_api::TransportError;
+use orbit_code_otel::TelemetryAuthMode;
+use orbit_code_protocol::config_types::CollaborationModeMask;
+use orbit_code_protocol::openai_models::ModelInfo;
+use orbit_code_protocol::openai_models::ModelPreset;
+use orbit_code_protocol::openai_models::ModelsResponse;
 use std::fmt;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -66,7 +66,7 @@ impl RequestTelemetry for ModelsRequestTelemetry {
             .unwrap_or_default();
         let status = status.map(|status| status.as_u16());
         tracing::event!(
-            target: "codex_otel.log_only",
+            target: "orbit_code_otel.log_only",
             tracing::Level::INFO,
             event.name = "codex.api_request",
             duration_ms = %duration.as_millis(),
@@ -78,8 +78,8 @@ impl RequestTelemetry for ModelsRequestTelemetry {
             auth.header_attached = self.auth_header_attached,
             auth.header_name = self.auth_header_name,
             auth.env_openai_api_key_present = self.auth_env.openai_api_key_env_present,
-            auth.env_codex_api_key_present = self.auth_env.codex_api_key_env_present,
-            auth.env_codex_api_key_enabled = self.auth_env.codex_api_key_env_enabled,
+            auth.env_orbit_code_api_key_present = self.auth_env.orbit_code_api_key_env_present,
+            auth.env_orbit_code_api_key_enabled = self.auth_env.orbit_code_api_key_env_enabled,
             auth.env_provider_key_name = self.auth_env.provider_env_key_name.as_deref(),
             auth.env_provider_key_present = self.auth_env.provider_env_key_present,
             auth.env_refresh_token_url_override_present = self.auth_env.refresh_token_url_override_present,
@@ -90,7 +90,7 @@ impl RequestTelemetry for ModelsRequestTelemetry {
             auth.mode = self.auth_mode.as_deref(),
         );
         tracing::event!(
-            target: "codex_otel.trace_safe",
+            target: "orbit_code_otel.trace_safe",
             tracing::Level::INFO,
             event.name = "codex.api_request",
             duration_ms = %duration.as_millis(),
@@ -102,8 +102,8 @@ impl RequestTelemetry for ModelsRequestTelemetry {
             auth.header_attached = self.auth_header_attached,
             auth.header_name = self.auth_header_name,
             auth.env_openai_api_key_present = self.auth_env.openai_api_key_env_present,
-            auth.env_codex_api_key_present = self.auth_env.codex_api_key_env_present,
-            auth.env_codex_api_key_enabled = self.auth_env.codex_api_key_env_enabled,
+            auth.env_orbit_code_api_key_present = self.auth_env.orbit_code_api_key_env_present,
+            auth.env_orbit_code_api_key_enabled = self.auth_env.orbit_code_api_key_env_enabled,
             auth.env_provider_key_name = self.auth_env.provider_env_key_name.as_deref(),
             auth.env_provider_key_present = self.auth_env.provider_env_key_present,
             auth.env_refresh_token_url_override_present = self.auth_env.refresh_token_url_override_present,
@@ -186,17 +186,17 @@ pub struct ModelsManager {
 impl ModelsManager {
     /// Construct a manager scoped to the provided `AuthManager`.
     ///
-    /// Uses `codex_home` to store cached model metadata and initializes with bundled catalog
+    /// Uses `orbit_code_home` to store cached model metadata and initializes with bundled catalog
     /// When `model_catalog` is provided, it becomes the authoritative remote model list and
     /// background refreshes from `/models` are disabled.
     pub fn new(
-        codex_home: PathBuf,
+        orbit_code_home: PathBuf,
         auth_manager: Arc<AuthManager>,
         model_catalog: Option<ModelsResponse>,
         collaboration_modes_config: CollaborationModesConfig,
     ) -> Self {
         Self::new_with_provider(
-            codex_home,
+            orbit_code_home,
             auth_manager,
             model_catalog,
             collaboration_modes_config,
@@ -206,13 +206,13 @@ impl ModelsManager {
 
     /// Construct a manager with an explicit provider used for remote model refreshes.
     pub fn new_with_provider(
-        codex_home: PathBuf,
+        orbit_code_home: PathBuf,
         auth_manager: Arc<AuthManager>,
         model_catalog: Option<ModelsResponse>,
         collaboration_modes_config: CollaborationModesConfig,
         provider: ModelProviderInfo,
     ) -> Self {
-        let cache_path = codex_home.join(MODEL_CACHE_FILE);
+        let cache_path = orbit_code_home.join(MODEL_CACHE_FILE);
         let cache_manager = ModelsCacheManager::new(cache_path, DEFAULT_MODEL_CACHE_TTL);
         let catalog_mode = if model_catalog.is_some() {
             CatalogMode::Custom
@@ -429,15 +429,17 @@ impl ModelsManager {
     }
 
     async fn fetch_and_update_models(&self) -> CoreResult<()> {
-        let _timer =
-            codex_otel::start_global_timer("codex.remote_models.fetch_update.duration_ms", &[]);
+        let _timer = orbit_code_otel::start_global_timer(
+            "codex.remote_models.fetch_update.duration_ms",
+            &[],
+        );
         let auth = self.auth_manager.auth().await;
         let auth_mode = auth.as_ref().map(CodexAuth::auth_mode);
         let api_provider = self.provider.to_api_provider(auth_mode)?;
         let api_auth = auth_provider_from_auth(auth.clone(), &self.provider)?;
         let auth_env = collect_auth_env_telemetry(
             &self.provider,
-            self.auth_manager.codex_api_key_env_enabled(),
+            self.auth_manager.orbit_code_api_key_env_enabled(),
         );
         let transport = ReqwestTransport::new(build_reqwest_client());
         let request_telemetry: Arc<dyn RequestTelemetry> = Arc::new(ModelsRequestTelemetry {
@@ -495,7 +497,7 @@ impl ModelsManager {
     /// Attempt to satisfy the refresh from the cache when it matches the provider and TTL.
     async fn try_load_cache(&self) -> bool {
         let _timer =
-            codex_otel::start_global_timer("codex.remote_models.load_cache.duration_ms", &[]);
+            orbit_code_otel::start_global_timer("codex.remote_models.load_cache.duration_ms", &[]);
         let client_version = crate::models_manager::client_version_to_whole();
         info!(client_version, "models cache: evaluating cache eligibility");
         let cache = match self.cache_manager.load_fresh(&client_version).await {
@@ -539,12 +541,12 @@ impl ModelsManager {
 
     /// Construct a manager with a specific provider for testing.
     pub(crate) fn with_provider_for_tests(
-        codex_home: PathBuf,
+        orbit_code_home: PathBuf,
         auth_manager: Arc<AuthManager>,
         provider: ModelProviderInfo,
     ) -> Self {
         Self::new_with_provider(
-            codex_home,
+            orbit_code_home,
             auth_manager,
             /*model_catalog*/ None,
             CollaborationModesConfig::default(),

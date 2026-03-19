@@ -1,13 +1,13 @@
 use crate::outgoing_message::ConnectionId;
 use crate::outgoing_message::ConnectionRequestId;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::ThreadHistoryBuilder;
-use codex_app_server_protocol::Turn;
-use codex_app_server_protocol::TurnError;
-use codex_core::CodexThread;
-use codex_core::ThreadConfigSnapshot;
-use codex_protocol::ThreadId;
-use codex_protocol::protocol::EventMsg;
+use orbit_code_app_server_protocol::RequestId;
+use orbit_code_app_server_protocol::ThreadHistoryBuilder;
+use orbit_code_app_server_protocol::Turn;
+use orbit_code_app_server_protocol::TurnError;
+use orbit_code_core::CodexThread;
+use orbit_code_core::ThreadConfigSnapshot;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::protocol::EventMsg;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::path::PathBuf;
@@ -19,14 +19,14 @@ use tokio::sync::oneshot;
 
 type PendingInterruptQueue = Vec<(
     ConnectionRequestId,
-    crate::codex_message_processor::ApiVersion,
+    crate::orbit_code_message_processor::ApiVersion,
 )>;
 
 pub(crate) struct PendingThreadResumeRequest {
     pub(crate) request_id: ConnectionRequestId,
     pub(crate) rollout_path: PathBuf,
     pub(crate) config_snapshot: ThreadConfigSnapshot,
-    pub(crate) thread_summary: codex_app_server_protocol::Thread,
+    pub(crate) thread_summary: orbit_code_app_server_protocol::Thread,
 }
 
 // ThreadListenerCommand is used to perform operations in the context of the thread listener, for serialization purposes.

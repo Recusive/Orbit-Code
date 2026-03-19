@@ -4,7 +4,7 @@ use crate::default_client::create_client;
 use crate::git_info::collect_git_info;
 use crate::git_info::get_git_repo_root;
 use crate::plugins::PluginTelemetryMetadata;
-use codex_protocol::protocol::SkillScope;
+use orbit_code_protocol::protocol::SkillScope;
 use serde::Serialize;
 use sha1::Digest;
 use sha1::Sha1;
@@ -545,9 +545,9 @@ async fn send_track_app_mentioned(auth_manager: &AuthManager, job: TrackAppMenti
     let events = mentions
         .into_iter()
         .map(|mention| {
-            let event_params = codex_app_metadata(&tracking, mention);
+            let event_params = orbit_code_app_metadata(&tracking, mention);
             TrackEventRequest::AppMentioned(CodexAppMentionedEventRequest {
-                event_type: "codex_app_mentioned",
+                event_type: "orbit_code_app_mentioned",
                 event_params,
             })
         })
@@ -562,9 +562,9 @@ async fn send_track_app_used(auth_manager: &AuthManager, job: TrackAppUsedJob) {
         tracking,
         app,
     } = job;
-    let event_params = codex_app_metadata(&tracking, app);
+    let event_params = orbit_code_app_metadata(&tracking, app);
     let events = vec![TrackEventRequest::AppUsed(CodexAppUsedEventRequest {
-        event_type: "codex_app_used",
+        event_type: "orbit_code_app_used",
         event_params,
     })];
 
@@ -578,27 +578,27 @@ async fn send_track_plugin_used(auth_manager: &AuthManager, job: TrackPluginUsed
         plugin,
     } = job;
     let events = vec![TrackEventRequest::PluginUsed(CodexPluginUsedEventRequest {
-        event_type: "codex_plugin_used",
-        event_params: codex_plugin_used_metadata(&tracking, plugin),
+        event_type: "orbit_code_plugin_used",
+        event_params: orbit_code_plugin_used_metadata(&tracking, plugin),
     })];
 
     send_track_events(auth_manager, config, events).await;
 }
 
 async fn send_track_plugin_installed(auth_manager: &AuthManager, job: TrackPluginManagementJob) {
-    send_track_plugin_management_event(auth_manager, job, "codex_plugin_installed").await;
+    send_track_plugin_management_event(auth_manager, job, "orbit_code_plugin_installed").await;
 }
 
 async fn send_track_plugin_uninstalled(auth_manager: &AuthManager, job: TrackPluginManagementJob) {
-    send_track_plugin_management_event(auth_manager, job, "codex_plugin_uninstalled").await;
+    send_track_plugin_management_event(auth_manager, job, "orbit_code_plugin_uninstalled").await;
 }
 
 async fn send_track_plugin_enabled(auth_manager: &AuthManager, job: TrackPluginManagementJob) {
-    send_track_plugin_management_event(auth_manager, job, "codex_plugin_enabled").await;
+    send_track_plugin_management_event(auth_manager, job, "orbit_code_plugin_enabled").await;
 }
 
 async fn send_track_plugin_disabled(auth_manager: &AuthManager, job: TrackPluginManagementJob) {
-    send_track_plugin_management_event(auth_manager, job, "codex_plugin_disabled").await;
+    send_track_plugin_management_event(auth_manager, job, "orbit_code_plugin_disabled").await;
 }
 
 async fn send_track_plugin_management_event(
@@ -607,23 +607,23 @@ async fn send_track_plugin_management_event(
     event_type: &'static str,
 ) {
     let TrackPluginManagementJob { config, plugin } = job;
-    let event_params = codex_plugin_metadata(plugin);
+    let event_params = orbit_code_plugin_metadata(plugin);
     let event = CodexPluginEventRequest {
         event_type,
         event_params,
     };
     let events = vec![match event_type {
-        "codex_plugin_installed" => TrackEventRequest::PluginInstalled(event),
-        "codex_plugin_uninstalled" => TrackEventRequest::PluginUninstalled(event),
-        "codex_plugin_enabled" => TrackEventRequest::PluginEnabled(event),
-        "codex_plugin_disabled" => TrackEventRequest::PluginDisabled(event),
+        "orbit_code_plugin_installed" => TrackEventRequest::PluginInstalled(event),
+        "orbit_code_plugin_uninstalled" => TrackEventRequest::PluginUninstalled(event),
+        "orbit_code_plugin_enabled" => TrackEventRequest::PluginEnabled(event),
+        "orbit_code_plugin_disabled" => TrackEventRequest::PluginDisabled(event),
         _ => unreachable!("unknown plugin management event type"),
     }];
 
     send_track_events(auth_manager, config, events).await;
 }
 
-fn codex_app_metadata(tracking: &TrackEventsContext, app: AppInvocation) -> CodexAppMetadata {
+fn orbit_code_app_metadata(tracking: &TrackEventsContext, app: AppInvocation) -> CodexAppMetadata {
     CodexAppMetadata {
         connector_id: app.connector_id,
         thread_id: Some(tracking.thread_id.clone()),
@@ -635,7 +635,7 @@ fn codex_app_metadata(tracking: &TrackEventsContext, app: AppInvocation) -> Code
     }
 }
 
-fn codex_plugin_metadata(plugin: PluginTelemetryMetadata) -> CodexPluginMetadata {
+fn orbit_code_plugin_metadata(plugin: PluginTelemetryMetadata) -> CodexPluginMetadata {
     let capability_summary = plugin.capability_summary;
     CodexPluginMetadata {
         plugin_id: Some(plugin.plugin_id.as_key()),
@@ -658,12 +658,12 @@ fn codex_plugin_metadata(plugin: PluginTelemetryMetadata) -> CodexPluginMetadata
     }
 }
 
-fn codex_plugin_used_metadata(
+fn orbit_code_plugin_used_metadata(
     tracking: &TrackEventsContext,
     plugin: PluginTelemetryMetadata,
 ) -> CodexPluginUsedMetadata {
     CodexPluginUsedMetadata {
-        plugin: codex_plugin_metadata(plugin),
+        plugin: orbit_code_plugin_metadata(plugin),
         thread_id: Some(tracking.thread_id.clone()),
         turn_id: Some(tracking.turn_id.clone()),
         model_slug: Some(tracking.model_slug.clone()),

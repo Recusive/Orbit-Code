@@ -1,12 +1,12 @@
 use std::sync::Arc;
 
-use codex_app_server_protocol::Model;
-use codex_app_server_protocol::ModelUpgradeInfo;
-use codex_app_server_protocol::ReasoningEffortOption;
-use codex_core::ThreadManager;
-use codex_core::models_manager::manager::RefreshStrategy;
-use codex_protocol::openai_models::ModelPreset;
-use codex_protocol::openai_models::ReasoningEffortPreset;
+use orbit_code_app_server_protocol::Model;
+use orbit_code_app_server_protocol::ModelUpgradeInfo;
+use orbit_code_app_server_protocol::ReasoningEffortOption;
+use orbit_code_core::ThreadManager;
+use orbit_code_core::models_manager::manager::RefreshStrategy;
+use orbit_code_protocol::openai_models::ModelPreset;
+use orbit_code_protocol::openai_models::ReasoningEffortPreset;
 
 pub async fn supported_models(
     thread_manager: Arc<ThreadManager>,

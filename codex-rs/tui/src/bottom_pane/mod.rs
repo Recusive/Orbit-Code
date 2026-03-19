@@ -27,15 +27,15 @@ use crate::render::renderable::Renderable;
 use crate::render::renderable::RenderableItem;
 use crate::tui::FrameRequester;
 use bottom_pane_view::BottomPaneView;
-use codex_core::features::Features;
-use codex_core::plugins::PluginCapabilitySummary;
-use codex_core::skills::model::SkillMetadata;
-use codex_file_search::FileMatch;
-use codex_protocol::request_user_input::RequestUserInputEvent;
-use codex_protocol::user_input::TextElement;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyEventKind;
+use orbit_code_core::features::Features;
+use orbit_code_core::plugins::PluginCapabilitySummary;
+use orbit_code_core::skills::model::SkillMetadata;
+use orbit_code_file_search::FileMatch;
+use orbit_code_protocol::request_user_input::RequestUserInputEvent;
+use orbit_code_protocol::user_input::TextElement;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::text::Line;
@@ -141,7 +141,7 @@ use crate::bottom_pane::prompt_args::parse_slash_name;
 pub(crate) use chat_composer::ChatComposer;
 pub(crate) use chat_composer::ChatComposerConfig;
 pub(crate) use chat_composer::InputResult;
-use codex_protocol::custom_prompts::CustomPrompt;
+use orbit_code_protocol::custom_prompts::CustomPrompt;
 
 use crate::status_indicator_widget::StatusDetailsCapitalization;
 use crate::status_indicator_widget::StatusIndicatorWidget;
@@ -1245,11 +1245,11 @@ mod tests {
     use crate::app_event::AppEvent;
     use crate::status_indicator_widget::STATUS_DETAILS_DEFAULT_MAX_LINES;
     use crate::status_indicator_widget::StatusDetailsCapitalization;
-    use codex_protocol::protocol::Op;
-    use codex_protocol::protocol::SkillScope;
     use crossterm::event::KeyEventKind;
     use crossterm::event::KeyModifiers;
     use insta::assert_snapshot;
+    use orbit_code_protocol::protocol::Op;
+    use orbit_code_protocol::protocol::SkillScope;
     use ratatui::buffer::Buffer;
     use ratatui::layout::Rect;
     use std::cell::Cell;
@@ -1277,14 +1277,14 @@ mod tests {
 
     fn exec_request() -> ApprovalRequest {
         ApprovalRequest::Exec {
-            thread_id: codex_protocol::ThreadId::new(),
+            thread_id: orbit_code_protocol::ThreadId::new(),
             thread_label: None,
             id: "1".to_string(),
             command: vec!["echo".into(), "ok".into()],
             reason: None,
             available_decisions: vec![
-                codex_protocol::protocol::ReviewDecision::Approved,
-                codex_protocol::protocol::ReviewDecision::Abort,
+                orbit_code_protocol::protocol::ReviewDecision::Approved,
+                orbit_code_protocol::protocol::ReviewDecision::Abort,
             ],
             network_approval_context: None,
             additional_permissions: None,

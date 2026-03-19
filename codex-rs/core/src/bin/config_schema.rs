@@ -15,6 +15,6 @@ fn main() -> Result<()> {
     let out_path = args
         .out
         .unwrap_or_else(|| PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("config.schema.json"));
-    codex_core::config::schema::write_config_schema(&out_path)?;
+    orbit_code_core::config::schema::write_config_schema(&out_path)?;
     Ok(())
 }

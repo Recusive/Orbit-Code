@@ -1,12 +1,12 @@
-use codex_core::AuthManager;
-use codex_core::config::Config;
-#[cfg(target_os = "windows")]
-use codex_core::windows_sandbox::WindowsSandboxLevelExt;
-#[cfg(target_os = "windows")]
-use codex_protocol::config_types::WindowsSandboxLevel;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyEventKind;
+use orbit_code_core::AuthManager;
+use orbit_code_core::config::Config;
+#[cfg(target_os = "windows")]
+use orbit_code_core::windows_sandbox::WindowsSandboxLevelExt;
+#[cfg(target_os = "windows")]
+use orbit_code_protocol::config_types::WindowsSandboxLevel;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::prelude::Widget;
@@ -14,7 +14,7 @@ use ratatui::style::Color;
 use ratatui::widgets::Clear;
 use ratatui::widgets::WidgetRef;
 
-use codex_protocol::config_types::ForcedLoginMethod;
+use orbit_code_protocol::config_types::ForcedLoginMethod;
 
 use crate::LoginStatus;
 use crate::onboarding::auth::AuthModeWidget;
@@ -85,7 +85,7 @@ impl OnboardingScreen {
         let cwd = config.cwd.clone();
         let forced_chatgpt_workspace_id = config.forced_chatgpt_workspace_id.clone();
         let forced_login_method = config.forced_login_method;
-        let codex_home = config.codex_home.clone();
+        let orbit_code_home = config.orbit_code_home.clone();
         let cli_auth_credentials_store_mode = config.cli_auth_credentials_store_mode;
         let mut steps: Vec<Step> = Vec::new();
         steps.push(Step::Welcome(WelcomeWidget::new(
@@ -103,7 +103,7 @@ impl OnboardingScreen {
                 highlighted_mode,
                 error: None,
                 sign_in_state: Arc::new(RwLock::new(SignInState::PickMode)),
-                codex_home: codex_home.clone(),
+                orbit_code_home: orbit_code_home.clone(),
                 cli_auth_credentials_store_mode,
                 login_status,
                 auth_manager,
@@ -121,7 +121,7 @@ impl OnboardingScreen {
         if show_trust_screen {
             steps.push(Step::TrustDirectory(TrustDirectoryWidget {
                 cwd,
-                codex_home,
+                orbit_code_home,
                 show_windows_create_sandbox_hint,
                 should_quit: false,
                 selection: None,

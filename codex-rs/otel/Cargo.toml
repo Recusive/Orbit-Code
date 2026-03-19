@@ -1,12 +1,12 @@
 [package]
-name = "codex-otel"
+name = "orbit-code-otel"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [lib]
 doctest = false
-name = "codex_otel"
+name = "orbit_code_otel"
 path = "src/lib.rs"
 
 [lints]
@@ -21,10 +21,10 @@ disable-default-metrics-exporter = []
 
 [dependencies]
 chrono = { workspace = true }
-codex-utils-absolute-path = { workspace = true }
-codex-utils-string = { workspace = true }
-codex-api = { workspace = true }
-codex-protocol = { workspace = true }
+orbit-code-utils-absolute-path = { workspace = true }
+orbit-code-utils-string = { workspace = true }
+orbit-code-api = { workspace = true }
+orbit-code-protocol = { workspace = true }
 eventsource-stream = { workspace = true }
 gethostname = { workspace = true }
 opentelemetry = { workspace = true, features = ["logs", "metrics", "trace"] }

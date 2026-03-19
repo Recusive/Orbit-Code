@@ -2,11 +2,11 @@ use std::path::Path;
 use std::path::PathBuf;
 
 use anyhow::Result;
-use codex_core::config::Config;
-use codex_core::config::Constrained;
-use codex_core::features::Feature;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::SandboxPolicy;
+use orbit_code_core::config::Config;
+use orbit_code_core::config::Constrained;
+use orbit_code_core::features::Feature;
+use orbit_code_protocol::protocol::AskForApproval;
+use orbit_code_protocol::protocol::SandboxPolicy;
 
 use crate::test_codex::TestCodex;
 use crate::test_codex::test_codex;
@@ -61,7 +61,7 @@ pub fn zsh_fork_runtime(test_name: &str) -> Result<Option<ZshForkRuntime>> {
         );
         return Ok(None);
     }
-    let Ok(main_execve_wrapper_exe) = codex_utils_cargo_bin::cargo_bin("codex-execve-wrapper")
+    let Ok(main_execve_wrapper_exe) = orbit_code_utils_cargo_bin::cargo_bin("codex-execve-wrapper")
     else {
         eprintln!("skipping {test_name}: unable to resolve `codex-execve-wrapper` binary");
         return Ok(None);
@@ -92,7 +92,7 @@ where
 }
 
 fn find_test_zsh_path() -> Result<Option<PathBuf>> {
-    let repo_root = codex_utils_cargo_bin::repo_root()?;
+    let repo_root = orbit_code_utils_cargo_bin::repo_root()?;
     let dotslash_zsh = repo_root.join("codex-rs/app-server/tests/suite/zsh");
     if !dotslash_zsh.is_file() {
         eprintln!(

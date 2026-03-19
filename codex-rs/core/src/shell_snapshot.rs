@@ -14,8 +14,8 @@ use anyhow::Context;
 use anyhow::Result;
 use anyhow::anyhow;
 use anyhow::bail;
-use codex_otel::SessionTelemetry;
-use codex_protocol::ThreadId;
+use orbit_code_otel::SessionTelemetry;
+use orbit_code_protocol::ThreadId;
 use tokio::fs;
 use tokio::process::Command;
 use tokio::sync::watch;
@@ -36,7 +36,7 @@ const EXCLUDED_EXPORT_VARS: &[&str] = &["PWD", "OLDPWD"];
 
 impl ShellSnapshot {
     pub fn start_snapshotting(
-        codex_home: PathBuf,
+        orbit_code_home: PathBuf,
         session_id: ThreadId,
         session_cwd: PathBuf,
         shell: &mut Shell,
@@ -46,7 +46,7 @@ impl ShellSnapshot {
         shell.shell_snapshot = shell_snapshot_rx;
 
         Self::spawn_snapshot_task(
-            codex_home,
+            orbit_code_home,
             session_id,
             session_cwd,
             shell.clone(),
@@ -58,7 +58,7 @@ impl ShellSnapshot {
     }
 
     pub fn refresh_snapshot(
-        codex_home: PathBuf,
+        orbit_code_home: PathBuf,
         session_id: ThreadId,
         session_cwd: PathBuf,
         shell: Shell,
@@ -66,7 +66,7 @@ impl ShellSnapshot {
         session_telemetry: SessionTelemetry,
     ) {
         Self::spawn_snapshot_task(
-            codex_home,
+            orbit_code_home,
             session_id,
             session_cwd,
             shell,
@@ -76,7 +76,7 @@ impl ShellSnapshot {
     }
 
     fn spawn_snapshot_task(
-        codex_home: PathBuf,
+        orbit_code_home: PathBuf,
         session_id: ThreadId,
         session_cwd: PathBuf,
         snapshot_shell: Shell,
@@ -88,7 +88,7 @@ impl ShellSnapshot {
             async move {
                 let timer = session_telemetry.start_timer("codex.shell_snapshot.duration_ms", &[]);
                 let snapshot = ShellSnapshot::try_new(
-                    &codex_home,
+                    &orbit_code_home,
                     session_id,
                     session_cwd.as_path(),
                     &snapshot_shell,
@@ -110,7 +110,7 @@ impl ShellSnapshot {
     }
 
     async fn try_new(
-        codex_home: &Path,
+        orbit_code_home: &Path,
         session_id: ThreadId,
         session_cwd: &Path,
         shell: &Shell,
@@ -124,18 +124,18 @@ impl ShellSnapshot {
             .duration_since(SystemTime::UNIX_EPOCH)
             .map(|duration| duration.as_nanos())
             .unwrap_or(0);
-        let path = codex_home
+        let path = orbit_code_home
             .join(SNAPSHOT_DIR)
             .join(format!("{session_id}.{nonce}.{extension}"));
-        let temp_path = codex_home
+        let temp_path = orbit_code_home
             .join(SNAPSHOT_DIR)
             .join(format!("{session_id}.tmp-{nonce}"));
 
         // Clean the (unlikely) leaked snapshot files.
-        let codex_home = codex_home.to_path_buf();
+        let orbit_code_home = orbit_code_home.to_path_buf();
         let cleanup_session_id = session_id;
         tokio::spawn(async move {
-            if let Err(err) = cleanup_stale_snapshots(&codex_home, cleanup_session_id).await {
+            if let Err(err) = cleanup_stale_snapshots(&orbit_code_home, cleanup_session_id).await {
                 tracing::warn!("Failed to clean up shell snapshots: {err:?}");
             }
         });
@@ -284,7 +284,7 @@ async fn run_script_with_timeout(
     #[cfg(unix)]
     unsafe {
         handler.pre_exec(|| {
-            codex_utils_pty::process_group::detach_from_tty()?;
+            orbit_code_utils_pty::process_group::detach_from_tty()?;
             Ok(())
         });
     }
@@ -489,8 +489,11 @@ $envVars | ForEach-Object {
 /// Removes shell snapshots that either lack a matching session rollout file or
 /// whose rollouts have not been updated within the retention window.
 /// The active session id is exempt from cleanup.
-pub async fn cleanup_stale_snapshots(codex_home: &Path, active_session_id: ThreadId) -> Result<()> {
-    let snapshot_dir = codex_home.join(SNAPSHOT_DIR);
+pub async fn cleanup_stale_snapshots(
+    orbit_code_home: &Path,
+    active_session_id: ThreadId,
+) -> Result<()> {
+    let snapshot_dir = orbit_code_home.join(SNAPSHOT_DIR);
 
     let mut entries = match fs::read_dir(&snapshot_dir).await {
         Ok(entries) => entries,
@@ -518,7 +521,7 @@ pub async fn cleanup_stale_snapshots(codex_home: &Path, active_session_id: Threa
             continue;
         }
 
-        let rollout_path = find_thread_path_by_id_str(codex_home, session_id).await?;
+        let rollout_path = find_thread_path_by_id_str(orbit_code_home, session_id).await?;
         let Some(rollout_path) = rollout_path else {
             remove_snapshot_file(&path).await;
             continue;

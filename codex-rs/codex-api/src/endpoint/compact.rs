@@ -3,11 +3,11 @@ use crate::common::CompactionInput;
 use crate::endpoint::session::EndpointSession;
 use crate::error::ApiError;
 use crate::provider::Provider;
-use codex_client::HttpTransport;
-use codex_client::RequestTelemetry;
-use codex_protocol::models::ResponseItem;
 use http::HeaderMap;
 use http::Method;
+use orbit_code_client::HttpTransport;
+use orbit_code_client::RequestTelemetry;
+use orbit_code_protocol::models::ResponseItem;
 use serde::Deserialize;
 use serde_json::to_value;
 use std::sync::Arc;
@@ -67,10 +67,10 @@ struct CompactHistoryResponse {
 mod tests {
     use super::*;
     use async_trait::async_trait;
-    use codex_client::Request;
-    use codex_client::Response;
-    use codex_client::StreamResponse;
-    use codex_client::TransportError;
+    use orbit_code_client::Request;
+    use orbit_code_client::Response;
+    use orbit_code_client::StreamResponse;
+    use orbit_code_client::TransportError;
 
     #[derive(Clone, Default)]
     struct DummyTransport;

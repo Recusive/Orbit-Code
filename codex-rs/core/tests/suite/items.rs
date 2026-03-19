@@ -1,19 +1,6 @@
 #![cfg(not(target_os = "windows"))]
 
 use anyhow::Ok;
-use codex_protocol::config_types::CollaborationMode;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::config_types::Settings;
-use codex_protocol::items::AgentMessageContent;
-use codex_protocol::items::TurnItem;
-use codex_protocol::models::WebSearchAction;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::ItemCompletedEvent;
-use codex_protocol::protocol::ItemStartedEvent;
-use codex_protocol::protocol::Op;
-use codex_protocol::user_input::ByteRange;
-use codex_protocol::user_input::TextElement;
-use codex_protocol::user_input::UserInput;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_image_generation_call;
@@ -34,6 +21,19 @@ use core_test_support::test_codex::TestCodex;
 use core_test_support::test_codex::test_codex;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_match;
+use orbit_code_protocol::config_types::CollaborationMode;
+use orbit_code_protocol::config_types::ModeKind;
+use orbit_code_protocol::config_types::Settings;
+use orbit_code_protocol::items::AgentMessageContent;
+use orbit_code_protocol::items::TurnItem;
+use orbit_code_protocol::models::WebSearchAction;
+use orbit_code_protocol::protocol::EventMsg;
+use orbit_code_protocol::protocol::ItemCompletedEvent;
+use orbit_code_protocol::protocol::ItemStartedEvent;
+use orbit_code_protocol::protocol::Op;
+use orbit_code_protocol::user_input::ByteRange;
+use orbit_code_protocol::user_input::TextElement;
+use orbit_code_protocol::user_input::UserInput;
 use pretty_assertions::assert_eq;
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
@@ -137,7 +137,8 @@ async fn assistant_message_item_is_emitted() -> anyhow::Result<()> {
     .await;
 
     assert_eq!(started.id, completed.id);
-    let Some(codex_protocol::items::AgentMessageContent::Text { text }) = completed.content.first()
+    let Some(orbit_code_protocol::items::AgentMessageContent::Text { text }) =
+        completed.content.first()
     else {
         panic!("expected agent message text content");
     };
@@ -477,8 +478,8 @@ async fn plan_mode_emits_plan_item_from_proposed_plan_block() -> anyhow::Result<
             }],
             final_output_json_schema: None,
             cwd: std::env::current_dir()?,
-            approval_policy: codex_protocol::protocol::AskForApproval::Never,
-            sandbox_policy: codex_protocol::protocol::SandboxPolicy::DangerFullAccess,
+            approval_policy: orbit_code_protocol::protocol::AskForApproval::Never,
+            sandbox_policy: orbit_code_protocol::protocol::SandboxPolicy::DangerFullAccess,
             model: session_configured.model.clone(),
             effort: None,
             summary: None,
@@ -553,8 +554,8 @@ async fn plan_mode_strips_plan_from_agent_messages() -> anyhow::Result<()> {
             }],
             final_output_json_schema: None,
             cwd: std::env::current_dir()?,
-            approval_policy: codex_protocol::protocol::AskForApproval::Never,
-            sandbox_policy: codex_protocol::protocol::SandboxPolicy::DangerFullAccess,
+            approval_policy: orbit_code_protocol::protocol::AskForApproval::Never,
+            sandbox_policy: orbit_code_protocol::protocol::SandboxPolicy::DangerFullAccess,
             model: session_configured.model.clone(),
             effort: None,
             summary: None,
@@ -661,8 +662,8 @@ async fn plan_mode_streaming_citations_are_stripped_across_added_deltas_and_done
             }],
             final_output_json_schema: None,
             cwd: std::env::current_dir()?,
-            approval_policy: codex_protocol::protocol::AskForApproval::Never,
-            sandbox_policy: codex_protocol::protocol::SandboxPolicy::DangerFullAccess,
+            approval_policy: orbit_code_protocol::protocol::AskForApproval::Never,
+            sandbox_policy: orbit_code_protocol::protocol::SandboxPolicy::DangerFullAccess,
             model: session_configured.model.clone(),
             effort: None,
             summary: None,
@@ -847,8 +848,8 @@ async fn plan_mode_streaming_proposed_plan_tag_split_across_added_and_delta_is_p
             }],
             final_output_json_schema: None,
             cwd: std::env::current_dir()?,
-            approval_policy: codex_protocol::protocol::AskForApproval::Never,
-            sandbox_policy: codex_protocol::protocol::SandboxPolicy::DangerFullAccess,
+            approval_policy: orbit_code_protocol::protocol::AskForApproval::Never,
+            sandbox_policy: orbit_code_protocol::protocol::SandboxPolicy::DangerFullAccess,
             model: session_configured.model.clone(),
             effort: None,
             summary: None,
@@ -960,8 +961,8 @@ async fn plan_mode_handles_missing_plan_close_tag() -> anyhow::Result<()> {
             }],
             final_output_json_schema: None,
             cwd: std::env::current_dir()?,
-            approval_policy: codex_protocol::protocol::AskForApproval::Never,
-            sandbox_policy: codex_protocol::protocol::SandboxPolicy::DangerFullAccess,
+            approval_policy: orbit_code_protocol::protocol::AskForApproval::Never,
+            sandbox_policy: orbit_code_protocol::protocol::SandboxPolicy::DangerFullAccess,
             model: session_configured.model.clone(),
             effort: None,
             summary: None,

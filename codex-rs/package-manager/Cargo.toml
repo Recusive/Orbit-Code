@@ -1,5 +1,5 @@
 [package]
-name = "codex-package-manager"
+name = "orbit-code-package-manager"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

@@ -10,7 +10,7 @@ pub fn grant_read_root_non_elevated(
     policy_cwd: &Path,
     command_cwd: &Path,
     env_map: &HashMap<String, String>,
-    codex_home: &Path,
+    orbit_code_home: &Path,
     read_root: &Path,
 ) -> Result<PathBuf> {
     if !read_root.is_absolute() {
@@ -29,7 +29,7 @@ pub fn grant_read_root_non_elevated(
         policy_cwd,
         command_cwd,
         env_map,
-        codex_home,
+        orbit_code_home,
         vec![canonical_root.clone()],
     )?;
     Ok(canonical_root)

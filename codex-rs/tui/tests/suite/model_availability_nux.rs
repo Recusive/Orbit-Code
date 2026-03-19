@@ -11,15 +11,15 @@ use tokio::time::timeout;
 
 #[tokio::test]
 async fn resume_startup_does_not_consume_model_availability_nux_count() -> Result<()> {
-    // run_codex_cli() does not work on Windows due to PTY limitations.
+    // run_orbit_code_cli() does not work on Windows due to PTY limitations.
     if cfg!(windows) {
         return Ok(());
     }
 
-    let repo_root = codex_utils_cargo_bin::repo_root()?;
-    let codex_home = tempdir()?;
+    let repo_root = orbit_code_utils_cargo_bin::repo_root()?;
+    let orbit_code_home = tempdir()?;
 
-    let source_catalog_path = codex_utils_cargo_bin::find_resource!("../core/models.json")?;
+    let source_catalog_path = orbit_code_utils_cargo_bin::find_resource!("../core/models.json")?;
     let source_catalog = std::fs::read_to_string(&source_catalog_path)?;
     let mut source_catalog: JsonValue = serde_json::from_str(&source_catalog)?;
     let models = source_catalog
@@ -47,7 +47,7 @@ async fn resume_startup_does_not_consume_model_availability_nux_count() -> Resul
         }),
     );
 
-    let custom_catalog_path = codex_home.path().join("catalog.json");
+    let custom_catalog_path = orbit_code_home.path().join("catalog.json");
     std::fs::write(
         &custom_catalog_path,
         serde_json::to_string(&source_catalog)?,
@@ -67,14 +67,14 @@ trust_level = "trusted"
 "{model_slug}" = 1
 "#
     );
-    std::fs::write(codex_home.path().join("config.toml"), config_contents)?;
+    std::fs::write(orbit_code_home.path().join("config.toml"), config_contents)?;
 
     let fixture_path =
-        codex_utils_cargo_bin::find_resource!("../core/tests/cli_responses_fixture.sse")?;
-    let codex = if let Ok(path) = codex_utils_cargo_bin::cargo_bin("codex") {
+        orbit_code_utils_cargo_bin::find_resource!("../core/tests/cli_responses_fixture.sse")?;
+    let codex = if let Ok(path) = orbit_code_utils_cargo_bin::cargo_bin("orbit-code") {
         path
     } else {
-        let fallback = repo_root.join("codex-rs/target/debug/codex");
+        let fallback = repo_root.join("codex-rs/target/debug/orbit-code");
         if fallback.is_file() {
             fallback
         } else {
@@ -89,22 +89,22 @@ trust_level = "trusted"
         .arg("-C")
         .arg(&repo_root)
         .arg("seed session for resume")
-        .env("CODEX_HOME", codex_home.path())
+        .env("ORBIT_HOME", orbit_code_home.path())
         .env("OPENAI_API_KEY", "dummy")
-        .env("CODEX_RS_SSE_FIXTURE", fixture_path)
+        .env("ORBIT_RS_SSE_FIXTURE", fixture_path)
         .env("OPENAI_BASE_URL", "http://unused.local")
         .output()
-        .context("failed to execute codex exec")?;
+        .context("failed to execute orbit-code exec")?;
     anyhow::ensure!(
         exec_output.status.success(),
-        "codex exec failed: {}",
+        "orbit-code exec failed: {}",
         String::from_utf8_lossy(&exec_output.stderr)
     );
 
     let mut env = HashMap::new();
     env.insert(
-        "CODEX_HOME".to_string(),
-        codex_home.path().display().to_string(),
+        "ORBIT_HOME".to_string(),
+        orbit_code_home.path().display().to_string(),
     );
     env.insert("OPENAI_API_KEY".to_string(), "dummy".to_string());
 
@@ -118,24 +118,24 @@ trust_level = "trusted"
         "analytics.enabled=false".to_string(),
     ];
 
-    let spawned = codex_utils_pty::spawn_pty_process(
+    let spawned = orbit_code_utils_pty::spawn_pty_process(
         codex.to_string_lossy().as_ref(),
         &args,
         &repo_root,
         &env,
         &None,
-        codex_utils_pty::TerminalSize::default(),
+        orbit_code_utils_pty::TerminalSize::default(),
     )
     .await?;
 
     let mut output = Vec::new();
-    let codex_utils_pty::SpawnedProcess {
+    let orbit_code_utils_pty::SpawnedProcess {
         session,
         stdout_rx,
         stderr_rx,
         exit_rx,
     } = spawned;
-    let mut output_rx = codex_utils_pty::combine_output_receivers(stdout_rx, stderr_rx);
+    let mut output_rx = orbit_code_utils_pty::combine_output_receivers(stdout_rx, stderr_rx);
     let mut exit_rx = exit_rx;
     let writer_tx = session.writer_sender();
     let interrupt_writer = writer_tx.clone();
@@ -173,16 +173,16 @@ trust_level = "trusted"
         Ok(Err(err)) => return Err(err.into()),
         Err(_) => {
             session.terminate();
-            anyhow::bail!("timed out waiting for codex resume to exit");
+            anyhow::bail!("timed out waiting for orbit-code resume to exit");
         }
     };
     anyhow::ensure!(
         exit_code == 0 || exit_code == 130,
-        "unexpected exit code from codex resume: {exit_code}; output: {}",
+        "unexpected exit code from orbit-code resume: {exit_code}; output: {}",
         String::from_utf8_lossy(&output)
     );
 
-    let config_contents = std::fs::read_to_string(codex_home.path().join("config.toml"))?;
+    let config_contents = std::fs::read_to_string(orbit_code_home.path().join("config.toml"))?;
     let config: toml::Value = toml::from_str(&config_contents)?;
     let shown_count = config
         .get("tui")

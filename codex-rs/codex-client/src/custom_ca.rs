@@ -9,7 +9,7 @@
 //!
 //! The module intentionally has a narrow responsibility:
 //!
-//! - read CA material from `CODEX_CA_CERTIFICATE`, falling back to `SSL_CERT_FILE`
+//! - read CA material from `ORBIT_CA_CERTIFICATE`, falling back to `SSL_CERT_FILE`
 //! - normalize PEM variants that show up in real deployments, including OpenSSL-style
 //!   `TRUSTED CERTIFICATE` labels and bundles that also contain CRLs
 //! - return user-facing errors that explain how to fix misconfigured CA files
@@ -47,7 +47,7 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use codex_utils_rustls_provider::ensure_rustls_crypto_provider;
+use orbit_code_utils_rustls_provider::ensure_rustls_crypto_provider;
 use rustls::ClientConfig;
 use rustls::RootCertStore;
 use rustls_pki_types::CertificateDer;
@@ -58,9 +58,9 @@ use thiserror::Error;
 use tracing::info;
 use tracing::warn;
 
-pub const CODEX_CA_CERT_ENV: &str = "CODEX_CA_CERTIFICATE";
+pub const ORBIT_CA_CERT_ENV: &str = "ORBIT_CA_CERTIFICATE";
 pub const SSL_CERT_FILE_ENV: &str = "SSL_CERT_FILE";
-const CA_CERT_HINT: &str = "If you set CODEX_CA_CERTIFICATE or SSL_CERT_FILE, ensure it points to a PEM file containing one or more CERTIFICATE blocks, or unset it to use system roots.";
+const CA_CERT_HINT: &str = "If you set ORBIT_CA_CERTIFICATE or SSL_CERT_FILE, ensure it points to a PEM file containing one or more CERTIFICATE blocks, or unset it to use system roots.";
 type PemSection = (SectionKind, Vec<u8>);
 
 /// Describes why a transport using shared custom CA support could not be constructed.
@@ -164,7 +164,7 @@ impl From<BuildCustomCaTransportError> for io::Error {
 /// Builds a reqwest client that honors Codex custom CA environment variables.
 ///
 /// Callers supply the baseline builder configuration they need, and this helper layers in custom
-/// CA handling before finally constructing the client. `CODEX_CA_CERTIFICATE` takes precedence
+/// CA handling before finally constructing the client. `ORBIT_CA_CERTIFICATE` takes precedence
 /// over `SSL_CERT_FILE`, and empty values for either are treated as unset so callers do not
 /// accidentally turn `VAR=""` into a bogus path lookup.
 ///
@@ -185,7 +185,7 @@ pub fn build_reqwest_client_with_custom_ca(
 /// Builds a rustls client config when a Codex custom CA bundle is configured.
 ///
 /// This is the websocket-facing sibling of [`build_reqwest_client_with_custom_ca`]. When
-/// `CODEX_CA_CERTIFICATE` or `SSL_CERT_FILE` selects a CA bundle, the returned config starts from
+/// `ORBIT_CA_CERTIFICATE` or `SSL_CERT_FILE` selects a CA bundle, the returned config starts from
 /// the platform native roots and then adds the configured custom CA certificates. When no custom
 /// CA env var is set, this returns `Ok(None)` so websocket callers can keep using their ordinary
 /// default connector path.
@@ -314,7 +314,7 @@ fn build_reqwest_client_with_env(
     }
 
     info!(
-        codex_ca_certificate_configured = false,
+        orbit_code_ca_certificate_configured = false,
         ssl_cert_file_configured = false,
         "using system root certificates because no CA override environment variable was selected"
     );
@@ -358,13 +358,13 @@ trait EnvSource {
 
     /// Returns the configured CA bundle and which environment variable selected it.
     ///
-    /// `CODEX_CA_CERTIFICATE` wins over `SSL_CERT_FILE` because it is the Codex-specific override.
+    /// `ORBIT_CA_CERTIFICATE` wins over `SSL_CERT_FILE` because it is the Codex-specific override.
     /// Keeping the winning variable name with the path lets later logging explain not only which
     /// file was used but also why that file was chosen.
     fn configured_ca_bundle(&self) -> Option<ConfiguredCaBundle> {
-        self.non_empty_path(CODEX_CA_CERT_ENV)
+        self.non_empty_path(ORBIT_CA_CERT_ENV)
             .map(|path| ConfiguredCaBundle {
-                source_env: CODEX_CA_CERT_ENV,
+                source_env: ORBIT_CA_CERT_ENV,
                 path,
             })
             .or_else(|| {
@@ -689,8 +689,8 @@ mod tests {
     use tempfile::TempDir;
 
     use super::BuildCustomCaTransportError;
-    use super::CODEX_CA_CERT_ENV;
     use super::EnvSource;
+    use super::ORBIT_CA_CERT_ENV;
     use super::SSL_CERT_FILE_ENV;
     use super::maybe_build_rustls_client_config_with_env;
 
@@ -724,9 +724,9 @@ mod tests {
     }
 
     #[test]
-    fn ca_path_prefers_codex_env() {
+    fn ca_path_prefers_orbit_code_env() {
         let env = map_env(&[
-            (CODEX_CA_CERT_ENV, "/tmp/codex.pem"),
+            (ORBIT_CA_CERT_ENV, "/tmp/codex.pem"),
             (SSL_CERT_FILE_ENV, "/tmp/fallback.pem"),
         ]);
 
@@ -749,7 +749,7 @@ mod tests {
     #[test]
     fn ca_path_ignores_empty_values() {
         let env = map_env(&[
-            (CODEX_CA_CERT_ENV, ""),
+            (ORBIT_CA_CERT_ENV, ""),
             (SSL_CERT_FILE_ENV, "/tmp/fallback.pem"),
         ]);
 
@@ -763,7 +763,7 @@ mod tests {
     fn rustls_config_uses_custom_ca_bundle_when_configured() {
         let temp_dir = TempDir::new().expect("tempdir");
         let cert_path = write_cert_file(&temp_dir, "ca.pem", TEST_CERT);
-        let env = map_env(&[(CODEX_CA_CERT_ENV, cert_path.to_string_lossy().as_ref())]);
+        let env = map_env(&[(ORBIT_CA_CERT_ENV, cert_path.to_string_lossy().as_ref())]);
 
         let config = maybe_build_rustls_client_config_with_env(&env)
             .expect("rustls config")
@@ -776,7 +776,7 @@ mod tests {
     fn rustls_config_reports_invalid_ca_file() {
         let temp_dir = TempDir::new().expect("tempdir");
         let cert_path = write_cert_file(&temp_dir, "empty.pem", "");
-        let env = map_env(&[(CODEX_CA_CERT_ENV, cert_path.to_string_lossy().as_ref())]);
+        let env = map_env(&[(ORBIT_CA_CERT_ENV, cert_path.to_string_lossy().as_ref())]);
 
         let error = maybe_build_rustls_client_config_with_env(&env).expect_err("invalid CA");
 

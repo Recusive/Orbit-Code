@@ -3,11 +3,11 @@ use super::ArtifactRuntimePlatform;
 use super::InstalledArtifactRuntime;
 use super::ReleaseManifest;
 use super::detect_runtime_root;
-use codex_package_manager::ManagedPackage;
-use codex_package_manager::PackageManager;
-use codex_package_manager::PackageManagerConfig;
-use codex_package_manager::PackageManagerError;
-use codex_package_manager::PackageReleaseArchive;
+use orbit_code_package_manager::ManagedPackage;
+use orbit_code_package_manager::PackageManager;
+use orbit_code_package_manager::PackageManagerConfig;
+use orbit_code_package_manager::PackageManagerError;
+use orbit_code_package_manager::PackageReleaseArchive;
 use reqwest::Client;
 use std::path::Path;
 use std::path::PathBuf;
@@ -16,7 +16,7 @@ use url::Url;
 /// Release tag prefix used for artifact runtime assets.
 pub const DEFAULT_RELEASE_TAG_PREFIX: &str = "artifact-runtime-v";
 
-/// Relative cache root for installed artifact runtimes under `codex_home`.
+/// Relative cache root for installed artifact runtimes under `orbit_code_home`.
 pub const DEFAULT_CACHE_ROOT_RELATIVE: &str = "packages/artifacts";
 
 /// Base URL used by default when downloading runtime assets from GitHub releases.
@@ -97,10 +97,10 @@ pub struct ArtifactRuntimeManagerConfig {
 
 impl ArtifactRuntimeManagerConfig {
     /// Creates a runtime-manager config from a Codex home and explicit release locator.
-    pub fn new(codex_home: PathBuf, release: ArtifactRuntimeReleaseLocator) -> Self {
+    pub fn new(orbit_code_home: PathBuf, release: ArtifactRuntimeReleaseLocator) -> Self {
         Self {
             package_manager: PackageManagerConfig::new(
-                codex_home,
+                orbit_code_home,
                 ArtifactRuntimePackage::new(release.clone()),
             ),
             release,
@@ -108,9 +108,12 @@ impl ArtifactRuntimeManagerConfig {
     }
 
     /// Creates a runtime-manager config that downloads from the default GitHub release location.
-    pub fn with_default_release(codex_home: PathBuf, runtime_version: impl Into<String>) -> Self {
+    pub fn with_default_release(
+        orbit_code_home: PathBuf,
+        runtime_version: impl Into<String>,
+    ) -> Self {
         Self::new(
-            codex_home,
+            orbit_code_home,
             ArtifactRuntimeReleaseLocator::default(runtime_version),
         )
     }

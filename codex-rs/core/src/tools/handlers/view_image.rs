@@ -1,14 +1,14 @@
 use async_trait::async_trait;
-use codex_environment::ExecutorFileSystem;
-use codex_protocol::models::FunctionCallOutputBody;
-use codex_protocol::models::FunctionCallOutputContentItem;
-use codex_protocol::models::FunctionCallOutputPayload;
-use codex_protocol::models::ImageDetail;
-use codex_protocol::models::ResponseInputItem;
-use codex_protocol::openai_models::InputModality;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_image::PromptImageMode;
-use codex_utils_image::load_for_prompt_bytes;
+use orbit_code_environment::ExecutorFileSystem;
+use orbit_code_protocol::models::FunctionCallOutputBody;
+use orbit_code_protocol::models::FunctionCallOutputContentItem;
+use orbit_code_protocol::models::FunctionCallOutputPayload;
+use orbit_code_protocol::models::ImageDetail;
+use orbit_code_protocol::models::ResponseInputItem;
+use orbit_code_protocol::openai_models::InputModality;
+use orbit_code_utils_absolute_path::AbsolutePathBuf;
+use orbit_code_utils_image::PromptImageMode;
+use orbit_code_utils_image::load_for_prompt_bytes;
 use serde::Deserialize;
 
 use crate::function_tool::FunctionCallError;

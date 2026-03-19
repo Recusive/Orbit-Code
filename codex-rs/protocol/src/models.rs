@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 use std::path::Path;
 
-use codex_utils_image::PromptImageMode;
-use codex_utils_image::load_for_prompt_bytes;
+use orbit_code_utils_image::PromptImageMode;
+use orbit_code_utils_image::load_for_prompt_bytes;
 use serde::Deserialize;
 use serde::Deserializer;
 use serde::Serialize;
@@ -21,10 +21,10 @@ use crate::protocol::REALTIME_CONVERSATION_OPEN_TAG;
 use crate::protocol::SandboxPolicy;
 use crate::protocol::WritableRoot;
 use crate::user_input::UserInput;
-use codex_execpolicy::Policy;
-use codex_git::GhostCommit;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_image::error::ImageProcessingError;
+use orbit_code_execpolicy::Policy;
+use orbit_code_git::GhostCommit;
+use orbit_code_utils_absolute_path::AbsolutePathBuf;
+use orbit_code_utils_image::error::ImageProcessingError;
 use schemars::JsonSchema;
 
 use crate::mcp::CallToolResult;
@@ -1515,7 +1515,7 @@ mod tests {
     use crate::protocol::AskForApproval;
     use crate::protocol::GranularApprovalConfig;
     use anyhow::Result;
-    use codex_execpolicy::Policy;
+    use orbit_code_execpolicy::Policy;
     use pretty_assertions::assert_eq;
     use std::path::PathBuf;
     use tempfile::tempdir;
@@ -1880,8 +1880,8 @@ mod tests {
     fn function_call_deserializes_optional_namespace() {
         let item: ResponseItem = serde_json::from_value(serde_json::json!({
             "type": "function_call",
-            "name": "mcp__codex_apps__gmail_get_recent_emails",
-            "namespace": "mcp__codex_apps__gmail",
+            "name": "mcp__orbit_code_apps__gmail_get_recent_emails",
+            "namespace": "mcp__orbit_code_apps__gmail",
             "arguments": "{\"top_k\":5}",
             "call_id": "call-1",
         }))
@@ -1891,8 +1891,8 @@ mod tests {
             item,
             ResponseItem::FunctionCall {
                 id: None,
-                name: "mcp__codex_apps__gmail_get_recent_emails".to_string(),
-                namespace: Some("mcp__codex_apps__gmail".to_string()),
+                name: "mcp__orbit_code_apps__gmail_get_recent_emails".to_string(),
+                namespace: Some("mcp__orbit_code_apps__gmail".to_string()),
                 arguments: "{\"top_k\":5}".to_string(),
                 call_id: "call-1".to_string(),
             }
@@ -1970,7 +1970,7 @@ mod tests {
         exec_policy
             .add_prefix_rule(
                 &["git".to_string(), "pull".to_string()],
-                codex_execpolicy::Decision::Allow,
+                orbit_code_execpolicy::Decision::Allow,
             )
             .expect("add rule");
         let instructions = DeveloperInstructions::from_permissions_with_network(
@@ -2302,7 +2302,7 @@ mod tests {
             exec_policy
                 .add_prefix_rule(
                     &[format!("tool-{i:03}"), "x".repeat(500)],
-                    codex_execpolicy::Decision::Allow,
+                    orbit_code_execpolicy::Decision::Allow,
                 )
                 .expect("add rule");
         }
@@ -2681,7 +2681,7 @@ mod tests {
             execution: "client".to_string(),
             tools: vec![serde_json::json!({
                 "type": "function",
-                "name": "mcp__codex_apps__calendar_create_event",
+                "name": "mcp__orbit_code_apps__calendar_create_event",
                 "description": "Create a calendar event.",
                 "defer_loading": true,
                 "parameters": {
@@ -2702,7 +2702,7 @@ mod tests {
                 execution: "client".to_string(),
                 tools: vec![serde_json::json!({
                     "type": "function",
-                    "name": "mcp__codex_apps__calendar_create_event",
+                    "name": "mcp__orbit_code_apps__calendar_create_event",
                     "description": "Create a calendar event.",
                     "defer_loading": true,
                     "parameters": {
@@ -2726,7 +2726,7 @@ mod tests {
                 "execution": "client",
                 "tools": [{
                     "type": "function",
-                    "name": "mcp__codex_apps__calendar_create_event",
+                    "name": "mcp__orbit_code_apps__calendar_create_event",
                     "description": "Create a calendar event.",
                     "defer_loading": true,
                     "parameters": {

@@ -5,4 +5,4 @@ fn main() {
 }
 
 #[cfg(unix)]
-pub use codex_shell_escalation::main_execve_wrapper as main;
+pub use orbit_code_shell_escalation::main_execve_wrapper as main;

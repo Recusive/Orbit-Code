@@ -90,7 +90,7 @@ mod windows_impl {
     }
 
     /// Creates the sandbox user's Codex home directory if it does not already exist.
-    fn ensure_codex_home_exists(p: &Path) -> Result<()> {
+    fn ensure_orbit_code_home_exists(p: &Path) -> Result<()> {
         std::fs::create_dir_all(p)?;
         Ok(())
     }
@@ -119,9 +119,9 @@ mod windows_impl {
         }
     }
 
-    /// Resolves the command runner path, preferring CODEX_HOME/.sandbox/bin.
-    fn find_runner_exe(codex_home: &Path, log_dir: Option<&Path>) -> PathBuf {
-        resolve_helper_for_launch(HelperExecutable::CommandRunner, codex_home, log_dir)
+    /// Resolves the command runner path, preferring ORBIT_HOME/.sandbox/bin.
+    fn find_runner_exe(orbit_code_home: &Path, log_dir: Option<&Path>) -> PathBuf {
+        resolve_helper_for_launch(HelperExecutable::CommandRunner, orbit_code_home, log_dir)
     }
 
     /// Generates a unique named-pipe path used to communicate with the runner process.
@@ -205,7 +205,7 @@ mod windows_impl {
     pub fn run_windows_sandbox_capture(
         policy_json_or_preset: &str,
         sandbox_policy_cwd: &Path,
-        codex_home: &Path,
+        orbit_code_home: &Path,
         command: Vec<String>,
         cwd: &Path,
         mut env_map: HashMap<String, String>,
@@ -219,13 +219,18 @@ mod windows_impl {
         inject_git_safe_directory(&mut env_map, cwd, None);
         let current_dir = cwd.to_path_buf();
         // Use a temp-based log dir that the sandbox user can write.
-        let sandbox_base = codex_home.join(".sandbox");
-        ensure_codex_home_exists(&sandbox_base)?;
+        let sandbox_base = orbit_code_home.join(".sandbox");
+        ensure_orbit_code_home_exists(&sandbox_base)?;
 
         let logs_base_dir: Option<&Path> = Some(sandbox_base.as_path());
         log_start(&command, logs_base_dir);
-        let sandbox_creds =
-            require_logon_sandbox_creds(&policy, sandbox_policy_cwd, cwd, &env_map, codex_home)?;
+        let sandbox_creds = require_logon_sandbox_creds(
+            &policy,
+            sandbox_policy_cwd,
+            cwd,
+            &env_map,
+            orbit_code_home,
+        )?;
         let sandbox_sid = resolve_sid(&sandbox_creds.username).map_err(|err: anyhow::Error| {
             io::Error::new(io::ErrorKind::PermissionDenied, err.to_string())
         })?;
@@ -238,7 +243,7 @@ mod windows_impl {
         ) {
             anyhow::bail!("DangerFullAccess and ExternalSandbox are not supported for sandboxing")
         }
-        let caps = load_or_create_cap_sids(codex_home)?;
+        let caps = load_or_create_cap_sids(orbit_code_home)?;
         let (psid_to_use, cap_sids) = match &policy {
             SandboxPolicy::ReadOnly { .. } => (
                 unsafe { convert_string_sid_to_sid(&caps.readonly).unwrap() },
@@ -248,7 +253,7 @@ mod windows_impl {
                 unsafe { convert_string_sid_to_sid(&caps.workspace).unwrap() },
                 vec![
                     caps.workspace.clone(),
-                    crate::cap::workspace_cap_sid_for_cwd(codex_home, cwd)?,
+                    crate::cap::workspace_cap_sid_for_cwd(orbit_code_home, cwd)?,
                 ],
             ),
             SandboxPolicy::DangerFullAccess | SandboxPolicy::ExternalSandbox { .. } => {
@@ -269,7 +274,7 @@ mod windows_impl {
         let h_pipe_out = create_named_pipe(&pipe_out_name, PIPE_ACCESS_INBOUND, &sandbox_sid)?;
 
         // Launch runner as sandbox user via CreateProcessWithLogonW.
-        let runner_exe = find_runner_exe(codex_home, logs_base_dir);
+        let runner_exe = find_runner_exe(orbit_code_home, logs_base_dir);
         let runner_cmdline = runner_exe
             .to_str()
             .map(|s| s.to_string())
@@ -378,8 +383,8 @@ mod windows_impl {
                         env: env_map.clone(),
                         policy_json_or_preset: policy_json_or_preset.to_string(),
                         sandbox_policy_cwd: sandbox_policy_cwd.to_path_buf(),
-                        codex_home: sandbox_base.clone(),
-                        real_codex_home: codex_home.to_path_buf(),
+                        orbit_code_home: sandbox_base.clone(),
+                        real_orbit_code_home: orbit_code_home.to_path_buf(),
                         cap_sids,
                         timeout_ms,
                         tty: false,
@@ -482,7 +487,7 @@ pub use windows_impl::run_windows_sandbox_capture;
 mod stub {
     use anyhow::bail;
     use anyhow::Result;
-    use codex_protocol::protocol::SandboxPolicy;
+    use orbit_code_protocol::protocol::SandboxPolicy;
     use std::collections::HashMap;
     use std::path::Path;
 
@@ -499,7 +504,7 @@ mod stub {
     pub fn run_windows_sandbox_capture(
         _policy_json_or_preset: &str,
         _sandbox_policy_cwd: &Path,
-        _codex_home: &Path,
+        _orbit_code_home: &Path,
         _command: Vec<String>,
         _cwd: &Path,
         _env_map: HashMap<String, String>,

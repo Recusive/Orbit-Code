@@ -1,13 +1,4 @@
 use anyhow::Context;
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::RolloutItem;
-use codex_protocol::protocol::RolloutLine;
-use codex_protocol::protocol::SandboxPolicy;
-use codex_protocol::user_input::UserInput;
 use core_test_support::responses;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
@@ -20,6 +11,15 @@ use core_test_support::test_codex::test_codex;
 use core_test_support::wait_for_event;
 use image::ImageBuffer;
 use image::Rgba;
+use orbit_code_protocol::models::ContentItem;
+use orbit_code_protocol::models::ResponseItem;
+use orbit_code_protocol::protocol::AskForApproval;
+use orbit_code_protocol::protocol::EventMsg;
+use orbit_code_protocol::protocol::Op;
+use orbit_code_protocol::protocol::RolloutItem;
+use orbit_code_protocol::protocol::RolloutLine;
+use orbit_code_protocol::protocol::SandboxPolicy;
+use orbit_code_protocol::user_input::UserInput;
 use pretty_assertions::assert_eq;
 use std::path::Path;
 use std::time::Duration;
@@ -147,11 +147,11 @@ async fn copy_paste_local_image_persists_rollout_request_shape() -> anyhow::Resu
         role: "user".to_string(),
         content: vec![
             ContentItem::InputText {
-                text: codex_protocol::models::local_image_open_tag_text(1),
+                text: orbit_code_protocol::models::local_image_open_tag_text(1),
             },
             ContentItem::InputImage { image_url },
             ContentItem::InputText {
-                text: codex_protocol::models::image_close_tag_text(),
+                text: orbit_code_protocol::models::image_close_tag_text(),
             },
             ContentItem::InputText {
                 text: "pasted image".to_string(),
@@ -230,11 +230,11 @@ async fn drag_drop_image_persists_rollout_request_shape() -> anyhow::Result<()> 
         role: "user".to_string(),
         content: vec![
             ContentItem::InputText {
-                text: codex_protocol::models::image_open_tag_text(),
+                text: orbit_code_protocol::models::image_open_tag_text(),
             },
             ContentItem::InputImage { image_url },
             ContentItem::InputText {
-                text: codex_protocol::models::image_close_tag_text(),
+                text: orbit_code_protocol::models::image_close_tag_text(),
             },
             ContentItem::InputText {
                 text: "dropped image".to_string(),

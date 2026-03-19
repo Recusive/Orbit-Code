@@ -1,23 +1,23 @@
 #![cfg(target_os = "linux")]
 #![allow(clippy::unwrap_used)]
-use codex_core::config::types::ShellEnvironmentPolicy;
-use codex_core::error::CodexErr;
-use codex_core::error::Result;
-use codex_core::error::SandboxErr;
-use codex_core::exec::ExecParams;
-use codex_core::exec::process_exec_tool_call;
-use codex_core::exec_env::create_env;
-use codex_core::sandboxing::SandboxPermissions;
-use codex_protocol::config_types::WindowsSandboxLevel;
-use codex_protocol::permissions::FileSystemAccessMode;
-use codex_protocol::permissions::FileSystemPath;
-use codex_protocol::permissions::FileSystemSandboxEntry;
-use codex_protocol::permissions::FileSystemSandboxPolicy;
-use codex_protocol::permissions::FileSystemSpecialPath;
-use codex_protocol::permissions::NetworkSandboxPolicy;
-use codex_protocol::protocol::ReadOnlyAccess;
-use codex_protocol::protocol::SandboxPolicy;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use orbit_code_core::config::types::ShellEnvironmentPolicy;
+use orbit_code_core::error::CodexErr;
+use orbit_code_core::error::Result;
+use orbit_code_core::error::SandboxErr;
+use orbit_code_core::exec::ExecParams;
+use orbit_code_core::exec::process_exec_tool_call;
+use orbit_code_core::exec_env::create_env;
+use orbit_code_core::sandboxing::SandboxPermissions;
+use orbit_code_protocol::config_types::WindowsSandboxLevel;
+use orbit_code_protocol::permissions::FileSystemAccessMode;
+use orbit_code_protocol::permissions::FileSystemPath;
+use orbit_code_protocol::permissions::FileSystemSandboxEntry;
+use orbit_code_protocol::permissions::FileSystemSandboxPolicy;
+use orbit_code_protocol::permissions::FileSystemSpecialPath;
+use orbit_code_protocol::permissions::NetworkSandboxPolicy;
+use orbit_code_protocol::protocol::ReadOnlyAccess;
+use orbit_code_protocol::protocol::SandboxPolicy;
+use orbit_code_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -62,7 +62,7 @@ async fn run_cmd_output(
     cmd: &[&str],
     writable_roots: &[PathBuf],
     timeout_ms: u64,
-) -> codex_core::exec::ExecToolCallOutput {
+) -> orbit_code_core::exec::ExecToolCallOutput {
     run_cmd_result_with_writable_roots(cmd, writable_roots, timeout_ms, false, false)
         .await
         .expect("sandboxed command should execute")
@@ -74,7 +74,7 @@ async fn run_cmd_result_with_writable_roots(
     timeout_ms: u64,
     use_legacy_landlock: bool,
     network_access: bool,
-) -> Result<codex_core::exec::ExecToolCallOutput> {
+) -> Result<orbit_code_core::exec::ExecToolCallOutput> {
     let sandbox_policy = SandboxPolicy::WorkspaceWrite {
         writable_roots: writable_roots
             .iter()
@@ -109,7 +109,7 @@ async fn run_cmd_result_with_policies(
     network_sandbox_policy: NetworkSandboxPolicy,
     timeout_ms: u64,
     use_legacy_landlock: bool,
-) -> Result<codex_core::exec::ExecToolCallOutput> {
+) -> Result<orbit_code_core::exec::ExecToolCallOutput> {
     let cwd = std::env::current_dir().expect("cwd should exist");
     let sandbox_cwd = cwd.clone();
     let params = ExecParams {
@@ -125,7 +125,7 @@ async fn run_cmd_result_with_policies(
         arg0: None,
     };
     let sandbox_program = env!("CARGO_BIN_EXE_codex-linux-sandbox");
-    let codex_linux_sandbox_exe = Some(PathBuf::from(sandbox_program));
+    let orbit_code_linux_sandbox_exe = Some(PathBuf::from(sandbox_program));
 
     process_exec_tool_call(
         params,
@@ -133,14 +133,14 @@ async fn run_cmd_result_with_policies(
         &file_system_sandbox_policy,
         network_sandbox_policy,
         sandbox_cwd.as_path(),
-        &codex_linux_sandbox_exe,
+        &orbit_code_linux_sandbox_exe,
         use_legacy_landlock,
         None,
     )
     .await
 }
 
-fn is_bwrap_unavailable_output(output: &codex_core::exec::ExecToolCallOutput) -> bool {
+fn is_bwrap_unavailable_output(output: &orbit_code_core::exec::ExecToolCallOutput) -> bool {
     output.stderr.text.contains(BWRAP_UNAVAILABLE_ERR)
         || (output
             .stderr
@@ -173,9 +173,9 @@ async fn should_skip_bwrap_tests() -> bool {
 }
 
 fn expect_denied(
-    result: Result<codex_core::exec::ExecToolCallOutput>,
+    result: Result<orbit_code_core::exec::ExecToolCallOutput>,
     context: &str,
-) -> codex_core::exec::ExecToolCallOutput {
+) -> orbit_code_core::exec::ExecToolCallOutput {
     match result {
         Ok(output) => {
             assert_ne!(output.exit_code, 0, "{context}: expected nonzero exit code");
@@ -386,14 +386,14 @@ async fn assert_network_blocked(cmd: &[&str]) {
 
     let sandbox_policy = SandboxPolicy::new_read_only_policy();
     let sandbox_program = env!("CARGO_BIN_EXE_codex-linux-sandbox");
-    let codex_linux_sandbox_exe: Option<PathBuf> = Some(PathBuf::from(sandbox_program));
+    let orbit_code_linux_sandbox_exe: Option<PathBuf> = Some(PathBuf::from(sandbox_program));
     let result = process_exec_tool_call(
         params,
         &sandbox_policy,
         &FileSystemSandboxPolicy::from(&sandbox_policy),
         NetworkSandboxPolicy::from(&sandbox_policy),
         sandbox_cwd.as_path(),
-        &codex_linux_sandbox_exe,
+        &orbit_code_linux_sandbox_exe,
         false,
         None,
     )
@@ -446,7 +446,7 @@ async fn sandbox_blocks_nc() {
 }
 
 #[tokio::test]
-async fn sandbox_blocks_git_and_codex_writes_inside_writable_root() {
+async fn sandbox_blocks_git_and_orbit_code_writes_inside_writable_root() {
     if should_skip_bwrap_tests().await {
         eprintln!("skipping bwrap test: bwrap sandbox prerequisites are unavailable");
         return;
@@ -459,7 +459,7 @@ async fn sandbox_blocks_git_and_codex_writes_inside_writable_root() {
     std::fs::create_dir_all(&dot_codex).expect("create .codex");
 
     let git_target = dot_git.join("config");
-    let codex_target = dot_codex.join("config.toml");
+    let orbit_code_target = dot_codex.join("config.toml");
 
     let git_output = expect_denied(
         run_cmd_result_with_writable_roots(
@@ -477,12 +477,12 @@ async fn sandbox_blocks_git_and_codex_writes_inside_writable_root() {
         ".git write should be denied under bubblewrap",
     );
 
-    let codex_output = expect_denied(
+    let orbit_code_output = expect_denied(
         run_cmd_result_with_writable_roots(
             &[
                 "bash",
                 "-lc",
-                &format!("echo denied > {}", codex_target.to_string_lossy()),
+                &format!("echo denied > {}", orbit_code_target.to_string_lossy()),
             ],
             &[tmpdir.path().to_path_buf()],
             LONG_TIMEOUT_MS,
@@ -493,11 +493,11 @@ async fn sandbox_blocks_git_and_codex_writes_inside_writable_root() {
         ".codex write should be denied under bubblewrap",
     );
     assert_ne!(git_output.exit_code, 0);
-    assert_ne!(codex_output.exit_code, 0);
+    assert_ne!(orbit_code_output.exit_code, 0);
 }
 
 #[tokio::test]
-async fn sandbox_blocks_codex_symlink_replacement_attack() {
+async fn sandbox_blocks_orbit_code_symlink_replacement_attack() {
     if should_skip_bwrap_tests().await {
         eprintln!("skipping bwrap test: bwrap sandbox prerequisites are unavailable");
         return;
@@ -512,14 +512,14 @@ async fn sandbox_blocks_codex_symlink_replacement_attack() {
     let dot_codex = tmpdir.path().join(".codex");
     symlink(&decoy, &dot_codex).expect("create .codex symlink");
 
-    let codex_target = dot_codex.join("config.toml");
+    let orbit_code_target = dot_codex.join("config.toml");
 
-    let codex_output = expect_denied(
+    let orbit_code_output = expect_denied(
         run_cmd_result_with_writable_roots(
             &[
                 "bash",
                 "-lc",
-                &format!("echo denied > {}", codex_target.to_string_lossy()),
+                &format!("echo denied > {}", orbit_code_target.to_string_lossy()),
             ],
             &[tmpdir.path().to_path_buf()],
             LONG_TIMEOUT_MS,
@@ -529,7 +529,7 @@ async fn sandbox_blocks_codex_symlink_replacement_attack() {
         .await,
         ".codex symlink replacement should be denied",
     );
-    assert_ne!(codex_output.exit_code, 0);
+    assert_ne!(orbit_code_output.exit_code, 0);
 }
 
 #[tokio::test]

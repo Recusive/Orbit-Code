@@ -4,9 +4,9 @@ use std::sync::Arc;
 use chrono::DateTime;
 use chrono::SecondsFormat;
 use chrono::Utc;
-use codex_protocol::ThreadId;
-use codex_protocol::models::SandboxPermissions;
 use futures::future::BoxFuture;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::models::SandboxPermissions;
 use serde::Serialize;
 use serde::Serializer;
 
@@ -163,8 +163,8 @@ mod tests {
 
     use chrono::TimeZone;
     use chrono::Utc;
-    use codex_protocol::ThreadId;
-    use codex_protocol::models::SandboxPermissions;
+    use orbit_code_protocol::ThreadId;
+    use orbit_code_protocol::models::SandboxPermissions;
     use pretty_assertions::assert_eq;
     use serde_json::json;
 

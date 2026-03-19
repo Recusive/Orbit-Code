@@ -3,26 +3,26 @@ use crate::agent::guards::Guards;
 use crate::agent::role::DEFAULT_ROLE_NAME;
 use crate::agent::role::resolve_role_config;
 use crate::agent::status::is_final;
-use crate::codex_thread::ThreadConfigSnapshot;
 use crate::error::CodexErr;
 use crate::error::Result as CodexResult;
 use crate::find_thread_path_by_id_str;
+use crate::orbit_code_thread::ThreadConfigSnapshot;
 use crate::rollout::RolloutRecorder;
 use crate::session_prefix::format_subagent_context_line;
 use crate::session_prefix::format_subagent_notification_message;
 use crate::shell_snapshot::ShellSnapshot;
 use crate::state_db;
 use crate::thread_manager::ThreadManagerState;
-use codex_protocol::ThreadId;
-use codex_protocol::models::FunctionCallOutputPayload;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::protocol::InitialHistory;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::RolloutItem;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::SubAgentSource;
-use codex_protocol::protocol::TokenUsage;
-use codex_protocol::user_input::UserInput;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::models::FunctionCallOutputPayload;
+use orbit_code_protocol::models::ResponseItem;
+use orbit_code_protocol::protocol::InitialHistory;
+use orbit_code_protocol::protocol::Op;
+use orbit_code_protocol::protocol::RolloutItem;
+use orbit_code_protocol::protocol::SessionSource;
+use orbit_code_protocol::protocol::SubAgentSource;
+use orbit_code_protocol::protocol::TokenUsage;
+use orbit_code_protocol::user_input::UserInput;
 use std::sync::Arc;
 use std::sync::Weak;
 use tokio::sync::watch;
@@ -160,7 +160,7 @@ impl AgentControl {
                         .as_ref()
                         .and_then(|parent_thread| parent_thread.rollout_path())
                         .or(find_thread_path_by_id_str(
-                            config.codex_home.as_path(),
+                            config.orbit_code_home.as_path(),
                             &parent_thread_id.to_string(),
                         )
                         .await?)
@@ -280,7 +280,7 @@ impl AgentControl {
             .inherited_exec_policy_for_source(&state, Some(&session_source), &config)
             .await;
         let rollout_path =
-            find_thread_path_by_id_str(config.codex_home.as_path(), &thread_id.to_string())
+            find_thread_path_by_id_str(config.orbit_code_home.as_path(), &thread_id.to_string())
                 .await?
                 .ok_or_else(|| CodexErr::ThreadNotFound(thread_id))?;
 

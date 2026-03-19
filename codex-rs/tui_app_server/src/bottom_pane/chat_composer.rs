@@ -193,13 +193,13 @@ use crate::render::RectExt;
 use crate::render::renderable::Renderable;
 use crate::slash_command::SlashCommand;
 use crate::style::user_message_style;
-use codex_protocol::custom_prompts::CustomPrompt;
-use codex_protocol::custom_prompts::PROMPTS_CMD_PREFIX;
-use codex_protocol::models::local_image_label_text;
-use codex_protocol::user_input::ByteRange;
-use codex_protocol::user_input::MAX_USER_INPUT_TEXT_CHARS;
-use codex_protocol::user_input::TextElement;
-use codex_utils_fuzzy_match::fuzzy_match;
+use orbit_code_protocol::custom_prompts::CustomPrompt;
+use orbit_code_protocol::custom_prompts::PROMPTS_CMD_PREFIX;
+use orbit_code_protocol::models::local_image_label_text;
+use orbit_code_protocol::user_input::ByteRange;
+use orbit_code_protocol::user_input::MAX_USER_INPUT_TEXT_CHARS;
+use orbit_code_protocol::user_input::TextElement;
+use orbit_code_utils_fuzzy_match::fuzzy_match;
 
 use crate::app_event::AppEvent;
 use crate::app_event::ConnectorsSnapshot;
@@ -213,11 +213,11 @@ use crate::clipboard_paste::pasted_image_format;
 use crate::history_cell;
 use crate::tui::FrameRequester;
 use crate::ui_consts::LIVE_PREFIX_COLS;
-use codex_chatgpt::connectors;
-use codex_chatgpt::connectors::AppInfo;
-use codex_core::plugins::PluginCapabilitySummary;
-use codex_core::skills::model::SkillMetadata;
-use codex_file_search::FileMatch;
+use orbit_code_chatgpt::connectors;
+use orbit_code_chatgpt::connectors::AppInfo;
+use orbit_code_core::plugins::PluginCapabilitySummary;
+use orbit_code_core::skills::model::SkillMetadata;
+use orbit_code_file_search::FileMatch;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::collections::HashSet;
@@ -3674,7 +3674,7 @@ impl ChatComposer {
                 }
                 let display_name = connectors::connector_display_label(connector);
                 let description = Some(Self::connector_brief_description(connector));
-                let slug = codex_core::connectors::connector_mention_slug(connector);
+                let slug = orbit_code_core::connectors::connector_mention_slug(connector);
                 let search_terms = vec![display_name.clone(), connector.id.clone(), slug.clone()];
                 let connector_id = connector.id.as_str();
                 mentions.push(MentionItem {
@@ -5402,7 +5402,7 @@ mod tests {
                 ),
                 has_skills: true,
                 mcp_server_names: vec!["sample".to_string()],
-                app_connector_ids: vec![codex_core::plugins::AppConnectorId(
+                app_connector_ids: vec![orbit_code_core::plugins::AppConnectorId(
                     "calendar".to_string(),
                 )],
             }]));
@@ -5418,7 +5418,7 @@ mod tests {
                 name: "google-calendar-skill".to_string(),
                 description: "Find availability and plan event changes".to_string(),
                 short_description: None,
-                interface: Some(codex_core::skills::model::SkillInterface {
+                interface: Some(orbit_code_core::skills::model::SkillInterface {
                     display_name: Some("Google Calendar".to_string()),
                     short_description: None,
                     icon_small: None,
@@ -5431,7 +5431,7 @@ mod tests {
                 permission_profile: None,
                 managed_network_override: None,
                 path_to_skills_md: PathBuf::from("/tmp/repo/google-calendar/SKILL.md"),
-                scope: codex_protocol::protocol::SkillScope::Repo,
+                scope: orbit_code_protocol::protocol::SkillScope::Repo,
             }]));
             composer.set_plugin_mentions(Some(vec![PluginCapabilitySummary {
                 config_name: "google-calendar@debug".to_string(),
@@ -7268,7 +7268,7 @@ mod tests {
             vec![FileMatch {
                 score: 1,
                 path: PathBuf::from("src/main.rs"),
-                match_type: codex_file_search::MatchType::File,
+                match_type: orbit_code_file_search::MatchType::File,
                 root: PathBuf::from("/tmp"),
                 indices: None,
             }],
@@ -8247,7 +8247,7 @@ mod tests {
     #[test]
     fn pasting_filepath_attaches_image() {
         let tmp = tempdir().expect("create TempDir");
-        let tmp_path: PathBuf = tmp.path().join("codex_tui_test_paste_image.png");
+        let tmp_path: PathBuf = tmp.path().join("orbit_code_tui_test_paste_image.png");
         let img: ImageBuffer<Rgba<u8>, Vec<u8>> =
             ImageBuffer::from_fn(3, 2, |_x, _y| Rgba([1, 2, 3, 255]));
         img.save(&tmp_path).expect("failed to write temp png");

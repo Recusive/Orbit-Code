@@ -7,10 +7,10 @@ use std::time::Duration;
 
 use anyhow::Result;
 use base64::Engine;
-use codex_core::auth::AuthCredentialsStoreMode;
-use codex_login::ServerOptions;
-use codex_login::run_login_server;
 use core_test_support::skip_if_no_network;
+use orbit_code_core::auth::AuthCredentialsStoreMode;
+use orbit_code_login::ServerOptions;
+use orbit_code_login::run_login_server;
 use tempfile::tempdir;
 
 // See spawn.rs for details
@@ -87,7 +87,7 @@ async fn end_to_end_login_flow_persists_auth_json() -> Result<()> {
     let issuer = format!("http://{}:{}", issuer_addr.ip(), issuer_addr.port());
 
     let tmp = tempdir()?;
-    let codex_home = tmp.path().to_path_buf();
+    let orbit_code_home = tmp.path().to_path_buf();
 
     // Seed auth.json with stale API key + tokens that should be overwritten.
     let stale_auth = serde_json::json!({
@@ -100,19 +100,19 @@ async fn end_to_end_login_flow_persists_auth_json() -> Result<()> {
         }
     });
     std::fs::write(
-        codex_home.join("auth.json"),
+        orbit_code_home.join("auth.json"),
         serde_json::to_string_pretty(&stale_auth)?,
     )?;
 
     let state = "test_state_123".to_string();
 
     // Run server in background
-    let server_home = codex_home.clone();
+    let server_home = orbit_code_home.clone();
 
     let opts = ServerOptions {
-        codex_home: server_home,
+        orbit_code_home: server_home,
         cli_auth_credentials_store_mode: AuthCredentialsStoreMode::File,
-        client_id: codex_login::CLIENT_ID.to_string(),
+        client_id: orbit_code_login::CLIENT_ID.to_string(),
         issuer,
         port: 0,
         open_browser: false,
@@ -140,7 +140,7 @@ async fn end_to_end_login_flow_persists_auth_json() -> Result<()> {
     server.block_until_done().await?;
 
     // Validate auth.json
-    let auth_path = codex_home.join("auth.json");
+    let auth_path = orbit_code_home.join("auth.json");
     let data = std::fs::read_to_string(&auth_path)?;
     let json: serde_json::Value = serde_json::from_str(&data)?;
     // The following assert is here because of the old oauth flow that exchanges tokens for an
@@ -157,23 +157,23 @@ async fn end_to_end_login_flow_persists_auth_json() -> Result<()> {
 }
 
 #[tokio::test]
-async fn creates_missing_codex_home_dir() -> Result<()> {
+async fn creates_missing_orbit_code_home_dir() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let (issuer_addr, _issuer_handle) = start_mock_issuer("org-123");
     let issuer = format!("http://{}:{}", issuer_addr.ip(), issuer_addr.port());
 
     let tmp = tempdir()?;
-    let codex_home = tmp.path().join("missing-subdir"); // does not exist
+    let orbit_code_home = tmp.path().join("missing-subdir"); // does not exist
 
     let state = "state2".to_string();
 
     // Run server in background
-    let server_home = codex_home.clone();
+    let server_home = orbit_code_home.clone();
     let opts = ServerOptions {
-        codex_home: server_home,
+        orbit_code_home: server_home,
         cli_auth_credentials_store_mode: AuthCredentialsStoreMode::File,
-        client_id: codex_login::CLIENT_ID.to_string(),
+        client_id: orbit_code_login::CLIENT_ID.to_string(),
         issuer,
         port: 0,
         open_browser: false,
@@ -190,7 +190,7 @@ async fn creates_missing_codex_home_dir() -> Result<()> {
 
     server.block_until_done().await?;
 
-    let auth_path = codex_home.join("auth.json");
+    let auth_path = orbit_code_home.join("auth.json");
     assert!(
         auth_path.exists(),
         "auth.json should be created even if parent dir was missing"
@@ -206,13 +206,13 @@ async fn forced_chatgpt_workspace_id_mismatch_blocks_login() -> Result<()> {
     let issuer = format!("http://{}:{}", issuer_addr.ip(), issuer_addr.port());
 
     let tmp = tempdir()?;
-    let codex_home = tmp.path().to_path_buf();
+    let orbit_code_home = tmp.path().to_path_buf();
     let state = "state-mismatch".to_string();
 
     let opts = ServerOptions {
-        codex_home: codex_home.clone(),
+        orbit_code_home: orbit_code_home.clone(),
         cli_auth_credentials_store_mode: AuthCredentialsStoreMode::File,
-        client_id: codex_login::CLIENT_ID.to_string(),
+        client_id: orbit_code_login::CLIENT_ID.to_string(),
         issuer,
         port: 0,
         open_browser: false,
@@ -246,7 +246,7 @@ async fn forced_chatgpt_workspace_id_mismatch_blocks_login() -> Result<()> {
     let err = result.unwrap_err();
     assert_eq!(err.kind(), io::ErrorKind::PermissionDenied);
 
-    let auth_path = codex_home.join("auth.json");
+    let auth_path = orbit_code_home.join("auth.json");
     assert!(
         !auth_path.exists(),
         "auth.json should not be written when the workspace mismatches"
@@ -263,13 +263,13 @@ async fn oauth_access_denied_missing_entitlement_blocks_login_with_clear_error()
     let issuer = format!("http://{}:{}", issuer_addr.ip(), issuer_addr.port());
 
     let tmp = tempdir()?;
-    let codex_home = tmp.path().to_path_buf();
+    let orbit_code_home = tmp.path().to_path_buf();
     let state = "state-entitlement".to_string();
 
     let opts = ServerOptions {
-        codex_home: codex_home.clone(),
+        orbit_code_home: orbit_code_home.clone(),
         cli_auth_credentials_store_mode: AuthCredentialsStoreMode::File,
-        client_id: codex_login::CLIENT_ID.to_string(),
+        client_id: orbit_code_login::CLIENT_ID.to_string(),
         issuer,
         port: 0,
         open_browser: false,
@@ -281,7 +281,7 @@ async fn oauth_access_denied_missing_entitlement_blocks_login_with_clear_error()
 
     let client = reqwest::Client::new();
     let url = format!(
-        "http://127.0.0.1:{login_port}/auth/callback?state={state}&error=access_denied&error_description=missing_codex_entitlement"
+        "http://127.0.0.1:{login_port}/auth/callback?state={state}&error=access_denied&error_description=missing_orbit_code_entitlement"
     );
     let resp = client.get(&url).send().await?;
     assert!(resp.status().is_success());
@@ -299,7 +299,7 @@ async fn oauth_access_denied_missing_entitlement_blocks_login_with_clear_error()
         "error body should still include the oauth error code"
     );
     assert!(
-        !body.contains("missing_codex_entitlement"),
+        !body.contains("missing_orbit_code_entitlement"),
         "known entitlement errors should be mapped to user-facing copy"
     );
 
@@ -313,7 +313,7 @@ async fn oauth_access_denied_missing_entitlement_blocks_login_with_clear_error()
         "terminal error should also tell the user what to do next"
     );
 
-    let auth_path = codex_home.join("auth.json");
+    let auth_path = orbit_code_home.join("auth.json");
     assert!(
         !auth_path.exists(),
         "auth.json should not be written when oauth callback is denied"
@@ -330,13 +330,13 @@ async fn oauth_access_denied_unknown_reason_uses_generic_error_page() -> Result<
     let issuer = format!("http://{}:{}", issuer_addr.ip(), issuer_addr.port());
 
     let tmp = tempdir()?;
-    let codex_home = tmp.path().to_path_buf();
+    let orbit_code_home = tmp.path().to_path_buf();
     let state = "state-generic-denial".to_string();
 
     let opts = ServerOptions {
-        codex_home: codex_home.clone(),
+        orbit_code_home: orbit_code_home.clone(),
         cli_auth_credentials_store_mode: AuthCredentialsStoreMode::File,
-        client_id: codex_login::CLIENT_ID.to_string(),
+        client_id: orbit_code_login::CLIENT_ID.to_string(),
         issuer,
         port: 0,
         open_browser: false,
@@ -392,7 +392,7 @@ async fn oauth_access_denied_unknown_reason_uses_generic_error_page() -> Result<
         "terminal error should preserve generic oauth details"
     );
 
-    let auth_path = codex_home.join("auth.json");
+    let auth_path = orbit_code_home.join("auth.json");
     assert!(
         !auth_path.exists(),
         "auth.json should not be written when oauth callback is denied"
@@ -409,12 +409,12 @@ async fn cancels_previous_login_server_when_port_is_in_use() -> Result<()> {
     let issuer = format!("http://{}:{}", issuer_addr.ip(), issuer_addr.port());
 
     let first_tmp = tempdir()?;
-    let first_codex_home = first_tmp.path().to_path_buf();
+    let first_orbit_code_home = first_tmp.path().to_path_buf();
 
     let first_opts = ServerOptions {
-        codex_home: first_codex_home,
+        orbit_code_home: first_orbit_code_home,
         cli_auth_credentials_store_mode: AuthCredentialsStoreMode::File,
-        client_id: codex_login::CLIENT_ID.to_string(),
+        client_id: orbit_code_login::CLIENT_ID.to_string(),
         issuer: issuer.clone(),
         port: 0,
         open_browser: false,
@@ -429,12 +429,12 @@ async fn cancels_previous_login_server_when_port_is_in_use() -> Result<()> {
     tokio::time::sleep(Duration::from_millis(100)).await;
 
     let second_tmp = tempdir()?;
-    let second_codex_home = second_tmp.path().to_path_buf();
+    let second_orbit_code_home = second_tmp.path().to_path_buf();
 
     let second_opts = ServerOptions {
-        codex_home: second_codex_home,
+        orbit_code_home: second_orbit_code_home,
         cli_auth_credentials_store_mode: AuthCredentialsStoreMode::File,
-        client_id: codex_login::CLIENT_ID.to_string(),
+        client_id: orbit_code_login::CLIENT_ID.to_string(),
         issuer,
         port: login_port,
         open_browser: false,

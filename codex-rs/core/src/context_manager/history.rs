@@ -9,19 +9,19 @@ use crate::truncate::truncate_function_output_items_with_policy;
 use crate::truncate::truncate_text;
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD as BASE64_STANDARD;
-use codex_protocol::models::BaseInstructions;
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::FunctionCallOutputBody;
-use codex_protocol::models::FunctionCallOutputContentItem;
-use codex_protocol::models::FunctionCallOutputPayload;
-use codex_protocol::models::ImageDetail;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::openai_models::InputModality;
-use codex_protocol::protocol::TokenUsage;
-use codex_protocol::protocol::TokenUsageInfo;
-use codex_protocol::protocol::TurnContextItem;
-use codex_utils_cache::BlockingLruCache;
-use codex_utils_cache::sha1_digest;
+use orbit_code_protocol::models::BaseInstructions;
+use orbit_code_protocol::models::ContentItem;
+use orbit_code_protocol::models::FunctionCallOutputBody;
+use orbit_code_protocol::models::FunctionCallOutputContentItem;
+use orbit_code_protocol::models::FunctionCallOutputPayload;
+use orbit_code_protocol::models::ImageDetail;
+use orbit_code_protocol::models::ResponseItem;
+use orbit_code_protocol::openai_models::InputModality;
+use orbit_code_protocol::protocol::TokenUsage;
+use orbit_code_protocol::protocol::TokenUsageInfo;
+use orbit_code_protocol::protocol::TurnContextItem;
+use orbit_code_utils_cache::BlockingLruCache;
+use orbit_code_utils_cache::sha1_digest;
 use std::num::NonZeroUsize;
 use std::ops::Deref;
 use std::sync::LazyLock;
@@ -622,7 +622,7 @@ fn is_model_generated_item(item: &ResponseItem) -> bool {
     }
 }
 
-pub(crate) fn is_codex_generated_item(item: &ResponseItem) -> bool {
+pub(crate) fn is_orbit_code_generated_item(item: &ResponseItem) -> bool {
     matches!(
         item,
         ResponseItem::FunctionCallOutput { .. }

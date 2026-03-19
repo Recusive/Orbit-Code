@@ -7,7 +7,7 @@ use crate::export::GeneratedSchema;
 use crate::export::write_json_schema;
 use crate::protocol::v1;
 use crate::protocol::v2;
-use codex_experimental_api_macros::ExperimentalApi;
+use orbit_code_experimental_api_macros::ExperimentalApi;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;
@@ -799,7 +799,7 @@ pub struct FuzzyFileSearchParams {
     pub cancellation_token: Option<String>,
 }
 
-/// Superset of [`codex_file_search::FileMatch`]
+/// Superset of [`orbit_code_file_search::FileMatch`]
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]
 pub struct FuzzyFileSearchResult {
     pub root: String,
@@ -948,11 +948,11 @@ client_notification_definitions! {
 mod tests {
     use super::*;
     use anyhow::Result;
-    use codex_protocol::ThreadId;
-    use codex_protocol::account::PlanType;
-    use codex_protocol::parse_command::ParsedCommand;
-    use codex_protocol::protocol::RealtimeConversationVersion;
-    use codex_utils_absolute_path::AbsolutePathBuf;
+    use orbit_code_protocol::ThreadId;
+    use orbit_code_protocol::account::PlanType;
+    use orbit_code_protocol::parse_command::ParsedCommand;
+    use orbit_code_protocol::protocol::RealtimeConversationVersion;
+    use orbit_code_utils_absolute_path::AbsolutePathBuf;
     use pretty_assertions::assert_eq;
     use serde_json::json;
     use std::path::PathBuf;
@@ -997,7 +997,7 @@ mod tests {
             request_id: RequestId::Integer(42),
             params: v1::InitializeParams {
                 client_info: v1::ClientInfo {
-                    name: "codex_vscode".to_string(),
+                    name: "orbit_code_vscode".to_string(),
                     title: Some("Codex VS Code Extension".to_string()),
                     version: "0.1.0".to_string(),
                 },
@@ -1017,7 +1017,7 @@ mod tests {
                 "id": 42,
                 "params": {
                     "clientInfo": {
-                        "name": "codex_vscode",
+                        "name": "orbit_code_vscode",
                         "title": "Codex VS Code Extension",
                         "version": "0.1.0"
                     },
@@ -1042,7 +1042,7 @@ mod tests {
             "id": 42,
             "params": {
                 "clientInfo": {
-                    "name": "codex_vscode",
+                    "name": "orbit_code_vscode",
                     "title": "Codex VS Code Extension",
                     "version": "0.1.0"
                 },
@@ -1062,7 +1062,7 @@ mod tests {
                 request_id: RequestId::Integer(42),
                 params: v1::InitializeParams {
                     client_info: v1::ClientInfo {
-                        name: "codex_vscode".to_string(),
+                        name: "orbit_code_vscode".to_string(),
                         title: Some("Codex VS Code Extension".to_string()),
                         version: "0.1.0".to_string(),
                     },
@@ -1198,7 +1198,7 @@ mod tests {
         let params = v2::McpServerElicitationRequestParams {
             thread_id: "thr_123".to_string(),
             turn_id: Some("turn_123".to_string()),
-            server_name: "codex_apps".to_string(),
+            server_name: "orbit_code_apps".to_string(),
             request: v2::McpServerElicitationRequest::Form {
                 meta: None,
                 message: "Allow this request?".to_string(),
@@ -1217,7 +1217,7 @@ mod tests {
                 "params": {
                     "threadId": "thr_123",
                     "turnId": "turn_123",
-                    "serverName": "codex_apps",
+                    "serverName": "orbit_code_apps",
                     "mode": "form",
                     "_meta": null,
                     "message": "Allow this request?",

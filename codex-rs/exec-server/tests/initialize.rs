@@ -2,11 +2,11 @@
 
 mod common;
 
-use codex_app_server_protocol::JSONRPCMessage;
-use codex_app_server_protocol::JSONRPCResponse;
-use codex_exec_server::InitializeParams;
-use codex_exec_server::InitializeResponse;
 use common::exec_server::exec_server;
+use orbit_code_app_server_protocol::JSONRPCMessage;
+use orbit_code_app_server_protocol::JSONRPCResponse;
+use orbit_code_exec_server::InitializeParams;
+use orbit_code_exec_server::InitializeResponse;
 use pretty_assertions::assert_eq;
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]

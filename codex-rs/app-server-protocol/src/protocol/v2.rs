@@ -4,91 +4,91 @@ use std::path::PathBuf;
 
 use crate::RequestId;
 use crate::protocol::common::AuthMode;
-use codex_experimental_api_macros::ExperimentalApi;
-use codex_protocol::account::PlanType;
-use codex_protocol::approvals::ElicitationRequest as CoreElicitationRequest;
-use codex_protocol::approvals::ExecApprovalRequestSkillMetadata as CoreExecApprovalRequestSkillMetadata;
-use codex_protocol::approvals::ExecPolicyAmendment as CoreExecPolicyAmendment;
-use codex_protocol::approvals::NetworkApprovalContext as CoreNetworkApprovalContext;
-use codex_protocol::approvals::NetworkApprovalProtocol as CoreNetworkApprovalProtocol;
-use codex_protocol::approvals::NetworkPolicyAmendment as CoreNetworkPolicyAmendment;
-use codex_protocol::approvals::NetworkPolicyRuleAction as CoreNetworkPolicyRuleAction;
-use codex_protocol::config_types::ApprovalsReviewer as CoreApprovalsReviewer;
-use codex_protocol::config_types::CollaborationMode;
-use codex_protocol::config_types::CollaborationModeMask as CoreCollaborationModeMask;
-use codex_protocol::config_types::ForcedLoginMethod;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::config_types::Personality;
-use codex_protocol::config_types::ReasoningSummary;
-use codex_protocol::config_types::SandboxMode as CoreSandboxMode;
-use codex_protocol::config_types::ServiceTier;
-use codex_protocol::config_types::Verbosity;
-use codex_protocol::config_types::WebSearchMode;
-use codex_protocol::config_types::WebSearchToolConfig;
-use codex_protocol::items::AgentMessageContent as CoreAgentMessageContent;
-use codex_protocol::items::TurnItem as CoreTurnItem;
-use codex_protocol::mcp::Resource as McpResource;
-use codex_protocol::mcp::ResourceTemplate as McpResourceTemplate;
-use codex_protocol::mcp::Tool as McpTool;
-use codex_protocol::memory_citation::MemoryCitation as CoreMemoryCitation;
-use codex_protocol::memory_citation::MemoryCitationEntry as CoreMemoryCitationEntry;
-use codex_protocol::models::FileSystemPermissions as CoreFileSystemPermissions;
-use codex_protocol::models::MacOsAutomationPermission as CoreMacOsAutomationPermission;
-use codex_protocol::models::MacOsContactsPermission as CoreMacOsContactsPermission;
-use codex_protocol::models::MacOsPreferencesPermission as CoreMacOsPreferencesPermission;
-use codex_protocol::models::MacOsSeatbeltProfileExtensions as CoreMacOsSeatbeltProfileExtensions;
-use codex_protocol::models::MessagePhase;
-use codex_protocol::models::NetworkPermissions as CoreNetworkPermissions;
-use codex_protocol::models::PermissionProfile as CorePermissionProfile;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::openai_models::InputModality;
-use codex_protocol::openai_models::ModelAvailabilityNux as CoreModelAvailabilityNux;
-use codex_protocol::openai_models::ReasoningEffort;
-use codex_protocol::openai_models::default_input_modalities;
-use codex_protocol::parse_command::ParsedCommand as CoreParsedCommand;
-use codex_protocol::plan_tool::PlanItemArg as CorePlanItemArg;
-use codex_protocol::plan_tool::StepStatus as CorePlanStepStatus;
-use codex_protocol::protocol::AgentStatus as CoreAgentStatus;
-use codex_protocol::protocol::AskForApproval as CoreAskForApproval;
-use codex_protocol::protocol::CodexErrorInfo as CoreCodexErrorInfo;
-use codex_protocol::protocol::CreditsSnapshot as CoreCreditsSnapshot;
-use codex_protocol::protocol::ExecCommandSource as CoreExecCommandSource;
-use codex_protocol::protocol::ExecCommandStatus as CoreExecCommandStatus;
-use codex_protocol::protocol::GranularApprovalConfig as CoreGranularApprovalConfig;
-use codex_protocol::protocol::GuardianRiskLevel as CoreGuardianRiskLevel;
-use codex_protocol::protocol::HookEventName as CoreHookEventName;
-use codex_protocol::protocol::HookExecutionMode as CoreHookExecutionMode;
-use codex_protocol::protocol::HookHandlerType as CoreHookHandlerType;
-use codex_protocol::protocol::HookOutputEntry as CoreHookOutputEntry;
-use codex_protocol::protocol::HookOutputEntryKind as CoreHookOutputEntryKind;
-use codex_protocol::protocol::HookRunStatus as CoreHookRunStatus;
-use codex_protocol::protocol::HookRunSummary as CoreHookRunSummary;
-use codex_protocol::protocol::HookScope as CoreHookScope;
-use codex_protocol::protocol::ModelRerouteReason as CoreModelRerouteReason;
-use codex_protocol::protocol::NetworkAccess as CoreNetworkAccess;
-use codex_protocol::protocol::PatchApplyStatus as CorePatchApplyStatus;
-use codex_protocol::protocol::RateLimitSnapshot as CoreRateLimitSnapshot;
-use codex_protocol::protocol::RateLimitWindow as CoreRateLimitWindow;
-use codex_protocol::protocol::ReadOnlyAccess as CoreReadOnlyAccess;
-use codex_protocol::protocol::RealtimeAudioFrame as CoreRealtimeAudioFrame;
-use codex_protocol::protocol::RealtimeConversationVersion;
-use codex_protocol::protocol::ReviewDecision as CoreReviewDecision;
-use codex_protocol::protocol::SessionSource as CoreSessionSource;
-use codex_protocol::protocol::SkillDependencies as CoreSkillDependencies;
-use codex_protocol::protocol::SkillErrorInfo as CoreSkillErrorInfo;
-use codex_protocol::protocol::SkillInterface as CoreSkillInterface;
-use codex_protocol::protocol::SkillMetadata as CoreSkillMetadata;
-use codex_protocol::protocol::SkillScope as CoreSkillScope;
-use codex_protocol::protocol::SkillToolDependency as CoreSkillToolDependency;
-use codex_protocol::protocol::SubAgentSource as CoreSubAgentSource;
-use codex_protocol::protocol::TokenUsage as CoreTokenUsage;
-use codex_protocol::protocol::TokenUsageInfo as CoreTokenUsageInfo;
-use codex_protocol::request_permissions::PermissionGrantScope as CorePermissionGrantScope;
-use codex_protocol::request_permissions::RequestPermissionProfile as CoreRequestPermissionProfile;
-use codex_protocol::user_input::ByteRange as CoreByteRange;
-use codex_protocol::user_input::TextElement as CoreTextElement;
-use codex_protocol::user_input::UserInput as CoreUserInput;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use orbit_code_experimental_api_macros::ExperimentalApi;
+use orbit_code_protocol::account::PlanType;
+use orbit_code_protocol::approvals::ElicitationRequest as CoreElicitationRequest;
+use orbit_code_protocol::approvals::ExecApprovalRequestSkillMetadata as CoreExecApprovalRequestSkillMetadata;
+use orbit_code_protocol::approvals::ExecPolicyAmendment as CoreExecPolicyAmendment;
+use orbit_code_protocol::approvals::NetworkApprovalContext as CoreNetworkApprovalContext;
+use orbit_code_protocol::approvals::NetworkApprovalProtocol as CoreNetworkApprovalProtocol;
+use orbit_code_protocol::approvals::NetworkPolicyAmendment as CoreNetworkPolicyAmendment;
+use orbit_code_protocol::approvals::NetworkPolicyRuleAction as CoreNetworkPolicyRuleAction;
+use orbit_code_protocol::config_types::ApprovalsReviewer as CoreApprovalsReviewer;
+use orbit_code_protocol::config_types::CollaborationMode;
+use orbit_code_protocol::config_types::CollaborationModeMask as CoreCollaborationModeMask;
+use orbit_code_protocol::config_types::ForcedLoginMethod;
+use orbit_code_protocol::config_types::ModeKind;
+use orbit_code_protocol::config_types::Personality;
+use orbit_code_protocol::config_types::ReasoningSummary;
+use orbit_code_protocol::config_types::SandboxMode as CoreSandboxMode;
+use orbit_code_protocol::config_types::ServiceTier;
+use orbit_code_protocol::config_types::Verbosity;
+use orbit_code_protocol::config_types::WebSearchMode;
+use orbit_code_protocol::config_types::WebSearchToolConfig;
+use orbit_code_protocol::items::AgentMessageContent as CoreAgentMessageContent;
+use orbit_code_protocol::items::TurnItem as CoreTurnItem;
+use orbit_code_protocol::mcp::Resource as McpResource;
+use orbit_code_protocol::mcp::ResourceTemplate as McpResourceTemplate;
+use orbit_code_protocol::mcp::Tool as McpTool;
+use orbit_code_protocol::memory_citation::MemoryCitation as CoreMemoryCitation;
+use orbit_code_protocol::memory_citation::MemoryCitationEntry as CoreMemoryCitationEntry;
+use orbit_code_protocol::models::FileSystemPermissions as CoreFileSystemPermissions;
+use orbit_code_protocol::models::MacOsAutomationPermission as CoreMacOsAutomationPermission;
+use orbit_code_protocol::models::MacOsContactsPermission as CoreMacOsContactsPermission;
+use orbit_code_protocol::models::MacOsPreferencesPermission as CoreMacOsPreferencesPermission;
+use orbit_code_protocol::models::MacOsSeatbeltProfileExtensions as CoreMacOsSeatbeltProfileExtensions;
+use orbit_code_protocol::models::MessagePhase;
+use orbit_code_protocol::models::NetworkPermissions as CoreNetworkPermissions;
+use orbit_code_protocol::models::PermissionProfile as CorePermissionProfile;
+use orbit_code_protocol::models::ResponseItem;
+use orbit_code_protocol::openai_models::InputModality;
+use orbit_code_protocol::openai_models::ModelAvailabilityNux as CoreModelAvailabilityNux;
+use orbit_code_protocol::openai_models::ReasoningEffort;
+use orbit_code_protocol::openai_models::default_input_modalities;
+use orbit_code_protocol::parse_command::ParsedCommand as CoreParsedCommand;
+use orbit_code_protocol::plan_tool::PlanItemArg as CorePlanItemArg;
+use orbit_code_protocol::plan_tool::StepStatus as CorePlanStepStatus;
+use orbit_code_protocol::protocol::AgentStatus as CoreAgentStatus;
+use orbit_code_protocol::protocol::AskForApproval as CoreAskForApproval;
+use orbit_code_protocol::protocol::CodexErrorInfo as CoreCodexErrorInfo;
+use orbit_code_protocol::protocol::CreditsSnapshot as CoreCreditsSnapshot;
+use orbit_code_protocol::protocol::ExecCommandSource as CoreExecCommandSource;
+use orbit_code_protocol::protocol::ExecCommandStatus as CoreExecCommandStatus;
+use orbit_code_protocol::protocol::GranularApprovalConfig as CoreGranularApprovalConfig;
+use orbit_code_protocol::protocol::GuardianRiskLevel as CoreGuardianRiskLevel;
+use orbit_code_protocol::protocol::HookEventName as CoreHookEventName;
+use orbit_code_protocol::protocol::HookExecutionMode as CoreHookExecutionMode;
+use orbit_code_protocol::protocol::HookHandlerType as CoreHookHandlerType;
+use orbit_code_protocol::protocol::HookOutputEntry as CoreHookOutputEntry;
+use orbit_code_protocol::protocol::HookOutputEntryKind as CoreHookOutputEntryKind;
+use orbit_code_protocol::protocol::HookRunStatus as CoreHookRunStatus;
+use orbit_code_protocol::protocol::HookRunSummary as CoreHookRunSummary;
+use orbit_code_protocol::protocol::HookScope as CoreHookScope;
+use orbit_code_protocol::protocol::ModelRerouteReason as CoreModelRerouteReason;
+use orbit_code_protocol::protocol::NetworkAccess as CoreNetworkAccess;
+use orbit_code_protocol::protocol::PatchApplyStatus as CorePatchApplyStatus;
+use orbit_code_protocol::protocol::RateLimitSnapshot as CoreRateLimitSnapshot;
+use orbit_code_protocol::protocol::RateLimitWindow as CoreRateLimitWindow;
+use orbit_code_protocol::protocol::ReadOnlyAccess as CoreReadOnlyAccess;
+use orbit_code_protocol::protocol::RealtimeAudioFrame as CoreRealtimeAudioFrame;
+use orbit_code_protocol::protocol::RealtimeConversationVersion;
+use orbit_code_protocol::protocol::ReviewDecision as CoreReviewDecision;
+use orbit_code_protocol::protocol::SessionSource as CoreSessionSource;
+use orbit_code_protocol::protocol::SkillDependencies as CoreSkillDependencies;
+use orbit_code_protocol::protocol::SkillErrorInfo as CoreSkillErrorInfo;
+use orbit_code_protocol::protocol::SkillInterface as CoreSkillInterface;
+use orbit_code_protocol::protocol::SkillMetadata as CoreSkillMetadata;
+use orbit_code_protocol::protocol::SkillScope as CoreSkillScope;
+use orbit_code_protocol::protocol::SkillToolDependency as CoreSkillToolDependency;
+use orbit_code_protocol::protocol::SubAgentSource as CoreSubAgentSource;
+use orbit_code_protocol::protocol::TokenUsage as CoreTokenUsage;
+use orbit_code_protocol::protocol::TokenUsageInfo as CoreTokenUsageInfo;
+use orbit_code_protocol::request_permissions::PermissionGrantScope as CorePermissionGrantScope;
+use orbit_code_protocol::request_permissions::RequestPermissionProfile as CoreRequestPermissionProfile;
+use orbit_code_protocol::user_input::ByteRange as CoreByteRange;
+use orbit_code_protocol::user_input::TextElement as CoreTextElement;
+use orbit_code_protocol::user_input::UserInput as CoreUserInput;
+use orbit_code_utils_absolute_path::AbsolutePathBuf;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;
@@ -325,13 +325,13 @@ impl From<CoreSandboxMode> for SandboxMode {
 }
 
 v2_enum_from_core!(
-    pub enum ReviewDelivery from codex_protocol::protocol::ReviewDelivery {
+    pub enum ReviewDelivery from orbit_code_protocol::protocol::ReviewDelivery {
         Inline, Detached
     }
 );
 
 v2_enum_from_core!(
-    pub enum McpAuthStatus from codex_protocol::protocol::McpAuthStatus {
+    pub enum McpAuthStatus from orbit_code_protocol::protocol::McpAuthStatus {
         Unsupported,
         NotLoggedIn,
         BearerToken,
@@ -459,7 +459,7 @@ pub enum ConfigLayerSource {
         file: AbsolutePathBuf,
     },
 
-    /// User config layer from $CODEX_HOME/config.toml. This layer is special
+    /// User config layer from $ORBIT_HOME/config.toml. This layer is special
     /// in that it is expected to be:
     /// - writable by the user
     /// - generally outside the workspace directory
@@ -476,7 +476,7 @@ pub enum ConfigLayerSource {
     #[serde(rename_all = "camelCase")]
     #[ts(rename_all = "camelCase")]
     Project {
-        dot_codex_folder: AbsolutePathBuf,
+        dot_orbit_code_folder: AbsolutePathBuf,
     },
 
     /// Session-layer overrides supplied via `-c`/`--config`.
@@ -1305,20 +1305,20 @@ pub enum SandboxPolicy {
 }
 
 impl SandboxPolicy {
-    pub fn to_core(&self) -> codex_protocol::protocol::SandboxPolicy {
+    pub fn to_core(&self) -> orbit_code_protocol::protocol::SandboxPolicy {
         match self {
             SandboxPolicy::DangerFullAccess => {
-                codex_protocol::protocol::SandboxPolicy::DangerFullAccess
+                orbit_code_protocol::protocol::SandboxPolicy::DangerFullAccess
             }
             SandboxPolicy::ReadOnly {
                 access,
                 network_access,
-            } => codex_protocol::protocol::SandboxPolicy::ReadOnly {
+            } => orbit_code_protocol::protocol::SandboxPolicy::ReadOnly {
                 access: access.to_core(),
                 network_access: *network_access,
             },
             SandboxPolicy::ExternalSandbox { network_access } => {
-                codex_protocol::protocol::SandboxPolicy::ExternalSandbox {
+                orbit_code_protocol::protocol::SandboxPolicy::ExternalSandbox {
                     network_access: match network_access {
                         NetworkAccess::Restricted => CoreNetworkAccess::Restricted,
                         NetworkAccess::Enabled => CoreNetworkAccess::Enabled,
@@ -1331,7 +1331,7 @@ impl SandboxPolicy {
                 network_access,
                 exclude_tmpdir_env_var,
                 exclude_slash_tmp,
-            } => codex_protocol::protocol::SandboxPolicy::WorkspaceWrite {
+            } => orbit_code_protocol::protocol::SandboxPolicy::WorkspaceWrite {
                 writable_roots: writable_roots.clone(),
                 read_only_access: read_only_access.to_core(),
                 network_access: *network_access,
@@ -1342,20 +1342,20 @@ impl SandboxPolicy {
     }
 }
 
-impl From<codex_protocol::protocol::SandboxPolicy> for SandboxPolicy {
-    fn from(value: codex_protocol::protocol::SandboxPolicy) -> Self {
+impl From<orbit_code_protocol::protocol::SandboxPolicy> for SandboxPolicy {
+    fn from(value: orbit_code_protocol::protocol::SandboxPolicy) -> Self {
         match value {
-            codex_protocol::protocol::SandboxPolicy::DangerFullAccess => {
+            orbit_code_protocol::protocol::SandboxPolicy::DangerFullAccess => {
                 SandboxPolicy::DangerFullAccess
             }
-            codex_protocol::protocol::SandboxPolicy::ReadOnly {
+            orbit_code_protocol::protocol::SandboxPolicy::ReadOnly {
                 access,
                 network_access,
             } => SandboxPolicy::ReadOnly {
                 access: ReadOnlyAccess::from(access),
                 network_access,
             },
-            codex_protocol::protocol::SandboxPolicy::ExternalSandbox { network_access } => {
+            orbit_code_protocol::protocol::SandboxPolicy::ExternalSandbox { network_access } => {
                 SandboxPolicy::ExternalSandbox {
                     network_access: match network_access {
                         CoreNetworkAccess::Restricted => NetworkAccess::Restricted,
@@ -1363,7 +1363,7 @@ impl From<codex_protocol::protocol::SandboxPolicy> for SandboxPolicy {
                     },
                 }
             }
-            codex_protocol::protocol::SandboxPolicy::WorkspaceWrite {
+            orbit_code_protocol::protocol::SandboxPolicy::WorkspaceWrite {
                 writable_roots,
                 read_only_access,
                 network_access,
@@ -3635,7 +3635,7 @@ impl From<CoreMemoryCitationEntry> for MemoryCitationEntry {
 #[error("{message}")]
 pub struct TurnError {
     pub message: String,
-    pub codex_error_info: Option<CodexErrorInfo>,
+    pub orbit_code_error_info: Option<CodexErrorInfo>,
     #[serde(default)]
     pub additional_details: Option<String>,
 }
@@ -4346,19 +4346,19 @@ pub enum WebSearchAction {
     Other,
 }
 
-impl From<codex_protocol::models::WebSearchAction> for WebSearchAction {
-    fn from(value: codex_protocol::models::WebSearchAction) -> Self {
+impl From<orbit_code_protocol::models::WebSearchAction> for WebSearchAction {
+    fn from(value: orbit_code_protocol::models::WebSearchAction) -> Self {
         match value {
-            codex_protocol::models::WebSearchAction::Search { query, queries } => {
+            orbit_code_protocol::models::WebSearchAction::Search { query, queries } => {
                 WebSearchAction::Search { query, queries }
             }
-            codex_protocol::models::WebSearchAction::OpenPage { url } => {
+            orbit_code_protocol::models::WebSearchAction::OpenPage { url } => {
                 WebSearchAction::OpenPage { url }
             }
-            codex_protocol::models::WebSearchAction::FindInPage { url, pattern } => {
+            orbit_code_protocol::models::WebSearchAction::FindInPage { url, pattern } => {
                 WebSearchAction::FindInPage { url, pattern }
             }
-            codex_protocol::models::WebSearchAction::Other => WebSearchAction::Other,
+            orbit_code_protocol::models::WebSearchAction::Other => WebSearchAction::Other,
         }
     }
 }
@@ -5135,11 +5135,11 @@ pub enum McpServerElicitationAction {
 }
 
 impl McpServerElicitationAction {
-    pub fn to_core(self) -> codex_protocol::approvals::ElicitationAction {
+    pub fn to_core(self) -> orbit_code_protocol::approvals::ElicitationAction {
         match self {
-            Self::Accept => codex_protocol::approvals::ElicitationAction::Accept,
-            Self::Decline => codex_protocol::approvals::ElicitationAction::Decline,
-            Self::Cancel => codex_protocol::approvals::ElicitationAction::Cancel,
+            Self::Accept => orbit_code_protocol::approvals::ElicitationAction::Accept,
+            Self::Decline => orbit_code_protocol::approvals::ElicitationAction::Decline,
+            Self::Cancel => orbit_code_protocol::approvals::ElicitationAction::Cancel,
         }
     }
 }
@@ -5650,7 +5650,7 @@ pub enum DynamicToolCallOutputContentItem {
 }
 
 impl From<DynamicToolCallOutputContentItem>
-    for codex_protocol::dynamic_tools::DynamicToolCallOutputContentItem
+    for orbit_code_protocol::dynamic_tools::DynamicToolCallOutputContentItem
 {
     fn from(item: DynamicToolCallOutputContentItem) -> Self {
         match item {
@@ -5856,16 +5856,16 @@ pub struct ConfigWarningNotification {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use codex_protocol::items::AgentMessageContent;
-    use codex_protocol::items::AgentMessageItem;
-    use codex_protocol::items::ReasoningItem;
-    use codex_protocol::items::TurnItem;
-    use codex_protocol::items::UserMessageItem;
-    use codex_protocol::items::WebSearchItem;
-    use codex_protocol::models::WebSearchAction as CoreWebSearchAction;
-    use codex_protocol::protocol::NetworkAccess as CoreNetworkAccess;
-    use codex_protocol::protocol::ReadOnlyAccess as CoreReadOnlyAccess;
-    use codex_protocol::user_input::UserInput as CoreUserInput;
+    use orbit_code_protocol::items::AgentMessageContent;
+    use orbit_code_protocol::items::AgentMessageItem;
+    use orbit_code_protocol::items::ReasoningItem;
+    use orbit_code_protocol::items::TurnItem;
+    use orbit_code_protocol::items::UserMessageItem;
+    use orbit_code_protocol::items::WebSearchItem;
+    use orbit_code_protocol::models::WebSearchAction as CoreWebSearchAction;
+    use orbit_code_protocol::protocol::NetworkAccess as CoreNetworkAccess;
+    use orbit_code_protocol::protocol::ReadOnlyAccess as CoreReadOnlyAccess;
+    use orbit_code_protocol::user_input::UserInput as CoreUserInput;
     use pretty_assertions::assert_eq;
     use serde_json::json;
     use std::path::PathBuf;
@@ -6709,7 +6709,7 @@ mod tests {
         let core_policy = v2_policy.to_core();
         assert_eq!(
             core_policy,
-            codex_protocol::protocol::SandboxPolicy::ExternalSandbox {
+            orbit_code_protocol::protocol::SandboxPolicy::ExternalSandbox {
                 network_access: CoreNetworkAccess::Enabled,
             }
         );
@@ -6732,7 +6732,7 @@ mod tests {
         let core_policy = v2_policy.to_core();
         assert_eq!(
             core_policy,
-            codex_protocol::protocol::SandboxPolicy::ReadOnly {
+            orbit_code_protocol::protocol::SandboxPolicy::ReadOnly {
                 access: CoreReadOnlyAccess::Restricted {
                     include_platform_defaults: false,
                     readable_roots: vec![readable_root],
@@ -7374,7 +7374,7 @@ mod tests {
         let core_policy = v2_policy.to_core();
         assert_eq!(
             core_policy,
-            codex_protocol::protocol::SandboxPolicy::WorkspaceWrite {
+            orbit_code_protocol::protocol::SandboxPolicy::WorkspaceWrite {
                 writable_roots: vec![],
                 read_only_access: CoreReadOnlyAccess::Restricted {
                     include_platform_defaults: false,
@@ -7746,7 +7746,7 @@ mod tests {
     }
 
     #[test]
-    fn codex_error_info_serializes_http_status_code_in_camel_case() {
+    fn orbit_code_error_info_serializes_http_status_code_in_camel_case() {
         let value = CodexErrorInfo::ResponseTooManyFailedAttempts {
             http_status_code: Some(401),
         };

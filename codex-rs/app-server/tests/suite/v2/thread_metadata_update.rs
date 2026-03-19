@@ -4,25 +4,25 @@ use app_test_support::create_fake_rollout;
 use app_test_support::create_mock_responses_server_repeating_assistant;
 use app_test_support::rollout_path;
 use app_test_support::to_response;
-use codex_app_server_protocol::GitInfo;
-use codex_app_server_protocol::JSONRPCError;
-use codex_app_server_protocol::JSONRPCResponse;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::ThreadMetadataGitInfoUpdateParams;
-use codex_app_server_protocol::ThreadMetadataUpdateParams;
-use codex_app_server_protocol::ThreadMetadataUpdateResponse;
-use codex_app_server_protocol::ThreadReadParams;
-use codex_app_server_protocol::ThreadReadResponse;
-use codex_app_server_protocol::ThreadResumeParams;
-use codex_app_server_protocol::ThreadResumeResponse;
-use codex_app_server_protocol::ThreadStartParams;
-use codex_app_server_protocol::ThreadStartResponse;
-use codex_app_server_protocol::ThreadStatus;
-use codex_core::ARCHIVED_SESSIONS_SUBDIR;
-use codex_core::state_db::reconcile_rollout;
-use codex_protocol::ThreadId;
-use codex_protocol::protocol::GitInfo as RolloutGitInfo;
-use codex_state::StateRuntime;
+use orbit_code_app_server_protocol::GitInfo;
+use orbit_code_app_server_protocol::JSONRPCError;
+use orbit_code_app_server_protocol::JSONRPCResponse;
+use orbit_code_app_server_protocol::RequestId;
+use orbit_code_app_server_protocol::ThreadMetadataGitInfoUpdateParams;
+use orbit_code_app_server_protocol::ThreadMetadataUpdateParams;
+use orbit_code_app_server_protocol::ThreadMetadataUpdateResponse;
+use orbit_code_app_server_protocol::ThreadReadParams;
+use orbit_code_app_server_protocol::ThreadReadResponse;
+use orbit_code_app_server_protocol::ThreadResumeParams;
+use orbit_code_app_server_protocol::ThreadResumeResponse;
+use orbit_code_app_server_protocol::ThreadStartParams;
+use orbit_code_app_server_protocol::ThreadStartResponse;
+use orbit_code_app_server_protocol::ThreadStatus;
+use orbit_code_core::ARCHIVED_SESSIONS_SUBDIR;
+use orbit_code_core::state_db::reconcile_rollout;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::protocol::GitInfo as RolloutGitInfo;
+use orbit_code_state::StateRuntime;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 use std::fs;
@@ -36,10 +36,10 @@ const DEFAULT_READ_TIMEOUT: std::time::Duration = std::time::Duration::from_secs
 #[tokio::test]
 async fn thread_metadata_update_patches_git_branch_and_returns_updated_thread() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path(), &server.uri())?;
+    let orbit_code_home = TempDir::new()?;
+    create_config_toml(orbit_code_home.path(), &server.uri())?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     let start_id = mcp
@@ -126,10 +126,10 @@ async fn thread_metadata_update_patches_git_branch_and_returns_updated_thread() 
 #[tokio::test]
 async fn thread_metadata_update_rejects_empty_git_info_patch() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path(), &server.uri())?;
+    let orbit_code_home = TempDir::new()?;
+    create_config_toml(orbit_code_home.path(), &server.uri())?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     let start_id = mcp
@@ -172,13 +172,13 @@ async fn thread_metadata_update_rejects_empty_git_info_patch() -> Result<()> {
 #[tokio::test]
 async fn thread_metadata_update_repairs_missing_sqlite_row_for_stored_thread() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path(), &server.uri())?;
-    let _state_db = init_state_db(codex_home.path()).await?;
+    let orbit_code_home = TempDir::new()?;
+    create_config_toml(orbit_code_home.path(), &server.uri())?;
+    let _state_db = init_state_db(orbit_code_home.path()).await?;
 
     let preview = "Stored thread preview";
     let thread_id = create_fake_rollout(
-        codex_home.path(),
+        orbit_code_home.path(),
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         preview,
@@ -186,7 +186,7 @@ async fn thread_metadata_update_repairs_missing_sqlite_row_for_stored_thread() -
         None,
     )?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     let update_id = mcp
@@ -225,13 +225,13 @@ async fn thread_metadata_update_repairs_missing_sqlite_row_for_stored_thread() -
 #[tokio::test]
 async fn thread_metadata_update_repairs_loaded_thread_without_resetting_summary() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path(), &server.uri())?;
-    let state_db = init_state_db(codex_home.path()).await?;
+    let orbit_code_home = TempDir::new()?;
+    create_config_toml(orbit_code_home.path(), &server.uri())?;
+    let state_db = init_state_db(orbit_code_home.path()).await?;
 
     let preview = "Loaded thread preview";
     let thread_id = create_fake_rollout(
-        codex_home.path(),
+        orbit_code_home.path(),
         "2025-01-06T08-30-00",
         "2025-01-06T08:30:00Z",
         preview,
@@ -239,7 +239,7 @@ async fn thread_metadata_update_repairs_loaded_thread_without_resetting_summary(
         None,
     )?;
     let thread_uuid = ThreadId::from_string(&thread_id)?;
-    let rollout_path = rollout_path(codex_home.path(), "2025-01-06T08-30-00", &thread_id);
+    let rollout_path = rollout_path(orbit_code_home.path(), "2025-01-06T08-30-00", &thread_id);
     reconcile_rollout(
         Some(&state_db),
         rollout_path.as_path(),
@@ -251,7 +251,7 @@ async fn thread_metadata_update_repairs_loaded_thread_without_resetting_summary(
     )
     .await;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     let resume_id = mcp
@@ -305,13 +305,13 @@ async fn thread_metadata_update_repairs_loaded_thread_without_resetting_summary(
 #[tokio::test]
 async fn thread_metadata_update_repairs_missing_sqlite_row_for_archived_thread() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path(), &server.uri())?;
-    let _state_db = init_state_db(codex_home.path()).await?;
+    let orbit_code_home = TempDir::new()?;
+    create_config_toml(orbit_code_home.path(), &server.uri())?;
+    let _state_db = init_state_db(orbit_code_home.path()).await?;
 
     let preview = "Archived thread preview";
     let thread_id = create_fake_rollout(
-        codex_home.path(),
+        orbit_code_home.path(),
         "2025-01-06T08-30-00",
         "2025-01-06T08:30:00Z",
         preview,
@@ -319,9 +319,9 @@ async fn thread_metadata_update_repairs_missing_sqlite_row_for_archived_thread()
         None,
     )?;
 
-    let archived_dir = codex_home.path().join(ARCHIVED_SESSIONS_SUBDIR);
+    let archived_dir = orbit_code_home.path().join(ARCHIVED_SESSIONS_SUBDIR);
     fs::create_dir_all(&archived_dir)?;
-    let archived_source = rollout_path(codex_home.path(), "2025-01-06T08-30-00", &thread_id);
+    let archived_source = rollout_path(orbit_code_home.path(), "2025-01-06T08-30-00", &thread_id);
     let archived_dest = archived_dir.join(
         archived_source
             .file_name()
@@ -329,7 +329,7 @@ async fn thread_metadata_update_repairs_missing_sqlite_row_for_archived_thread()
     );
     fs::rename(&archived_source, &archived_dest)?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     let update_id = mcp
@@ -368,11 +368,11 @@ async fn thread_metadata_update_repairs_missing_sqlite_row_for_archived_thread()
 #[tokio::test]
 async fn thread_metadata_update_can_clear_stored_git_fields() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path(), &server.uri())?;
+    let orbit_code_home = TempDir::new()?;
+    create_config_toml(orbit_code_home.path(), &server.uri())?;
 
     let thread_id = create_fake_rollout(
-        codex_home.path(),
+        orbit_code_home.path(),
         "2025-01-07T09-15-00",
         "2025-01-07T09:15:00Z",
         "Thread preview",
@@ -383,9 +383,9 @@ async fn thread_metadata_update_can_clear_stored_git_fields() -> Result<()> {
             repository_url: Some("git@example.com:openai/codex.git".to_string()),
         }),
     )?;
-    let _state_db = init_state_db(codex_home.path()).await?;
+    let _state_db = init_state_db(orbit_code_home.path()).await?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     let update_id = mcp
@@ -427,14 +427,15 @@ async fn thread_metadata_update_can_clear_stored_git_fields() -> Result<()> {
     Ok(())
 }
 
-async fn init_state_db(codex_home: &Path) -> Result<Arc<StateRuntime>> {
-    let state_db = StateRuntime::init(codex_home.to_path_buf(), "mock_provider".into()).await?;
+async fn init_state_db(orbit_code_home: &Path) -> Result<Arc<StateRuntime>> {
+    let state_db =
+        StateRuntime::init(orbit_code_home.to_path_buf(), "mock_provider".into()).await?;
     state_db.mark_backfill_complete(None).await?;
     Ok(state_db)
 }
 
-fn create_config_toml(codex_home: &Path, server_uri: &str) -> std::io::Result<()> {
-    let config_toml = codex_home.join("config.toml");
+fn create_config_toml(orbit_code_home: &Path, server_uri: &str) -> std::io::Result<()> {
+    let config_toml = orbit_code_home.join("config.toml");
     std::fs::write(
         config_toml,
         format!(

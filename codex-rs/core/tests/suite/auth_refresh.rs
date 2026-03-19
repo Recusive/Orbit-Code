@@ -3,18 +3,18 @@ use anyhow::Result;
 use base64::Engine;
 use chrono::Duration;
 use chrono::Utc;
-use codex_app_server_protocol::AuthMode;
-use codex_core::AuthManager;
-use codex_core::auth::AuthCredentialsStoreMode;
-use codex_core::auth::AuthDotJson;
-use codex_core::auth::REFRESH_TOKEN_URL_OVERRIDE_ENV_VAR;
-use codex_core::auth::RefreshTokenError;
-use codex_core::auth::load_auth_dot_json;
-use codex_core::auth::save_auth;
-use codex_core::error::RefreshTokenFailedReason;
-use codex_core::token_data::IdTokenInfo;
-use codex_core::token_data::TokenData;
 use core_test_support::skip_if_no_network;
+use orbit_code_app_server_protocol::AuthMode;
+use orbit_code_core::AuthManager;
+use orbit_code_core::auth::AuthCredentialsStoreMode;
+use orbit_code_core::auth::AuthDotJson;
+use orbit_code_core::auth::REFRESH_TOKEN_URL_OVERRIDE_ENV_VAR;
+use orbit_code_core::auth::RefreshTokenError;
+use orbit_code_core::auth::load_auth_dot_json;
+use orbit_code_core::auth::save_auth;
+use orbit_code_core::error::RefreshTokenFailedReason;
+use orbit_code_core::token_data::IdTokenInfo;
+use orbit_code_core::token_data::TokenData;
 use pretty_assertions::assert_eq;
 use serde::Serialize;
 use serde_json::json;
@@ -182,7 +182,7 @@ async fn refresh_token_skips_refresh_when_auth_changed() -> Result<()> {
         last_refresh: Some(initial_last_refresh),
     };
     save_auth(
-        ctx.codex_home.path(),
+        ctx.orbit_code_home.path(),
         &disk_auth,
         AuthCredentialsStoreMode::File,
     )?;
@@ -246,7 +246,7 @@ async fn refresh_token_errors_on_account_mismatch() -> Result<()> {
         last_refresh: Some(initial_last_refresh),
     };
     save_auth(
-        ctx.codex_home.path(),
+        ctx.orbit_code_home.path(),
         &disk_auth,
         AuthCredentialsStoreMode::File,
     )?;
@@ -519,7 +519,7 @@ async fn unauthorized_recovery_reloads_then_refreshes_tokens() -> Result<()> {
         last_refresh: Some(initial_last_refresh),
     };
     save_auth(
-        ctx.codex_home.path(),
+        ctx.orbit_code_home.path(),
         &disk_auth,
         AuthCredentialsStoreMode::File,
     )?;
@@ -612,7 +612,7 @@ async fn unauthorized_recovery_errors_on_account_mismatch() -> Result<()> {
         last_refresh: Some(initial_last_refresh),
     };
     save_auth(
-        ctx.codex_home.path(),
+        ctx.orbit_code_home.path(),
         &disk_auth,
         AuthCredentialsStoreMode::File,
     )?;
@@ -687,40 +687,40 @@ async fn unauthorized_recovery_requires_chatgpt_auth() -> Result<()> {
 }
 
 struct RefreshTokenTestContext {
-    codex_home: TempDir,
+    orbit_code_home: TempDir,
     auth_manager: Arc<AuthManager>,
     _env_guard: EnvGuard,
 }
 
 impl RefreshTokenTestContext {
     fn new(server: &MockServer) -> Result<Self> {
-        let codex_home = TempDir::new()?;
+        let orbit_code_home = TempDir::new()?;
 
         let endpoint = format!("{}/oauth/token", server.uri());
         let env_guard = EnvGuard::set(REFRESH_TOKEN_URL_OVERRIDE_ENV_VAR, endpoint);
 
         let auth_manager = AuthManager::shared(
-            codex_home.path().to_path_buf(),
+            orbit_code_home.path().to_path_buf(),
             false,
             AuthCredentialsStoreMode::File,
         );
 
         Ok(Self {
-            codex_home,
+            orbit_code_home,
             auth_manager,
             _env_guard: env_guard,
         })
     }
 
     fn load_auth(&self) -> Result<AuthDotJson> {
-        load_auth_dot_json(self.codex_home.path(), AuthCredentialsStoreMode::File)
+        load_auth_dot_json(self.orbit_code_home.path(), AuthCredentialsStoreMode::File)
             .context("load auth.json")?
             .context("auth.json should exist")
     }
 
     fn write_auth(&self, auth_dot_json: &AuthDotJson) -> Result<()> {
         save_auth(
-            self.codex_home.path(),
+            self.orbit_code_home.path(),
             auth_dot_json,
             AuthCredentialsStoreMode::File,
         )?;

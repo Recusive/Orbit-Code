@@ -1,15 +1,15 @@
 use std::collections::HashMap;
 
-use codex_arg0::Arg0DispatchPaths;
-use codex_core::AuthManager;
-use codex_core::ThreadManager;
-use codex_core::config::Config;
-use codex_core::default_client::USER_AGENT_SUFFIX;
-use codex_core::default_client::get_codex_user_agent;
-use codex_core::models_manager::collaboration_mode_presets::CollaborationModesConfig;
-use codex_protocol::ThreadId;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::Submission;
+use orbit_code_arg0::Arg0DispatchPaths;
+use orbit_code_core::AuthManager;
+use orbit_code_core::ThreadManager;
+use orbit_code_core::config::Config;
+use orbit_code_core::default_client::USER_AGENT_SUFFIX;
+use orbit_code_core::default_client::get_orbit_code_user_agent;
+use orbit_code_core::models_manager::collaboration_mode_presets::CollaborationModesConfig;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::protocol::SessionSource;
+use orbit_code_protocol::protocol::Submission;
 use rmcp::model::CallToolRequestParams;
 use rmcp::model::CallToolResult;
 use rmcp::model::ClientNotification;
@@ -30,10 +30,10 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 use tokio::task;
 
-use crate::codex_tool_config::CodexToolCallParam;
-use crate::codex_tool_config::CodexToolCallReplyParam;
-use crate::codex_tool_config::create_tool_for_codex_tool_call_param;
-use crate::codex_tool_config::create_tool_for_codex_tool_call_reply_param;
+use crate::orbit_code_tool_config::CodexToolCallParam;
+use crate::orbit_code_tool_config::CodexToolCallReplyParam;
+use crate::orbit_code_tool_config::create_tool_for_orbit_code_tool_call_param;
+use crate::orbit_code_tool_config::create_tool_for_orbit_code_tool_call_reply_param;
 use crate::outgoing_message::OutgoingMessageSender;
 
 pub(crate) struct MessageProcessor {
@@ -41,7 +41,7 @@ pub(crate) struct MessageProcessor {
     initialized: bool,
     arg0_paths: Arg0DispatchPaths,
     thread_manager: Arc<ThreadManager>,
-    running_requests_id_to_codex_uuid: Arc<Mutex<HashMap<RequestId, ThreadId>>>,
+    running_requests_id_to_orbit_code_uuid: Arc<Mutex<HashMap<RequestId, ThreadId>>>,
 }
 
 impl MessageProcessor {
@@ -54,8 +54,8 @@ impl MessageProcessor {
     ) -> Self {
         let outgoing = Arc::new(outgoing);
         let auth_manager = AuthManager::shared(
-            config.codex_home.clone(),
-            /*enable_codex_api_key_env*/ false,
+            config.orbit_code_home.clone(),
+            /*enable_orbit_code_api_key_env*/ false,
             config.cli_auth_credentials_store_mode,
         );
         let thread_manager = Arc::new(ThreadManager::new(
@@ -65,7 +65,7 @@ impl MessageProcessor {
             CollaborationModesConfig {
                 default_mode_request_user_input: config
                     .features
-                    .enabled(codex_core::features::Feature::DefaultModeRequestUserInput),
+                    .enabled(orbit_code_core::features::Feature::DefaultModeRequestUserInput),
             },
         ));
         Self {
@@ -73,7 +73,7 @@ impl MessageProcessor {
             initialized: false,
             arg0_paths,
             thread_manager,
-            running_requests_id_to_codex_uuid: Arc::new(Mutex::new(HashMap::new())),
+            running_requests_id_to_orbit_code_uuid: Arc::new(Mutex::new(HashMap::new())),
         }
     }
 
@@ -237,7 +237,7 @@ impl MessageProcessor {
             }
         };
         if let serde_json::Value::Object(ref mut obj) = server_info_value {
-            obj.insert("user_agent".to_string(), json!(get_codex_user_agent()));
+            obj.insert("user_agent".to_string(), json!(get_orbit_code_user_agent()));
         }
 
         let mut result_value = match serde_json::to_value(InitializeResult {
@@ -316,8 +316,8 @@ impl MessageProcessor {
         let result = rmcp::model::ListToolsResult {
             meta: None,
             tools: vec![
-                create_tool_for_codex_tool_call_param(),
-                create_tool_for_codex_tool_call_reply_param(),
+                create_tool_for_orbit_code_tool_call_param(),
+                create_tool_for_orbit_code_tool_call_reply_param(),
             ],
             next_cursor: None,
         };
@@ -334,7 +334,7 @@ impl MessageProcessor {
         match name.as_ref() {
             "codex" => self.handle_tool_call_codex(id, arguments).await,
             "codex-reply" => {
-                self.handle_tool_call_codex_session_reply(id, arguments)
+                self.handle_tool_call_orbit_code_session_reply(id, arguments)
                     .await
             }
             _ => {
@@ -402,25 +402,26 @@ impl MessageProcessor {
         // Clone outgoing and server to move into async task.
         let outgoing = self.outgoing.clone();
         let thread_manager = self.thread_manager.clone();
-        let running_requests_id_to_codex_uuid = self.running_requests_id_to_codex_uuid.clone();
+        let running_requests_id_to_orbit_code_uuid =
+            self.running_requests_id_to_orbit_code_uuid.clone();
 
         // Spawn an async task to handle the Codex session so that we do not
         // block the synchronous message-processing loop.
         task::spawn(async move {
             // Run the Codex session and stream events back to the client.
-            crate::codex_tool_runner::run_codex_tool_session(
+            crate::orbit_code_tool_runner::run_orbit_code_tool_session(
                 id,
                 initial_prompt,
                 config,
                 outgoing,
                 thread_manager,
-                running_requests_id_to_codex_uuid,
+                running_requests_id_to_orbit_code_uuid,
             )
             .await;
         });
     }
 
-    async fn handle_tool_call_codex_session_reply(
+    async fn handle_tool_call_orbit_code_session_reply(
         &self,
         request_id: RequestId,
         arguments: Option<rmcp::model::JsonObject>,
@@ -429,7 +430,7 @@ impl MessageProcessor {
         tracing::info!("tools/call -> params: {:?}", arguments);
 
         // parse arguments
-        let codex_tool_call_reply_param: CodexToolCallReplyParam = match arguments {
+        let orbit_code_tool_call_reply_param: CodexToolCallReplyParam = match arguments {
             Some(json_val) => match serde_json::from_value::<CodexToolCallReplyParam>(json_val) {
                 Ok(params) => params,
                 Err(e) => {
@@ -463,7 +464,7 @@ impl MessageProcessor {
             }
         };
 
-        let thread_id = match codex_tool_call_reply_param.get_thread_id() {
+        let thread_id = match orbit_code_tool_call_reply_param.get_thread_id() {
             Ok(id) => id,
             Err(e) => {
                 tracing::error!("Failed to parse thread_id: {e}");
@@ -482,13 +483,14 @@ impl MessageProcessor {
 
         // Clone outgoing to move into async task.
         let outgoing = self.outgoing.clone();
-        let running_requests_id_to_codex_uuid = self.running_requests_id_to_codex_uuid.clone();
+        let running_requests_id_to_orbit_code_uuid =
+            self.running_requests_id_to_orbit_code_uuid.clone();
 
         let codex = match self.thread_manager.get_thread(thread_id).await {
             Ok(c) => c,
             Err(_) => {
                 tracing::warn!("Session not found for thread_id: {thread_id}");
-                let result = crate::codex_tool_runner::create_call_tool_result_with_thread_id(
+                let result = crate::orbit_code_tool_runner::create_call_tool_result_with_thread_id(
                     thread_id,
                     format!("Session not found for thread_id: {thread_id}"),
                     Some(true),
@@ -499,19 +501,20 @@ impl MessageProcessor {
         };
 
         // Spawn the long-running reply handler.
-        let prompt = codex_tool_call_reply_param.prompt.clone();
+        let prompt = orbit_code_tool_call_reply_param.prompt.clone();
         tokio::spawn({
             let outgoing = outgoing.clone();
-            let running_requests_id_to_codex_uuid = running_requests_id_to_codex_uuid.clone();
+            let running_requests_id_to_orbit_code_uuid =
+                running_requests_id_to_orbit_code_uuid.clone();
 
             async move {
-                crate::codex_tool_runner::run_codex_tool_session_reply(
+                crate::orbit_code_tool_runner::run_orbit_code_tool_session_reply(
                     thread_id,
                     codex,
                     outgoing,
                     request_id,
                     prompt,
-                    running_requests_id_to_codex_uuid,
+                    running_requests_id_to_orbit_code_uuid,
                 )
                 .await;
             }
@@ -550,7 +553,7 @@ impl MessageProcessor {
 
         // Obtain the thread id while holding the first lock, then release.
         let thread_id = {
-            let map_guard = self.running_requests_id_to_codex_uuid.lock().await;
+            let map_guard = self.running_requests_id_to_orbit_code_uuid.lock().await;
             match map_guard.get(&request_id) {
                 Some(id) => *id,
                 None => {
@@ -562,7 +565,7 @@ impl MessageProcessor {
         tracing::info!("thread_id: {thread_id}");
 
         // Obtain the Codex thread from the server.
-        let codex_arc = match self.thread_manager.get_thread(thread_id).await {
+        let orbit_code_arc = match self.thread_manager.get_thread(thread_id).await {
             Ok(c) => c,
             Err(_) => {
                 tracing::warn!("Session not found for thread_id: {thread_id}");
@@ -571,10 +574,10 @@ impl MessageProcessor {
         };
 
         // Submit interrupt to Codex.
-        if let Err(e) = codex_arc
+        if let Err(e) = orbit_code_arc
             .submit_with_id(Submission {
                 id: request_id_string,
-                op: codex_protocol::protocol::Op::Interrupt,
+                op: orbit_code_protocol::protocol::Op::Interrupt,
                 trace: None,
             })
             .await
@@ -583,7 +586,7 @@ impl MessageProcessor {
             return;
         }
         // unregister the id so we don't keep it in the map
-        self.running_requests_id_to_codex_uuid
+        self.running_requests_id_to_orbit_code_uuid
             .lock()
             .await
             .remove(&request_id);

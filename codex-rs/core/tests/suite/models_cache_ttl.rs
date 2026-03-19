@@ -5,21 +5,6 @@ use anyhow::Result;
 use chrono::DateTime;
 use chrono::TimeZone;
 use chrono::Utc;
-use codex_core::CodexAuth;
-use codex_core::models_manager::manager::RefreshStrategy;
-use codex_protocol::config_types::ReasoningSummary;
-use codex_protocol::openai_models::ConfigShellToolType;
-use codex_protocol::openai_models::ModelInfo;
-use codex_protocol::openai_models::ModelVisibility;
-use codex_protocol::openai_models::ModelsResponse;
-use codex_protocol::openai_models::ReasoningEffort;
-use codex_protocol::openai_models::ReasoningEffortPreset;
-use codex_protocol::openai_models::TruncationPolicyConfig;
-use codex_protocol::openai_models::default_input_modalities;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::SandboxPolicy;
-use codex_protocol::user_input::UserInput;
 use core_test_support::responses;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
@@ -28,6 +13,21 @@ use core_test_support::responses::sse;
 use core_test_support::responses::sse_response;
 use core_test_support::test_codex::test_codex;
 use core_test_support::wait_for_event;
+use orbit_code_core::CodexAuth;
+use orbit_code_core::models_manager::manager::RefreshStrategy;
+use orbit_code_protocol::config_types::ReasoningSummary;
+use orbit_code_protocol::openai_models::ConfigShellToolType;
+use orbit_code_protocol::openai_models::ModelInfo;
+use orbit_code_protocol::openai_models::ModelVisibility;
+use orbit_code_protocol::openai_models::ModelsResponse;
+use orbit_code_protocol::openai_models::ReasoningEffort;
+use orbit_code_protocol::openai_models::ReasoningEffortPreset;
+use orbit_code_protocol::openai_models::TruncationPolicyConfig;
+use orbit_code_protocol::openai_models::default_input_modalities;
+use orbit_code_protocol::protocol::EventMsg;
+use orbit_code_protocol::protocol::Op;
+use orbit_code_protocol::protocol::SandboxPolicy;
+use orbit_code_protocol::user_input::UserInput;
 use pretty_assertions::assert_eq;
 use serde::Deserialize;
 use serde::Serialize;
@@ -71,7 +71,7 @@ async fn renews_cache_ttl_on_matching_models_etag() -> Result<()> {
         .list_models(RefreshStrategy::OnlineIfUncached)
         .await;
 
-    let cache_path = config.codex_home.join(CACHE_FILE);
+    let cache_path = config.orbit_code_home.join(CACHE_FILE);
     let stale_time = Utc.timestamp_opt(0, 0).single().expect("valid epoch");
     rewrite_cache_timestamp(&cache_path, stale_time).await?;
 
@@ -95,7 +95,7 @@ async fn renews_cache_ttl_on_matching_models_etag() -> Result<()> {
             }],
             final_output_json_schema: None,
             cwd: test.cwd_path().to_path_buf(),
-            approval_policy: codex_protocol::protocol::AskForApproval::Never,
+            approval_policy: orbit_code_protocol::protocol::AskForApproval::Never,
             sandbox_policy: SandboxPolicy::DangerFullAccess,
             model: test.session_configured.model.clone(),
             effort: None,
@@ -152,7 +152,7 @@ async fn uses_cache_when_version_matches() -> Result<()> {
             let cache = ModelsCache {
                 fetched_at: Utc::now(),
                 etag: None,
-                client_version: Some(codex_core::models_manager::client_version_to_whole()),
+                client_version: Some(orbit_code_core::models_manager::client_version_to_whole()),
                 models: vec![cached_model],
             };
             let cache_path = home.join(CACHE_FILE);
@@ -243,7 +243,7 @@ async fn refreshes_when_cache_version_differs() -> Result<()> {
     let mut builder = test_codex().with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing());
     builder = builder
         .with_pre_build_hook(move |home| {
-            let client_version = codex_core::models_manager::client_version_to_whole();
+            let client_version = orbit_code_core::models_manager::client_version_to_whole();
             let cache = ModelsCache {
                 fetched_at: Utc::now(),
                 etag: None,

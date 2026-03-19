@@ -1,5 +1,5 @@
 use crate::plugins::PluginCapabilitySummary;
-use codex_app_server_protocol::AppInfo;
+use orbit_code_app_server_protocol::AppInfo;
 use serde::Deserialize;
 use serde::Serialize;
 

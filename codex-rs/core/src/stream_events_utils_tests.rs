@@ -3,9 +3,9 @@ use super::last_assistant_message_from_item;
 use super::save_image_generation_result;
 use crate::codex::make_session_and_context;
 use crate::error::CodexErr;
-use codex_protocol::items::TurnItem;
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::ResponseItem;
+use orbit_code_protocol::items::TurnItem;
+use orbit_code_protocol::models::ContentItem;
+use orbit_code_protocol::models::ResponseItem;
 use pretty_assertions::assert_eq;
 
 fn assistant_output_text(text: &str) -> ResponseItem {
@@ -38,7 +38,7 @@ async fn handle_non_tool_response_item_strips_citations_from_assistant_message()
         .content
         .iter()
         .map(|entry| match entry {
-            codex_protocol::items::AgentMessageContent::Text { text } => text.as_str(),
+            orbit_code_protocol::items::AgentMessageContent::Text { text } => text.as_str(),
         })
         .collect::<String>();
     assert_eq!(text, "hello world");

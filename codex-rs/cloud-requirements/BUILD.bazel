@@ -1,6 +1,6 @@
-load("//:defs.bzl", "codex_rust_crate")
+load("//:defs.bzl", "orbit_code_rust_crate")
 
-codex_rust_crate(
+orbit_code_rust_crate(
     name = "cloud-requirements",
-    crate_name = "codex_cloud_requirements",
+    crate_name = "orbit_code_cloud_requirements",
 )

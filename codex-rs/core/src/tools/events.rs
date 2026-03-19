@@ -17,7 +17,7 @@ use crate::protocol::PatchApplyStatus;
 use crate::protocol::TurnDiffEvent;
 use crate::tools::context::SharedTurnDiffTracker;
 use crate::tools::sandboxing::ToolError;
-use codex_protocol::parse_command::ParsedCommand;
+use orbit_code_protocol::parse_command::ParsedCommand;
 use std::collections::HashMap;
 use std::path::Path;
 use std::path::PathBuf;

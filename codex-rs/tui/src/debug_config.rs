@@ -1,15 +1,15 @@
 use crate::history_cell::PlainHistoryCell;
-use codex_app_server_protocol::ConfigLayerSource;
-use codex_core::config::Config;
-use codex_core::config_loader::ConfigLayerEntry;
-use codex_core::config_loader::ConfigLayerStack;
-use codex_core::config_loader::ConfigLayerStackOrdering;
-use codex_core::config_loader::NetworkConstraints;
-use codex_core::config_loader::RequirementSource;
-use codex_core::config_loader::ResidencyRequirement;
-use codex_core::config_loader::SandboxModeRequirement;
-use codex_core::config_loader::WebSearchModeRequirement;
-use codex_protocol::protocol::SessionNetworkProxyRuntime;
+use orbit_code_app_server_protocol::ConfigLayerSource;
+use orbit_code_core::config::Config;
+use orbit_code_core::config_loader::ConfigLayerEntry;
+use orbit_code_core::config_loader::ConfigLayerStack;
+use orbit_code_core::config_loader::ConfigLayerStackOrdering;
+use orbit_code_core::config_loader::NetworkConstraints;
+use orbit_code_core::config_loader::RequirementSource;
+use orbit_code_core::config_loader::ResidencyRequirement;
+use orbit_code_core::config_loader::SandboxModeRequirement;
+use orbit_code_core::config_loader::WebSearchModeRequirement;
+use orbit_code_protocol::protocol::SessionNetworkProxyRuntime;
 use ratatui::style::Stylize;
 use ratatui::text::Line;
 use toml::Value as TomlValue;
@@ -35,7 +35,7 @@ pub(crate) fn new_debug_config_output(
                 .permissions
                 .network
                 .as_ref()
-                .is_some_and(codex_core::config::NetworkProxySpec::socks_enabled),
+                .is_some_and(orbit_code_core::config::NetworkProxySpec::socks_enabled),
         );
         lines.push(format!("    - HTTP_PROXY  = http://{http_addr}").into());
         lines.push(format!("    - ALL_PROXY   = {all_proxy}").into());
@@ -292,10 +292,12 @@ fn format_config_layer_source(source: &ConfigLayerSource) -> String {
         ConfigLayerSource::User { file } => {
             format!("user ({})", file.as_path().display())
         }
-        ConfigLayerSource::Project { dot_codex_folder } => {
+        ConfigLayerSource::Project {
+            dot_orbit_code_folder,
+        } => {
             format!(
                 "project ({}/config.toml)",
-                dot_codex_folder.as_path().display()
+                dot_orbit_code_folder.as_path().display()
             )
         }
         ConfigLayerSource::SessionFlags => "session-flags".to_string(),
@@ -390,25 +392,25 @@ fn format_network_constraints(network: &NetworkConstraints) -> String {
 mod tests {
     use super::render_debug_config_lines;
     use super::session_all_proxy_url;
-    use codex_app_server_protocol::ConfigLayerSource;
-    use codex_core::config::Constrained;
-    use codex_core::config_loader::ConfigLayerEntry;
-    use codex_core::config_loader::ConfigLayerStack;
-    use codex_core::config_loader::ConfigRequirements;
-    use codex_core::config_loader::ConfigRequirementsToml;
-    use codex_core::config_loader::ConstrainedWithSource;
-    use codex_core::config_loader::McpServerIdentity;
-    use codex_core::config_loader::McpServerRequirement;
-    use codex_core::config_loader::NetworkConstraints;
-    use codex_core::config_loader::RequirementSource;
-    use codex_core::config_loader::ResidencyRequirement;
-    use codex_core::config_loader::SandboxModeRequirement;
-    use codex_core::config_loader::Sourced;
-    use codex_core::config_loader::WebSearchModeRequirement;
-    use codex_protocol::config_types::WebSearchMode;
-    use codex_protocol::protocol::AskForApproval;
-    use codex_protocol::protocol::SandboxPolicy;
-    use codex_utils_absolute_path::AbsolutePathBuf;
+    use orbit_code_app_server_protocol::ConfigLayerSource;
+    use orbit_code_core::config::Constrained;
+    use orbit_code_core::config_loader::ConfigLayerEntry;
+    use orbit_code_core::config_loader::ConfigLayerStack;
+    use orbit_code_core::config_loader::ConfigRequirements;
+    use orbit_code_core::config_loader::ConfigRequirementsToml;
+    use orbit_code_core::config_loader::ConstrainedWithSource;
+    use orbit_code_core::config_loader::McpServerIdentity;
+    use orbit_code_core::config_loader::McpServerRequirement;
+    use orbit_code_core::config_loader::NetworkConstraints;
+    use orbit_code_core::config_loader::RequirementSource;
+    use orbit_code_core::config_loader::ResidencyRequirement;
+    use orbit_code_core::config_loader::SandboxModeRequirement;
+    use orbit_code_core::config_loader::Sourced;
+    use orbit_code_core::config_loader::WebSearchModeRequirement;
+    use orbit_code_protocol::config_types::WebSearchMode;
+    use orbit_code_protocol::protocol::AskForApproval;
+    use orbit_code_protocol::protocol::SandboxPolicy;
+    use orbit_code_utils_absolute_path::AbsolutePathBuf;
     use ratatui::text::Line;
     use std::collections::BTreeMap;
     use toml::Value as TomlValue;
@@ -454,7 +456,7 @@ mod tests {
             ),
             ConfigLayerEntry::new_disabled(
                 ConfigLayerSource::Project {
-                    dot_codex_folder: project_folder,
+                    dot_orbit_code_folder: project_folder,
                 },
                 empty_toml_table(),
                 "project is untrusted",

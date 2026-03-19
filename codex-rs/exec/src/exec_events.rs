@@ -1,4 +1,4 @@
-use codex_protocol::models::WebSearchAction;
+use orbit_code_protocol::models::WebSearchAction;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::Value as JsonValue;

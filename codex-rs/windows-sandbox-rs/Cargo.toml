@@ -2,19 +2,19 @@
 build = "build.rs"
 edition = "2021"
 license.workspace = true
-name = "codex-windows-sandbox"
+name = "orbit-code-windows-sandbox"
 version.workspace = true
 
 [lib]
-name = "codex_windows_sandbox"
+name = "orbit_code_windows_sandbox"
 path = "src/lib.rs"
 
 [[bin]]
-name = "codex-windows-sandbox-setup"
+name = "orbit-code-windows-sandbox-setup"
 path = "src/bin/setup_main.rs"
 
 [[bin]]
-name = "codex-command-runner"
+name = "orbit-code-command-runner"
 path = "src/bin/command_runner.rs"
 
 [dependencies]
@@ -24,9 +24,9 @@ chrono = { version = "0.4.42", default-features = false, features = [
     "clock",
     "std",
 ] }
-codex-utils-pty = { workspace = true }
-codex-utils-absolute-path = { workspace = true }
-codex-utils-string = { workspace = true }
+orbit-code-utils-pty = { workspace = true }
+orbit-code-utils-absolute-path = { workspace = true }
+orbit-code-utils-string = { workspace = true }
 dunce = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
@@ -39,8 +39,8 @@ windows = { version = "0.58", features = [
     "Win32_System_Variant",
 ] }
 
-[dependencies.codex-protocol]
-package = "codex-protocol"
+[dependencies.orbit-code-protocol]
+package = "orbit-code-protocol"
 path = "../protocol"
 
 [dependencies.rand]
@@ -90,4 +90,4 @@ pretty_assertions = { workspace = true }
 winres = "0.1"
 
 [package.metadata.cargo-shear]
-ignored = ["codex-utils-pty", "tokio"]
+ignored = ["orbit-code-utils-pty", "tokio"]

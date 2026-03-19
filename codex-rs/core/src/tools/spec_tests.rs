@@ -7,11 +7,11 @@ use crate::shell::ShellType;
 use crate::tools::ToolRouter;
 use crate::tools::registry::ConfiguredToolSpec;
 use crate::tools::router::ToolRouterParams;
-use codex_app_server_protocol::AppInfo;
-use codex_protocol::openai_models::InputModality;
-use codex_protocol::openai_models::ModelInfo;
-use codex_protocol::openai_models::ModelsResponse;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use orbit_code_app_server_protocol::AppInfo;
+use orbit_code_protocol::openai_models::InputModality;
+use orbit_code_protocol::openai_models::ModelInfo;
+use orbit_code_protocol::openai_models::ModelsResponse;
+use orbit_code_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use std::path::PathBuf;
 
@@ -207,7 +207,7 @@ fn search_tool_deferred_tools_always_set_defer_loading_true() {
     );
 
     let openai_tool =
-        mcp_tool_to_deferred_openai_tool("mcp__codex_apps__lookup_order".to_string(), tool)
+        mcp_tool_to_deferred_openai_tool("mcp__orbit_code_apps__lookup_order".to_string(), tool)
             .expect("convert deferred tool");
 
     assert_eq!(openai_tool.defer_loading, Some(true));
@@ -229,7 +229,7 @@ fn deferred_responses_api_tool_serializes_with_defer_loading() {
     );
 
     let serialized = serde_json::to_value(ToolSpec::Function(
-        mcp_tool_to_deferred_openai_tool("mcp__codex_apps__lookup_order".to_string(), tool)
+        mcp_tool_to_deferred_openai_tool("mcp__orbit_code_apps__lookup_order".to_string(), tool)
             .expect("convert deferred tool"),
     ))
     .expect("serialize deferred tool");
@@ -238,7 +238,7 @@ fn deferred_responses_api_tool_serializes_with_defer_loading() {
         serialized,
         serde_json::json!({
             "type": "function",
-            "name": "mcp__codex_apps__lookup_order",
+            "name": "mcp__orbit_code_apps__lookup_order",
             "description": "Look up an order",
             "strict": false,
             "defer_loading": true,
@@ -415,7 +415,7 @@ fn model_provided_unified_exec_is_blocked_for_windows_sandboxed_policies() {
 }
 
 #[test]
-fn test_full_toolset_specs_for_gpt5_codex_unified_exec_web_search() {
+fn test_full_toolset_specs_for_gpt5_orbit_code_unified_exec_web_search() {
     let model_info = model_info_from_models_json("gpt-5-codex");
     let mut features = Features::with_defaults();
     features.enable(Feature::UnifiedExec);
@@ -615,7 +615,7 @@ fn view_image_tool_includes_detail_with_original_detail_feature() {
 fn test_build_specs_artifact_tool_enabled() {
     let mut config = test_config();
     let runtime_root = tempfile::TempDir::new().expect("create temp codex home");
-    config.codex_home = runtime_root.path().to_path_buf();
+    config.orbit_code_home = runtime_root.path().to_path_buf();
     let model_info = ModelsManager::construct_model_info_offline_for_tests("gpt-5-codex", &config);
     let mut features = Features::with_defaults();
     features.enable(Feature::Artifact);
@@ -1045,17 +1045,17 @@ fn web_search_config_is_forwarded_to_tool_spec() {
     let model_info = ModelsManager::construct_model_info_offline_for_tests("gpt-5-codex", &config);
     let features = Features::with_defaults();
     let web_search_config = WebSearchConfig {
-        filters: Some(codex_protocol::config_types::WebSearchFilters {
+        filters: Some(orbit_code_protocol::config_types::WebSearchFilters {
             allowed_domains: Some(vec!["example.com".to_string()]),
         }),
-        user_location: Some(codex_protocol::config_types::WebSearchUserLocation {
-            r#type: codex_protocol::config_types::WebSearchUserLocationType::Approximate,
+        user_location: Some(orbit_code_protocol::config_types::WebSearchUserLocation {
+            r#type: orbit_code_protocol::config_types::WebSearchUserLocationType::Approximate,
             country: Some("US".to_string()),
             region: Some("California".to_string()),
             city: Some("San Francisco".to_string()),
             timezone: Some("America/Los_Angeles".to_string()),
         }),
-        search_context_size: Some(codex_protocol::config_types::WebSearchContextSize::High),
+        search_context_size: Some(orbit_code_protocol::config_types::WebSearchContextSize::High),
     };
 
     let available_models = Vec::new();
@@ -1180,7 +1180,7 @@ fn mcp_resource_tools_are_included_when_mcp_servers_are_present() {
 }
 
 #[test]
-fn test_build_specs_gpt5_codex_default() {
+fn test_build_specs_gpt5_orbit_code_default() {
     let features = Features::with_defaults();
     assert_default_model_tools(
         "gpt-5-codex",
@@ -1203,7 +1203,7 @@ fn test_build_specs_gpt5_codex_default() {
 }
 
 #[test]
-fn test_build_specs_gpt51_codex_default() {
+fn test_build_specs_gpt51_orbit_code_default() {
     let features = Features::with_defaults();
     assert_default_model_tools(
         "gpt-5.1-codex",
@@ -1226,7 +1226,7 @@ fn test_build_specs_gpt51_codex_default() {
 }
 
 #[test]
-fn test_build_specs_gpt5_codex_unified_exec_web_search() {
+fn test_build_specs_gpt5_orbit_code_unified_exec_web_search() {
     let mut features = Features::with_defaults();
     features.enable(Feature::UnifiedExec);
     assert_model_tools(
@@ -1251,7 +1251,7 @@ fn test_build_specs_gpt5_codex_unified_exec_web_search() {
 }
 
 #[test]
-fn test_build_specs_gpt51_codex_unified_exec_web_search() {
+fn test_build_specs_gpt51_orbit_code_unified_exec_web_search() {
     let mut features = Features::with_defaults();
     features.enable(Feature::UnifiedExec);
     assert_model_tools(
@@ -1276,7 +1276,7 @@ fn test_build_specs_gpt51_codex_unified_exec_web_search() {
 }
 
 #[test]
-fn test_gpt_5_1_codex_max_defaults() {
+fn test_gpt_5_1_orbit_code_max_defaults() {
     let features = Features::with_defaults();
     assert_default_model_tools(
         "gpt-5.1-codex-max",
@@ -1299,7 +1299,7 @@ fn test_gpt_5_1_codex_max_defaults() {
 }
 
 #[test]
-fn test_codex_5_1_mini_defaults() {
+fn test_orbit_code_5_1_mini_defaults() {
     let features = Features::with_defaults();
     assert_default_model_tools(
         "gpt-5.1-codex-mini",
@@ -1367,7 +1367,7 @@ fn test_gpt_5_1_defaults() {
 }
 
 #[test]
-fn test_gpt_5_1_codex_max_unified_exec_web_search() {
+fn test_gpt_5_1_orbit_code_max_unified_exec_web_search() {
     let mut features = Features::with_defaults();
     features.enable(Feature::UnifiedExec);
     assert_model_tools(
@@ -1690,7 +1690,7 @@ fn test_build_specs_mcp_tools_sorted_by_name() {
 }
 
 #[test]
-fn search_tool_description_lists_each_codex_apps_connector_once() {
+fn search_tool_description_lists_each_orbit_code_apps_connector_once() {
     let model_info = search_capable_model_info();
     let mut features = Features::with_defaults();
     features.enable(Feature::Apps);
@@ -1709,7 +1709,7 @@ fn search_tool_description_lists_each_codex_apps_connector_once() {
         &tools_config,
         Some(HashMap::from([
             (
-                "mcp__codex_apps__calendar_create_event".to_string(),
+                "mcp__orbit_code_apps__calendar_create_event".to_string(),
                 mcp_tool(
                     "calendar_create_event",
                     "Create calendar event",
@@ -1723,11 +1723,11 @@ fn search_tool_description_lists_each_codex_apps_connector_once() {
         ])),
         Some(HashMap::from([
             (
-                "mcp__codex_apps__calendar_create_event".to_string(),
+                "mcp__orbit_code_apps__calendar_create_event".to_string(),
                 ToolInfo {
-                    server_name: crate::mcp::CODEX_APPS_MCP_SERVER_NAME.to_string(),
+                    server_name: crate::mcp::ORBIT_APPS_MCP_SERVER_NAME.to_string(),
                     tool_name: "_create_event".to_string(),
-                    tool_namespace: "mcp__codex_apps__calendar".to_string(),
+                    tool_namespace: "mcp__orbit_code_apps__calendar".to_string(),
                     tool: mcp_tool(
                         "calendar-create-event",
                         "Create calendar event",
@@ -1742,11 +1742,11 @@ fn search_tool_description_lists_each_codex_apps_connector_once() {
                 },
             ),
             (
-                "mcp__codex_apps__calendar_list_events".to_string(),
+                "mcp__orbit_code_apps__calendar_list_events".to_string(),
                 ToolInfo {
-                    server_name: crate::mcp::CODEX_APPS_MCP_SERVER_NAME.to_string(),
+                    server_name: crate::mcp::ORBIT_APPS_MCP_SERVER_NAME.to_string(),
                     tool_name: "_list_events".to_string(),
-                    tool_namespace: "mcp__codex_apps__calendar".to_string(),
+                    tool_namespace: "mcp__orbit_code_apps__calendar".to_string(),
                     tool: mcp_tool(
                         "calendar-list-events",
                         "List calendar events",
@@ -1761,11 +1761,11 @@ fn search_tool_description_lists_each_codex_apps_connector_once() {
                 },
             ),
             (
-                "mcp__codex_apps__gmail_search_threads".to_string(),
+                "mcp__orbit_code_apps__gmail_search_threads".to_string(),
                 ToolInfo {
-                    server_name: crate::mcp::CODEX_APPS_MCP_SERVER_NAME.to_string(),
+                    server_name: crate::mcp::ORBIT_APPS_MCP_SERVER_NAME.to_string(),
                     tool_name: "_search_threads".to_string(),
-                    tool_namespace: "mcp__codex_apps__gmail".to_string(),
+                    tool_namespace: "mcp__orbit_code_apps__gmail".to_string(),
                     tool: mcp_tool(
                         "gmail-search-threads",
                         "Search email threads",
@@ -1815,11 +1815,11 @@ fn search_tool_description_lists_each_codex_apps_connector_once() {
 fn search_tool_requires_model_capability_only() {
     let model_info = search_capable_model_info();
     let app_tools = Some(HashMap::from([(
-        "mcp__codex_apps__calendar_create_event".to_string(),
+        "mcp__orbit_code_apps__calendar_create_event".to_string(),
         ToolInfo {
-            server_name: crate::mcp::CODEX_APPS_MCP_SERVER_NAME.to_string(),
+            server_name: crate::mcp::ORBIT_APPS_MCP_SERVER_NAME.to_string(),
             tool_name: "calendar_create_event".to_string(),
-            tool_namespace: "mcp__codex_apps__calendar".to_string(),
+            tool_namespace: "mcp__orbit_code_apps__calendar".to_string(),
             tool: mcp_tool(
                 "calendar_create_event",
                 "Create calendar event",
@@ -1943,11 +1943,11 @@ fn search_tool_description_falls_back_to_connector_name_without_description() {
         &tools_config,
         None,
         Some(HashMap::from([(
-            "mcp__codex_apps__calendar_create_event".to_string(),
+            "mcp__orbit_code_apps__calendar_create_event".to_string(),
             ToolInfo {
-                server_name: crate::mcp::CODEX_APPS_MCP_SERVER_NAME.to_string(),
+                server_name: crate::mcp::ORBIT_APPS_MCP_SERVER_NAME.to_string(),
                 tool_name: "_create_event".to_string(),
-                tool_namespace: "mcp__codex_apps__calendar".to_string(),
+                tool_namespace: "mcp__orbit_code_apps__calendar".to_string(),
                 tool: mcp_tool(
                     "calendar_create_event",
                     "Create calendar event",
@@ -1992,11 +1992,11 @@ fn search_tool_registers_namespaced_app_tool_aliases() {
         None,
         Some(HashMap::from([
             (
-                "mcp__codex_apps__calendar_create_event".to_string(),
+                "mcp__orbit_code_apps__calendar_create_event".to_string(),
                 ToolInfo {
-                    server_name: crate::mcp::CODEX_APPS_MCP_SERVER_NAME.to_string(),
+                    server_name: crate::mcp::ORBIT_APPS_MCP_SERVER_NAME.to_string(),
                     tool_name: "_create_event".to_string(),
-                    tool_namespace: "mcp__codex_apps__calendar".to_string(),
+                    tool_namespace: "mcp__orbit_code_apps__calendar".to_string(),
                     tool: mcp_tool(
                         "calendar-create-event",
                         "Create calendar event",
@@ -2009,11 +2009,11 @@ fn search_tool_registers_namespaced_app_tool_aliases() {
                 },
             ),
             (
-                "mcp__codex_apps__calendar_list_events".to_string(),
+                "mcp__orbit_code_apps__calendar_list_events".to_string(),
                 ToolInfo {
-                    server_name: crate::mcp::CODEX_APPS_MCP_SERVER_NAME.to_string(),
+                    server_name: crate::mcp::ORBIT_APPS_MCP_SERVER_NAME.to_string(),
                     tool_name: "_list_events".to_string(),
-                    tool_namespace: "mcp__codex_apps__calendar".to_string(),
+                    tool_namespace: "mcp__orbit_code_apps__calendar".to_string(),
                     tool: mcp_tool(
                         "calendar-list-events",
                         "List calendar events",
@@ -2030,7 +2030,7 @@ fn search_tool_registers_namespaced_app_tool_aliases() {
     )
     .build();
 
-    let alias = tool_handler_key("_create_event", Some("mcp__codex_apps__calendar"));
+    let alias = tool_handler_key("_create_event", Some("mcp__orbit_code_apps__calendar"));
 
     assert!(registry.has_handler(TOOL_SEARCH_TOOL_NAME, None));
     assert!(registry.has_handler(alias.as_str(), None));

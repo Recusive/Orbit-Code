@@ -4,9 +4,9 @@ use std::sync::Arc;
 
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD as BASE64_STANDARD;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::items::TurnItem;
-use codex_utils_stream_parser::strip_citations;
+use orbit_code_protocol::config_types::ModeKind;
+use orbit_code_protocol::items::TurnItem;
+use orbit_code_utils_stream_parser::strip_citations;
 use tokio_util::sync::CancellationToken;
 
 use crate::codex::Session;
@@ -20,13 +20,13 @@ use crate::parse_turn_item;
 use crate::state_db;
 use crate::tools::parallel::ToolCallRuntime;
 use crate::tools::router::ToolRouter;
-use codex_protocol::models::DeveloperInstructions;
-use codex_protocol::models::FunctionCallOutputBody;
-use codex_protocol::models::FunctionCallOutputPayload;
-use codex_protocol::models::ResponseInputItem;
-use codex_protocol::models::ResponseItem;
-use codex_utils_stream_parser::strip_proposed_plan_blocks;
 use futures::Future;
+use orbit_code_protocol::models::DeveloperInstructions;
+use orbit_code_protocol::models::FunctionCallOutputBody;
+use orbit_code_protocol::models::FunctionCallOutputPayload;
+use orbit_code_protocol::models::ResponseInputItem;
+use orbit_code_protocol::models::ResponseItem;
+use orbit_code_utils_stream_parser::strip_proposed_plan_blocks;
 use tracing::debug;
 use tracing::instrument;
 
@@ -44,7 +44,7 @@ fn strip_hidden_assistant_markup_and_parse_memory_citation(
     plan_mode: bool,
 ) -> (
     String,
-    Option<codex_protocol::memory_citation::MemoryCitation>,
+    Option<orbit_code_protocol::memory_citation::MemoryCitation>,
 ) {
     let (without_citations, citations) = strip_citations(text);
     let visible_text = if plan_mode {
@@ -62,7 +62,9 @@ pub(crate) fn raw_assistant_output_text_from_item(item: &ResponseItem) -> Option
         let combined = content
             .iter()
             .filter_map(|ci| match ci {
-                codex_protocol::models::ContentItem::OutputText { text } => Some(text.as_str()),
+                orbit_code_protocol::models::ContentItem::OutputText { text } => {
+                    Some(text.as_str())
+                }
                 _ => None,
             })
             .collect::<String>();
@@ -311,13 +313,15 @@ pub(crate) async fn handle_non_tool_response_item(
                     .content
                     .iter()
                     .map(|entry| match entry {
-                        codex_protocol::items::AgentMessageContent::Text { text } => text.as_str(),
+                        orbit_code_protocol::items::AgentMessageContent::Text { text } => {
+                            text.as_str()
+                        }
                     })
                     .collect::<String>();
                 let (stripped, memory_citation) =
                     strip_hidden_assistant_markup_and_parse_memory_citation(&combined, plan_mode);
                 agent_message.content =
-                    vec![codex_protocol::items::AgentMessageContent::Text { text: stripped }];
+                    vec![orbit_code_protocol::items::AgentMessageContent::Text { text: stripped }];
                 agent_message.memory_citation = memory_citation;
             }
             if let TurnItem::ImageGeneration(image_item) = &mut turn_item {

@@ -7,7 +7,7 @@ use crate::tools::context::ToolInvocation;
 use crate::tools::context::ToolPayload;
 use crate::tools::registry::ToolHandler;
 use crate::tools::registry::ToolKind;
-use codex_protocol::mcp::CallToolResult;
+use orbit_code_protocol::mcp::CallToolResult;
 
 pub struct McpHandler;
 #[async_trait]

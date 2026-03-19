@@ -2,10 +2,6 @@
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 
 use anyhow::Result;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::SandboxPolicy;
-use codex_protocol::user_input::UserInput;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_response_created;
@@ -14,6 +10,10 @@ use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
 use core_test_support::test_codex::test_codex;
+use orbit_code_protocol::protocol::AskForApproval;
+use orbit_code_protocol::protocol::Op;
+use orbit_code_protocol::protocol::SandboxPolicy;
+use orbit_code_protocol::user_input::UserInput;
 use std::fs;
 use std::path::Path;
 
@@ -45,7 +45,7 @@ async fn user_turn_includes_skill_instructions() -> Result<()> {
     });
     let test = builder.build(&server).await?;
 
-    let skill_path = test.codex_home_path().join("skills/demo/SKILL.md");
+    let skill_path = test.orbit_code_home_path().join("skills/demo/SKILL.md");
     let skill_path = std::fs::canonicalize(skill_path)?;
 
     let mock = mount_sse_once(
@@ -85,7 +85,10 @@ async fn user_turn_includes_skill_instructions() -> Result<()> {
         .await?;
 
     core_test_support::wait_for_event(test.codex.as_ref(), |event| {
-        matches!(event, codex_protocol::protocol::EventMsg::TurnComplete(_))
+        matches!(
+            event,
+            orbit_code_protocol::protocol::EventMsg::TurnComplete(_)
+        )
     })
     .await;
 
@@ -125,7 +128,7 @@ async fn skill_load_errors_surface_in_session_configured() -> Result<()> {
         .await?;
     let response =
         core_test_support::wait_for_event_match(test.codex.as_ref(), |event| match event {
-            codex_protocol::protocol::EventMsg::ListSkillsResponse(response) => {
+            orbit_code_protocol::protocol::EventMsg::ListSkillsResponse(response) => {
                 Some(response.clone())
             }
             _ => None,
@@ -175,7 +178,7 @@ async fn list_skills_includes_system_cache_entries() -> Result<()> {
     });
     let test = builder.build(&server).await?;
 
-    let system_skill_path = system_skill_md_path(test.codex_home_path(), SYSTEM_SKILL_NAME);
+    let system_skill_path = system_skill_md_path(test.orbit_code_home_path(), SYSTEM_SKILL_NAME);
     assert!(
         system_skill_path.exists(),
         "expected embedded system skills installed to {system_skill_path:?}"
@@ -195,7 +198,7 @@ async fn list_skills_includes_system_cache_entries() -> Result<()> {
         .await?;
     let response =
         core_test_support::wait_for_event_match(test.codex.as_ref(), |event| match event {
-            codex_protocol::protocol::EventMsg::ListSkillsResponse(response) => {
+            orbit_code_protocol::protocol::EventMsg::ListSkillsResponse(response) => {
                 Some(response.clone())
             }
             _ => None,
@@ -214,7 +217,10 @@ async fn list_skills_includes_system_cache_entries() -> Result<()> {
         .iter()
         .find(|skill| skill.name == SYSTEM_SKILL_NAME)
         .expect("expected system skill to be present");
-    assert_eq!(skill.scope, codex_protocol::protocol::SkillScope::System);
+    assert_eq!(
+        skill.scope,
+        orbit_code_protocol::protocol::SkillScope::System
+    );
     let path_str = skill.path.to_string_lossy().replace('\\', "/");
     let expected_path_suffix = format!("/skills/.system/{SYSTEM_SKILL_NAME}/SKILL.md");
     assert!(

@@ -9,15 +9,15 @@ use crate::rate_limits::parse_rate_limit_event;
 use crate::sse::responses::ResponsesStreamEvent;
 use crate::sse::responses::process_responses_event;
 use crate::telemetry::WebsocketTelemetry;
-use codex_client::TransportError;
-use codex_client::maybe_build_rustls_client_config_with_custom_ca;
-use codex_utils_rustls_provider::ensure_rustls_crypto_provider;
 use futures::SinkExt;
 use futures::StreamExt;
 use http::HeaderMap;
 use http::HeaderName;
 use http::HeaderValue;
 use http::StatusCode;
+use orbit_code_client::TransportError;
+use orbit_code_client::maybe_build_rustls_client_config_with_custom_ca;
+use orbit_code_utils_rustls_provider::ensure_rustls_crypto_provider;
 use serde::Deserialize;
 use serde_json::Value;
 use serde_json::map::Map as JsonMap;
@@ -152,7 +152,7 @@ impl Drop for WsStream {
     }
 }
 
-const X_CODEX_TURN_STATE_HEADER: &str = "x-codex-turn-state";
+const X_ORBIT_TURN_STATE_HEADER: &str = "x-codex-turn-state";
 const X_MODELS_ETAG_HEADER: &str = "x-models-etag";
 const X_REASONING_INCLUDED_HEADER: &str = "x-reasoning-included";
 const OPENAI_MODEL_HEADER: &str = "openai-model";
@@ -397,7 +397,7 @@ async fn connect_websocket(
     if let Some(turn_state) = turn_state
         && let Some(header_value) = response
             .headers()
-            .get(X_CODEX_TURN_STATE_HEADER)
+            .get(X_ORBIT_TURN_STATE_HEADER)
             .and_then(|value| value.to_str().ok())
     {
         let _ = turn_state.set(header_value.to_string());

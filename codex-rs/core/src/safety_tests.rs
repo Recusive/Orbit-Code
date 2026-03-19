@@ -1,10 +1,10 @@
 use super::*;
-use codex_protocol::protocol::FileSystemAccessMode;
-use codex_protocol::protocol::FileSystemPath;
-use codex_protocol::protocol::FileSystemSandboxEntry;
-use codex_protocol::protocol::FileSystemSpecialPath;
-use codex_protocol::protocol::GranularApprovalConfig;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use orbit_code_protocol::protocol::FileSystemAccessMode;
+use orbit_code_protocol::protocol::FileSystemPath;
+use orbit_code_protocol::protocol::FileSystemSandboxEntry;
+use orbit_code_protocol::protocol::FileSystemSpecialPath;
+use orbit_code_protocol::protocol::GranularApprovalConfig;
+use orbit_code_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 
@@ -67,7 +67,7 @@ fn external_sandbox_auto_approves_in_on_request() {
     let add_inside = ApplyPatchAction::new_add_for_test(&cwd.join("inner.txt"), "".to_string());
 
     let policy = SandboxPolicy::ExternalSandbox {
-        network_access: codex_protocol::protocol::NetworkAccess::Enabled,
+        network_access: orbit_code_protocol::protocol::NetworkAccess::Enabled,
     };
 
     assert_eq!(
@@ -175,7 +175,7 @@ fn explicit_unreadable_paths_prevent_auto_approval_for_external_sandbox() {
     let blocked_absolute = AbsolutePathBuf::from_absolute_path(blocked_path.clone()).unwrap();
     let action = ApplyPatchAction::new_add_for_test(&blocked_path, "".to_string());
     let sandbox_policy = SandboxPolicy::ExternalSandbox {
-        network_access: codex_protocol::protocol::NetworkAccess::Restricted,
+        network_access: orbit_code_protocol::protocol::NetworkAccess::Restricted,
     };
     let file_system_sandbox_policy = FileSystemSandboxPolicy::restricted(vec![
         FileSystemSandboxEntry {
@@ -218,7 +218,7 @@ fn explicit_read_only_subpaths_prevent_auto_approval_for_external_sandbox() {
     let docs_absolute = AbsolutePathBuf::resolve_path_against_base("docs", &cwd).unwrap();
     let action = ApplyPatchAction::new_add_for_test(&blocked_path, "".to_string());
     let sandbox_policy = SandboxPolicy::ExternalSandbox {
-        network_access: codex_protocol::protocol::NetworkAccess::Restricted,
+        network_access: orbit_code_protocol::protocol::NetworkAccess::Restricted,
     };
     let file_system_sandbox_policy = FileSystemSandboxPolicy::restricted(vec![
         FileSystemSandboxEntry {

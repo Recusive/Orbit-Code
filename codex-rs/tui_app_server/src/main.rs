@@ -1,9 +1,9 @@
 use clap::Parser;
-use codex_arg0::Arg0DispatchPaths;
-use codex_arg0::arg0_dispatch_or_else;
-use codex_tui_app_server::Cli;
-use codex_tui_app_server::run_main;
-use codex_utils_cli::CliConfigOverrides;
+use orbit_code_arg0::Arg0DispatchPaths;
+use orbit_code_arg0::arg0_dispatch_or_else;
+use orbit_code_tui_app_server::Cli;
+use orbit_code_tui_app_server::run_main;
+use orbit_code_utils_cli::CliConfigOverrides;
 
 #[derive(Parser, Debug)]
 struct TopCli {
@@ -25,7 +25,7 @@ fn main() -> anyhow::Result<()> {
         let exit_info = run_main(
             inner,
             arg0_paths,
-            codex_core::config_loader::LoaderOverrides::default(),
+            orbit_code_core::config_loader::LoaderOverrides::default(),
             /*remote*/ None,
         )
         .await?;
@@ -33,7 +33,7 @@ fn main() -> anyhow::Result<()> {
         if !token_usage.is_zero() {
             println!(
                 "{}",
-                codex_protocol::protocol::FinalOutput::from(token_usage),
+                orbit_code_protocol::protocol::FinalOutput::from(token_usage),
             );
         }
         Ok(())

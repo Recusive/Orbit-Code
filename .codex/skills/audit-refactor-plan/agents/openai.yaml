@@ -1,0 +1,4 @@
+interface:
+  display_name: "Audit Refactor Plan"
+  short_description: "Audit Orbit Code refactor plans before implementation"
+  default_prompt: "Audit this Orbit Code refactor plan for production readiness before implementation."

@@ -1,6 +1,6 @@
-use codex_core::config::Config;
 use cpal::traits::DeviceTrait;
 use cpal::traits::HostTrait;
+use orbit_code_core::config::Config;
 use tracing::warn;
 
 use crate::app_event::RealtimeAudioDeviceKind;

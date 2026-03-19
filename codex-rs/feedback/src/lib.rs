@@ -11,10 +11,10 @@ use std::time::Duration;
 
 use anyhow::Result;
 use anyhow::anyhow;
-use codex_protocol::ThreadId;
-use codex_protocol::protocol::SessionSource;
 use feedback_diagnostics::FEEDBACK_DIAGNOSTICS_ATTACHMENT_FILENAME;
 use feedback_diagnostics::FeedbackDiagnostics;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::protocol::SessionSource;
 use tracing::Event;
 use tracing::Level;
 use tracing::field::Visit;

@@ -158,7 +158,7 @@ pub use workspace_acl::is_command_cwd_root;
 #[cfg(target_os = "windows")]
 pub use workspace_acl::protect_workspace_agents_dir;
 #[cfg(target_os = "windows")]
-pub use workspace_acl::protect_workspace_codex_dir;
+pub use workspace_acl::protect_workspace_orbit_code_dir;
 
 #[cfg(not(target_os = "windows"))]
 pub use stub::apply_world_writable_scan_and_denies;
@@ -193,7 +193,7 @@ mod windows_impl {
     use super::token::create_workspace_write_token_with_caps_from;
     use super::workspace_acl::is_command_cwd_root;
     use super::workspace_acl::protect_workspace_agents_dir;
-    use super::workspace_acl::protect_workspace_codex_dir;
+    use super::workspace_acl::protect_workspace_orbit_code_dir;
     use anyhow::Result;
     use std::collections::HashMap;
     use std::ffi::c_void;
@@ -217,7 +217,7 @@ mod windows_impl {
         !policy.has_full_network_access()
     }
 
-    fn ensure_codex_home_exists(p: &Path) -> Result<()> {
+    fn ensure_orbit_code_home_exists(p: &Path) -> Result<()> {
         std::fs::create_dir_all(p)?;
         Ok(())
     }
@@ -261,7 +261,7 @@ mod windows_impl {
     pub fn run_windows_sandbox_capture(
         policy_json_or_preset: &str,
         sandbox_policy_cwd: &Path,
-        codex_home: &Path,
+        orbit_code_home: &Path,
         command: Vec<String>,
         cwd: &Path,
         mut env_map: HashMap<String, String>,
@@ -275,9 +275,9 @@ mod windows_impl {
         if apply_network_block {
             apply_no_network_to_env(&mut env_map)?;
         }
-        ensure_codex_home_exists(codex_home)?;
+        ensure_orbit_code_home_exists(orbit_code_home)?;
         let current_dir = cwd.to_path_buf();
-        let sandbox_base = codex_home.join(".sandbox");
+        let sandbox_base = orbit_code_home.join(".sandbox");
         std::fs::create_dir_all(&sandbox_base)?;
         let logs_base_dir = Some(sandbox_base.as_path());
         log_start(&command, logs_base_dir);
@@ -294,7 +294,7 @@ mod windows_impl {
                 "Restricted read-only access requires the elevated Windows sandbox backend"
             );
         }
-        let caps = load_or_create_cap_sids(codex_home)?;
+        let caps = load_or_create_cap_sids(orbit_code_home)?;
         let (h_token, psid_generic, psid_workspace): (HANDLE, *mut c_void, Option<*mut c_void>) = unsafe {
             match &policy {
                 SandboxPolicy::ReadOnly { .. } => {
@@ -304,7 +304,7 @@ mod windows_impl {
                 }
                 SandboxPolicy::WorkspaceWrite { .. } => {
                     let psid_generic = convert_string_sid_to_sid(&caps.workspace).unwrap();
-                    let ws_sid = workspace_cap_sid_for_cwd(codex_home, cwd)?;
+                    let ws_sid = workspace_cap_sid_for_cwd(orbit_code_home, cwd)?;
                     let psid_workspace = convert_string_sid_to_sid(&ws_sid).unwrap();
                     let base = super::token::get_current_token_for_restriction()?;
                     let h_res = create_workspace_write_token_with_caps_from(
@@ -368,7 +368,7 @@ mod windows_impl {
             allow_null_device(psid_generic);
             if let Some(psid) = psid_workspace {
                 allow_null_device(psid);
-                let _ = protect_workspace_codex_dir(&current_dir, psid);
+                let _ = protect_workspace_orbit_code_dir(&current_dir, psid);
                 let _ = protect_workspace_agents_dir(&current_dir, psid);
             }
         }
@@ -515,7 +515,7 @@ mod windows_impl {
     pub fn run_windows_sandbox_legacy_preflight(
         sandbox_policy: &SandboxPolicy,
         sandbox_policy_cwd: &Path,
-        codex_home: &Path,
+        orbit_code_home: &Path,
         cwd: &Path,
         env_map: &HashMap<String, String>,
     ) -> Result<()> {
@@ -524,11 +524,11 @@ mod windows_impl {
             return Ok(());
         }
 
-        ensure_codex_home_exists(codex_home)?;
-        let caps = load_or_create_cap_sids(codex_home)?;
+        ensure_orbit_code_home_exists(orbit_code_home)?;
+        let caps = load_or_create_cap_sids(orbit_code_home)?;
         let psid_generic =
             unsafe { convert_string_sid_to_sid(&caps.workspace) }.expect("valid workspace SID");
-        let ws_sid = workspace_cap_sid_for_cwd(codex_home, cwd)?;
+        let ws_sid = workspace_cap_sid_for_cwd(orbit_code_home, cwd)?;
         let psid_workspace =
             unsafe { convert_string_sid_to_sid(&ws_sid) }.expect("valid workspace SID");
         let current_dir = cwd.to_path_buf();
@@ -550,7 +550,7 @@ mod windows_impl {
             }
             allow_null_device(psid_generic);
             allow_null_device(psid_workspace);
-            let _ = protect_workspace_codex_dir(&current_dir, psid_workspace);
+            let _ = protect_workspace_orbit_code_dir(&current_dir, psid_workspace);
             let _ = protect_workspace_agents_dir(&current_dir, psid_workspace);
         }
 
@@ -595,7 +595,7 @@ mod windows_impl {
 mod stub {
     use anyhow::bail;
     use anyhow::Result;
-    use codex_protocol::protocol::SandboxPolicy;
+    use orbit_code_protocol::protocol::SandboxPolicy;
     use std::collections::HashMap;
     use std::path::Path;
 
@@ -611,7 +611,7 @@ mod stub {
     pub fn run_windows_sandbox_capture(
         _policy_json_or_preset: &str,
         _sandbox_policy_cwd: &Path,
-        _codex_home: &Path,
+        _orbit_code_home: &Path,
         _command: Vec<String>,
         _cwd: &Path,
         _env_map: HashMap<String, String>,
@@ -622,7 +622,7 @@ mod stub {
     }
 
     pub fn apply_world_writable_scan_and_denies(
-        _codex_home: &Path,
+        _orbit_code_home: &Path,
         _cwd: &Path,
         _env_map: &HashMap<String, String>,
         _sandbox_policy: &SandboxPolicy,
@@ -634,7 +634,7 @@ mod stub {
     pub fn run_windows_sandbox_legacy_preflight(
         _sandbox_policy: &SandboxPolicy,
         _sandbox_policy_cwd: &Path,
-        _codex_home: &Path,
+        _orbit_code_home: &Path,
         _cwd: &Path,
         _env_map: &HashMap<String, String>,
     ) -> Result<()> {

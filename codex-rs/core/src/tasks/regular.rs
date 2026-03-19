@@ -9,7 +9,7 @@ use crate::protocol::EventMsg;
 use crate::protocol::TurnStartedEvent;
 use crate::session_startup_prewarm::SessionStartupPrewarmResolution;
 use crate::state::TaskKind;
-use codex_protocol::user_input::UserInput;
+use orbit_code_protocol::user_input::UserInput;
 use tracing::Instrument;
 use tracing::trace_span;
 

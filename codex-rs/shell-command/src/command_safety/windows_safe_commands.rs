@@ -135,7 +135,7 @@ fn parse_with_powershell_ast(executable: &str, script: &str) -> PowershellParseO
             "-EncodedCommand",
             encoded_parser_script,
         ])
-        .env("CODEX_POWERSHELL_PAYLOAD", &encoded_script)
+        .env("ORBIT_POWERSHELL_PAYLOAD", &encoded_script)
         .output()
     {
         Ok(output) if output.status.success() => {

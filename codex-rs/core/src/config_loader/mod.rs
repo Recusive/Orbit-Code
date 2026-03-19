@@ -8,15 +8,15 @@ mod tests;
 use crate::config::ConfigToml;
 use crate::config_loader::layer_io::LoadedConfigLayers;
 use crate::git_info::resolve_root_git_project_for_trust;
-use codex_app_server_protocol::ConfigLayerSource;
-use codex_config::CONFIG_TOML_FILE;
-use codex_config::ConfigRequirementsWithSources;
-use codex_protocol::config_types::SandboxMode;
-use codex_protocol::config_types::TrustLevel;
-use codex_protocol::protocol::AskForApproval;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_absolute_path::AbsolutePathBufGuard;
 use dunce::canonicalize as normalize_path;
+use orbit_code_app_server_protocol::ConfigLayerSource;
+use orbit_code_config::CONFIG_TOML_FILE;
+use orbit_code_config::ConfigRequirementsWithSources;
+use orbit_code_protocol::config_types::SandboxMode;
+use orbit_code_protocol::config_types::TrustLevel;
+use orbit_code_protocol::protocol::AskForApproval;
+use orbit_code_utils_absolute_path::AbsolutePathBuf;
+use orbit_code_utils_absolute_path::AbsolutePathBufGuard;
 use serde::Deserialize;
 use std::io;
 use std::path::Path;
@@ -24,45 +24,45 @@ use std::path::Path;
 use std::path::PathBuf;
 use toml::Value as TomlValue;
 
-pub use codex_config::AppRequirementToml;
-pub use codex_config::AppsRequirementsToml;
-pub use codex_config::CloudRequirementsLoadError;
-pub use codex_config::CloudRequirementsLoadErrorCode;
-pub use codex_config::CloudRequirementsLoader;
-pub use codex_config::ConfigError;
-pub use codex_config::ConfigLayerEntry;
-pub use codex_config::ConfigLayerStack;
-pub use codex_config::ConfigLayerStackOrdering;
-pub use codex_config::ConfigLoadError;
-pub use codex_config::ConfigRequirements;
-pub use codex_config::ConfigRequirementsToml;
-pub use codex_config::ConstrainedWithSource;
-pub use codex_config::FeatureRequirementsToml;
-pub use codex_config::LoaderOverrides;
-pub use codex_config::McpServerIdentity;
-pub use codex_config::McpServerRequirement;
-pub use codex_config::NetworkConstraints;
-pub use codex_config::NetworkRequirementsToml;
-pub use codex_config::RequirementSource;
-pub use codex_config::ResidencyRequirement;
-pub use codex_config::SandboxModeRequirement;
-pub use codex_config::Sourced;
-pub use codex_config::TextPosition;
-pub use codex_config::TextRange;
-pub use codex_config::WebSearchModeRequirement;
-pub(crate) use codex_config::build_cli_overrides_layer;
-pub(crate) use codex_config::config_error_from_toml;
-pub use codex_config::format_config_error;
-pub use codex_config::format_config_error_with_source;
-pub(crate) use codex_config::io_error_from_config_error;
-pub use codex_config::merge_toml_values;
+pub use orbit_code_config::AppRequirementToml;
+pub use orbit_code_config::AppsRequirementsToml;
+pub use orbit_code_config::CloudRequirementsLoadError;
+pub use orbit_code_config::CloudRequirementsLoadErrorCode;
+pub use orbit_code_config::CloudRequirementsLoader;
+pub use orbit_code_config::ConfigError;
+pub use orbit_code_config::ConfigLayerEntry;
+pub use orbit_code_config::ConfigLayerStack;
+pub use orbit_code_config::ConfigLayerStackOrdering;
+pub use orbit_code_config::ConfigLoadError;
+pub use orbit_code_config::ConfigRequirements;
+pub use orbit_code_config::ConfigRequirementsToml;
+pub use orbit_code_config::ConstrainedWithSource;
+pub use orbit_code_config::FeatureRequirementsToml;
+pub use orbit_code_config::LoaderOverrides;
+pub use orbit_code_config::McpServerIdentity;
+pub use orbit_code_config::McpServerRequirement;
+pub use orbit_code_config::NetworkConstraints;
+pub use orbit_code_config::NetworkRequirementsToml;
+pub use orbit_code_config::RequirementSource;
+pub use orbit_code_config::ResidencyRequirement;
+pub use orbit_code_config::SandboxModeRequirement;
+pub use orbit_code_config::Sourced;
+pub use orbit_code_config::TextPosition;
+pub use orbit_code_config::TextRange;
+pub use orbit_code_config::WebSearchModeRequirement;
+pub(crate) use orbit_code_config::build_cli_overrides_layer;
+pub(crate) use orbit_code_config::config_error_from_toml;
+pub use orbit_code_config::format_config_error;
+pub use orbit_code_config::format_config_error_with_source;
+pub(crate) use orbit_code_config::io_error_from_config_error;
+pub use orbit_code_config::merge_toml_values;
 #[cfg(test)]
-pub(crate) use codex_config::version_for_toml;
+pub(crate) use orbit_code_config::version_for_toml;
 
 /// On Unix systems, load default settings from this file path, if present.
-/// Note that /etc/codex/ is treated as a "config folder," so subfolders such
+/// Note that /etc/orbit/ is treated as a "config folder," so subfolders such
 /// as skills/ and rules/ will also be honored.
-pub const SYSTEM_CONFIG_TOML_FILE_UNIX: &str = "/etc/codex/config.toml";
+pub const SYSTEM_CONFIG_TOML_FILE_UNIX: &str = "/etc/orbit/config.toml";
 
 #[cfg(windows)]
 const DEFAULT_PROGRAM_DATA_DIR_WINDOWS: &str = r"C:\ProgramData";
@@ -70,13 +70,13 @@ const DEFAULT_PROGRAM_DATA_DIR_WINDOWS: &str = r"C:\ProgramData";
 const DEFAULT_PROJECT_ROOT_MARKERS: &[&str] = &[".git"];
 
 pub(crate) async fn first_layer_config_error(layers: &ConfigLayerStack) -> Option<ConfigError> {
-    codex_config::first_layer_config_error::<ConfigToml>(layers, CONFIG_TOML_FILE).await
+    orbit_code_config::first_layer_config_error::<ConfigToml>(layers, CONFIG_TOML_FILE).await
 }
 
 pub(crate) async fn first_layer_config_error_from_entries(
     layers: &[ConfigLayerEntry],
 ) -> Option<ConfigError> {
-    codex_config::first_layer_config_error_from_entries::<ConfigToml>(layers, CONFIG_TOML_FILE)
+    orbit_code_config::first_layer_config_error_from_entries::<ConfigToml>(layers, CONFIG_TOML_FILE)
         .await
 }
 
@@ -97,7 +97,7 @@ pub(crate) async fn first_layer_config_error_from_entries(
 /// - admin:    managed preferences (*)
 /// - system    `/etc/codex/config.toml` (Unix) or
 ///   `%ProgramData%\OpenAI\Codex\config.toml` (Windows)
-/// - user      `${CODEX_HOME}/config.toml`
+/// - user      `${ORBIT_HOME}/config.toml`
 /// - cwd       `${PWD}/config.toml` (loaded but disabled when the directory is untrusted)
 /// - tree      parent directories up to root looking for `./.codex/config.toml` (loaded but disabled when untrusted)
 /// - repo      `$(git rev-parse --show-toplevel)/.codex/config.toml` (loaded but disabled when untrusted)
@@ -112,7 +112,7 @@ pub(crate) async fn first_layer_config_error_from_entries(
 /// thread-agnostic config loading (e.g., for the app server's `/config`
 /// endpoint) should `cwd` be `None`.
 pub async fn load_config_layers_state(
-    codex_home: &Path,
+    orbit_code_home: &Path,
     cwd: Option<AbsolutePathBuf>,
     cli_overrides: &[(String, TomlValue)],
     overrides: LoaderOverrides,
@@ -140,7 +140,8 @@ pub async fn load_config_layers_state(
 
     // Make a best-effort to support the legacy `managed_config.toml` as a
     // requirements specification.
-    let loaded_config_layers = layer_io::load_config_layers_internal(codex_home, overrides).await?;
+    let loaded_config_layers =
+        layer_io::load_config_layers_internal(orbit_code_home, overrides).await?;
     load_requirements_from_legacy_scheme(
         &mut config_requirements_toml,
         loaded_config_layers.clone(),
@@ -156,7 +157,7 @@ pub async fn load_config_layers_state(
         let base_dir = cwd
             .as_ref()
             .map(AbsolutePathBuf::as_path)
-            .unwrap_or(codex_home);
+            .unwrap_or(orbit_code_home);
         Some(resolve_relative_paths_in_config_toml(
             cli_overrides_layer,
             base_dir,
@@ -178,10 +179,10 @@ pub async fn load_config_layers_state(
         .await?;
     layers.push(system_layer);
 
-    // Add a layer for $CODEX_HOME/config.toml if it exists. Note if the file
+    // Add a layer for $ORBIT_HOME/config.toml if it exists. Note if the file
     // exists, but is malformed, then this error should be propagated to the
     // user.
-    let user_file = AbsolutePathBuf::resolve_path_against_base(CONFIG_TOML_FILE, codex_home)?;
+    let user_file = AbsolutePathBuf::resolve_path_against_base(CONFIG_TOML_FILE, orbit_code_home)?;
     let user_layer = load_config_toml_for_required_layer(&user_file, |config_toml| {
         ConfigLayerEntry::new(
             ConfigLayerSource::User {
@@ -219,7 +220,7 @@ pub async fn load_config_layers_state(
             &merged_so_far,
             &cwd,
             &project_root_markers,
-            codex_home,
+            orbit_code_home,
             &user_file,
         )
         .await
@@ -244,7 +245,7 @@ pub async fn load_config_layers_state(
             &cwd,
             &project_trust_context.project_root,
             &project_trust_context,
-            codex_home,
+            orbit_code_home,
         )
         .await?;
         layers.extend(project_layers);
@@ -389,7 +390,7 @@ async fn load_requirements_toml(
 
 #[cfg(unix)]
 fn system_requirements_toml_file() -> io::Result<AbsolutePathBuf> {
-    AbsolutePathBuf::from_absolute_path(Path::new("/etc/codex/requirements.toml"))
+    AbsolutePathBuf::from_absolute_path(Path::new("/etc/orbit/requirements.toml"))
 }
 
 #[cfg(windows)]
@@ -408,7 +409,7 @@ fn system_config_toml_file() -> io::Result<AbsolutePathBuf> {
 }
 
 #[cfg(windows)]
-fn windows_codex_system_dir() -> PathBuf {
+fn windows_orbit_code_system_dir() -> PathBuf {
     let program_data = windows_program_data_dir_from_known_folder().unwrap_or_else(|err| {
         tracing::warn!(
             error = %err,
@@ -421,13 +422,13 @@ fn windows_codex_system_dir() -> PathBuf {
 
 #[cfg(windows)]
 fn windows_system_requirements_toml_file() -> io::Result<AbsolutePathBuf> {
-    let requirements_toml_file = windows_codex_system_dir().join("requirements.toml");
+    let requirements_toml_file = windows_orbit_code_system_dir().join("requirements.toml");
     AbsolutePathBuf::try_from(requirements_toml_file)
 }
 
 #[cfg(windows)]
 fn windows_system_config_toml_file() -> io::Result<AbsolutePathBuf> {
-    let config_toml_file = windows_codex_system_dir().join("config.toml");
+    let config_toml_file = windows_orbit_code_system_dir().join("config.toml");
     AbsolutePathBuf::try_from(config_toml_file)
 }
 
@@ -651,13 +652,13 @@ impl ProjectTrustContext {
 
 fn project_layer_entry(
     trust_context: &ProjectTrustContext,
-    dot_codex_folder: &AbsolutePathBuf,
+    dot_orbit_code_folder: &AbsolutePathBuf,
     layer_dir: &AbsolutePathBuf,
     config: TomlValue,
     config_toml_exists: bool,
 ) -> ConfigLayerEntry {
     let source = ConfigLayerSource::Project {
-        dot_codex_folder: dot_codex_folder.clone(),
+        dot_orbit_code_folder: dot_orbit_code_folder.clone(),
     };
 
     if config_toml_exists && let Some(reason) = trust_context.disabled_reason_for_dir(layer_dir) {
@@ -793,11 +794,11 @@ async fn load_project_layers(
     cwd: &AbsolutePathBuf,
     project_root: &AbsolutePathBuf,
     trust_context: &ProjectTrustContext,
-    codex_home: &Path,
+    orbit_code_home: &Path,
 ) -> io::Result<Vec<ConfigLayerEntry>> {
-    let codex_home_abs = AbsolutePathBuf::from_absolute_path(codex_home)?;
-    let codex_home_normalized =
-        normalize_path(codex_home_abs.as_path()).unwrap_or_else(|_| codex_home_abs.to_path_buf());
+    let orbit_code_home_abs = AbsolutePathBuf::from_absolute_path(orbit_code_home)?;
+    let orbit_code_home_normalized = normalize_path(orbit_code_home_abs.as_path())
+        .unwrap_or_else(|_| orbit_code_home_abs.to_path_buf());
     let mut dirs = cwd
         .as_path()
         .ancestors()
@@ -816,77 +817,85 @@ async fn load_project_layers(
 
     let mut layers = Vec::new();
     for dir in dirs {
-        let dot_codex = dir.join(".codex");
-        if !tokio::fs::metadata(&dot_codex)
-            .await
-            .map(|meta| meta.is_dir())
-            .unwrap_or(false)
-        {
-            continue;
-        }
-
         let layer_dir = AbsolutePathBuf::from_absolute_path(dir)?;
         let decision = trust_context.decision_for_dir(&layer_dir);
-        let dot_codex_abs = AbsolutePathBuf::from_absolute_path(&dot_codex)?;
-        let dot_codex_normalized =
-            normalize_path(dot_codex_abs.as_path()).unwrap_or_else(|_| dot_codex_abs.to_path_buf());
-        if dot_codex_abs == codex_home_abs || dot_codex_normalized == codex_home_normalized {
-            continue;
-        }
-        let config_file = dot_codex_abs.join(CONFIG_TOML_FILE)?;
-        match tokio::fs::read_to_string(&config_file).await {
-            Ok(contents) => {
-                let config: TomlValue = match toml::from_str(&contents) {
-                    Ok(config) => config,
-                    Err(e) => {
-                        if decision.is_trusted() {
-                            let config_file_display = config_file.as_path().display();
-                            return Err(io::Error::new(
-                                io::ErrorKind::InvalidData,
-                                format!(
-                                    "Error parsing project config file {config_file_display}: {e}"
-                                ),
-                            ));
-                        }
-                        layers.push(project_layer_entry(
-                            trust_context,
-                            &dot_codex_abs,
-                            &layer_dir,
-                            TomlValue::Table(toml::map::Map::new()),
-                            /*config_toml_exists*/ true,
-                        ));
-                        continue;
-                    }
-                };
-                let config =
-                    resolve_relative_paths_in_config_toml(config, dot_codex_abs.as_path())?;
-                let entry = project_layer_entry(
-                    trust_context,
-                    &dot_codex_abs,
-                    &layer_dir,
-                    config,
-                    /*config_toml_exists*/ true,
-                );
-                layers.push(entry);
+        for config_dir_name in [".codex", ".orbit"] {
+            let project_config_dir = dir.join(config_dir_name);
+            if !tokio::fs::metadata(&project_config_dir)
+                .await
+                .map(|meta| meta.is_dir())
+                .unwrap_or(false)
+            {
+                continue;
             }
-            Err(err) => {
-                if err.kind() == io::ErrorKind::NotFound {
-                    // If there is no config.toml file, record an empty entry
-                    // for this project layer, as this may still have subfolders
-                    // that are significant in the overall ConfigLayerStack.
+
+            let project_config_dir_abs = AbsolutePathBuf::from_absolute_path(&project_config_dir)?;
+            let project_config_dir_normalized = normalize_path(project_config_dir_abs.as_path())
+                .unwrap_or_else(|_| project_config_dir_abs.to_path_buf());
+            if project_config_dir_abs == orbit_code_home_abs
+                || project_config_dir_normalized == orbit_code_home_normalized
+            {
+                continue;
+            }
+
+            let config_file = project_config_dir_abs.join(CONFIG_TOML_FILE)?;
+            match tokio::fs::read_to_string(&config_file).await {
+                Ok(contents) => {
+                    let config: TomlValue = match toml::from_str(&contents) {
+                        Ok(config) => config,
+                        Err(e) => {
+                            if decision.is_trusted() {
+                                let config_file_display = config_file.as_path().display();
+                                return Err(io::Error::new(
+                                    io::ErrorKind::InvalidData,
+                                    format!(
+                                        "Error parsing project config file {config_file_display}: {e}"
+                                    ),
+                                ));
+                            }
+                            layers.push(project_layer_entry(
+                                trust_context,
+                                &project_config_dir_abs,
+                                &layer_dir,
+                                TomlValue::Table(toml::map::Map::new()),
+                                /*config_toml_exists*/ true,
+                            ));
+                            continue;
+                        }
+                    };
+                    let config = resolve_relative_paths_in_config_toml(
+                        config,
+                        project_config_dir_abs.as_path(),
+                    )?;
                     layers.push(project_layer_entry(
                         trust_context,
-                        &dot_codex_abs,
+                        &project_config_dir_abs,
                         &layer_dir,
-                        TomlValue::Table(toml::map::Map::new()),
-                        /*config_toml_exists*/ false,
+                        config,
+                        /*config_toml_exists*/ true,
                     ));
-                } else {
-                    let config_file_display = config_file.as_path().display();
-                    return Err(io::Error::new(
-                        err.kind(),
-                        format!("Failed to read project config file {config_file_display}: {err}"),
-                    ));
+                }
+                Err(err) => {
+                    if err.kind() == io::ErrorKind::NotFound {
+                        // If there is no config.toml file, record an empty entry
+                        // for this project layer, as this may still have subfolders
+                        // that are significant in the overall ConfigLayerStack.
+                        layers.push(project_layer_entry(
+                            trust_context,
+                            &project_config_dir_abs,
+                            &layer_dir,
+                            TomlValue::Table(toml::map::Map::new()),
+                            /*config_toml_exists*/ false,
+                        ));
+                    } else {
+                        let config_file_display = config_file.as_path().display();
+                        return Err(io::Error::new(
+                            err.kind(),
+                            format!(
+                                "Failed to read project config file {config_file_display}: {err}"
+                            ),
+                        ));
+                    }
                 }
             }
         }

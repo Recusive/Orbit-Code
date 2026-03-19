@@ -3,31 +3,31 @@ use anyhow::Result;
 use app_test_support::McpProcess;
 use app_test_support::create_mock_responses_server_sequence_unchecked;
 use app_test_support::to_response;
-use codex_app_server_protocol::JSONRPCError;
-use codex_app_server_protocol::JSONRPCResponse;
-use codex_app_server_protocol::LoginAccountResponse;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::ThreadRealtimeAppendAudioParams;
-use codex_app_server_protocol::ThreadRealtimeAppendAudioResponse;
-use codex_app_server_protocol::ThreadRealtimeAppendTextParams;
-use codex_app_server_protocol::ThreadRealtimeAppendTextResponse;
-use codex_app_server_protocol::ThreadRealtimeAudioChunk;
-use codex_app_server_protocol::ThreadRealtimeClosedNotification;
-use codex_app_server_protocol::ThreadRealtimeErrorNotification;
-use codex_app_server_protocol::ThreadRealtimeItemAddedNotification;
-use codex_app_server_protocol::ThreadRealtimeOutputAudioDeltaNotification;
-use codex_app_server_protocol::ThreadRealtimeStartParams;
-use codex_app_server_protocol::ThreadRealtimeStartResponse;
-use codex_app_server_protocol::ThreadRealtimeStartedNotification;
-use codex_app_server_protocol::ThreadRealtimeStopParams;
-use codex_app_server_protocol::ThreadRealtimeStopResponse;
-use codex_app_server_protocol::ThreadStartParams;
-use codex_app_server_protocol::ThreadStartResponse;
-use codex_core::features::FEATURES;
-use codex_core::features::Feature;
-use codex_protocol::protocol::RealtimeConversationVersion;
 use core_test_support::responses::start_websocket_server;
 use core_test_support::skip_if_no_network;
+use orbit_code_app_server_protocol::JSONRPCError;
+use orbit_code_app_server_protocol::JSONRPCResponse;
+use orbit_code_app_server_protocol::LoginAccountResponse;
+use orbit_code_app_server_protocol::RequestId;
+use orbit_code_app_server_protocol::ThreadRealtimeAppendAudioParams;
+use orbit_code_app_server_protocol::ThreadRealtimeAppendAudioResponse;
+use orbit_code_app_server_protocol::ThreadRealtimeAppendTextParams;
+use orbit_code_app_server_protocol::ThreadRealtimeAppendTextResponse;
+use orbit_code_app_server_protocol::ThreadRealtimeAudioChunk;
+use orbit_code_app_server_protocol::ThreadRealtimeClosedNotification;
+use orbit_code_app_server_protocol::ThreadRealtimeErrorNotification;
+use orbit_code_app_server_protocol::ThreadRealtimeItemAddedNotification;
+use orbit_code_app_server_protocol::ThreadRealtimeOutputAudioDeltaNotification;
+use orbit_code_app_server_protocol::ThreadRealtimeStartParams;
+use orbit_code_app_server_protocol::ThreadRealtimeStartResponse;
+use orbit_code_app_server_protocol::ThreadRealtimeStartedNotification;
+use orbit_code_app_server_protocol::ThreadRealtimeStopParams;
+use orbit_code_app_server_protocol::ThreadRealtimeStopResponse;
+use orbit_code_app_server_protocol::ThreadStartParams;
+use orbit_code_app_server_protocol::ThreadStartResponse;
+use orbit_code_core::features::FEATURES;
+use orbit_code_core::features::Feature;
+use orbit_code_protocol::protocol::RealtimeConversationVersion;
 use pretty_assertions::assert_eq;
 use serde::de::DeserializeOwned;
 use serde_json::json;
@@ -75,15 +75,15 @@ async fn realtime_conversation_streams_v2_notifications() -> Result<()> {
     ]])
     .await;
 
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     create_config_toml(
-        codex_home.path(),
+        orbit_code_home.path(),
         &responses_server.uri(),
         realtime_server.uri(),
         true,
     )?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     mcp.initialize().await?;
     login_with_api_key(&mut mcp, "sk-test-key").await?;
 
@@ -248,15 +248,15 @@ async fn realtime_conversation_stop_emits_closed_notification() -> Result<()> {
     ]])
     .await;
 
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     create_config_toml(
-        codex_home.path(),
+        orbit_code_home.path(),
         &responses_server.uri(),
         realtime_server.uri(),
         true,
     )?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     mcp.initialize().await?;
     login_with_api_key(&mut mcp, "sk-test-key").await?;
 
@@ -320,15 +320,15 @@ async fn realtime_conversation_requires_feature_flag() -> Result<()> {
     let responses_server = create_mock_responses_server_sequence_unchecked(Vec::new()).await;
     let realtime_server = start_websocket_server(vec![vec![]]).await;
 
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     create_config_toml(
-        codex_home.path(),
+        orbit_code_home.path(),
         &responses_server.uri(),
         realtime_server.uri(),
         false,
     )?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     mcp.initialize().await?;
 
     let thread_start_request_id = mcp
@@ -391,7 +391,7 @@ async fn login_with_api_key(mcp: &mut McpProcess, api_key: &str) -> Result<()> {
 }
 
 fn create_config_toml(
-    codex_home: &Path,
+    orbit_code_home: &Path,
     responses_server_uri: &str,
     realtime_server_uri: &str,
     realtime_enabled: bool,
@@ -403,7 +403,7 @@ fn create_config_toml(
         .unwrap_or("realtime_conversation");
 
     std::fs::write(
-        codex_home.join("config.toml"),
+        orbit_code_home.join("config.toml"),
         format!(
             r#"
 model = "mock-model"

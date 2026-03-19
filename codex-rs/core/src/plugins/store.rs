@@ -1,6 +1,6 @@
 use super::load_plugin_manifest;
 use super::manifest::PLUGIN_MANIFEST_PATH;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use orbit_code_utils_absolute_path::AbsolutePathBuf;
 use std::fs;
 use std::io;
 use std::path::Path;
@@ -69,9 +69,9 @@ pub struct PluginStore {
 }
 
 impl PluginStore {
-    pub fn new(codex_home: PathBuf) -> Self {
+    pub fn new(orbit_code_home: PathBuf) -> Self {
         Self {
-            root: AbsolutePathBuf::try_from(codex_home.join(PLUGINS_CACHE_DIR))
+            root: AbsolutePathBuf::try_from(orbit_code_home.join(PLUGINS_CACHE_DIR))
                 .unwrap_or_else(|err| panic!("plugin cache root should be absolute: {err}")),
         }
     }

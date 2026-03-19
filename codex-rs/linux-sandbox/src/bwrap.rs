@@ -16,9 +16,9 @@ use std::os::fd::AsRawFd;
 use std::path::Path;
 use std::path::PathBuf;
 
-use codex_core::error::Result;
-use codex_protocol::protocol::FileSystemSandboxPolicy;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use orbit_code_core::error::Result;
+use orbit_code_protocol::protocol::FileSystemSandboxPolicy;
+use orbit_code_utils_absolute_path::AbsolutePathBuf;
 
 /// Linux "platform defaults" that keep common system binaries and dynamic
 /// libraries readable when `ReadOnlyAccess::Restricted` requests them.
@@ -598,14 +598,14 @@ fn find_first_non_existent_component(target_path: &Path) -> Option<PathBuf> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use codex_protocol::protocol::FileSystemAccessMode;
-    use codex_protocol::protocol::FileSystemPath;
-    use codex_protocol::protocol::FileSystemSandboxEntry;
-    use codex_protocol::protocol::FileSystemSandboxPolicy;
-    use codex_protocol::protocol::FileSystemSpecialPath;
-    use codex_protocol::protocol::ReadOnlyAccess;
-    use codex_protocol::protocol::SandboxPolicy;
-    use codex_utils_absolute_path::AbsolutePathBuf;
+    use orbit_code_protocol::protocol::FileSystemAccessMode;
+    use orbit_code_protocol::protocol::FileSystemPath;
+    use orbit_code_protocol::protocol::FileSystemSandboxEntry;
+    use orbit_code_protocol::protocol::FileSystemSandboxPolicy;
+    use orbit_code_protocol::protocol::FileSystemSpecialPath;
+    use orbit_code_protocol::protocol::ReadOnlyAccess;
+    use orbit_code_protocol::protocol::SandboxPolicy;
+    use orbit_code_utils_absolute_path::AbsolutePathBuf;
     use pretty_assertions::assert_eq;
     use tempfile::TempDir;
 

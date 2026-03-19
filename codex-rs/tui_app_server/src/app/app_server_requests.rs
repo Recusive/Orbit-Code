@@ -2,18 +2,18 @@ use std::collections::HashMap;
 
 use crate::app_command::AppCommand;
 use crate::app_command::AppCommandView;
-use codex_app_server_protocol::CommandExecutionRequestApprovalResponse;
-use codex_app_server_protocol::FileChangeApprovalDecision;
-use codex_app_server_protocol::FileChangeRequestApprovalResponse;
-use codex_app_server_protocol::GrantedPermissionProfile;
-use codex_app_server_protocol::McpServerElicitationAction;
-use codex_app_server_protocol::McpServerElicitationRequestResponse;
-use codex_app_server_protocol::PermissionsRequestApprovalResponse;
-use codex_app_server_protocol::RequestId as AppServerRequestId;
-use codex_app_server_protocol::ServerRequest;
-use codex_app_server_protocol::ToolRequestUserInputResponse;
-use codex_protocol::mcp::RequestId as McpRequestId;
-use codex_protocol::protocol::ReviewDecision;
+use orbit_code_app_server_protocol::CommandExecutionRequestApprovalResponse;
+use orbit_code_app_server_protocol::FileChangeApprovalDecision;
+use orbit_code_app_server_protocol::FileChangeRequestApprovalResponse;
+use orbit_code_app_server_protocol::GrantedPermissionProfile;
+use orbit_code_app_server_protocol::McpServerElicitationAction;
+use orbit_code_app_server_protocol::McpServerElicitationRequestResponse;
+use orbit_code_app_server_protocol::PermissionsRequestApprovalResponse;
+use orbit_code_app_server_protocol::RequestId as AppServerRequestId;
+use orbit_code_app_server_protocol::ServerRequest;
+use orbit_code_app_server_protocol::ToolRequestUserInputResponse;
+use orbit_code_protocol::mcp::RequestId as McpRequestId;
+use orbit_code_protocol::protocol::ReviewDecision;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(super) struct AppServerRequestResolution {
@@ -213,13 +213,13 @@ impl PendingAppServerRequests {
                         request_id,
                         result: serde_json::to_value(McpServerElicitationRequestResponse {
                             action: match decision {
-                                codex_protocol::approvals::ElicitationAction::Accept => {
+                                orbit_code_protocol::approvals::ElicitationAction::Accept => {
                                     McpServerElicitationAction::Accept
                                 }
-                                codex_protocol::approvals::ElicitationAction::Decline => {
+                                orbit_code_protocol::approvals::ElicitationAction::Decline => {
                                     McpServerElicitationAction::Decline
                                 }
-                                codex_protocol::approvals::ElicitationAction::Cancel => {
+                                orbit_code_protocol::approvals::ElicitationAction::Cancel => {
                                     McpServerElicitationAction::Cancel
                                 }
                             },
@@ -279,25 +279,25 @@ fn file_change_decision(decision: &ReviewDecision) -> Result<FileChangeApprovalD
 #[cfg(test)]
 mod tests {
     use super::PendingAppServerRequests;
-    use codex_app_server_protocol::CommandExecutionRequestApprovalParams;
-    use codex_app_server_protocol::FileChangeRequestApprovalParams;
-    use codex_app_server_protocol::McpElicitationObjectType;
-    use codex_app_server_protocol::McpElicitationSchema;
-    use codex_app_server_protocol::McpServerElicitationRequest;
-    use codex_app_server_protocol::McpServerElicitationRequestParams;
-    use codex_app_server_protocol::PermissionGrantScope;
-    use codex_app_server_protocol::PermissionsRequestApprovalParams;
-    use codex_app_server_protocol::PermissionsRequestApprovalResponse;
-    use codex_app_server_protocol::RequestId as AppServerRequestId;
-    use codex_app_server_protocol::ServerRequest;
-    use codex_app_server_protocol::ToolRequestUserInputAnswer;
-    use codex_app_server_protocol::ToolRequestUserInputParams;
-    use codex_app_server_protocol::ToolRequestUserInputResponse;
-    use codex_protocol::approvals::ElicitationAction;
-    use codex_protocol::approvals::ExecPolicyAmendment;
-    use codex_protocol::mcp::RequestId as McpRequestId;
-    use codex_protocol::protocol::Op;
-    use codex_protocol::protocol::ReviewDecision;
+    use orbit_code_app_server_protocol::CommandExecutionRequestApprovalParams;
+    use orbit_code_app_server_protocol::FileChangeRequestApprovalParams;
+    use orbit_code_app_server_protocol::McpElicitationObjectType;
+    use orbit_code_app_server_protocol::McpElicitationSchema;
+    use orbit_code_app_server_protocol::McpServerElicitationRequest;
+    use orbit_code_app_server_protocol::McpServerElicitationRequestParams;
+    use orbit_code_app_server_protocol::PermissionGrantScope;
+    use orbit_code_app_server_protocol::PermissionsRequestApprovalParams;
+    use orbit_code_app_server_protocol::PermissionsRequestApprovalResponse;
+    use orbit_code_app_server_protocol::RequestId as AppServerRequestId;
+    use orbit_code_app_server_protocol::ServerRequest;
+    use orbit_code_app_server_protocol::ToolRequestUserInputAnswer;
+    use orbit_code_app_server_protocol::ToolRequestUserInputParams;
+    use orbit_code_app_server_protocol::ToolRequestUserInputResponse;
+    use orbit_code_protocol::approvals::ElicitationAction;
+    use orbit_code_protocol::approvals::ExecPolicyAmendment;
+    use orbit_code_protocol::mcp::RequestId as McpRequestId;
+    use orbit_code_protocol::protocol::Op;
+    use orbit_code_protocol::protocol::ReviewDecision;
     use pretty_assertions::assert_eq;
     use serde_json::json;
     use std::collections::BTreeMap;
@@ -376,12 +376,12 @@ mod tests {
         let permissions = pending
             .take_resolution(&Op::RequestPermissionsResponse {
                 id: "perm-1".to_string(),
-                response: codex_protocol::request_permissions::RequestPermissionsResponse {
+                response: orbit_code_protocol::request_permissions::RequestPermissionsResponse {
                     permissions: serde_json::from_value(json!({
                         "network": { "enabled": null }
                     }))
                     .expect("valid permissions"),
-                    scope: codex_protocol::request_permissions::PermissionGrantScope::Session,
+                    scope: orbit_code_protocol::request_permissions::PermissionGrantScope::Session,
                 },
             })
             .expect("permissions response should serialize")
@@ -402,10 +402,10 @@ mod tests {
         let user_input = pending
             .take_resolution(&Op::UserInputAnswer {
                 id: "turn-2".to_string(),
-                response: codex_protocol::request_user_input::RequestUserInputResponse {
+                response: orbit_code_protocol::request_user_input::RequestUserInputResponse {
                     answers: std::iter::once((
                         "question".to_string(),
-                        codex_protocol::request_user_input::RequestUserInputAnswer {
+                        orbit_code_protocol::request_user_input::RequestUserInputAnswer {
                             answers: vec!["yes".to_string()],
                         },
                     ))
@@ -484,7 +484,7 @@ mod tests {
         let unsupported = pending
             .note_server_request(&ServerRequest::DynamicToolCall {
                 request_id: AppServerRequestId::Integer(99),
-                params: codex_app_server_protocol::DynamicToolCallParams {
+                params: orbit_code_app_server_protocol::DynamicToolCallParams {
                     thread_id: "thread-1".to_string(),
                     turn_id: "turn-1".to_string(),
                     call_id: "tool-1".to_string(),
@@ -508,8 +508,8 @@ mod tests {
         assert_eq!(
             pending.note_server_request(&ServerRequest::ChatgptAuthTokensRefresh {
                 request_id: AppServerRequestId::Integer(100),
-                params: codex_app_server_protocol::ChatgptAuthTokensRefreshParams {
-                    reason: codex_app_server_protocol::ChatgptAuthTokensRefreshReason::Unauthorized,
+                params: orbit_code_app_server_protocol::ChatgptAuthTokensRefreshParams {
+                    reason: orbit_code_app_server_protocol::ChatgptAuthTokensRefreshReason::Unauthorized,
                     previous_account_id: Some("workspace-1".to_string()),
                 },
             }),

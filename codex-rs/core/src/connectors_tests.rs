@@ -12,9 +12,9 @@ use crate::config_loader::ConfigLayerStack;
 use crate::config_loader::ConfigRequirements;
 use crate::config_loader::ConfigRequirementsToml;
 use crate::features::Feature;
-use crate::mcp::CODEX_APPS_MCP_SERVER_NAME;
+use crate::mcp::ORBIT_APPS_MCP_SERVER_NAME;
 use crate::mcp_connection_manager::ToolInfo;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use orbit_code_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use rmcp::model::JsonObject;
 use rmcp::model::Tool;
@@ -97,7 +97,7 @@ fn google_calendar_accessible_connector(plugin_display_names: &[&str]) -> AppInf
     }
 }
 
-fn codex_app_tool(
+fn orbit_code_app_tool(
     tool_name: &str,
     connector_id: &str,
     connector_name: Option<&str>,
@@ -105,11 +105,11 @@ fn codex_app_tool(
 ) -> ToolInfo {
     let tool_namespace = connector_name
         .map(sanitize_name)
-        .map(|connector_name| format!("mcp__{CODEX_APPS_MCP_SERVER_NAME}__{connector_name}"))
-        .unwrap_or_else(|| CODEX_APPS_MCP_SERVER_NAME.to_string());
+        .map(|connector_name| format!("mcp__{ORBIT_APPS_MCP_SERVER_NAME}__{connector_name}"))
+        .unwrap_or_else(|| ORBIT_APPS_MCP_SERVER_NAME.to_string());
 
     ToolInfo {
-        server_name: CODEX_APPS_MCP_SERVER_NAME.to_string(),
+        server_name: ORBIT_APPS_MCP_SERVER_NAME.to_string(),
         tool_name: tool_name.to_string(),
         tool_namespace,
         tool: test_tool_definition(tool_name),
@@ -167,8 +167,8 @@ fn merge_connectors_replaces_plugin_placeholder_name_with_accessible_name() {
 fn accessible_connectors_from_mcp_tools_carries_plugin_display_names() {
     let tools = HashMap::from([
         (
-            "mcp__codex_apps__calendar_list_events".to_string(),
-            codex_app_tool(
+            "mcp__orbit_code_apps__calendar_list_events".to_string(),
+            orbit_code_app_tool(
                 "calendar_list_events",
                 "calendar",
                 None,
@@ -176,8 +176,8 @@ fn accessible_connectors_from_mcp_tools_carries_plugin_display_names() {
             ),
         ),
         (
-            "mcp__codex_apps__calendar_create_event".to_string(),
-            codex_app_tool(
+            "mcp__orbit_code_apps__calendar_create_event".to_string(),
+            orbit_code_app_tool(
                 "calendar_create_event",
                 "calendar",
                 Some("Google Calendar"),
@@ -223,9 +223,9 @@ fn accessible_connectors_from_mcp_tools_carries_plugin_display_names() {
 
 #[tokio::test]
 async fn refresh_accessible_connectors_cache_from_mcp_tools_writes_latest_installed_apps() {
-    let codex_home = tempdir().expect("tempdir should succeed");
+    let orbit_code_home = tempdir().expect("tempdir should succeed");
     let mut config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
+        .orbit_code_home(orbit_code_home.path().to_path_buf())
         .build()
         .await
         .expect("config should load");
@@ -233,8 +233,8 @@ async fn refresh_accessible_connectors_cache_from_mcp_tools_writes_latest_instal
     let cache_key = accessible_connectors_cache_key(&config, None);
     let tools = HashMap::from([
         (
-            "mcp__codex_apps__calendar_list_events".to_string(),
-            codex_app_tool(
+            "mcp__orbit_code_apps__calendar_list_events".to_string(),
+            orbit_code_app_tool(
                 "calendar_list_events",
                 "calendar",
                 Some("Google Calendar"),
@@ -242,8 +242,8 @@ async fn refresh_accessible_connectors_cache_from_mcp_tools_writes_latest_instal
             ),
         ),
         (
-            "mcp__codex_apps__openai_hidden".to_string(),
-            codex_app_tool(
+            "mcp__orbit_code_apps__openai_hidden".to_string(),
+            orbit_code_app_tool(
                 "openai_hidden",
                 "connector_openai_hidden",
                 Some("Hidden"),
@@ -309,11 +309,11 @@ fn merge_connectors_unions_and_dedupes_plugin_display_names() {
 #[test]
 fn accessible_connectors_from_mcp_tools_preserves_description() {
     let mcp_tools = HashMap::from([(
-        "mcp__codex_apps__calendar_create_event".to_string(),
+        "mcp__orbit_code_apps__calendar_create_event".to_string(),
         ToolInfo {
-            server_name: CODEX_APPS_MCP_SERVER_NAME.to_string(),
+            server_name: ORBIT_APPS_MCP_SERVER_NAME.to_string(),
             tool_name: "calendar_create_event".to_string(),
-            tool_namespace: "mcp__codex_apps__calendar".to_string(),
+            tool_namespace: "mcp__orbit_code_apps__calendar".to_string(),
             tool: Tool {
                 name: "calendar_create_event".to_string().into(),
                 title: None,
@@ -486,9 +486,9 @@ fn requirements_enabled_does_not_override_disabled_connector() {
 
 #[tokio::test]
 async fn cloud_requirements_disable_connector_overrides_user_apps_config() {
-    let codex_home = tempdir().expect("tempdir should succeed");
+    let orbit_code_home = tempdir().expect("tempdir should succeed");
     std::fs::write(
-        codex_home.path().join(CONFIG_TOML_FILE),
+        orbit_code_home.path().join(CONFIG_TOML_FILE),
         r#"
 [apps.connector_123123]
 enabled = true
@@ -509,8 +509,8 @@ enabled = true
     };
 
     let config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
-        .fallback_cwd(Some(codex_home.path().to_path_buf()))
+        .orbit_code_home(orbit_code_home.path().to_path_buf())
+        .fallback_cwd(Some(orbit_code_home.path().to_path_buf()))
         .cloud_requirements(CloudRequirementsLoader::new(async move {
             Ok(Some(requirements))
         }))
@@ -530,8 +530,8 @@ enabled = true
 
 #[tokio::test]
 async fn cloud_requirements_disable_connector_applies_without_user_apps_table() {
-    let codex_home = tempdir().expect("tempdir should succeed");
-    std::fs::write(codex_home.path().join(CONFIG_TOML_FILE), "").expect("write config");
+    let orbit_code_home = tempdir().expect("tempdir should succeed");
+    std::fs::write(orbit_code_home.path().join(CONFIG_TOML_FILE), "").expect("write config");
 
     let requirements = ConfigRequirementsToml {
         apps: Some(AppsRequirementsToml {
@@ -546,8 +546,8 @@ async fn cloud_requirements_disable_connector_applies_without_user_apps_table() 
     };
 
     let config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
-        .fallback_cwd(Some(codex_home.path().to_path_buf()))
+        .orbit_code_home(orbit_code_home.path().to_path_buf())
+        .fallback_cwd(Some(orbit_code_home.path().to_path_buf()))
         .cloud_requirements(CloudRequirementsLoader::new(async move {
             Ok(Some(requirements))
         }))
@@ -567,12 +567,12 @@ async fn cloud_requirements_disable_connector_applies_without_user_apps_table() 
 
 #[tokio::test]
 async fn local_requirements_disable_connector_overrides_user_apps_config() {
-    let codex_home = tempdir().expect("tempdir should succeed");
+    let orbit_code_home = tempdir().expect("tempdir should succeed");
     let config_toml_path =
-        AbsolutePathBuf::try_from(codex_home.path().join(CONFIG_TOML_FILE)).expect("abs path");
+        AbsolutePathBuf::try_from(orbit_code_home.path().join(CONFIG_TOML_FILE)).expect("abs path");
     let mut config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
-        .fallback_cwd(Some(codex_home.path().to_path_buf()))
+        .orbit_code_home(orbit_code_home.path().to_path_buf())
+        .fallback_cwd(Some(orbit_code_home.path().to_path_buf()))
         .build()
         .await
         .expect("config should build");
@@ -614,10 +614,10 @@ enabled = true
 
 #[tokio::test]
 async fn local_requirements_disable_connector_applies_without_user_apps_table() {
-    let codex_home = tempdir().expect("tempdir should succeed");
+    let orbit_code_home = tempdir().expect("tempdir should succeed");
     let mut config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
-        .fallback_cwd(Some(codex_home.path().to_path_buf()))
+        .orbit_code_home(orbit_code_home.path().to_path_buf())
+        .fallback_cwd(Some(orbit_code_home.path().to_path_buf()))
         .build()
         .await
         .expect("config should build");
@@ -649,10 +649,10 @@ async fn local_requirements_disable_connector_applies_without_user_apps_table() 
 
 #[tokio::test]
 async fn with_app_enabled_state_preserves_unrelated_disabled_connector() {
-    let codex_home = tempdir().expect("tempdir should succeed");
+    let orbit_code_home = tempdir().expect("tempdir should succeed");
     let mut config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
-        .fallback_cwd(Some(codex_home.path().to_path_buf()))
+        .orbit_code_home(orbit_code_home.path().to_path_buf())
+        .fallback_cwd(Some(orbit_code_home.path().to_path_buf()))
         .build()
         .await
         .expect("config should build");
@@ -972,7 +972,7 @@ fn first_party_chat_originator_filters_target_and_openai_prefixed_connectors() {
             app("asdk_app_6938a94a61d881918ef32cb999ff937c"),
             app("connector_0f9c9d4592e54d0a9a12b3f44a1e2010"),
         ],
-        "codex_atlas",
+        "orbit_code_atlas",
     );
     assert_eq!(
         filtered,
@@ -982,9 +982,9 @@ fn first_party_chat_originator_filters_target_and_openai_prefixed_connectors() {
 
 #[tokio::test]
 async fn tool_suggest_connector_ids_include_configured_tool_suggest_discoverables() {
-    let codex_home = tempdir().expect("tempdir should succeed");
+    let orbit_code_home = tempdir().expect("tempdir should succeed");
     std::fs::write(
-        codex_home.path().join(CONFIG_TOML_FILE),
+        orbit_code_home.path().join(CONFIG_TOML_FILE),
         r#"
 [tool_suggest]
 discoverables = [
@@ -996,7 +996,7 @@ discoverables = [
     )
     .expect("write config");
     let config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
+        .orbit_code_home(orbit_code_home.path().to_path_buf())
         .build()
         .await
         .expect("config should load");

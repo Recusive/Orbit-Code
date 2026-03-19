@@ -1,12 +1,12 @@
 #![allow(dead_code)]
 
-use codex_app_server_protocol::ClientRequest;
-use codex_app_server_protocol::LoginAccountParams;
-use codex_app_server_protocol::LoginAccountResponse;
-use codex_core::auth::CLIENT_ID;
-use codex_login::ServerOptions;
-use codex_login::complete_device_code_login;
-use codex_login::request_device_code;
+use orbit_code_app_server_protocol::ClientRequest;
+use orbit_code_app_server_protocol::LoginAccountParams;
+use orbit_code_app_server_protocol::LoginAccountResponse;
+use orbit_code_core::auth::CLIENT_ID;
+use orbit_code_login::ServerOptions;
+use orbit_code_login::complete_device_code_login;
+use orbit_code_login::request_device_code;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::prelude::Widget;
@@ -33,7 +33,7 @@ use super::onboarding_request_id;
 
 pub(super) fn start_headless_chatgpt_login(widget: &mut AuthModeWidget) {
     let mut opts = ServerOptions::new(
-        widget.codex_home.clone(),
+        widget.orbit_code_home.clone(),
         CLIENT_ID.to_string(),
         widget.forced_chatgpt_workspace_id.clone(),
         widget.cli_auth_credentials_store_mode,
@@ -44,7 +44,7 @@ pub(super) fn start_headless_chatgpt_login(widget: &mut AuthModeWidget) {
     let request_frame = widget.request_frame.clone();
     let error = widget.error.clone();
     let request_handle = widget.app_server_request_handle.clone();
-    let codex_home = widget.codex_home.clone();
+    let orbit_code_home = widget.orbit_code_home.clone();
     let cli_auth_credentials_store_mode = widget.cli_auth_credentials_store_mode;
     let forced_chatgpt_workspace_id = widget.forced_chatgpt_workspace_id.clone();
     let cancel = begin_device_code_attempt(&sign_in_state, &request_frame);
@@ -93,7 +93,7 @@ pub(super) fn start_headless_chatgpt_login(widget: &mut AuthModeWidget) {
                 match result {
                     Ok(()) => {
                         let local_auth = load_local_chatgpt_auth(
-                            &codex_home,
+                            &orbit_code_home,
                             cli_auth_credentials_store_mode,
                             forced_chatgpt_workspace_id.as_deref(),
                         );
@@ -267,7 +267,7 @@ fn set_device_code_error_for_active_attempt(
 }
 
 async fn fallback_to_browser_login(
-    request_handle: codex_app_server_client::AppServerRequestHandle,
+    request_handle: orbit_code_app_server_client::AppServerRequestHandle,
     sign_in_state: Arc<RwLock<SignInState>>,
     request_frame: FrameRequester,
     error: Arc<RwLock<Option<String>>>,
@@ -322,7 +322,7 @@ async fn fallback_to_browser_login(
 }
 
 async fn handle_chatgpt_auth_tokens_login_result_for_active_attempt(
-    request_handle: codex_app_server_client::AppServerRequestHandle,
+    request_handle: orbit_code_app_server_client::AppServerRequestHandle,
     sign_in_state: Arc<RwLock<SignInState>>,
     request_frame: FrameRequester,
     error: Arc<RwLock<Option<String>>>,

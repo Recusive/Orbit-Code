@@ -13,29 +13,29 @@ use async_channel::Sender;
 use async_channel::TrySendError;
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD as BASE64_STANDARD;
-use codex_api::Provider as ApiProvider;
-use codex_api::RealtimeAudioFrame;
-use codex_api::RealtimeEvent;
-use codex_api::RealtimeEventParser;
-use codex_api::RealtimeSessionConfig;
-use codex_api::RealtimeSessionMode;
-use codex_api::RealtimeWebsocketClient;
-use codex_api::endpoint::realtime_websocket::RealtimeWebsocketEvents;
-use codex_api::endpoint::realtime_websocket::RealtimeWebsocketWriter;
-use codex_protocol::protocol::CodexErrorInfo;
-use codex_protocol::protocol::ConversationAudioParams;
-use codex_protocol::protocol::ConversationStartParams;
-use codex_protocol::protocol::ConversationTextParams;
-use codex_protocol::protocol::ErrorEvent;
-use codex_protocol::protocol::Event;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::RealtimeConversationClosedEvent;
-use codex_protocol::protocol::RealtimeConversationRealtimeEvent;
-use codex_protocol::protocol::RealtimeConversationStartedEvent;
-use codex_protocol::protocol::RealtimeHandoffRequested;
 use http::HeaderMap;
 use http::HeaderValue;
 use http::header::AUTHORIZATION;
+use orbit_code_api::Provider as ApiProvider;
+use orbit_code_api::RealtimeAudioFrame;
+use orbit_code_api::RealtimeEvent;
+use orbit_code_api::RealtimeEventParser;
+use orbit_code_api::RealtimeSessionConfig;
+use orbit_code_api::RealtimeSessionMode;
+use orbit_code_api::RealtimeWebsocketClient;
+use orbit_code_api::endpoint::realtime_websocket::RealtimeWebsocketEvents;
+use orbit_code_api::endpoint::realtime_websocket::RealtimeWebsocketWriter;
+use orbit_code_protocol::protocol::CodexErrorInfo;
+use orbit_code_protocol::protocol::ConversationAudioParams;
+use orbit_code_protocol::protocol::ConversationStartParams;
+use orbit_code_protocol::protocol::ConversationTextParams;
+use orbit_code_protocol::protocol::ErrorEvent;
+use orbit_code_protocol::protocol::Event;
+use orbit_code_protocol::protocol::EventMsg;
+use orbit_code_protocol::protocol::RealtimeConversationClosedEvent;
+use orbit_code_protocol::protocol::RealtimeConversationRealtimeEvent;
+use orbit_code_protocol::protocol::RealtimeConversationStartedEvent;
+use orbit_code_protocol::protocol::RealtimeHandoffRequested;
 use serde_json::Value;
 use serde_json::json;
 use std::sync::Arc;
@@ -1006,13 +1006,13 @@ async fn send_conversation_error(
     sess: &Arc<Session>,
     sub_id: String,
     message: String,
-    codex_error_info: CodexErrorInfo,
+    orbit_code_error_info: CodexErrorInfo,
 ) {
     sess.send_event_raw(Event {
         id: sub_id,
         msg: EventMsg::Error(ErrorEvent {
             message,
-            codex_error_info: Some(codex_error_info),
+            orbit_code_error_info: Some(orbit_code_error_info),
         }),
     })
     .await;

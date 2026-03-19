@@ -1,11 +1,11 @@
 use crate::client_common::tools::ToolSpec;
 use crate::config::types::Personality;
 use crate::error::Result;
-pub use codex_api::common::ResponseEvent;
-use codex_protocol::models::BaseInstructions;
-use codex_protocol::models::FunctionCallOutputBody;
-use codex_protocol::models::ResponseItem;
 use futures::Stream;
+pub use orbit_code_api::common::ResponseEvent;
+use orbit_code_protocol::models::BaseInstructions;
+use orbit_code_protocol::models::FunctionCallOutputBody;
+use orbit_code_protocol::models::ResponseItem;
 use serde::Deserialize;
 use serde_json::Value;
 use std::collections::HashSet;
@@ -158,10 +158,10 @@ fn strip_total_output_header(output: &str) -> Option<(&str, u32)> {
 
 pub(crate) mod tools {
     use crate::tools::spec::JsonSchema;
-    use codex_protocol::config_types::WebSearchContextSize;
-    use codex_protocol::config_types::WebSearchFilters as ConfigWebSearchFilters;
-    use codex_protocol::config_types::WebSearchUserLocation as ConfigWebSearchUserLocation;
-    use codex_protocol::config_types::WebSearchUserLocationType;
+    use orbit_code_protocol::config_types::WebSearchContextSize;
+    use orbit_code_protocol::config_types::WebSearchFilters as ConfigWebSearchFilters;
+    use orbit_code_protocol::config_types::WebSearchUserLocation as ConfigWebSearchUserLocation;
+    use orbit_code_protocol::config_types::WebSearchUserLocationType;
     use serde::Deserialize;
     use serde::Serialize;
     use serde_json::Value;

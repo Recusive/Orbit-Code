@@ -1,24 +1,24 @@
 use std::process::Command;
 use std::sync::Arc;
 
-use codex_core::CodexAuth;
-use codex_core::ModelClient;
-use codex_core::ModelProviderInfo;
-use codex_core::Prompt;
-use codex_core::ResponseEvent;
-use codex_core::WireApi;
-use codex_otel::SessionTelemetry;
-use codex_otel::TelemetryAuthMode;
-use codex_protocol::ThreadId;
-use codex_protocol::config_types::ReasoningSummary;
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::SubAgentSource;
 use core_test_support::load_default_config_for_test;
 use core_test_support::responses;
 use core_test_support::test_codex::test_codex;
 use futures::StreamExt;
+use orbit_code_core::CodexAuth;
+use orbit_code_core::ModelClient;
+use orbit_code_core::ModelProviderInfo;
+use orbit_code_core::Prompt;
+use orbit_code_core::ResponseEvent;
+use orbit_code_core::WireApi;
+use orbit_code_otel::SessionTelemetry;
+use orbit_code_otel::TelemetryAuthMode;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::config_types::ReasoningSummary;
+use orbit_code_protocol::models::ContentItem;
+use orbit_code_protocol::models::ResponseItem;
+use orbit_code_protocol::protocol::SessionSource;
+use orbit_code_protocol::protocol::SubAgentSource;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 use wiremock::matchers::header;
@@ -58,13 +58,13 @@ async fn responses_stream_includes_subagent_header_on_review() {
         supports_websockets: false,
     };
 
-    let codex_home = TempDir::new().expect("failed to create TempDir");
-    let mut config = load_default_config_for_test(&codex_home).await;
+    let orbit_code_home = TempDir::new().expect("failed to create TempDir");
+    let mut config = load_default_config_for_test(&orbit_code_home).await;
     config.model_provider_id = provider.name.clone();
     config.model_provider = provider.clone();
     let effort = config.model_reasoning_effort;
     let summary = config.model_reasoning_summary;
-    let model = codex_core::test_support::get_model_offline(config.model.as_deref());
+    let model = orbit_code_core::test_support::get_model_offline(config.model.as_deref());
     config.model = Some(model.clone());
     let config = Arc::new(config);
 
@@ -72,7 +72,7 @@ async fn responses_stream_includes_subagent_header_on_review() {
     let auth_mode = TelemetryAuthMode::Chatgpt;
     let session_source = SessionSource::SubAgent(SubAgentSource::Review);
     let model_info =
-        codex_core::test_support::construct_model_info_offline(model.as_str(), &config);
+        orbit_code_core::test_support::construct_model_info_offline(model.as_str(), &config);
     let session_telemetry = SessionTelemetry::new(
         conversation_id,
         model.as_str(),
@@ -170,13 +170,13 @@ async fn responses_stream_includes_subagent_header_on_other() {
         supports_websockets: false,
     };
 
-    let codex_home = TempDir::new().expect("failed to create TempDir");
-    let mut config = load_default_config_for_test(&codex_home).await;
+    let orbit_code_home = TempDir::new().expect("failed to create TempDir");
+    let mut config = load_default_config_for_test(&orbit_code_home).await;
     config.model_provider_id = provider.name.clone();
     config.model_provider = provider.clone();
     let effort = config.model_reasoning_effort;
     let summary = config.model_reasoning_summary;
-    let model = codex_core::test_support::get_model_offline(config.model.as_deref());
+    let model = orbit_code_core::test_support::get_model_offline(config.model.as_deref());
     config.model = Some(model.clone());
     let config = Arc::new(config);
 
@@ -184,7 +184,7 @@ async fn responses_stream_includes_subagent_header_on_other() {
     let auth_mode = TelemetryAuthMode::Chatgpt;
     let session_source = SessionSource::SubAgent(SubAgentSource::Other("my-task".to_string()));
     let model_info =
-        codex_core::test_support::construct_model_info_offline(model.as_str(), &config);
+        orbit_code_core::test_support::construct_model_info_offline(model.as_str(), &config);
 
     let session_telemetry = SessionTelemetry::new(
         conversation_id,
@@ -277,8 +277,8 @@ async fn responses_respects_model_info_overrides_from_config() {
         supports_websockets: false,
     };
 
-    let codex_home = TempDir::new().expect("failed to create TempDir");
-    let mut config = load_default_config_for_test(&codex_home).await;
+    let orbit_code_home = TempDir::new().expect("failed to create TempDir");
+    let mut config = load_default_config_for_test(&orbit_code_home).await;
     config.model = Some("gpt-3.5-turbo".to_string());
     config.model_provider_id = provider.name.clone();
     config.model_provider = provider.clone();
@@ -290,14 +290,15 @@ async fn responses_respects_model_info_overrides_from_config() {
     let config = Arc::new(config);
 
     let conversation_id = ThreadId::new();
-    let auth_mode =
-        codex_core::test_support::auth_manager_from_auth(CodexAuth::from_api_key("Test API Key"))
-            .auth_mode()
-            .map(TelemetryAuthMode::from);
+    let auth_mode = orbit_code_core::test_support::auth_manager_from_auth(CodexAuth::from_api_key(
+        "Test API Key",
+    ))
+    .auth_mode()
+    .map(TelemetryAuthMode::from);
     let session_source =
         SessionSource::SubAgent(SubAgentSource::Other("override-check".to_string()));
     let model_info =
-        codex_core::test_support::construct_model_info_offline(model.as_str(), &config);
+        orbit_code_core::test_support::construct_model_info_offline(model.as_str(), &config);
     let session_telemetry = SessionTelemetry::new(
         conversation_id,
         model.as_str(),

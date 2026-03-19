@@ -1,19 +1,19 @@
 [package]
-name = "codex-app-server"
+name = "orbit-code-app-server"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [[bin]]
-name = "codex-app-server"
+name = "orbit-code-app-server"
 path = "src/main.rs"
 
 [[bin]]
-name = "codex-app-server-test-notify-capture"
+name = "orbit-code-app-server-test-notify-capture"
 path = "src/bin/notify_capture.rs"
 
 [lib]
-name = "codex_app_server"
+name = "orbit_code_app_server"
 path = "src/lib.rs"
 
 [lints]
@@ -29,25 +29,25 @@ axum = { workspace = true, default-features = false, features = [
     "tokio",
     "ws",
 ] }
-codex-arg0 = { workspace = true }
-codex-cloud-requirements = { workspace = true }
-codex-core = { workspace = true }
-codex-environment = { workspace = true }
-codex-otel = { workspace = true }
-codex-shell-command = { workspace = true }
-codex-utils-cli = { workspace = true }
-codex-utils-pty = { workspace = true }
-codex-backend-client = { workspace = true }
-codex-file-search = { workspace = true }
-codex-chatgpt = { workspace = true }
-codex-login = { workspace = true }
-codex-protocol = { workspace = true }
-codex-app-server-protocol = { workspace = true }
-codex-feedback = { workspace = true }
-codex-rmcp-client = { workspace = true }
-codex-state = { workspace = true }
-codex-utils-absolute-path = { workspace = true }
-codex-utils-json-to-toml = { workspace = true }
+orbit-code-arg0 = { workspace = true }
+orbit-code-cloud-requirements = { workspace = true }
+orbit-code-core = { workspace = true }
+orbit-code-environment = { workspace = true }
+orbit-code-otel = { workspace = true }
+orbit-code-shell-command = { workspace = true }
+orbit-code-utils-cli = { workspace = true }
+orbit-code-utils-pty = { workspace = true }
+orbit-code-backend-client = { workspace = true }
+orbit-code-file-search = { workspace = true }
+orbit-code-chatgpt = { workspace = true }
+orbit-code-login = { workspace = true }
+orbit-code-protocol = { workspace = true }
+orbit-code-app-server-protocol = { workspace = true }
+orbit-code-feedback = { workspace = true }
+orbit-code-rmcp-client = { workspace = true }
+orbit-code-state = { workspace = true }
+orbit-code-utils-absolute-path = { workspace = true }
+orbit-code-utils-json-to-toml = { workspace = true }
 chrono = { workspace = true }
 clap = { workspace = true, features = ["derive"] }
 futures = { workspace = true }
@@ -79,7 +79,7 @@ axum = { workspace = true, default-features = false, features = [
     "tokio",
 ] }
 core_test_support = { workspace = true }
-codex-utils-cargo-bin = { workspace = true }
+orbit-code-utils-cargo-bin = { workspace = true }
 opentelemetry = { workspace = true }
 opentelemetry_sdk = { workspace = true }
 pretty_assertions = { workspace = true }

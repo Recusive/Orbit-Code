@@ -1,19 +1,19 @@
 [package]
 edition.workspace = true
 license.workspace = true
-name = "codex-skills"
+name = "orbit-code-skills"
 version.workspace = true
 build = "build.rs"
 
 [lib]
 doctest = false
-name = "codex_skills"
+name = "orbit_code_skills"
 path = "src/lib.rs"
 
 [lints]
 workspace = true
 
 [dependencies]
-codex-utils-absolute-path = { workspace = true }
+orbit-code-utils-absolute-path = { workspace = true }
 include_dir = { workspace = true }
 thiserror = { workspace = true }

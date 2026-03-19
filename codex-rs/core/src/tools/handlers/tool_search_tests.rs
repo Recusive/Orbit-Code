@@ -1,5 +1,5 @@
 use super::*;
-use crate::mcp::CODEX_APPS_MCP_SERVER_NAME;
+use crate::mcp::ORBIT_APPS_MCP_SERVER_NAME;
 use pretty_assertions::assert_eq;
 use rmcp::model::JsonObject;
 use rmcp::model::Tool;
@@ -10,11 +10,11 @@ use std::sync::Arc;
 fn serialize_tool_search_output_tools_groups_results_by_namespace() {
     let entries = [
         (
-            "mcp__codex_apps__calendar_create_event".to_string(),
+            "mcp__orbit_code_apps__calendar_create_event".to_string(),
             ToolInfo {
-                server_name: CODEX_APPS_MCP_SERVER_NAME.to_string(),
+                server_name: ORBIT_APPS_MCP_SERVER_NAME.to_string(),
                 tool_name: "_create_event".to_string(),
-                tool_namespace: "mcp__codex_apps__calendar".to_string(),
+                tool_namespace: "mcp__orbit_code_apps__calendar".to_string(),
                 tool: Tool {
                     name: "calendar-create-event".to_string().into(),
                     title: None,
@@ -36,11 +36,11 @@ fn serialize_tool_search_output_tools_groups_results_by_namespace() {
             },
         ),
         (
-            "mcp__codex_apps__gmail_read_email".to_string(),
+            "mcp__orbit_code_apps__gmail_read_email".to_string(),
             ToolInfo {
-                server_name: CODEX_APPS_MCP_SERVER_NAME.to_string(),
+                server_name: ORBIT_APPS_MCP_SERVER_NAME.to_string(),
                 tool_name: "_read_email".to_string(),
-                tool_namespace: "mcp__codex_apps__gmail".to_string(),
+                tool_namespace: "mcp__orbit_code_apps__gmail".to_string(),
                 tool: Tool {
                     name: "gmail-read-email".to_string().into(),
                     title: None,
@@ -62,11 +62,11 @@ fn serialize_tool_search_output_tools_groups_results_by_namespace() {
             },
         ),
         (
-            "mcp__codex_apps__calendar_list_events".to_string(),
+            "mcp__orbit_code_apps__calendar_list_events".to_string(),
             ToolInfo {
-                server_name: CODEX_APPS_MCP_SERVER_NAME.to_string(),
+                server_name: ORBIT_APPS_MCP_SERVER_NAME.to_string(),
                 tool_name: "_list_events".to_string(),
-                tool_namespace: "mcp__codex_apps__calendar".to_string(),
+                tool_namespace: "mcp__orbit_code_apps__calendar".to_string(),
                 tool: Tool {
                     name: "calendar-list-events".to_string().into(),
                     title: None,
@@ -96,7 +96,7 @@ fn serialize_tool_search_output_tools_groups_results_by_namespace() {
         tools,
         vec![
             ToolSearchOutputTool::Namespace(ResponsesApiNamespace {
-                name: "mcp__codex_apps__calendar".to_string(),
+                name: "mcp__orbit_code_apps__calendar".to_string(),
                 description: "Plan events".to_string(),
                 tools: vec![
                     ResponsesApiNamespaceTool::Function(ResponsesApiTool {
@@ -126,7 +126,7 @@ fn serialize_tool_search_output_tools_groups_results_by_namespace() {
                 ],
             }),
             ToolSearchOutputTool::Namespace(ResponsesApiNamespace {
-                name: "mcp__codex_apps__gmail".to_string(),
+                name: "mcp__orbit_code_apps__gmail".to_string(),
                 description: "Read mail".to_string(),
                 tools: vec![ResponsesApiNamespaceTool::Function(ResponsesApiTool {
                     name: "_read_email".to_string(),
@@ -148,11 +148,11 @@ fn serialize_tool_search_output_tools_groups_results_by_namespace() {
 #[test]
 fn serialize_tool_search_output_tools_falls_back_to_connector_name_description() {
     let entries = [(
-        "mcp__codex_apps__gmail_batch_read_email".to_string(),
+        "mcp__orbit_code_apps__gmail_batch_read_email".to_string(),
         ToolInfo {
-            server_name: CODEX_APPS_MCP_SERVER_NAME.to_string(),
+            server_name: ORBIT_APPS_MCP_SERVER_NAME.to_string(),
             tool_name: "_batch_read_email".to_string(),
-            tool_namespace: "mcp__codex_apps__gmail".to_string(),
+            tool_namespace: "mcp__orbit_code_apps__gmail".to_string(),
             tool: Tool {
                 name: "gmail-batch-read-email".to_string().into(),
                 title: None,
@@ -179,7 +179,7 @@ fn serialize_tool_search_output_tools_falls_back_to_connector_name_description()
     assert_eq!(
         tools,
         vec![ToolSearchOutputTool::Namespace(ResponsesApiNamespace {
-            name: "mcp__codex_apps__gmail".to_string(),
+            name: "mcp__orbit_code_apps__gmail".to_string(),
             description: "Tools for working with Gmail.".to_string(),
             tools: vec![ResponsesApiNamespaceTool::Function(ResponsesApiTool {
                 name: "_batch_read_email".to_string(),

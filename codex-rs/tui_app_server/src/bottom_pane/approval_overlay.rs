@@ -16,26 +16,26 @@ use crate::key_hint::KeyBinding;
 use crate::render::highlight::highlight_bash_to_lines;
 use crate::render::renderable::ColumnRenderable;
 use crate::render::renderable::Renderable;
-use codex_core::features::Features;
-use codex_protocol::ThreadId;
-use codex_protocol::mcp::RequestId;
-use codex_protocol::models::MacOsAutomationPermission;
-use codex_protocol::models::MacOsContactsPermission;
-use codex_protocol::models::MacOsPreferencesPermission;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::protocol::ElicitationAction;
-use codex_protocol::protocol::FileChange;
-use codex_protocol::protocol::NetworkApprovalContext;
-use codex_protocol::protocol::NetworkPolicyRuleAction;
-#[cfg(test)]
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::ReviewDecision;
-use codex_protocol::request_permissions::PermissionGrantScope;
-use codex_protocol::request_permissions::RequestPermissionProfile;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyEventKind;
 use crossterm::event::KeyModifiers;
+use orbit_code_core::features::Features;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::mcp::RequestId;
+use orbit_code_protocol::models::MacOsAutomationPermission;
+use orbit_code_protocol::models::MacOsContactsPermission;
+use orbit_code_protocol::models::MacOsPreferencesPermission;
+use orbit_code_protocol::models::PermissionProfile;
+use orbit_code_protocol::protocol::ElicitationAction;
+use orbit_code_protocol::protocol::FileChange;
+use orbit_code_protocol::protocol::NetworkApprovalContext;
+use orbit_code_protocol::protocol::NetworkPolicyRuleAction;
+#[cfg(test)]
+use orbit_code_protocol::protocol::Op;
+use orbit_code_protocol::protocol::ReviewDecision;
+use orbit_code_protocol::request_permissions::PermissionGrantScope;
+use orbit_code_protocol::request_permissions::RequestPermissionProfile;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::style::Stylize;
@@ -305,7 +305,7 @@ impl ApprovalOverlay {
         self.app_event_tx.request_permissions_response(
             thread_id,
             call_id.to_string(),
-            codex_protocol::request_permissions::RequestPermissionsResponse {
+            orbit_code_protocol::request_permissions::RequestPermissionsResponse {
                 permissions: granted_permissions,
                 scope,
             },
@@ -891,16 +891,16 @@ fn elicitation_options() -> Vec<ApprovalOption> {
 mod tests {
     use super::*;
     use crate::app_event::AppEvent;
-    use codex_protocol::models::FileSystemPermissions;
-    use codex_protocol::models::MacOsAutomationPermission;
-    use codex_protocol::models::MacOsPreferencesPermission;
-    use codex_protocol::models::MacOsSeatbeltProfileExtensions;
-    use codex_protocol::models::NetworkPermissions;
-    use codex_protocol::protocol::ExecPolicyAmendment;
-    use codex_protocol::protocol::NetworkApprovalProtocol;
-    use codex_protocol::protocol::NetworkPolicyAmendment;
-    use codex_utils_absolute_path::AbsolutePathBuf;
     use insta::assert_snapshot;
+    use orbit_code_protocol::models::FileSystemPermissions;
+    use orbit_code_protocol::models::MacOsAutomationPermission;
+    use orbit_code_protocol::models::MacOsPreferencesPermission;
+    use orbit_code_protocol::models::MacOsSeatbeltProfileExtensions;
+    use orbit_code_protocol::models::NetworkPermissions;
+    use orbit_code_protocol::protocol::ExecPolicyAmendment;
+    use orbit_code_protocol::protocol::NetworkApprovalProtocol;
+    use orbit_code_protocol::protocol::NetworkPolicyAmendment;
+    use orbit_code_utils_absolute_path::AbsolutePathBuf;
     use pretty_assertions::assert_eq;
     use tokio::sync::mpsc::unbounded_channel;
 

@@ -26,10 +26,10 @@ use crate::model::datetime_to_epoch_seconds;
 use crate::paths::file_modified_time_utc;
 use chrono::DateTime;
 use chrono::Utc;
-use codex_protocol::ThreadId;
-use codex_protocol::dynamic_tools::DynamicToolSpec;
-use codex_protocol::protocol::RolloutItem;
 use log::LevelFilter;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::dynamic_tools::DynamicToolSpec;
+use orbit_code_protocol::protocol::RolloutItem;
 use serde_json::Value;
 use sqlx::ConnectOptions;
 use sqlx::QueryBuilder;
@@ -68,7 +68,7 @@ const LOG_PARTITION_ROW_LIMIT: i64 = 1_000;
 
 #[derive(Clone)]
 pub struct StateRuntime {
-    codex_home: PathBuf,
+    orbit_code_home: PathBuf,
     default_provider: String,
     pool: Arc<sqlx::SqlitePool>,
     logs_pool: Arc<sqlx::SqlitePool>,
@@ -77,29 +77,32 @@ pub struct StateRuntime {
 impl StateRuntime {
     /// Initialize the state runtime using the provided Codex home and default provider.
     ///
-    /// This opens (and migrates) the SQLite databases under `codex_home`,
+    /// This opens (and migrates) the SQLite databases under `orbit_code_home`,
     /// keeping logs in a dedicated file to reduce lock contention with the
     /// rest of the state store.
-    pub async fn init(codex_home: PathBuf, default_provider: String) -> anyhow::Result<Arc<Self>> {
-        tokio::fs::create_dir_all(&codex_home).await?;
+    pub async fn init(
+        orbit_code_home: PathBuf,
+        default_provider: String,
+    ) -> anyhow::Result<Arc<Self>> {
+        tokio::fs::create_dir_all(&orbit_code_home).await?;
         let current_state_name = state_db_filename();
         let current_logs_name = logs_db_filename();
         remove_legacy_db_files(
-            &codex_home,
+            &orbit_code_home,
             current_state_name.as_str(),
             STATE_DB_FILENAME,
             "state",
         )
         .await;
         remove_legacy_db_files(
-            &codex_home,
+            &orbit_code_home,
             current_logs_name.as_str(),
             LOGS_DB_FILENAME,
             "logs",
         )
         .await;
-        let state_path = state_db_path(codex_home.as_path());
-        let logs_path = logs_db_path(codex_home.as_path());
+        let state_path = state_db_path(orbit_code_home.as_path());
+        let logs_path = logs_db_path(orbit_code_home.as_path());
         let pool = match open_sqlite(&state_path, &STATE_MIGRATOR).await {
             Ok(db) => Arc::new(db),
             Err(err) => {
@@ -117,15 +120,15 @@ impl StateRuntime {
         let runtime = Arc::new(Self {
             pool,
             logs_pool,
-            codex_home,
+            orbit_code_home,
             default_provider,
         });
         Ok(runtime)
     }
 
     /// Return the configured Codex home directory for this runtime.
-    pub fn codex_home(&self) -> &Path {
-        self.codex_home.as_path()
+    pub fn orbit_code_home(&self) -> &Path {
+        self.orbit_code_home.as_path()
     }
 }
 
@@ -153,30 +156,30 @@ pub fn state_db_filename() -> String {
     db_filename(STATE_DB_FILENAME, STATE_DB_VERSION)
 }
 
-pub fn state_db_path(codex_home: &Path) -> PathBuf {
-    codex_home.join(state_db_filename())
+pub fn state_db_path(orbit_code_home: &Path) -> PathBuf {
+    orbit_code_home.join(state_db_filename())
 }
 
 pub fn logs_db_filename() -> String {
     db_filename(LOGS_DB_FILENAME, LOGS_DB_VERSION)
 }
 
-pub fn logs_db_path(codex_home: &Path) -> PathBuf {
-    codex_home.join(logs_db_filename())
+pub fn logs_db_path(orbit_code_home: &Path) -> PathBuf {
+    orbit_code_home.join(logs_db_filename())
 }
 
 async fn remove_legacy_db_files(
-    codex_home: &Path,
+    orbit_code_home: &Path,
     current_name: &str,
     base_name: &str,
     db_label: &str,
 ) {
-    let mut entries = match tokio::fs::read_dir(codex_home).await {
+    let mut entries = match tokio::fs::read_dir(orbit_code_home).await {
         Ok(entries) => entries,
         Err(err) => {
             warn!(
-                "failed to read codex_home for {db_label} db cleanup {}: {err}",
-                codex_home.display(),
+                "failed to read orbit_code_home for {db_label} db cleanup {}: {err}",
+                orbit_code_home.display(),
             );
             return;
         }

@@ -3,8 +3,8 @@ use std::future::Future;
 use std::path::Path;
 use std::path::PathBuf;
 
-use codex_apply_patch::CODEX_CORE_APPLY_PATCH_ARG1;
-use codex_utils_home_dir::find_codex_home;
+use orbit_code_apply_patch::ORBIT_CORE_APPLY_PATCH_ARG1;
+use orbit_code_utils_home_dir::find_orbit_code_home;
 #[cfg(unix)]
 use std::os::unix::fs::symlink;
 use tempfile::TempDir;
@@ -19,7 +19,7 @@ const TOKIO_WORKER_STACK_SIZE_BYTES: usize = 16 * 1024 * 1024;
 
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct Arg0DispatchPaths {
-    pub codex_linux_sandbox_exe: Option<PathBuf>,
+    pub orbit_code_linux_sandbox_exe: Option<PathBuf>,
     pub main_execve_wrapper_exe: Option<PathBuf>,
 }
 
@@ -70,9 +70,8 @@ pub fn arg0_dispatch() -> Option<Arg0PathEntryGuard> {
             Ok(runtime) => runtime,
             Err(_) => std::process::exit(1),
         };
-        let exit_code = runtime.block_on(
-            codex_shell_escalation::run_shell_escalation_execve_wrapper(file, argv),
-        );
+        let exit_code = runtime
+            .block_on(orbit_code_shell_escalation::run_shell_escalation_execve_wrapper(file, argv));
         match exit_code {
             Ok(exit_code) => std::process::exit(exit_code),
             Err(_) => std::process::exit(1),
@@ -81,25 +80,25 @@ pub fn arg0_dispatch() -> Option<Arg0PathEntryGuard> {
 
     if exe_name == LINUX_SANDBOX_ARG0 {
         // Safety: [`run_main`] never returns.
-        codex_linux_sandbox::run_main();
+        orbit_code_linux_sandbox::run_main();
     } else if exe_name == APPLY_PATCH_ARG0 || exe_name == MISSPELLED_APPLY_PATCH_ARG0 {
-        codex_apply_patch::main();
+        orbit_code_apply_patch::main();
     }
 
     let argv1 = args.next().unwrap_or_default();
-    if argv1 == CODEX_CORE_APPLY_PATCH_ARG1 {
+    if argv1 == ORBIT_CORE_APPLY_PATCH_ARG1 {
         let patch_arg = args.next().and_then(|s| s.to_str().map(str::to_owned));
         let exit_code = match patch_arg {
             Some(patch_arg) => {
                 let mut stdout = std::io::stdout();
                 let mut stderr = std::io::stderr();
-                match codex_apply_patch::apply_patch(&patch_arg, &mut stdout, &mut stderr) {
+                match orbit_code_apply_patch::apply_patch(&patch_arg, &mut stdout, &mut stderr) {
                     Ok(()) => 0,
                     Err(_) => 1,
                 }
             }
             None => {
-                eprintln!("Error: {CODEX_CORE_APPLY_PATCH_ARG1} requires a UTF-8 PATCH argument.");
+                eprintln!("Error: {ORBIT_CORE_APPLY_PATCH_ARG1} requires a UTF-8 PATCH argument.");
                 1
             }
         };
@@ -110,7 +109,7 @@ pub fn arg0_dispatch() -> Option<Arg0PathEntryGuard> {
     // before creating any threads/the Tokio runtime.
     load_dotenv();
 
-    match prepend_path_entry_for_codex_aliases() {
+    match prepend_path_entry_for_orbit_code_aliases() {
         Ok(path_entry) => Some(path_entry),
         Err(err) => {
             // It is possible that Codex will proceed successfully even if
@@ -129,7 +128,7 @@ pub fn arg0_dispatch() -> Option<Arg0PathEntryGuard> {
 ///
 /// When the current executable is invoked through the hard-link or alias named
 /// `codex-linux-sandbox` we *directly* execute
-/// [`codex_linux_sandbox::run_main`] (which never returns). Otherwise we:
+/// [`orbit_code_linux_sandbox::run_main`] (which never returns). Otherwise we:
 ///
 /// 1.  Load `.env` values from `~/.codex/.env` before creating any threads.
 /// 2.  Construct a Tokio multi-thread runtime.
@@ -138,7 +137,7 @@ pub fn arg0_dispatch() -> Option<Arg0PathEntryGuard> {
 /// 4.  Execute the provided async `main_fn` inside that runtime, forwarding any
 ///     error. Note that `main_fn` receives [`Arg0DispatchPaths`], which
 ///     contains the helper executable paths needed to construct
-///     [`codex_core::config::Config`].
+///     [`orbit_code_core::config::Config`].
 ///
 /// This function should be used to wrap any `main()` function in binary crates
 /// in this workspace that depends on these helper CLIs.
@@ -158,11 +157,11 @@ where
     runtime.block_on(async move {
         let current_exe = std::env::current_exe().ok();
         let paths = Arg0DispatchPaths {
-            codex_linux_sandbox_exe: if cfg!(target_os = "linux") {
+            orbit_code_linux_sandbox_exe: if cfg!(target_os = "linux") {
                 current_exe.or_else(|| {
-                    path_entry
-                        .as_ref()
-                        .and_then(|path_entry| path_entry.paths().codex_linux_sandbox_exe.clone())
+                    path_entry.as_ref().and_then(|path_entry| {
+                        path_entry.paths().orbit_code_linux_sandbox_exe.clone()
+                    })
                 })
             } else {
                 None
@@ -183,21 +182,21 @@ fn build_runtime() -> anyhow::Result<tokio::runtime::Runtime> {
     Ok(builder.build()?)
 }
 
-const ILLEGAL_ENV_VAR_PREFIX: &str = "CODEX_";
+const ILLEGAL_ENV_VAR_PREFIX: &str = "ORBIT_";
 
 /// Load env vars from ~/.codex/.env.
 ///
 /// Security: Do not allow `.env` files to create or modify any variables
-/// with names starting with `CODEX_`.
+/// with names starting with `ORBIT_`.
 fn load_dotenv() {
-    if let Ok(codex_home) = find_codex_home()
-        && let Ok(iter) = dotenvy::from_path_iter(codex_home.join(".env"))
+    if let Ok(orbit_code_home) = find_orbit_code_home()
+        && let Ok(iter) = dotenvy::from_path_iter(orbit_code_home.join(".env"))
     {
         set_filtered(iter);
     }
 }
 
-/// Helper to set vars from a dotenvy iterator while filtering out `CODEX_` keys.
+/// Helper to set vars from a dotenvy iterator while filtering out `ORBIT_` keys.
 fn set_filtered<I>(iter: I)
 where
     I: IntoIterator<Item = Result<(String, String), dotenvy::Error>>,
@@ -225,25 +224,25 @@ where
 ///
 /// IMPORTANT: This function modifies the PATH environment variable, so it MUST
 /// be called before multiple threads are spawned.
-pub fn prepend_path_entry_for_codex_aliases() -> std::io::Result<Arg0PathEntryGuard> {
-    let codex_home = find_codex_home()?;
+pub fn prepend_path_entry_for_orbit_code_aliases() -> std::io::Result<Arg0PathEntryGuard> {
+    let orbit_code_home = find_orbit_code_home()?;
     #[cfg(not(debug_assertions))]
     {
         // Guard against placing helpers in system temp directories outside debug builds.
         let temp_root = std::env::temp_dir();
-        if codex_home.starts_with(&temp_root) {
+        if orbit_code_home.starts_with(&temp_root) {
             return Err(std::io::Error::new(
                 std::io::ErrorKind::InvalidInput,
                 format!(
-                    "Refusing to create helper binaries under temporary dir {temp_root:?} (codex_home: {codex_home:?})"
+                    "Refusing to create helper binaries under temporary dir {temp_root:?} (orbit_code_home: {orbit_code_home:?})"
                 ),
             ));
         }
     }
 
-    std::fs::create_dir_all(&codex_home)?;
-    // Use a CODEX_HOME-scoped temp root to avoid cluttering the top-level directory.
-    let temp_root = codex_home.join("tmp").join("arg0");
+    std::fs::create_dir_all(&orbit_code_home)?;
+    // Use a ORBIT_HOME-scoped temp root to avoid cluttering the top-level directory.
+    let temp_root = orbit_code_home.join("tmp").join("arg0");
     std::fs::create_dir_all(&temp_root)?;
     #[cfg(unix)]
     {
@@ -295,7 +294,7 @@ pub fn prepend_path_entry_for_codex_aliases() -> std::io::Result<Arg0PathEntryGu
                 &batch_script,
                 format!(
                     r#"@echo off
-"{}" {CODEX_CORE_APPLY_PATCH_ARG1} %*
+"{}" {ORBIT_CORE_APPLY_PATCH_ARG1} %*
 "#,
                     exe.display()
                 ),
@@ -324,7 +323,7 @@ pub fn prepend_path_entry_for_codex_aliases() -> std::io::Result<Arg0PathEntryGu
     }
 
     let paths = Arg0DispatchPaths {
-        codex_linux_sandbox_exe: {
+        orbit_code_linux_sandbox_exe: {
             #[cfg(target_os = "linux")]
             {
                 Some(path.join(LINUX_SANDBOX_ARG0))

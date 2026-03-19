@@ -41,7 +41,7 @@ fn find_git_root(start: &Path) -> Option<PathBuf> {
 }
 
 /// Ensure the sandbox codex home directory exists.
-pub fn ensure_codex_home_exists(p: &Path) -> Result<()> {
+pub fn ensure_orbit_code_home_exists(p: &Path) -> Result<()> {
     std::fs::create_dir_all(p)?;
     Ok(())
 }

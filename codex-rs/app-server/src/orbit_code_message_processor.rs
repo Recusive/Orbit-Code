@@ -20,265 +20,265 @@ use crate::thread_status::resolve_thread_status;
 use chrono::DateTime;
 use chrono::SecondsFormat;
 use chrono::Utc;
-use codex_app_server_protocol::Account;
-use codex_app_server_protocol::AccountLoginCompletedNotification;
-use codex_app_server_protocol::AccountUpdatedNotification;
-use codex_app_server_protocol::AppInfo;
-use codex_app_server_protocol::AppsListParams;
-use codex_app_server_protocol::AppsListResponse;
-use codex_app_server_protocol::AskForApproval;
-use codex_app_server_protocol::AuthMode;
-use codex_app_server_protocol::CancelLoginAccountParams;
-use codex_app_server_protocol::CancelLoginAccountResponse;
-use codex_app_server_protocol::CancelLoginAccountStatus;
-use codex_app_server_protocol::ClientRequest;
-use codex_app_server_protocol::CollaborationModeListParams;
-use codex_app_server_protocol::CollaborationModeListResponse;
-use codex_app_server_protocol::CommandExecParams;
-use codex_app_server_protocol::CommandExecResizeParams;
-use codex_app_server_protocol::CommandExecTerminateParams;
-use codex_app_server_protocol::CommandExecWriteParams;
-use codex_app_server_protocol::ConversationGitInfo;
-use codex_app_server_protocol::ConversationSummary;
-use codex_app_server_protocol::DynamicToolSpec as ApiDynamicToolSpec;
-use codex_app_server_protocol::ExperimentalFeature as ApiExperimentalFeature;
-use codex_app_server_protocol::ExperimentalFeatureListParams;
-use codex_app_server_protocol::ExperimentalFeatureListResponse;
-use codex_app_server_protocol::ExperimentalFeatureStage as ApiExperimentalFeatureStage;
-use codex_app_server_protocol::FeedbackUploadParams;
-use codex_app_server_protocol::FeedbackUploadResponse;
-use codex_app_server_protocol::FuzzyFileSearchParams;
-use codex_app_server_protocol::FuzzyFileSearchResponse;
-use codex_app_server_protocol::FuzzyFileSearchSessionStartParams;
-use codex_app_server_protocol::FuzzyFileSearchSessionStartResponse;
-use codex_app_server_protocol::FuzzyFileSearchSessionStopParams;
-use codex_app_server_protocol::FuzzyFileSearchSessionStopResponse;
-use codex_app_server_protocol::FuzzyFileSearchSessionUpdateParams;
-use codex_app_server_protocol::FuzzyFileSearchSessionUpdateResponse;
-use codex_app_server_protocol::GetAccountParams;
-use codex_app_server_protocol::GetAccountRateLimitsResponse;
-use codex_app_server_protocol::GetAccountResponse;
-use codex_app_server_protocol::GetAuthStatusParams;
-use codex_app_server_protocol::GetAuthStatusResponse;
-use codex_app_server_protocol::GetConversationSummaryParams;
-use codex_app_server_protocol::GetConversationSummaryResponse;
-use codex_app_server_protocol::GitDiffToRemoteResponse;
-use codex_app_server_protocol::GitInfo as ApiGitInfo;
-use codex_app_server_protocol::JSONRPCErrorError;
-use codex_app_server_protocol::ListMcpServerStatusParams;
-use codex_app_server_protocol::ListMcpServerStatusResponse;
-use codex_app_server_protocol::LoginAccountParams;
-use codex_app_server_protocol::LoginAccountResponse;
-use codex_app_server_protocol::LoginApiKeyParams;
-use codex_app_server_protocol::LogoutAccountResponse;
-use codex_app_server_protocol::MarketplaceInterface;
-use codex_app_server_protocol::McpServerOauthLoginCompletedNotification;
-use codex_app_server_protocol::McpServerOauthLoginParams;
-use codex_app_server_protocol::McpServerOauthLoginResponse;
-use codex_app_server_protocol::McpServerRefreshResponse;
-use codex_app_server_protocol::McpServerStatus;
-use codex_app_server_protocol::MockExperimentalMethodParams;
-use codex_app_server_protocol::MockExperimentalMethodResponse;
-use codex_app_server_protocol::ModelListParams;
-use codex_app_server_protocol::ModelListResponse;
-use codex_app_server_protocol::PluginDetail;
-use codex_app_server_protocol::PluginInstallParams;
-use codex_app_server_protocol::PluginInstallResponse;
-use codex_app_server_protocol::PluginInterface;
-use codex_app_server_protocol::PluginListParams;
-use codex_app_server_protocol::PluginListResponse;
-use codex_app_server_protocol::PluginMarketplaceEntry;
-use codex_app_server_protocol::PluginReadParams;
-use codex_app_server_protocol::PluginReadResponse;
-use codex_app_server_protocol::PluginSource;
-use codex_app_server_protocol::PluginSummary;
-use codex_app_server_protocol::PluginUninstallParams;
-use codex_app_server_protocol::PluginUninstallResponse;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::ReviewDelivery as ApiReviewDelivery;
-use codex_app_server_protocol::ReviewStartParams;
-use codex_app_server_protocol::ReviewStartResponse;
-use codex_app_server_protocol::ReviewTarget as ApiReviewTarget;
-use codex_app_server_protocol::SandboxMode;
-use codex_app_server_protocol::ServerNotification;
-use codex_app_server_protocol::ServerRequestResolvedNotification;
-use codex_app_server_protocol::SkillSummary;
-use codex_app_server_protocol::SkillsConfigWriteParams;
-use codex_app_server_protocol::SkillsConfigWriteResponse;
-use codex_app_server_protocol::SkillsListParams;
-use codex_app_server_protocol::SkillsListResponse;
-use codex_app_server_protocol::Thread;
-use codex_app_server_protocol::ThreadArchiveParams;
-use codex_app_server_protocol::ThreadArchiveResponse;
-use codex_app_server_protocol::ThreadArchivedNotification;
-use codex_app_server_protocol::ThreadBackgroundTerminalsCleanParams;
-use codex_app_server_protocol::ThreadBackgroundTerminalsCleanResponse;
-use codex_app_server_protocol::ThreadClosedNotification;
-use codex_app_server_protocol::ThreadCompactStartParams;
-use codex_app_server_protocol::ThreadCompactStartResponse;
-use codex_app_server_protocol::ThreadDecrementElicitationParams;
-use codex_app_server_protocol::ThreadDecrementElicitationResponse;
-use codex_app_server_protocol::ThreadForkParams;
-use codex_app_server_protocol::ThreadForkResponse;
-use codex_app_server_protocol::ThreadIncrementElicitationParams;
-use codex_app_server_protocol::ThreadIncrementElicitationResponse;
-use codex_app_server_protocol::ThreadItem;
-use codex_app_server_protocol::ThreadListParams;
-use codex_app_server_protocol::ThreadListResponse;
-use codex_app_server_protocol::ThreadLoadedListParams;
-use codex_app_server_protocol::ThreadLoadedListResponse;
-use codex_app_server_protocol::ThreadMetadataGitInfoUpdateParams;
-use codex_app_server_protocol::ThreadMetadataUpdateParams;
-use codex_app_server_protocol::ThreadMetadataUpdateResponse;
-use codex_app_server_protocol::ThreadNameUpdatedNotification;
-use codex_app_server_protocol::ThreadReadParams;
-use codex_app_server_protocol::ThreadReadResponse;
-use codex_app_server_protocol::ThreadRealtimeAppendAudioParams;
-use codex_app_server_protocol::ThreadRealtimeAppendAudioResponse;
-use codex_app_server_protocol::ThreadRealtimeAppendTextParams;
-use codex_app_server_protocol::ThreadRealtimeAppendTextResponse;
-use codex_app_server_protocol::ThreadRealtimeStartParams;
-use codex_app_server_protocol::ThreadRealtimeStartResponse;
-use codex_app_server_protocol::ThreadRealtimeStopParams;
-use codex_app_server_protocol::ThreadRealtimeStopResponse;
-use codex_app_server_protocol::ThreadResumeParams;
-use codex_app_server_protocol::ThreadResumeResponse;
-use codex_app_server_protocol::ThreadRollbackParams;
-use codex_app_server_protocol::ThreadSetNameParams;
-use codex_app_server_protocol::ThreadSetNameResponse;
-use codex_app_server_protocol::ThreadShellCommandParams;
-use codex_app_server_protocol::ThreadShellCommandResponse;
-use codex_app_server_protocol::ThreadSortKey;
-use codex_app_server_protocol::ThreadSourceKind;
-use codex_app_server_protocol::ThreadStartParams;
-use codex_app_server_protocol::ThreadStartResponse;
-use codex_app_server_protocol::ThreadStartedNotification;
-use codex_app_server_protocol::ThreadStatus;
-use codex_app_server_protocol::ThreadUnarchiveParams;
-use codex_app_server_protocol::ThreadUnarchiveResponse;
-use codex_app_server_protocol::ThreadUnarchivedNotification;
-use codex_app_server_protocol::ThreadUnsubscribeParams;
-use codex_app_server_protocol::ThreadUnsubscribeResponse;
-use codex_app_server_protocol::ThreadUnsubscribeStatus;
-use codex_app_server_protocol::Turn;
-use codex_app_server_protocol::TurnInterruptParams;
-use codex_app_server_protocol::TurnStartParams;
-use codex_app_server_protocol::TurnStartResponse;
-use codex_app_server_protocol::TurnStatus;
-use codex_app_server_protocol::TurnSteerParams;
-use codex_app_server_protocol::TurnSteerResponse;
-use codex_app_server_protocol::UserInput as V2UserInput;
-use codex_app_server_protocol::WindowsSandboxSetupCompletedNotification;
-use codex_app_server_protocol::WindowsSandboxSetupMode;
-use codex_app_server_protocol::WindowsSandboxSetupStartParams;
-use codex_app_server_protocol::WindowsSandboxSetupStartResponse;
-use codex_app_server_protocol::build_turns_from_rollout_items;
-use codex_arg0::Arg0DispatchPaths;
-use codex_backend_client::Client as BackendClient;
-use codex_chatgpt::connectors;
-use codex_cloud_requirements::cloud_requirements_loader;
-use codex_core::AuthManager;
-use codex_core::CodexAuth;
-use codex_core::CodexThread;
-use codex_core::Cursor as RolloutCursor;
-use codex_core::NewThread;
-use codex_core::RolloutRecorder;
-use codex_core::SessionMeta;
-use codex_core::SteerInputError;
-use codex_core::ThreadConfigSnapshot;
-use codex_core::ThreadManager;
-use codex_core::ThreadSortKey as CoreThreadSortKey;
-use codex_core::auth::AuthMode as CoreAuthMode;
-use codex_core::auth::CLIENT_ID;
-use codex_core::auth::login_with_api_key;
-use codex_core::auth::login_with_chatgpt_auth_tokens;
-use codex_core::config::Config;
-use codex_core::config::ConfigOverrides;
-use codex_core::config::NetworkProxyAuditMetadata;
-use codex_core::config::edit::ConfigEdit;
-use codex_core::config::edit::ConfigEditsBuilder;
-use codex_core::config::types::McpServerTransportConfig;
-use codex_core::config_loader::CloudRequirementsLoadError;
-use codex_core::config_loader::CloudRequirementsLoadErrorCode;
-use codex_core::config_loader::CloudRequirementsLoader;
-use codex_core::default_client::set_default_client_residency_requirement;
-use codex_core::error::CodexErr;
-use codex_core::error::Result as CodexResult;
-use codex_core::exec::ExecExpiration;
-use codex_core::exec::ExecParams;
-use codex_core::exec_env::create_env;
-use codex_core::features::FEATURES;
-use codex_core::features::Feature;
-use codex_core::features::Stage;
-use codex_core::find_archived_thread_path_by_id_str;
-use codex_core::find_thread_name_by_id;
-use codex_core::find_thread_names_by_ids;
-use codex_core::find_thread_path_by_id_str;
-use codex_core::git_info::git_diff_to_remote;
-use codex_core::mcp::auth::discover_supported_scopes;
-use codex_core::mcp::auth::resolve_oauth_scopes;
-use codex_core::mcp::collect_mcp_snapshot;
-use codex_core::mcp::group_tools_by_server;
-use codex_core::models_manager::collaboration_mode_presets::CollaborationModesConfig;
-use codex_core::parse_cursor;
-use codex_core::plugins::MarketplaceError;
-use codex_core::plugins::MarketplacePluginSource;
-use codex_core::plugins::OPENAI_CURATED_MARKETPLACE_NAME;
-use codex_core::plugins::PluginInstallError as CorePluginInstallError;
-use codex_core::plugins::PluginInstallRequest;
-use codex_core::plugins::PluginReadRequest;
-use codex_core::plugins::PluginUninstallError as CorePluginUninstallError;
-use codex_core::plugins::load_plugin_apps;
-use codex_core::read_head_for_summary;
-use codex_core::read_session_meta_line;
-use codex_core::rollout_date_parts;
-use codex_core::sandboxing::SandboxPermissions;
-use codex_core::state_db::StateDbHandle;
-use codex_core::state_db::get_state_db;
-use codex_core::state_db::reconcile_rollout;
-use codex_core::windows_sandbox::WindowsSandboxLevelExt;
-use codex_core::windows_sandbox::WindowsSandboxSetupMode as CoreWindowsSandboxSetupMode;
-use codex_core::windows_sandbox::WindowsSandboxSetupRequest;
-use codex_feedback::CodexFeedback;
-use codex_login::ServerOptions as LoginServerOptions;
-use codex_login::ShutdownHandle;
-use codex_login::run_login_server;
-use codex_protocol::ThreadId;
-use codex_protocol::config_types::CollaborationMode;
-use codex_protocol::config_types::ForcedLoginMethod;
-use codex_protocol::config_types::Personality;
-use codex_protocol::config_types::WindowsSandboxLevel;
-use codex_protocol::dynamic_tools::DynamicToolSpec as CoreDynamicToolSpec;
-use codex_protocol::items::TurnItem;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::protocol::AgentStatus;
-use codex_protocol::protocol::ConversationAudioParams;
-use codex_protocol::protocol::ConversationStartParams;
-use codex_protocol::protocol::ConversationTextParams;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::GitInfo as CoreGitInfo;
-use codex_protocol::protocol::InitialHistory;
-use codex_protocol::protocol::McpAuthStatus as CoreMcpAuthStatus;
-use codex_protocol::protocol::McpServerRefreshConfig;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::RateLimitSnapshot as CoreRateLimitSnapshot;
-use codex_protocol::protocol::ReviewDelivery as CoreReviewDelivery;
-use codex_protocol::protocol::ReviewRequest;
-use codex_protocol::protocol::ReviewTarget as CoreReviewTarget;
-use codex_protocol::protocol::RolloutItem;
-use codex_protocol::protocol::SessionConfiguredEvent;
-use codex_protocol::protocol::SessionMetaLine;
-use codex_protocol::protocol::USER_MESSAGE_BEGIN;
-use codex_protocol::protocol::W3cTraceContext;
-use codex_protocol::user_input::MAX_USER_INPUT_TEXT_CHARS;
-use codex_protocol::user_input::UserInput as CoreInputItem;
-use codex_rmcp_client::perform_oauth_login_return_url;
-use codex_state::StateRuntime;
-use codex_state::ThreadMetadata;
-use codex_state::ThreadMetadataBuilder;
-use codex_state::log_db::LogDbLayer;
-use codex_utils_json_to_toml::json_to_toml;
-use codex_utils_pty::DEFAULT_OUTPUT_BYTES_CAP;
+use orbit_code_app_server_protocol::Account;
+use orbit_code_app_server_protocol::AccountLoginCompletedNotification;
+use orbit_code_app_server_protocol::AccountUpdatedNotification;
+use orbit_code_app_server_protocol::AppInfo;
+use orbit_code_app_server_protocol::AppsListParams;
+use orbit_code_app_server_protocol::AppsListResponse;
+use orbit_code_app_server_protocol::AskForApproval;
+use orbit_code_app_server_protocol::AuthMode;
+use orbit_code_app_server_protocol::CancelLoginAccountParams;
+use orbit_code_app_server_protocol::CancelLoginAccountResponse;
+use orbit_code_app_server_protocol::CancelLoginAccountStatus;
+use orbit_code_app_server_protocol::ClientRequest;
+use orbit_code_app_server_protocol::CollaborationModeListParams;
+use orbit_code_app_server_protocol::CollaborationModeListResponse;
+use orbit_code_app_server_protocol::CommandExecParams;
+use orbit_code_app_server_protocol::CommandExecResizeParams;
+use orbit_code_app_server_protocol::CommandExecTerminateParams;
+use orbit_code_app_server_protocol::CommandExecWriteParams;
+use orbit_code_app_server_protocol::ConversationGitInfo;
+use orbit_code_app_server_protocol::ConversationSummary;
+use orbit_code_app_server_protocol::DynamicToolSpec as ApiDynamicToolSpec;
+use orbit_code_app_server_protocol::ExperimentalFeature as ApiExperimentalFeature;
+use orbit_code_app_server_protocol::ExperimentalFeatureListParams;
+use orbit_code_app_server_protocol::ExperimentalFeatureListResponse;
+use orbit_code_app_server_protocol::ExperimentalFeatureStage as ApiExperimentalFeatureStage;
+use orbit_code_app_server_protocol::FeedbackUploadParams;
+use orbit_code_app_server_protocol::FeedbackUploadResponse;
+use orbit_code_app_server_protocol::FuzzyFileSearchParams;
+use orbit_code_app_server_protocol::FuzzyFileSearchResponse;
+use orbit_code_app_server_protocol::FuzzyFileSearchSessionStartParams;
+use orbit_code_app_server_protocol::FuzzyFileSearchSessionStartResponse;
+use orbit_code_app_server_protocol::FuzzyFileSearchSessionStopParams;
+use orbit_code_app_server_protocol::FuzzyFileSearchSessionStopResponse;
+use orbit_code_app_server_protocol::FuzzyFileSearchSessionUpdateParams;
+use orbit_code_app_server_protocol::FuzzyFileSearchSessionUpdateResponse;
+use orbit_code_app_server_protocol::GetAccountParams;
+use orbit_code_app_server_protocol::GetAccountRateLimitsResponse;
+use orbit_code_app_server_protocol::GetAccountResponse;
+use orbit_code_app_server_protocol::GetAuthStatusParams;
+use orbit_code_app_server_protocol::GetAuthStatusResponse;
+use orbit_code_app_server_protocol::GetConversationSummaryParams;
+use orbit_code_app_server_protocol::GetConversationSummaryResponse;
+use orbit_code_app_server_protocol::GitDiffToRemoteResponse;
+use orbit_code_app_server_protocol::GitInfo as ApiGitInfo;
+use orbit_code_app_server_protocol::JSONRPCErrorError;
+use orbit_code_app_server_protocol::ListMcpServerStatusParams;
+use orbit_code_app_server_protocol::ListMcpServerStatusResponse;
+use orbit_code_app_server_protocol::LoginAccountParams;
+use orbit_code_app_server_protocol::LoginAccountResponse;
+use orbit_code_app_server_protocol::LoginApiKeyParams;
+use orbit_code_app_server_protocol::LogoutAccountResponse;
+use orbit_code_app_server_protocol::MarketplaceInterface;
+use orbit_code_app_server_protocol::McpServerOauthLoginCompletedNotification;
+use orbit_code_app_server_protocol::McpServerOauthLoginParams;
+use orbit_code_app_server_protocol::McpServerOauthLoginResponse;
+use orbit_code_app_server_protocol::McpServerRefreshResponse;
+use orbit_code_app_server_protocol::McpServerStatus;
+use orbit_code_app_server_protocol::MockExperimentalMethodParams;
+use orbit_code_app_server_protocol::MockExperimentalMethodResponse;
+use orbit_code_app_server_protocol::ModelListParams;
+use orbit_code_app_server_protocol::ModelListResponse;
+use orbit_code_app_server_protocol::PluginDetail;
+use orbit_code_app_server_protocol::PluginInstallParams;
+use orbit_code_app_server_protocol::PluginInstallResponse;
+use orbit_code_app_server_protocol::PluginInterface;
+use orbit_code_app_server_protocol::PluginListParams;
+use orbit_code_app_server_protocol::PluginListResponse;
+use orbit_code_app_server_protocol::PluginMarketplaceEntry;
+use orbit_code_app_server_protocol::PluginReadParams;
+use orbit_code_app_server_protocol::PluginReadResponse;
+use orbit_code_app_server_protocol::PluginSource;
+use orbit_code_app_server_protocol::PluginSummary;
+use orbit_code_app_server_protocol::PluginUninstallParams;
+use orbit_code_app_server_protocol::PluginUninstallResponse;
+use orbit_code_app_server_protocol::RequestId;
+use orbit_code_app_server_protocol::ReviewDelivery as ApiReviewDelivery;
+use orbit_code_app_server_protocol::ReviewStartParams;
+use orbit_code_app_server_protocol::ReviewStartResponse;
+use orbit_code_app_server_protocol::ReviewTarget as ApiReviewTarget;
+use orbit_code_app_server_protocol::SandboxMode;
+use orbit_code_app_server_protocol::ServerNotification;
+use orbit_code_app_server_protocol::ServerRequestResolvedNotification;
+use orbit_code_app_server_protocol::SkillSummary;
+use orbit_code_app_server_protocol::SkillsConfigWriteParams;
+use orbit_code_app_server_protocol::SkillsConfigWriteResponse;
+use orbit_code_app_server_protocol::SkillsListParams;
+use orbit_code_app_server_protocol::SkillsListResponse;
+use orbit_code_app_server_protocol::Thread;
+use orbit_code_app_server_protocol::ThreadArchiveParams;
+use orbit_code_app_server_protocol::ThreadArchiveResponse;
+use orbit_code_app_server_protocol::ThreadArchivedNotification;
+use orbit_code_app_server_protocol::ThreadBackgroundTerminalsCleanParams;
+use orbit_code_app_server_protocol::ThreadBackgroundTerminalsCleanResponse;
+use orbit_code_app_server_protocol::ThreadClosedNotification;
+use orbit_code_app_server_protocol::ThreadCompactStartParams;
+use orbit_code_app_server_protocol::ThreadCompactStartResponse;
+use orbit_code_app_server_protocol::ThreadDecrementElicitationParams;
+use orbit_code_app_server_protocol::ThreadDecrementElicitationResponse;
+use orbit_code_app_server_protocol::ThreadForkParams;
+use orbit_code_app_server_protocol::ThreadForkResponse;
+use orbit_code_app_server_protocol::ThreadIncrementElicitationParams;
+use orbit_code_app_server_protocol::ThreadIncrementElicitationResponse;
+use orbit_code_app_server_protocol::ThreadItem;
+use orbit_code_app_server_protocol::ThreadListParams;
+use orbit_code_app_server_protocol::ThreadListResponse;
+use orbit_code_app_server_protocol::ThreadLoadedListParams;
+use orbit_code_app_server_protocol::ThreadLoadedListResponse;
+use orbit_code_app_server_protocol::ThreadMetadataGitInfoUpdateParams;
+use orbit_code_app_server_protocol::ThreadMetadataUpdateParams;
+use orbit_code_app_server_protocol::ThreadMetadataUpdateResponse;
+use orbit_code_app_server_protocol::ThreadNameUpdatedNotification;
+use orbit_code_app_server_protocol::ThreadReadParams;
+use orbit_code_app_server_protocol::ThreadReadResponse;
+use orbit_code_app_server_protocol::ThreadRealtimeAppendAudioParams;
+use orbit_code_app_server_protocol::ThreadRealtimeAppendAudioResponse;
+use orbit_code_app_server_protocol::ThreadRealtimeAppendTextParams;
+use orbit_code_app_server_protocol::ThreadRealtimeAppendTextResponse;
+use orbit_code_app_server_protocol::ThreadRealtimeStartParams;
+use orbit_code_app_server_protocol::ThreadRealtimeStartResponse;
+use orbit_code_app_server_protocol::ThreadRealtimeStopParams;
+use orbit_code_app_server_protocol::ThreadRealtimeStopResponse;
+use orbit_code_app_server_protocol::ThreadResumeParams;
+use orbit_code_app_server_protocol::ThreadResumeResponse;
+use orbit_code_app_server_protocol::ThreadRollbackParams;
+use orbit_code_app_server_protocol::ThreadSetNameParams;
+use orbit_code_app_server_protocol::ThreadSetNameResponse;
+use orbit_code_app_server_protocol::ThreadShellCommandParams;
+use orbit_code_app_server_protocol::ThreadShellCommandResponse;
+use orbit_code_app_server_protocol::ThreadSortKey;
+use orbit_code_app_server_protocol::ThreadSourceKind;
+use orbit_code_app_server_protocol::ThreadStartParams;
+use orbit_code_app_server_protocol::ThreadStartResponse;
+use orbit_code_app_server_protocol::ThreadStartedNotification;
+use orbit_code_app_server_protocol::ThreadStatus;
+use orbit_code_app_server_protocol::ThreadUnarchiveParams;
+use orbit_code_app_server_protocol::ThreadUnarchiveResponse;
+use orbit_code_app_server_protocol::ThreadUnarchivedNotification;
+use orbit_code_app_server_protocol::ThreadUnsubscribeParams;
+use orbit_code_app_server_protocol::ThreadUnsubscribeResponse;
+use orbit_code_app_server_protocol::ThreadUnsubscribeStatus;
+use orbit_code_app_server_protocol::Turn;
+use orbit_code_app_server_protocol::TurnInterruptParams;
+use orbit_code_app_server_protocol::TurnStartParams;
+use orbit_code_app_server_protocol::TurnStartResponse;
+use orbit_code_app_server_protocol::TurnStatus;
+use orbit_code_app_server_protocol::TurnSteerParams;
+use orbit_code_app_server_protocol::TurnSteerResponse;
+use orbit_code_app_server_protocol::UserInput as V2UserInput;
+use orbit_code_app_server_protocol::WindowsSandboxSetupCompletedNotification;
+use orbit_code_app_server_protocol::WindowsSandboxSetupMode;
+use orbit_code_app_server_protocol::WindowsSandboxSetupStartParams;
+use orbit_code_app_server_protocol::WindowsSandboxSetupStartResponse;
+use orbit_code_app_server_protocol::build_turns_from_rollout_items;
+use orbit_code_arg0::Arg0DispatchPaths;
+use orbit_code_backend_client::Client as BackendClient;
+use orbit_code_chatgpt::connectors;
+use orbit_code_cloud_requirements::cloud_requirements_loader;
+use orbit_code_core::AuthManager;
+use orbit_code_core::CodexAuth;
+use orbit_code_core::CodexThread;
+use orbit_code_core::Cursor as RolloutCursor;
+use orbit_code_core::NewThread;
+use orbit_code_core::RolloutRecorder;
+use orbit_code_core::SessionMeta;
+use orbit_code_core::SteerInputError;
+use orbit_code_core::ThreadConfigSnapshot;
+use orbit_code_core::ThreadManager;
+use orbit_code_core::ThreadSortKey as CoreThreadSortKey;
+use orbit_code_core::auth::AuthMode as CoreAuthMode;
+use orbit_code_core::auth::CLIENT_ID;
+use orbit_code_core::auth::login_with_api_key;
+use orbit_code_core::auth::login_with_chatgpt_auth_tokens;
+use orbit_code_core::config::Config;
+use orbit_code_core::config::ConfigOverrides;
+use orbit_code_core::config::NetworkProxyAuditMetadata;
+use orbit_code_core::config::edit::ConfigEdit;
+use orbit_code_core::config::edit::ConfigEditsBuilder;
+use orbit_code_core::config::types::McpServerTransportConfig;
+use orbit_code_core::config_loader::CloudRequirementsLoadError;
+use orbit_code_core::config_loader::CloudRequirementsLoadErrorCode;
+use orbit_code_core::config_loader::CloudRequirementsLoader;
+use orbit_code_core::default_client::set_default_client_residency_requirement;
+use orbit_code_core::error::CodexErr;
+use orbit_code_core::error::Result as CodexResult;
+use orbit_code_core::exec::ExecExpiration;
+use orbit_code_core::exec::ExecParams;
+use orbit_code_core::exec_env::create_env;
+use orbit_code_core::features::FEATURES;
+use orbit_code_core::features::Feature;
+use orbit_code_core::features::Stage;
+use orbit_code_core::find_archived_thread_path_by_id_str;
+use orbit_code_core::find_thread_name_by_id;
+use orbit_code_core::find_thread_names_by_ids;
+use orbit_code_core::find_thread_path_by_id_str;
+use orbit_code_core::git_info::git_diff_to_remote;
+use orbit_code_core::mcp::auth::discover_supported_scopes;
+use orbit_code_core::mcp::auth::resolve_oauth_scopes;
+use orbit_code_core::mcp::collect_mcp_snapshot;
+use orbit_code_core::mcp::group_tools_by_server;
+use orbit_code_core::models_manager::collaboration_mode_presets::CollaborationModesConfig;
+use orbit_code_core::parse_cursor;
+use orbit_code_core::plugins::MarketplaceError;
+use orbit_code_core::plugins::MarketplacePluginSource;
+use orbit_code_core::plugins::OPENAI_CURATED_MARKETPLACE_NAME;
+use orbit_code_core::plugins::PluginInstallError as CorePluginInstallError;
+use orbit_code_core::plugins::PluginInstallRequest;
+use orbit_code_core::plugins::PluginReadRequest;
+use orbit_code_core::plugins::PluginUninstallError as CorePluginUninstallError;
+use orbit_code_core::plugins::load_plugin_apps;
+use orbit_code_core::read_head_for_summary;
+use orbit_code_core::read_session_meta_line;
+use orbit_code_core::rollout_date_parts;
+use orbit_code_core::sandboxing::SandboxPermissions;
+use orbit_code_core::state_db::StateDbHandle;
+use orbit_code_core::state_db::get_state_db;
+use orbit_code_core::state_db::reconcile_rollout;
+use orbit_code_core::windows_sandbox::WindowsSandboxLevelExt;
+use orbit_code_core::windows_sandbox::WindowsSandboxSetupMode as CoreWindowsSandboxSetupMode;
+use orbit_code_core::windows_sandbox::WindowsSandboxSetupRequest;
+use orbit_code_feedback::CodexFeedback;
+use orbit_code_login::ServerOptions as LoginServerOptions;
+use orbit_code_login::ShutdownHandle;
+use orbit_code_login::run_login_server;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::config_types::CollaborationMode;
+use orbit_code_protocol::config_types::ForcedLoginMethod;
+use orbit_code_protocol::config_types::Personality;
+use orbit_code_protocol::config_types::WindowsSandboxLevel;
+use orbit_code_protocol::dynamic_tools::DynamicToolSpec as CoreDynamicToolSpec;
+use orbit_code_protocol::items::TurnItem;
+use orbit_code_protocol::models::ResponseItem;
+use orbit_code_protocol::protocol::AgentStatus;
+use orbit_code_protocol::protocol::ConversationAudioParams;
+use orbit_code_protocol::protocol::ConversationStartParams;
+use orbit_code_protocol::protocol::ConversationTextParams;
+use orbit_code_protocol::protocol::EventMsg;
+use orbit_code_protocol::protocol::GitInfo as CoreGitInfo;
+use orbit_code_protocol::protocol::InitialHistory;
+use orbit_code_protocol::protocol::McpAuthStatus as CoreMcpAuthStatus;
+use orbit_code_protocol::protocol::McpServerRefreshConfig;
+use orbit_code_protocol::protocol::Op;
+use orbit_code_protocol::protocol::RateLimitSnapshot as CoreRateLimitSnapshot;
+use orbit_code_protocol::protocol::ReviewDelivery as CoreReviewDelivery;
+use orbit_code_protocol::protocol::ReviewRequest;
+use orbit_code_protocol::protocol::ReviewTarget as CoreReviewTarget;
+use orbit_code_protocol::protocol::RolloutItem;
+use orbit_code_protocol::protocol::SessionConfiguredEvent;
+use orbit_code_protocol::protocol::SessionMetaLine;
+use orbit_code_protocol::protocol::USER_MESSAGE_BEGIN;
+use orbit_code_protocol::protocol::W3cTraceContext;
+use orbit_code_protocol::user_input::MAX_USER_INPUT_TEXT_CHARS;
+use orbit_code_protocol::user_input::UserInput as CoreInputItem;
+use orbit_code_rmcp_client::perform_oauth_login_return_url;
+use orbit_code_state::StateRuntime;
+use orbit_code_state::ThreadMetadata;
+use orbit_code_state::ThreadMetadataBuilder;
+use orbit_code_state::log_db::LogDbLayer;
+use orbit_code_utils_json_to_toml::json_to_toml;
+use orbit_code_utils_pty::DEFAULT_OUTPUT_BYTES_CAP;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::ffi::OsStr;
@@ -307,7 +307,7 @@ use tracing::warn;
 use uuid::Uuid;
 
 #[cfg(test)]
-use codex_app_server_protocol::ServerRequest;
+use orbit_code_app_server_protocol::ServerRequest;
 
 mod apps_list_helpers;
 mod plugin_app_helpers;
@@ -395,7 +395,7 @@ struct ListenerTaskContext {
     outgoing: Arc<OutgoingMessageSender>,
     thread_watch_manager: ThreadWatchManager,
     fallback_model_provider: String,
-    codex_home: PathBuf,
+    orbit_code_home: PathBuf,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -504,7 +504,7 @@ impl CodexMessageProcessor {
         fallback_cwd: Option<PathBuf>,
     ) -> Result<Config, JSONRPCErrorError> {
         let cloud_requirements = self.current_cloud_requirements();
-        let mut config = codex_core::config::ConfigBuilder::default()
+        let mut config = orbit_code_core::config::ConfigBuilder::default()
             .cli_overrides(self.cli_overrides.clone())
             .fallback_cwd(fallback_cwd)
             .cloud_requirements(cloud_requirements)
@@ -515,7 +515,7 @@ impl CodexMessageProcessor {
                 message: format!("failed to reload config: {err}"),
                 data: None,
             })?;
-        config.codex_linux_sandbox_exe = self.arg0_paths.codex_linux_sandbox_exe.clone();
+        config.orbit_code_linux_sandbox_exe = self.arg0_paths.orbit_code_linux_sandbox_exe.clone();
         config.main_execve_wrapper_exe = self.arg0_paths.main_execve_wrapper_exe.clone();
         Ok(config)
     }
@@ -600,7 +600,7 @@ impl CodexMessageProcessor {
             ApiReviewTarget::Custom { instructions } => CoreReviewTarget::Custom { instructions },
         };
 
-        let hint = codex_core::review_prompts::user_facing_hint(&core_target);
+        let hint = orbit_code_core::review_prompts::user_facing_hint(&core_target);
         let review_request = ReviewRequest {
             target: core_target,
             user_facing_hint: Some(hint.clone()),
@@ -967,7 +967,7 @@ impl CodexMessageProcessor {
         }
 
         match login_with_api_key(
-            &self.config.codex_home,
+            &self.config.orbit_code_home,
             &params.api_key,
             self.config.cli_auth_credentials_store_mode,
         ) {
@@ -990,7 +990,7 @@ impl CodexMessageProcessor {
     ) {
         match self.login_api_key_common(&params).await {
             Ok(()) => {
-                let response = codex_app_server_protocol::LoginAccountResponse::ApiKey {};
+                let response = orbit_code_app_server_protocol::LoginAccountResponse::ApiKey {};
                 self.outgoing.send_response(request_id, response).await;
 
                 let payload_login_completed = AccountLoginCompletedNotification {
@@ -1037,7 +1037,7 @@ impl CodexMessageProcessor {
         Ok(LoginServerOptions {
             open_browser: false,
             ..LoginServerOptions::new(
-                config.codex_home.clone(),
+                config.orbit_code_home.clone(),
                 CLIENT_ID.to_string(),
                 config.forced_chatgpt_workspace_id.clone(),
                 config.cli_auth_credentials_store_mode,
@@ -1070,7 +1070,7 @@ impl CodexMessageProcessor {
                     let auth_manager = self.auth_manager.clone();
                     let cloud_requirements = self.cloud_requirements.clone();
                     let chatgpt_base_url = self.config.chatgpt_base_url.clone();
-                    let codex_home = self.config.codex_home.clone();
+                    let orbit_code_home = self.config.orbit_code_home.clone();
                     let cli_overrides = self.cli_overrides.clone();
                     let auth_url = server.auth_url.clone();
                     tokio::spawn(async move {
@@ -1105,7 +1105,7 @@ impl CodexMessageProcessor {
                                 cloud_requirements.as_ref(),
                                 auth_manager.clone(),
                                 chatgpt_base_url,
-                                codex_home,
+                                orbit_code_home,
                             );
                             sync_default_client_residency_requirement(
                                 &cli_overrides,
@@ -1133,7 +1133,7 @@ impl CodexMessageProcessor {
                         }
                     });
 
-                    let response = codex_app_server_protocol::LoginAccountResponse::Chatgpt {
+                    let response = orbit_code_app_server_protocol::LoginAccountResponse::Chatgpt {
                         login_id: login_id.to_string(),
                         auth_url,
                     };
@@ -1239,7 +1239,7 @@ impl CodexMessageProcessor {
         }
 
         if let Err(err) = login_with_chatgpt_auth_tokens(
-            &self.config.codex_home,
+            &self.config.orbit_code_home,
             &access_token,
             &chatgpt_account_id,
             chatgpt_plan_type.as_deref(),
@@ -1257,7 +1257,7 @@ impl CodexMessageProcessor {
             self.cloud_requirements.as_ref(),
             self.auth_manager.clone(),
             self.config.chatgpt_base_url.clone(),
-            self.config.codex_home.clone(),
+            self.config.orbit_code_home.clone(),
         );
         sync_default_client_residency_requirement(
             &self.cli_overrides,
@@ -1680,7 +1680,7 @@ impl CodexMessageProcessor {
             env,
             network: started_network_proxy
                 .as_ref()
-                .map(codex_core::config::StartedNetworkProxy::proxy),
+                .map(orbit_code_core::config::StartedNetworkProxy::proxy),
             sandbox_permissions: SandboxPermissions::UseDefault,
             windows_sandbox_level,
             windows_sandbox_private_desktop: self
@@ -1700,9 +1700,9 @@ impl CodexMessageProcessor {
             Some(policy) => match self.config.permissions.sandbox_policy.can_set(&policy) {
                 Ok(()) => {
                     let file_system_sandbox_policy =
-                        codex_protocol::permissions::FileSystemSandboxPolicy::from_legacy_sandbox_policy(&policy, &sandbox_cwd);
+                        orbit_code_protocol::permissions::FileSystemSandboxPolicy::from_legacy_sandbox_policy(&policy, &sandbox_cwd);
                     let network_sandbox_policy =
-                        codex_protocol::permissions::NetworkSandboxPolicy::from(&policy);
+                        orbit_code_protocol::permissions::NetworkSandboxPolicy::from(&policy);
                     (policy, file_system_sandbox_policy, network_sandbox_policy)
                 }
                 Err(err) => {
@@ -1722,7 +1722,7 @@ impl CodexMessageProcessor {
             ),
         };
 
-        let codex_linux_sandbox_exe = self.arg0_paths.codex_linux_sandbox_exe.clone();
+        let orbit_code_linux_sandbox_exe = self.arg0_paths.orbit_code_linux_sandbox_exe.clone();
         let outgoing = self.outgoing.clone();
         let request_for_task = request.clone();
         let started_network_proxy_for_task = started_network_proxy;
@@ -1736,13 +1736,13 @@ impl CodexMessageProcessor {
             None => None,
         };
 
-        match codex_core::exec::build_exec_request(
+        match orbit_code_core::exec::build_exec_request(
             exec_params,
             &effective_policy,
             &effective_file_system_sandbox_policy,
             effective_network_sandbox_policy,
             sandbox_cwd.as_path(),
-            &codex_linux_sandbox_exe,
+            &orbit_code_linux_sandbox_exe,
             use_legacy_landlock,
         ) {
             Ok(exec_request) => {
@@ -1867,7 +1867,7 @@ impl CodexMessageProcessor {
             outgoing: Arc::clone(&self.outgoing),
             thread_watch_manager: self.thread_watch_manager.clone(),
             fallback_model_provider: self.config.model_provider_id.clone(),
-            codex_home: self.config.codex_home.clone(),
+            orbit_code_home: self.config.orbit_code_home.clone(),
         };
         let request_trace = request_context.request_trace();
         let thread_start_task = async move {
@@ -1920,7 +1920,7 @@ impl CodexMessageProcessor {
     async fn request_trace_context(
         &self,
         request_id: &ConnectionRequestId,
-    ) -> Option<codex_protocol::protocol::W3cTraceContext> {
+    ) -> Option<orbit_code_protocol::protocol::W3cTraceContext> {
         self.outgoing.request_trace_context(request_id).await
     }
 
@@ -1954,7 +1954,7 @@ impl CodexMessageProcessor {
             config_overrides,
             typesafe_overrides,
             &cloud_requirements,
-            &listener_task_context.codex_home,
+            &listener_task_context.orbit_code_home,
         )
         .await
         {
@@ -2125,10 +2125,10 @@ impl CodexMessageProcessor {
         &self,
         model: Option<String>,
         model_provider: Option<String>,
-        service_tier: Option<Option<codex_protocol::config_types::ServiceTier>>,
+        service_tier: Option<Option<orbit_code_protocol::config_types::ServiceTier>>,
         cwd: Option<String>,
-        approval_policy: Option<codex_app_server_protocol::AskForApproval>,
-        approvals_reviewer: Option<codex_app_server_protocol::ApprovalsReviewer>,
+        approval_policy: Option<orbit_code_app_server_protocol::AskForApproval>,
+        approvals_reviewer: Option<orbit_code_app_server_protocol::ApprovalsReviewer>,
         sandbox: Option<SandboxMode>,
         base_instructions: Option<String>,
         developer_instructions: Option<String>,
@@ -2140,11 +2140,11 @@ impl CodexMessageProcessor {
             service_tier,
             cwd: cwd.map(PathBuf::from),
             approval_policy: approval_policy
-                .map(codex_app_server_protocol::AskForApproval::to_core),
+                .map(orbit_code_app_server_protocol::AskForApproval::to_core),
             approvals_reviewer: approvals_reviewer
-                .map(codex_app_server_protocol::ApprovalsReviewer::to_core),
+                .map(orbit_code_app_server_protocol::ApprovalsReviewer::to_core),
             sandbox_mode: sandbox.map(SandboxMode::to_core),
-            codex_linux_sandbox_exe: self.arg0_paths.codex_linux_sandbox_exe.clone(),
+            orbit_code_linux_sandbox_exe: self.arg0_paths.orbit_code_linux_sandbox_exe.clone(),
             main_execve_wrapper_exe: self.arg0_paths.main_execve_wrapper_exe.clone(),
             base_instructions,
             developer_instructions,
@@ -2173,7 +2173,8 @@ impl CodexMessageProcessor {
         };
 
         let rollout_path =
-            match find_thread_path_by_id_str(&self.config.codex_home, &thread_id.to_string()).await
+            match find_thread_path_by_id_str(&self.config.orbit_code_home, &thread_id.to_string())
+                .await
             {
                 Ok(Some(p)) => p,
                 Ok(None) => {
@@ -2297,7 +2298,7 @@ impl CodexMessageProcessor {
                 return;
             }
         };
-        let Some(name) = codex_core::util::normalize_thread_name(&name) else {
+        let Some(name) = orbit_code_core::util::normalize_thread_name(&name) else {
             self.send_invalid_request_error(
                 request_id,
                 "thread name must not be empty".to_string(),
@@ -2323,7 +2324,8 @@ impl CodexMessageProcessor {
         }
 
         let thread_exists =
-            match find_thread_path_by_id_str(&self.config.codex_home, &thread_id.to_string()).await
+            match find_thread_path_by_id_str(&self.config.orbit_code_home, &thread_id.to_string())
+                .await
             {
                 Ok(Some(_)) => true,
                 Ok(None) => false,
@@ -2344,7 +2346,8 @@ impl CodexMessageProcessor {
         }
 
         if let Err(err) =
-            codex_core::append_thread_name(&self.config.codex_home, thread_id, &name).await
+            orbit_code_core::append_thread_name(&self.config.orbit_code_home, thread_id, &name)
+                .await
         {
             self.send_internal_error(request_id, format!("failed to set thread name: {err}"))
                 .await;
@@ -2611,33 +2614,35 @@ impl CodexMessageProcessor {
             return Ok(());
         }
 
-        let rollout_path =
-            match find_thread_path_by_id_str(&self.config.codex_home, &thread_uuid.to_string())
-                .await
+        let rollout_path = match find_thread_path_by_id_str(
+            &self.config.orbit_code_home,
+            &thread_uuid.to_string(),
+        )
+        .await
+        {
+            Ok(Some(path)) => path,
+            Ok(None) => match find_archived_thread_path_by_id_str(
+                &self.config.orbit_code_home,
+                &thread_uuid.to_string(),
+            )
+            .await
             {
                 Ok(Some(path)) => path,
-                Ok(None) => match find_archived_thread_path_by_id_str(
-                    &self.config.codex_home,
-                    &thread_uuid.to_string(),
-                )
-                .await
-                {
-                    Ok(Some(path)) => path,
-                    Ok(None) => {
-                        return Err(invalid_request(format!("thread not found: {thread_uuid}")));
-                    }
-                    Err(err) => {
-                        return Err(internal_error(format!(
-                            "failed to locate archived thread id {thread_uuid}: {err}"
-                        )));
-                    }
-                },
+                Ok(None) => {
+                    return Err(invalid_request(format!("thread not found: {thread_uuid}")));
+                }
                 Err(err) => {
                     return Err(internal_error(format!(
-                        "failed to locate thread id {thread_uuid}: {err}"
+                        "failed to locate archived thread id {thread_uuid}: {err}"
                     )));
                 }
-            };
+            },
+            Err(err) => {
+                return Err(internal_error(format!(
+                    "failed to locate thread id {thread_uuid}: {err}"
+                )));
+            }
+        };
 
         reconcile_rollout(
             Some(state_db_ctx),
@@ -2681,7 +2686,7 @@ impl CodexMessageProcessor {
         };
 
         let archived_path = match find_archived_thread_path_by_id_str(
-            &self.config.codex_home,
+            &self.config.orbit_code_home,
             &thread_id.to_string(),
         )
         .await
@@ -2712,8 +2717,8 @@ impl CodexMessageProcessor {
         let state_db_ctx = get_state_db(&self.config).await;
         let archived_folder = self
             .config
-            .codex_home
-            .join(codex_core::ARCHIVED_SESSIONS_SUBDIR);
+            .orbit_code_home
+            .join(orbit_code_core::ARCHIVED_SESSIONS_SUBDIR);
 
         let result: Result<Thread, JSONRPCErrorError> = async {
             let canonical_archived_dir = tokio::fs::canonicalize(&archived_folder).await.map_err(
@@ -2771,7 +2776,10 @@ impl CodexMessageProcessor {
                 });
             };
 
-            let sessions_folder = self.config.codex_home.join(codex_core::SESSIONS_SUBDIR);
+            let sessions_folder = self
+                .config
+                .orbit_code_home
+                .join(orbit_code_core::SESSIONS_SUBDIR);
             let dest_dir = sessions_folder.join(year).join(month).join(day);
             let restored_path = dest_dir.join(&file_name);
             tokio::fs::create_dir_all(&dest_dir)
@@ -3086,7 +3094,8 @@ impl CodexMessageProcessor {
             threads.push((conversation_id, thread));
         }
 
-        let names = match find_thread_names_by_ids(&self.config.codex_home, &thread_ids).await {
+        let names = match find_thread_names_by_ids(&self.config.orbit_code_home, &thread_ids).await
+        {
             Ok(names) => names,
             Err(err) => {
                 warn!("Failed to read thread names: {err}");
@@ -3196,27 +3205,29 @@ impl CodexMessageProcessor {
         };
         let mut rollout_path = db_summary.as_ref().map(|summary| summary.path.clone());
         if rollout_path.is_none() || include_turns {
-            rollout_path =
-                match find_thread_path_by_id_str(&self.config.codex_home, &thread_uuid.to_string())
-                    .await
-                {
-                    Ok(Some(path)) => Some(path),
-                    Ok(None) => {
-                        if include_turns {
-                            None
-                        } else {
-                            rollout_path
-                        }
+            rollout_path = match find_thread_path_by_id_str(
+                &self.config.orbit_code_home,
+                &thread_uuid.to_string(),
+            )
+            .await
+            {
+                Ok(Some(path)) => Some(path),
+                Ok(None) => {
+                    if include_turns {
+                        None
+                    } else {
+                        rollout_path
                     }
-                    Err(err) => {
-                        self.send_invalid_request_error(
-                            request_id,
-                            format!("failed to locate thread id {thread_uuid}: {err}"),
-                        )
-                        .await;
-                        return;
-                    }
-                };
+                }
+                Err(err) => {
+                    self.send_invalid_request_error(
+                        request_id,
+                        format!("failed to locate thread id {thread_uuid}: {err}"),
+                    )
+                    .await;
+                    return;
+                }
+            };
         }
 
         if include_turns && rollout_path.is_none() && db_summary.is_some() {
@@ -3463,7 +3474,7 @@ impl CodexMessageProcessor {
             typesafe_overrides,
             history_cwd,
             &cloud_requirements,
-            &self.config.codex_home,
+            &self.config.orbit_code_home,
         )
         .await
         {
@@ -3618,7 +3629,7 @@ impl CodexMessageProcessor {
                     path
                 } else {
                     match find_thread_path_by_id_str(
-                        &self.config.codex_home,
+                        &self.config.orbit_code_home,
                         &existing_thread_id.to_string(),
                     )
                     .await
@@ -3644,7 +3655,7 @@ impl CodexMessageProcessor {
                 }
             } else {
                 match find_thread_path_by_id_str(
-                    &self.config.codex_home,
+                    &self.config.orbit_code_home,
                     &existing_thread_id.to_string(),
                 )
                 .await
@@ -3802,7 +3813,7 @@ impl CodexMessageProcessor {
             };
 
             match find_thread_path_by_id_str(
-                &self.config.codex_home,
+                &self.config.orbit_code_home,
                 &existing_thread_id.to_string(),
             )
             .await
@@ -3889,7 +3900,7 @@ impl CodexMessageProcessor {
     }
 
     async fn attach_thread_name(&self, thread_id: ThreadId, thread: &mut Thread) {
-        match find_thread_name_by_id(&self.config.codex_home, &thread_id).await {
+        match find_thread_name_by_id(&self.config.orbit_code_home, &thread_id).await {
             Ok(name) => {
                 thread.name = name;
             }
@@ -3933,7 +3944,7 @@ impl CodexMessageProcessor {
             };
 
             match find_thread_path_by_id_str(
-                &self.config.codex_home,
+                &self.config.orbit_code_home,
                 &existing_thread_id.to_string(),
             )
             .await
@@ -4005,7 +4016,7 @@ impl CodexMessageProcessor {
             typesafe_overrides,
             history_cwd,
             &cloud_requirements,
-            &self.config.codex_home,
+            &self.config.orbit_code_home,
         )
         .await
         {
@@ -4191,14 +4202,14 @@ impl CodexMessageProcessor {
         let path = match params {
             GetConversationSummaryParams::RolloutPath { rollout_path } => {
                 if rollout_path.is_relative() {
-                    self.config.codex_home.join(&rollout_path)
+                    self.config.orbit_code_home.join(&rollout_path)
                 } else {
                     rollout_path
                 }
             }
             GetConversationSummaryParams::ThreadId { conversation_id } => {
-                match codex_core::find_thread_path_by_id_str(
-                    &self.config.codex_home,
+                match orbit_code_core::find_thread_path_by_id_str(
+                    &self.config.orbit_code_home,
                     &conversation_id.to_string(),
                 )
                 .await
@@ -5050,7 +5061,10 @@ impl CodexMessageProcessor {
         rollout_path: &Path,
     ) -> Result<(), JSONRPCErrorError> {
         // Verify rollout_path is under sessions dir.
-        let rollout_folder = self.config.codex_home.join(codex_core::SESSIONS_SUBDIR);
+        let rollout_folder = self
+            .config
+            .orbit_code_home
+            .join(orbit_code_core::SESSIONS_SUBDIR);
 
         let canonical_sessions_dir = match tokio::fs::canonicalize(&rollout_folder).await {
             Ok(path) => path,
@@ -5137,8 +5151,8 @@ impl CodexMessageProcessor {
         let result: std::io::Result<()> = async move {
             let archive_folder = self
                 .config
-                .codex_home
-                .join(codex_core::ARCHIVED_SESSIONS_SUBDIR);
+                .orbit_code_home
+                .join(orbit_code_core::ARCHIVED_SESSIONS_SUBDIR);
             tokio::fs::create_dir_all(&archive_folder).await?;
             let archived_path = archive_folder.join(&file_name);
             tokio::fs::rename(&canonical_rollout_path, &archived_path).await?;
@@ -5444,7 +5458,7 @@ impl CodexMessageProcessor {
                 .await;
             let errors = errors_to_info(&outcome.errors);
             let skills = skills_to_info(&outcome.skills, &outcome.disabled_paths);
-            data.push(codex_app_server_protocol::SkillsListEntry {
+            data.push(orbit_code_app_server_protocol::SkillsListEntry {
                 cwd,
                 skills,
                 errors,
@@ -5662,7 +5676,7 @@ impl CodexMessageProcessor {
     ) {
         let SkillsConfigWriteParams { path, enabled } = params;
         let edits = vec![ConfigEdit::SetSkillConfig { path, enabled }];
-        let result = ConfigEditsBuilder::new(&self.config.codex_home)
+        let result = ConfigEditsBuilder::new(&self.config.orbit_code_home)
             .with_edits(edits)
             .apply()
             .await;
@@ -5758,9 +5772,9 @@ impl CodexMessageProcessor {
                     };
                     let all_connectors =
                         connectors::connectors_for_plugin_apps(all_connectors, &plugin_apps);
-                    let (accessible_connectors, codex_apps_ready) =
+                    let (accessible_connectors, orbit_code_apps_ready) =
                         match accessible_connectors_result {
-                            Ok(status) => (status.connectors, status.codex_apps_ready),
+                            Ok(status) => (status.connectors, status.orbit_code_apps_ready),
                             Err(err) => {
                                 warn!(
                                     plugin = result.plugin_id.as_key(),
@@ -5776,10 +5790,10 @@ impl CodexMessageProcessor {
                                 )
                             }
                         };
-                    if !codex_apps_ready {
+                    if !orbit_code_apps_ready {
                         warn!(
                             plugin = result.plugin_id.as_key(),
-                            "codex_apps MCP not ready after plugin install; skipping appsNeedingAuth check"
+                            "orbit_code_apps MCP not ready after plugin install; skipping appsNeedingAuth check"
                         );
                     }
 
@@ -5787,7 +5801,7 @@ impl CodexMessageProcessor {
                         &all_connectors,
                         &accessible_connectors,
                         &plugin_apps,
-                        codex_apps_ready,
+                        orbit_code_apps_ready,
                     )
                 };
 
@@ -5985,7 +5999,7 @@ impl CodexMessageProcessor {
                         approval_policy: params.approval_policy.map(AskForApproval::to_core),
                         approvals_reviewer: params
                             .approvals_reviewer
-                            .map(codex_app_server_protocol::ApprovalsReviewer::to_core),
+                            .map(orbit_code_app_server_protocol::ApprovalsReviewer::to_core),
                         sandbox_policy: params.sandbox_policy.map(|p| p.to_core()),
                         windows_sandbox_level: None,
                         model: params.model,
@@ -6377,7 +6391,7 @@ impl CodexMessageProcessor {
         let rollout_path = if let Some(path) = parent_thread.rollout_path() {
             path
         } else {
-            find_thread_path_by_id_str(&self.config.codex_home, &parent_thread_id.to_string())
+            find_thread_path_by_id_str(&self.config.orbit_code_home, &parent_thread_id.to_string())
                 .await
                 .map_err(|err| JSONRPCErrorError {
                     code: INTERNAL_ERROR_CODE,
@@ -6586,7 +6600,7 @@ impl CodexMessageProcessor {
                 outgoing: Arc::clone(&self.outgoing),
                 thread_watch_manager: self.thread_watch_manager.clone(),
                 fallback_model_provider: self.config.model_provider_id.clone(),
-                codex_home: self.config.codex_home.clone(),
+                orbit_code_home: self.config.orbit_code_home.clone(),
             },
             conversation_id,
             connection_id,
@@ -6673,7 +6687,7 @@ impl CodexMessageProcessor {
                 outgoing: Arc::clone(&self.outgoing),
                 thread_watch_manager: self.thread_watch_manager.clone(),
                 fallback_model_provider: self.config.model_provider_id.clone(),
-                codex_home: self.config.codex_home.clone(),
+                orbit_code_home: self.config.orbit_code_home.clone(),
             },
             conversation_id,
             conversation,
@@ -6704,7 +6718,7 @@ impl CodexMessageProcessor {
             thread_state_manager,
             thread_watch_manager,
             fallback_model_provider,
-            codex_home,
+            orbit_code_home,
         } = listener_task_context;
         let outgoing_for_task = Arc::clone(&outgoing);
         tokio::spawn(async move {
@@ -6799,7 +6813,7 @@ impl CodexMessageProcessor {
                             thread_watch_manager.clone(),
                             api_version,
                             fallback_model_provider.clone(),
-                            codex_home.as_path(),
+                            orbit_code_home.as_path(),
                         )
                         .await;
                     }
@@ -6810,7 +6824,7 @@ impl CodexMessageProcessor {
                         handle_thread_listener_command(
                             conversation_id,
                             &conversation,
-                            codex_home.as_path(),
+                            orbit_code_home.as_path(),
                             &thread_state_manager,
                             &thread_state,
                             &thread_watch_manager,
@@ -7137,7 +7151,7 @@ impl CodexMessageProcessor {
                 },
                 Some(command_cwd.clone()),
                 &cloud_requirements,
-                &config.codex_home,
+                &config.orbit_code_home,
             )
             .await;
             let setup_result = match derived_config {
@@ -7148,10 +7162,10 @@ impl CodexMessageProcessor {
                         policy_cwd: config.cwd.clone(),
                         command_cwd,
                         env_map: std::env::vars().collect(),
-                        codex_home: config.codex_home.clone(),
+                        orbit_code_home: config.orbit_code_home.clone(),
                         active_profile: config.active_profile.clone(),
                     };
-                    codex_core::windows_sandbox::run_windows_sandbox_setup(setup_request).await
+                    orbit_code_core::windows_sandbox::run_windows_sandbox_setup(setup_request).await
                 }
                 Err(err) => Err(err.into()),
             };
@@ -7184,7 +7198,7 @@ impl CodexMessageProcessor {
 async fn handle_thread_listener_command(
     conversation_id: ThreadId,
     conversation: &Arc<CodexThread>,
-    codex_home: &Path,
+    orbit_code_home: &Path,
     thread_state_manager: &ThreadStateManager,
     thread_state: &Arc<Mutex<ThreadState>>,
     thread_watch_manager: &ThreadWatchManager,
@@ -7196,7 +7210,7 @@ async fn handle_thread_listener_command(
             handle_pending_thread_resume_request(
                 conversation_id,
                 conversation,
-                codex_home,
+                orbit_code_home,
                 thread_state_manager,
                 thread_state,
                 thread_watch_manager,
@@ -7225,7 +7239,7 @@ async fn handle_thread_listener_command(
 async fn handle_pending_thread_resume_request(
     conversation_id: ThreadId,
     conversation: &Arc<CodexThread>,
-    codex_home: &Path,
+    orbit_code_home: &Path,
     thread_state_manager: &ThreadStateManager,
     thread_state: &Arc<Mutex<ThreadState>>,
     thread_watch_manager: &ThreadWatchManager,
@@ -7283,7 +7297,7 @@ async fn handle_pending_thread_resume_request(
         has_live_in_progress_turn,
     );
 
-    match find_thread_name_by_id(codex_home, &conversation_id).await {
+    match find_thread_name_by_id(orbit_code_home, &conversation_id).await {
         Ok(thread_name) => thread.name = thread_name,
         Err(err) => warn!("Failed to read thread name for {conversation_id}: {err}"),
     }
@@ -7446,7 +7460,7 @@ fn collect_resume_override_mismatches(
         }
     }
     if let Some(requested_review_policy) = request.approvals_reviewer.as_ref() {
-        let active_review_policy: codex_app_server_protocol::ApprovalsReviewer =
+        let active_review_policy: orbit_code_app_server_protocol::ApprovalsReviewer =
             config_snapshot.approvals_reviewer.into();
         if requested_review_policy != &active_review_policy {
             mismatch_details.push(format!(
@@ -7459,16 +7473,16 @@ fn collect_resume_override_mismatches(
             (requested_sandbox, &config_snapshot.sandbox_policy),
             (
                 SandboxMode::ReadOnly,
-                codex_protocol::protocol::SandboxPolicy::ReadOnly { .. }
+                orbit_code_protocol::protocol::SandboxPolicy::ReadOnly { .. }
             ) | (
                 SandboxMode::WorkspaceWrite,
-                codex_protocol::protocol::SandboxPolicy::WorkspaceWrite { .. }
+                orbit_code_protocol::protocol::SandboxPolicy::WorkspaceWrite { .. }
             ) | (
                 SandboxMode::DangerFullAccess,
-                codex_protocol::protocol::SandboxPolicy::DangerFullAccess
+                orbit_code_protocol::protocol::SandboxPolicy::DangerFullAccess
             ) | (
                 SandboxMode::DangerFullAccess,
-                codex_protocol::protocol::SandboxPolicy::ExternalSandbox { .. }
+                orbit_code_protocol::protocol::SandboxPolicy::ExternalSandbox { .. }
             )
         );
         if !sandbox_matches {
@@ -7540,19 +7554,19 @@ fn has_model_resume_override(
 }
 
 fn skills_to_info(
-    skills: &[codex_core::skills::SkillMetadata],
+    skills: &[orbit_code_core::skills::SkillMetadata],
     disabled_paths: &std::collections::HashSet<PathBuf>,
-) -> Vec<codex_app_server_protocol::SkillMetadata> {
+) -> Vec<orbit_code_app_server_protocol::SkillMetadata> {
     skills
         .iter()
         .map(|skill| {
             let enabled = !disabled_paths.contains(&skill.path_to_skills_md);
-            codex_app_server_protocol::SkillMetadata {
+            orbit_code_app_server_protocol::SkillMetadata {
                 name: skill.name.clone(),
                 description: skill.description.clone(),
                 short_description: skill.short_description.clone(),
                 interface: skill.interface.clone().map(|interface| {
-                    codex_app_server_protocol::SkillInterface {
+                    orbit_code_app_server_protocol::SkillInterface {
                         display_name: interface.display_name,
                         short_description: interface.short_description,
                         icon_small: interface.icon_small,
@@ -7562,11 +7576,11 @@ fn skills_to_info(
                     }
                 }),
                 dependencies: skill.dependencies.clone().map(|dependencies| {
-                    codex_app_server_protocol::SkillDependencies {
+                    orbit_code_app_server_protocol::SkillDependencies {
                         tools: dependencies
                             .tools
                             .into_iter()
-                            .map(|tool| codex_app_server_protocol::SkillToolDependency {
+                            .map(|tool| orbit_code_app_server_protocol::SkillToolDependency {
                                 r#type: tool.r#type,
                                 value: tool.value,
                                 description: tool.description,
@@ -7585,7 +7599,7 @@ fn skills_to_info(
         .collect()
 }
 
-fn plugin_skills_to_info(skills: &[codex_core::skills::SkillMetadata]) -> Vec<SkillSummary> {
+fn plugin_skills_to_info(skills: &[orbit_code_core::skills::SkillMetadata]) -> Vec<SkillSummary> {
     skills
         .iter()
         .map(|skill| SkillSummary {
@@ -7593,7 +7607,7 @@ fn plugin_skills_to_info(skills: &[codex_core::skills::SkillMetadata]) -> Vec<Sk
             description: skill.description.clone(),
             short_description: skill.short_description.clone(),
             interface: skill.interface.clone().map(|interface| {
-                codex_app_server_protocol::SkillInterface {
+                orbit_code_app_server_protocol::SkillInterface {
                     display_name: interface.display_name,
                     short_description: interface.short_description,
                     icon_small: interface.icon_small,
@@ -7608,7 +7622,7 @@ fn plugin_skills_to_info(skills: &[codex_core::skills::SkillMetadata]) -> Vec<Sk
 }
 
 fn plugin_interface_to_info(
-    interface: codex_core::plugins::PluginManifestInterface,
+    interface: orbit_code_core::plugins::PluginManifestInterface,
 ) -> PluginInterface {
     PluginInterface {
         display_name: interface.display_name,
@@ -7635,11 +7649,11 @@ fn marketplace_plugin_source_to_info(source: MarketplacePluginSource) -> PluginS
 }
 
 fn errors_to_info(
-    errors: &[codex_core::skills::SkillError],
-) -> Vec<codex_app_server_protocol::SkillErrorInfo> {
+    errors: &[orbit_code_core::skills::SkillError],
+) -> Vec<orbit_code_app_server_protocol::SkillErrorInfo> {
     errors
         .iter()
-        .map(|err| codex_app_server_protocol::SkillErrorInfo {
+        .map(|err| orbit_code_app_server_protocol::SkillErrorInfo {
             path: err.path.clone(),
             message: err.message.clone(),
         })
@@ -7702,7 +7716,7 @@ fn validate_dynamic_tools(tools: &[ApiDynamicToolSpec]) -> Result<(), String> {
             return Err(format!("duplicate dynamic tool name: {name}"));
         }
 
-        if let Err(err) = codex_core::parse_tool_input_schema(&tool.input_schema) {
+        if let Err(err) = orbit_code_core::parse_tool_input_schema(&tool.input_schema) {
             return Err(format!(
                 "dynamic tool input schema is not supported for {name}: {err}"
             ));
@@ -7715,9 +7729,9 @@ fn replace_cloud_requirements_loader(
     cloud_requirements: &RwLock<CloudRequirementsLoader>,
     auth_manager: Arc<AuthManager>,
     chatgpt_base_url: String,
-    codex_home: PathBuf,
+    orbit_code_home: PathBuf,
 ) {
-    let loader = cloud_requirements_loader(auth_manager, chatgpt_base_url, codex_home);
+    let loader = cloud_requirements_loader(auth_manager, chatgpt_base_url, orbit_code_home);
     if let Ok(mut guard) = cloud_requirements.write() {
         *guard = loader;
     } else {
@@ -7733,7 +7747,7 @@ async fn sync_default_client_residency_requirement(
         .read()
         .map(|guard| guard.clone())
         .unwrap_or_default();
-    match codex_core::config::ConfigBuilder::default()
+    match orbit_code_core::config::ConfigBuilder::default()
         .cli_overrides(cli_overrides.to_vec())
         .cloud_requirements(loader)
         .build()
@@ -7762,7 +7776,7 @@ async fn derive_config_from_params(
     request_overrides: Option<HashMap<String, serde_json::Value>>,
     typesafe_overrides: ConfigOverrides,
     cloud_requirements: &CloudRequirementsLoader,
-    codex_home: &Path,
+    orbit_code_home: &Path,
 ) -> std::io::Result<Config> {
     let merged_cli_overrides = cli_overrides
         .iter()
@@ -7775,8 +7789,8 @@ async fn derive_config_from_params(
         )
         .collect::<Vec<_>>();
 
-    codex_core::config::ConfigBuilder::default()
-        .codex_home(codex_home.to_path_buf())
+    orbit_code_core::config::ConfigBuilder::default()
+        .orbit_code_home(orbit_code_home.to_path_buf())
         .cli_overrides(merged_cli_overrides)
         .harness_overrides(typesafe_overrides)
         .cloud_requirements(cloud_requirements.clone())
@@ -7790,7 +7804,7 @@ async fn derive_config_for_cwd(
     typesafe_overrides: ConfigOverrides,
     cwd: Option<PathBuf>,
     cloud_requirements: &CloudRequirementsLoader,
-    codex_home: &Path,
+    orbit_code_home: &Path,
 ) -> std::io::Result<Config> {
     let merged_cli_overrides = cli_overrides
         .iter()
@@ -7803,8 +7817,8 @@ async fn derive_config_for_cwd(
         )
         .collect::<Vec<_>>();
 
-    codex_core::config::ConfigBuilder::default()
-        .codex_home(codex_home.to_path_buf())
+    orbit_code_core::config::ConfigBuilder::default()
+        .orbit_code_home(orbit_code_home.to_path_buf())
         .cli_overrides(merged_cli_overrides)
         .harness_overrides(typesafe_overrides)
         .fallback_cwd(cwd)
@@ -7857,7 +7871,7 @@ async fn read_summary_from_state_db_context_by_thread_id(
 }
 
 async fn summary_from_thread_list_item(
-    it: codex_core::ThreadItem,
+    it: orbit_code_core::ThreadItem,
     fallback_provider: &str,
     state_db_ctx: Option<&StateDbHandle>,
 ) -> Option<ConversationSummary> {
@@ -7872,7 +7886,7 @@ async fn summary_from_thread_list_item(
         let cli_version = it.cli_version.unwrap_or_default();
         let source = with_thread_spawn_agent_metadata(
             it.source
-                .unwrap_or(codex_protocol::protocol::SessionSource::Unknown),
+                .unwrap_or(orbit_code_protocol::protocol::SessionSource::Unknown),
             it.agent_nickname.clone(),
             it.agent_role.clone(),
         );
@@ -7939,7 +7953,7 @@ fn summary_from_state_db_metadata(
     let preview = first_user_message.unwrap_or_default();
     let source = serde_json::from_str(&source)
         .or_else(|_| serde_json::from_value(serde_json::Value::String(source.clone())))
-        .unwrap_or(codex_protocol::protocol::SessionSource::Unknown);
+        .unwrap_or(orbit_code_protocol::protocol::SessionSource::Unknown);
     let source = with_thread_spawn_agent_metadata(source, agent_nickname, agent_role);
     let git_info = if git_sha.is_none() && git_branch.is_none() && git_origin_url.is_none() {
         None
@@ -8084,7 +8098,7 @@ fn extract_conversation_summary(
     let preview = head
         .iter()
         .filter_map(|value| serde_json::from_value::<ResponseItem>(value.clone()).ok())
-        .find_map(|item| match codex_core::parse_turn_item(&item) {
+        .find_map(|item| match orbit_code_core::parse_turn_item(&item) {
             Some(TurnItem::UserMessage(user)) => Some(user.message()),
             _ => None,
         })?;
@@ -8164,8 +8178,10 @@ fn preview_from_rollout_items(items: &[RolloutItem]) -> String {
     items
         .iter()
         .find_map(|item| match item {
-            RolloutItem::ResponseItem(item) => match codex_core::parse_turn_item(item) {
-                Some(codex_protocol::items::TurnItem::UserMessage(user)) => Some(user.message()),
+            RolloutItem::ResponseItem(item) => match orbit_code_core::parse_turn_item(item) {
+                Some(orbit_code_protocol::items::TurnItem::UserMessage(user)) => {
+                    Some(user.message())
+                }
                 _ => None,
             },
             _ => None,
@@ -8178,24 +8194,24 @@ fn preview_from_rollout_items(items: &[RolloutItem]) -> String {
 }
 
 fn with_thread_spawn_agent_metadata(
-    source: codex_protocol::protocol::SessionSource,
+    source: orbit_code_protocol::protocol::SessionSource,
     agent_nickname: Option<String>,
     agent_role: Option<String>,
-) -> codex_protocol::protocol::SessionSource {
+) -> orbit_code_protocol::protocol::SessionSource {
     if agent_nickname.is_none() && agent_role.is_none() {
         return source;
     }
 
     match source {
-        codex_protocol::protocol::SessionSource::SubAgent(
-            codex_protocol::protocol::SubAgentSource::ThreadSpawn {
+        orbit_code_protocol::protocol::SessionSource::SubAgent(
+            orbit_code_protocol::protocol::SubAgentSource::ThreadSpawn {
                 parent_thread_id,
                 depth,
                 agent_nickname: existing_agent_nickname,
                 agent_role: existing_agent_role,
             },
-        ) => codex_protocol::protocol::SessionSource::SubAgent(
-            codex_protocol::protocol::SubAgentSource::ThreadSpawn {
+        ) => orbit_code_protocol::protocol::SessionSource::SubAgent(
+            orbit_code_protocol::protocol::SubAgentSource::ThreadSpawn {
                 parent_thread_id,
                 depth,
                 agent_nickname: agent_nickname.or(existing_agent_nickname),
@@ -8300,11 +8316,11 @@ mod tests {
     use crate::outgoing_message::OutgoingEnvelope;
     use crate::outgoing_message::OutgoingMessage;
     use anyhow::Result;
-    use codex_app_server_protocol::ServerRequestPayload;
-    use codex_app_server_protocol::ToolRequestUserInputParams;
-    use codex_protocol::openai_models::ReasoningEffort;
-    use codex_protocol::protocol::SessionSource;
-    use codex_protocol::protocol::SubAgentSource;
+    use orbit_code_app_server_protocol::ServerRequestPayload;
+    use orbit_code_app_server_protocol::ToolRequestUserInputParams;
+    use orbit_code_protocol::openai_models::ReasoningEffort;
+    use orbit_code_protocol::protocol::SessionSource;
+    use orbit_code_protocol::protocol::SubAgentSource;
     use pretty_assertions::assert_eq;
     use serde_json::json;
     use std::path::PathBuf;
@@ -8403,7 +8419,7 @@ mod tests {
             path: None,
             model: None,
             model_provider: None,
-            service_tier: Some(Some(codex_protocol::config_types::ServiceTier::Fast)),
+            service_tier: Some(Some(orbit_code_protocol::config_types::ServiceTier::Fast)),
             cwd: None,
             approval_policy: None,
             approvals_reviewer: None,
@@ -8417,10 +8433,10 @@ mod tests {
         let config_snapshot = ThreadConfigSnapshot {
             model: "gpt-5".to_string(),
             model_provider_id: "openai".to_string(),
-            service_tier: Some(codex_protocol::config_types::ServiceTier::Flex),
-            approval_policy: codex_protocol::protocol::AskForApproval::OnRequest,
-            approvals_reviewer: codex_protocol::config_types::ApprovalsReviewer::User,
-            sandbox_policy: codex_protocol::protocol::SandboxPolicy::DangerFullAccess,
+            service_tier: Some(orbit_code_protocol::config_types::ServiceTier::Flex),
+            approval_policy: orbit_code_protocol::protocol::AskForApproval::OnRequest,
+            approvals_reviewer: orbit_code_protocol::config_types::ApprovalsReviewer::User,
+            sandbox_policy: orbit_code_protocol::protocol::SandboxPolicy::DangerFullAccess,
             cwd: PathBuf::from("/tmp"),
             ephemeral: false,
             reasoning_effort: None,
@@ -8443,7 +8459,7 @@ mod tests {
             thread_id,
             PathBuf::from("/tmp/rollout.jsonl"),
             Utc::now(),
-            codex_protocol::protocol::SessionSource::default(),
+            orbit_code_protocol::protocol::SessionSource::default(),
         );
         builder.model_provider = Some("mock_provider".to_string());
         let mut metadata = builder.build("mock_provider");
@@ -8670,9 +8686,9 @@ mod tests {
 
     #[tokio::test]
     async fn read_summary_from_rollout_returns_empty_preview_when_no_user_message() -> Result<()> {
-        use codex_protocol::protocol::RolloutItem;
-        use codex_protocol::protocol::RolloutLine;
-        use codex_protocol::protocol::SessionMetaLine;
+        use orbit_code_protocol::protocol::RolloutItem;
+        use orbit_code_protocol::protocol::RolloutLine;
+        use orbit_code_protocol::protocol::SessionMetaLine;
         use std::fs;
         use std::fs::FileTimes;
 
@@ -8726,9 +8742,9 @@ mod tests {
 
     #[tokio::test]
     async fn read_summary_from_rollout_preserves_agent_nickname() -> Result<()> {
-        use codex_protocol::protocol::RolloutItem;
-        use codex_protocol::protocol::RolloutLine;
-        use codex_protocol::protocol::SessionMetaLine;
+        use orbit_code_protocol::protocol::RolloutItem;
+        use orbit_code_protocol::protocol::RolloutLine;
+        use orbit_code_protocol::protocol::SessionMetaLine;
         use std::fs;
 
         let temp_dir = TempDir::new()?;
@@ -8881,7 +8897,7 @@ mod tests {
             let mut state = state.lock().await;
             state.cancel_tx = Some(cancel_tx);
             state.track_current_turn_event(&EventMsg::TurnStarted(
-                codex_protocol::protocol::TurnStartedEvent {
+                orbit_code_protocol::protocol::TurnStartedEvent {
                     turn_id: "turn-1".to_string(),
                     model_context_window: None,
                     collaboration_mode_kind: Default::default(),

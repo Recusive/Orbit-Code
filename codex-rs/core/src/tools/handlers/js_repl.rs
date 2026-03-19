@@ -21,7 +21,7 @@ use crate::tools::js_repl::JS_REPL_PRAGMA_PREFIX;
 use crate::tools::js_repl::JsReplArgs;
 use crate::tools::registry::ToolHandler;
 use crate::tools::registry::ToolKind;
-use codex_protocol::models::FunctionCallOutputContentItem;
+use orbit_code_protocol::models::FunctionCallOutputContentItem;
 
 pub struct JsReplHandler;
 pub struct JsReplResetHandler;

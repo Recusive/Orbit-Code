@@ -1,6 +1,6 @@
 use super::*;
-use codex_network_proxy::BlockedRequestArgs;
-use codex_protocol::protocol::AskForApproval;
+use orbit_code_network_proxy::BlockedRequestArgs;
+use orbit_code_protocol::protocol::AskForApproval;
 use pretty_assertions::assert_eq;
 
 #[tokio::test]

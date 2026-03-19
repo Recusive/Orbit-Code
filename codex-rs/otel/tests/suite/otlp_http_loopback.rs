@@ -1,10 +1,10 @@
-use codex_otel::OtelProvider;
-use codex_otel::config::OtelExporter;
-use codex_otel::config::OtelHttpProtocol;
-use codex_otel::config::OtelSettings;
-use codex_otel::metrics::MetricsClient;
-use codex_otel::metrics::MetricsConfig;
-use codex_otel::metrics::Result;
+use orbit_code_otel::OtelProvider;
+use orbit_code_otel::config::OtelExporter;
+use orbit_code_otel::config::OtelHttpProtocol;
+use orbit_code_otel::config::OtelSettings;
+use orbit_code_otel::metrics::MetricsClient;
+use orbit_code_otel::metrics::MetricsConfig;
+use orbit_code_otel::metrics::Result;
 use std::collections::HashMap;
 use std::io::Read as _;
 use std::io::Write as _;
@@ -256,7 +256,7 @@ fn otlp_http_exporter_sends_traces_to_collector()
         environment: "test".to_string(),
         service_name: "codex-cli".to_string(),
         service_version: env!("CARGO_PKG_VERSION").to_string(),
-        codex_home: PathBuf::from("."),
+        orbit_code_home: PathBuf::from("."),
         exporter: OtelExporter::None,
         trace_exporter: OtelExporter::OtlpHttp {
             endpoint: format!("http://{addr}/v1/traces"),
@@ -364,7 +364,7 @@ async fn otlp_http_exporter_sends_traces_to_collector_in_tokio_runtime()
         environment: "test".to_string(),
         service_name: "codex-cli".to_string(),
         service_version: env!("CARGO_PKG_VERSION").to_string(),
-        codex_home: PathBuf::from("."),
+        orbit_code_home: PathBuf::from("."),
         exporter: OtelExporter::None,
         trace_exporter: OtelExporter::OtlpHttp {
             endpoint: format!("http://{addr}/v1/traces"),
@@ -480,7 +480,7 @@ fn otlp_http_exporter_sends_traces_to_collector_in_current_thread_tokio_runtime(
                 environment: "test".to_string(),
                 service_name: "codex-cli".to_string(),
                 service_version: env!("CARGO_PKG_VERSION").to_string(),
-                codex_home: PathBuf::from("."),
+                orbit_code_home: PathBuf::from("."),
                 exporter: OtelExporter::None,
                 trace_exporter: OtelExporter::OtlpHttp {
                     endpoint: format!("http://{addr}/v1/traces"),

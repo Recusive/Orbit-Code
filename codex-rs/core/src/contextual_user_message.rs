@@ -1,7 +1,7 @@
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::protocol::ENVIRONMENT_CONTEXT_CLOSE_TAG;
-use codex_protocol::protocol::ENVIRONMENT_CONTEXT_OPEN_TAG;
+use orbit_code_protocol::models::ContentItem;
+use orbit_code_protocol::models::ResponseItem;
+use orbit_code_protocol::protocol::ENVIRONMENT_CONTEXT_CLOSE_TAG;
+use orbit_code_protocol::protocol::ENVIRONMENT_CONTEXT_OPEN_TAG;
 
 pub(crate) const AGENTS_MD_START_MARKER: &str = "# AGENTS.md instructions for ";
 pub(crate) const AGENTS_MD_END_MARKER: &str = "</INSTRUCTIONS>";

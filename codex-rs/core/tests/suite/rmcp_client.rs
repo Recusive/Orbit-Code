@@ -9,27 +9,11 @@ use std::time::Duration;
 use std::time::SystemTime;
 use std::time::UNIX_EPOCH;
 
-use codex_core::CodexAuth;
-use codex_core::config::types::McpServerConfig;
-use codex_core::config::types::McpServerTransportConfig;
-use codex_core::models_manager::manager::RefreshStrategy;
+use orbit_code_core::CodexAuth;
+use orbit_code_core::config::types::McpServerConfig;
+use orbit_code_core::config::types::McpServerTransportConfig;
+use orbit_code_core::models_manager::manager::RefreshStrategy;
 
-use codex_protocol::config_types::ReasoningSummary;
-use codex_protocol::openai_models::ConfigShellToolType;
-use codex_protocol::openai_models::InputModality;
-use codex_protocol::openai_models::ModelInfo;
-use codex_protocol::openai_models::ModelVisibility;
-use codex_protocol::openai_models::ModelsResponse;
-use codex_protocol::openai_models::ReasoningEffortPreset;
-use codex_protocol::openai_models::TruncationPolicyConfig;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::McpInvocation;
-use codex_protocol::protocol::McpToolCallBeginEvent;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::SandboxPolicy;
-use codex_protocol::user_input::UserInput;
-use codex_utils_cargo_bin::cargo_bin;
 use core_test_support::responses;
 use core_test_support::responses::mount_models_once;
 use core_test_support::responses::mount_sse_once;
@@ -38,6 +22,22 @@ use core_test_support::stdio_server_bin;
 use core_test_support::test_codex::test_codex;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_with_timeout;
+use orbit_code_protocol::config_types::ReasoningSummary;
+use orbit_code_protocol::openai_models::ConfigShellToolType;
+use orbit_code_protocol::openai_models::InputModality;
+use orbit_code_protocol::openai_models::ModelInfo;
+use orbit_code_protocol::openai_models::ModelVisibility;
+use orbit_code_protocol::openai_models::ModelsResponse;
+use orbit_code_protocol::openai_models::ReasoningEffortPreset;
+use orbit_code_protocol::openai_models::TruncationPolicyConfig;
+use orbit_code_protocol::protocol::AskForApproval;
+use orbit_code_protocol::protocol::EventMsg;
+use orbit_code_protocol::protocol::McpInvocation;
+use orbit_code_protocol::protocol::McpToolCallBeginEvent;
+use orbit_code_protocol::protocol::Op;
+use orbit_code_protocol::protocol::SandboxPolicy;
+use orbit_code_protocol::user_input::UserInput;
+use orbit_code_utils_cargo_bin::cargo_bin;
 use reqwest::Client;
 use reqwest::StatusCode;
 use serde_json::Value;
@@ -394,7 +394,7 @@ async fn stdio_image_responses_are_sanitized_for_text_only_model() -> anyhow::Re
                 description: Some("Test model without image input support".to_string()),
                 default_reasoning_level: None,
                 supported_reasoning_levels: vec![ReasoningEffortPreset {
-                    effort: codex_protocol::openai_models::ReasoningEffort::Medium,
+                    effort: orbit_code_protocol::openai_models::ReasoningEffort::Medium,
                     description: "Medium".to_string(),
                 }],
                 shell_type: ConfigShellToolType::Default,
@@ -854,10 +854,10 @@ async fn streamable_http_tool_call_round_trip() -> anyhow::Result<()> {
     Ok(())
 }
 
-/// This test writes to a fallback credentials file in CODEX_HOME.
-/// Ideally, we wouldn't need to serialize the test but it's much more cumbersome to wire CODEX_HOME through the code.
+/// This test writes to a fallback credentials file in ORBIT_HOME.
+/// Ideally, we wouldn't need to serialize the test but it's much more cumbersome to wire ORBIT_HOME through the code.
 #[test]
-#[serial(codex_home)]
+#[serial(orbit_code_home)]
 fn streamable_http_with_oauth_round_trip() -> anyhow::Result<()> {
     const TEST_STACK_SIZE_BYTES: usize = 8 * 1024 * 1024;
 
@@ -940,7 +940,7 @@ async fn streamable_http_with_oauth_round_trip_impl() -> anyhow::Result<()> {
         .await?;
 
     let temp_home = Arc::new(tempdir()?);
-    let _codex_home_guard = EnvVarGuard::set("CODEX_HOME", temp_home.path().as_os_str());
+    let _orbit_code_home_guard = EnvVarGuard::set("ORBIT_HOME", temp_home.path().as_os_str());
     write_fallback_oauth_tokens(
         temp_home.path(),
         server_name,

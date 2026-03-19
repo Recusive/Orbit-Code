@@ -4,7 +4,6 @@ mod js_runtime;
 mod manager;
 mod manifest;
 
-pub use codex_package_manager::PackagePlatform as ArtifactRuntimePlatform;
 pub use error::ArtifactRuntimeError;
 pub use installed::InstalledArtifactRuntime;
 pub use installed::load_cached_runtime;
@@ -19,10 +18,11 @@ pub use manager::DEFAULT_CACHE_ROOT_RELATIVE;
 pub use manager::DEFAULT_RELEASE_BASE_URL;
 pub use manager::DEFAULT_RELEASE_TAG_PREFIX;
 pub use manifest::ReleaseManifest;
+pub use orbit_code_package_manager::PackagePlatform as ArtifactRuntimePlatform;
 
 pub(crate) use installed::default_cached_runtime_root;
 pub(crate) use installed::detect_runtime_root;
-pub(crate) use js_runtime::codex_app_runtime_candidates;
+pub(crate) use js_runtime::orbit_code_app_runtime_candidates;
 pub(crate) use js_runtime::resolve_js_runtime_from_candidates;
 pub(crate) use js_runtime::system_electron_runtime;
 pub(crate) use js_runtime::system_node_runtime;

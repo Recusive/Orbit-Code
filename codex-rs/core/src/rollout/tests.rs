@@ -26,16 +26,16 @@ use crate::rollout::list::get_threads;
 use crate::rollout::list::read_head_for_summary;
 use crate::rollout::rollout_date_parts;
 use anyhow::Result;
-use codex_protocol::ThreadId;
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::RolloutItem;
-use codex_protocol::protocol::RolloutLine;
-use codex_protocol::protocol::SessionMeta;
-use codex_protocol::protocol::SessionMetaLine;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::UserMessageEvent;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::models::ContentItem;
+use orbit_code_protocol::models::ResponseItem;
+use orbit_code_protocol::protocol::EventMsg;
+use orbit_code_protocol::protocol::RolloutItem;
+use orbit_code_protocol::protocol::RolloutLine;
+use orbit_code_protocol::protocol::SessionMeta;
+use orbit_code_protocol::protocol::SessionMetaLine;
+use orbit_code_protocol::protocol::SessionSource;
+use orbit_code_protocol::protocol::UserMessageEvent;
 
 const NO_SOURCE_FILTER: &[SessionSource] = &[];
 const TEST_PROVIDER: &str = "test-provider";
@@ -57,9 +57,10 @@ async fn insert_state_db_thread(
     rollout_path: &Path,
     archived: bool,
 ) {
-    let runtime = codex_state::StateRuntime::init(home.to_path_buf(), TEST_PROVIDER.to_string())
-        .await
-        .expect("state db should initialize");
+    let runtime =
+        orbit_code_state::StateRuntime::init(home.to_path_buf(), TEST_PROVIDER.to_string())
+            .await
+            .expect("state db should initialize");
     runtime
         .mark_backfill_complete(None)
         .await
@@ -68,7 +69,7 @@ async fn insert_state_db_thread(
         .with_ymd_and_hms(2025, 1, 3, 12, 0, 0)
         .single()
         .expect("valid datetime");
-    let mut builder = codex_state::ThreadMetadataBuilder::new(
+    let mut builder = orbit_code_state::ThreadMetadataBuilder::new(
         thread_id,
         rollout_path.to_path_buf(),
         created_at,
@@ -247,9 +248,10 @@ async fn find_thread_path_repairs_missing_db_row_after_filesystem_fallback() {
     let fs_rollout_path = home.join(format!("sessions/2025/01/03/rollout-{ts}-{uuid}.jsonl"));
 
     // Create an empty state DB so lookup takes the DB-first path and then falls back to files.
-    let _runtime = codex_state::StateRuntime::init(home.to_path_buf(), TEST_PROVIDER.to_string())
-        .await
-        .expect("state db should initialize");
+    let _runtime =
+        orbit_code_state::StateRuntime::init(home.to_path_buf(), TEST_PROVIDER.to_string())
+            .await
+            .expect("state db should initialize");
     _runtime
         .mark_backfill_complete(None)
         .await
@@ -277,9 +279,10 @@ async fn assert_state_db_rollout_path(
     thread_id: ThreadId,
     expected_path: Option<&Path>,
 ) {
-    let runtime = codex_state::StateRuntime::init(home.to_path_buf(), TEST_PROVIDER.to_string())
-        .await
-        .expect("state db should initialize");
+    let runtime =
+        orbit_code_state::StateRuntime::init(home.to_path_buf(), TEST_PROVIDER.to_string())
+            .await
+            .expect("state db should initialize");
     let path = runtime
         .find_rollout_path_by_id(thread_id, Some(false))
         .await

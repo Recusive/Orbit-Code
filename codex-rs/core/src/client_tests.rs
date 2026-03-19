@@ -2,11 +2,11 @@ use super::AuthRequestTelemetryContext;
 use super::ModelClient;
 use super::PendingUnauthorizedRetry;
 use super::UnauthorizedRecoveryExecution;
-use codex_otel::SessionTelemetry;
-use codex_protocol::ThreadId;
-use codex_protocol::openai_models::ModelInfo;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::SubAgentSource;
+use orbit_code_otel::SessionTelemetry;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::openai_models::ModelInfo;
+use orbit_code_protocol::protocol::SessionSource;
+use orbit_code_protocol::protocol::SubAgentSource;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 

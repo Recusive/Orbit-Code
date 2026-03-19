@@ -1,9 +1,9 @@
 use super::*;
 use crate::codex::make_session_and_context;
 use assert_matches::assert_matches;
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::ReasoningItemReasoningSummary;
-use codex_protocol::protocol::ThreadRolledBackEvent;
+use orbit_code_protocol::models::ContentItem;
+use orbit_code_protocol::models::ReasoningItemReasoningSummary;
+use orbit_code_protocol::protocol::ThreadRolledBackEvent;
 use pretty_assertions::assert_eq;
 
 fn user_msg(text: &str) -> ResponseItem {

@@ -5,25 +5,25 @@ use std::sync::Arc;
 
 use anyhow::Context;
 use anyhow::Result;
-use codex_core::CodexAuth;
-use codex_core::CodexThread;
-use codex_core::ModelProviderInfo;
-use codex_core::ThreadManager;
-use codex_core::built_in_model_providers;
-use codex_core::config::Config;
-use codex_core::features::Feature;
-use codex_core::models_manager::collaboration_mode_presets::CollaborationModesConfig;
-use codex_core::shell::Shell;
-use codex_core::shell::get_shell_by_model_provided_path;
-use codex_protocol::config_types::ServiceTier;
-use codex_protocol::openai_models::ModelsResponse;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::SandboxPolicy;
-use codex_protocol::protocol::SessionConfiguredEvent;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::user_input::UserInput;
+use orbit_code_core::CodexAuth;
+use orbit_code_core::CodexThread;
+use orbit_code_core::ModelProviderInfo;
+use orbit_code_core::ThreadManager;
+use orbit_code_core::built_in_model_providers;
+use orbit_code_core::config::Config;
+use orbit_code_core::features::Feature;
+use orbit_code_core::models_manager::collaboration_mode_presets::CollaborationModesConfig;
+use orbit_code_core::shell::Shell;
+use orbit_code_core::shell::get_shell_by_model_provided_path;
+use orbit_code_protocol::config_types::ServiceTier;
+use orbit_code_protocol::openai_models::ModelsResponse;
+use orbit_code_protocol::protocol::AskForApproval;
+use orbit_code_protocol::protocol::EventMsg;
+use orbit_code_protocol::protocol::Op;
+use orbit_code_protocol::protocol::SandboxPolicy;
+use orbit_code_protocol::protocol::SessionConfiguredEvent;
+use orbit_code_protocol::protocol::SessionSource;
+use orbit_code_protocol::user_input::UserInput;
 use serde_json::Value;
 use tempfile::TempDir;
 use wiremock::MockServer;
@@ -200,15 +200,15 @@ impl TestCodexBuilder {
         let thread_manager = if config.model_catalog.is_some() {
             ThreadManager::new(
                 &config,
-                codex_core::test_support::auth_manager_from_auth(auth.clone()),
+                orbit_code_core::test_support::auth_manager_from_auth(auth.clone()),
                 SessionSource::Exec,
                 CollaborationModesConfig::default(),
             )
         } else {
-            codex_core::test_support::thread_manager_with_models_provider_and_home(
+            orbit_code_core::test_support::thread_manager_with_models_provider_and_home(
                 auth.clone(),
                 config.model_provider.clone(),
-                config.codex_home.clone(),
+                config.orbit_code_home.clone(),
             )
         };
         let thread_manager = Arc::new(thread_manager);
@@ -216,9 +216,9 @@ impl TestCodexBuilder {
 
         let new_conversation = match (resume_from, user_shell_override) {
             (Some(path), Some(user_shell_override)) => {
-                let auth_manager = codex_core::test_support::auth_manager_from_auth(auth);
+                let auth_manager = orbit_code_core::test_support::auth_manager_from_auth(auth);
                 Box::pin(
-                    codex_core::test_support::resume_thread_from_rollout_with_user_shell_override(
+                    orbit_code_core::test_support::resume_thread_from_rollout_with_user_shell_override(
                         thread_manager.as_ref(),
                         config.clone(),
                         path,
@@ -229,7 +229,7 @@ impl TestCodexBuilder {
                 .await?
             }
             (Some(path), None) => {
-                let auth_manager = codex_core::test_support::auth_manager_from_auth(auth);
+                let auth_manager = orbit_code_core::test_support::auth_manager_from_auth(auth);
                 Box::pin(thread_manager.resume_thread_from_rollout(
                     config.clone(),
                     path,
@@ -240,7 +240,7 @@ impl TestCodexBuilder {
             }
             (None, Some(user_shell_override)) => {
                 Box::pin(
-                    codex_core::test_support::start_thread_with_user_shell_override(
+                    orbit_code_core::test_support::start_thread_with_user_shell_override(
                         thread_manager.as_ref(),
                         config.clone(),
                         user_shell_override,
@@ -280,16 +280,16 @@ impl TestCodexBuilder {
         for hook in self.pre_build_hooks.drain(..) {
             hook(home.path());
         }
-        if let Ok(path) = codex_utils_cargo_bin::cargo_bin("codex") {
-            config.codex_linux_sandbox_exe = Some(path);
+        if let Ok(path) = orbit_code_utils_cargo_bin::cargo_bin("orbit-code") {
+            config.orbit_code_linux_sandbox_exe = Some(path);
         } else if let Ok(exe) = std::env::current_exe()
             && let Some(path) = exe
                 .parent()
                 .and_then(|parent| parent.parent())
-                .map(|parent| parent.join("codex"))
+                .map(|parent| parent.join("orbit-code"))
             && path.is_file()
         {
-            config.codex_linux_sandbox_exe = Some(path);
+            config.orbit_code_linux_sandbox_exe = Some(path);
         }
 
         let mut mutators = vec![];
@@ -316,7 +316,7 @@ fn ensure_test_model_catalog(config: &mut Config) -> Result<()> {
         return Ok(());
     }
 
-    let bundled_models_path = codex_utils_cargo_bin::find_resource!("../../models.json")
+    let bundled_models_path = orbit_code_utils_cargo_bin::find_resource!("../../models.json")
         .context("bundled models.json")?;
     let bundled_models_contents =
         std::fs::read_to_string(&bundled_models_path).with_context(|| {
@@ -361,8 +361,8 @@ impl TestCodex {
         self.cwd.path()
     }
 
-    pub fn codex_home_path(&self) -> &Path {
-        self.config.codex_home.as_path()
+    pub fn orbit_code_home_path(&self) -> &Path {
+        self.config.orbit_code_home.as_path()
     }
 
     pub fn workspace_path(&self, rel: impl AsRef<Path>) -> PathBuf {

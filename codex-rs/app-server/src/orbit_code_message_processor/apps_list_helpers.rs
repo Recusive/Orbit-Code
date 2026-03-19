@@ -1,11 +1,11 @@
 use std::sync::Arc;
 
-use codex_app_server_protocol::AppInfo;
-use codex_app_server_protocol::AppListUpdatedNotification;
-use codex_app_server_protocol::AppsListResponse;
-use codex_app_server_protocol::JSONRPCErrorError;
-use codex_app_server_protocol::ServerNotification;
-use codex_chatgpt::connectors;
+use orbit_code_app_server_protocol::AppInfo;
+use orbit_code_app_server_protocol::AppListUpdatedNotification;
+use orbit_code_app_server_protocol::AppsListResponse;
+use orbit_code_app_server_protocol::JSONRPCErrorError;
+use orbit_code_app_server_protocol::ServerNotification;
+use orbit_code_chatgpt::connectors;
 
 use crate::error_code::INVALID_REQUEST_ERROR_CODE;
 use crate::outgoing_message::OutgoingMessageSender;

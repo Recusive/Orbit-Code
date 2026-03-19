@@ -14,13 +14,13 @@ use anyhow::Result;
 use app_test_support::create_fake_rollout_with_text_elements;
 use app_test_support::create_mock_responses_server_repeating_assistant;
 use app_test_support::to_response;
-use codex_app_server_protocol::JSONRPCNotification;
-use codex_app_server_protocol::JSONRPCResponse;
-use codex_app_server_protocol::ThreadNameUpdatedNotification;
-use codex_app_server_protocol::ThreadResumeParams;
-use codex_app_server_protocol::ThreadResumeResponse;
-use codex_app_server_protocol::ThreadSetNameParams;
-use codex_app_server_protocol::ThreadSetNameResponse;
+use orbit_code_app_server_protocol::JSONRPCNotification;
+use orbit_code_app_server_protocol::JSONRPCResponse;
+use orbit_code_app_server_protocol::ThreadNameUpdatedNotification;
+use orbit_code_app_server_protocol::ThreadResumeParams;
+use orbit_code_app_server_protocol::ThreadResumeResponse;
+use orbit_code_app_server_protocol::ThreadSetNameParams;
+use orbit_code_app_server_protocol::ThreadSetNameResponse;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 use tokio::time::Duration;
@@ -29,11 +29,11 @@ use tokio::time::timeout;
 #[tokio::test]
 async fn thread_name_updated_broadcasts_for_loaded_threads() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path(), &server.uri(), "never")?;
-    let conversation_id = create_rollout(codex_home.path(), "2025-01-05T12-00-00")?;
+    let orbit_code_home = TempDir::new()?;
+    create_config_toml(orbit_code_home.path(), &server.uri(), "never")?;
+    let conversation_id = create_rollout(orbit_code_home.path(), "2025-01-05T12-00-00")?;
 
-    let (mut process, bind_addr) = spawn_websocket_server(codex_home.path()).await?;
+    let (mut process, bind_addr) = spawn_websocket_server(orbit_code_home.path()).await?;
 
     let result = async {
         let mut ws1 = connect_websocket(bind_addr).await?;
@@ -90,11 +90,11 @@ async fn thread_name_updated_broadcasts_for_loaded_threads() -> Result<()> {
 #[tokio::test]
 async fn thread_name_updated_broadcasts_for_not_loaded_threads() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path(), &server.uri(), "never")?;
-    let conversation_id = create_rollout(codex_home.path(), "2025-01-05T12-05-00")?;
+    let orbit_code_home = TempDir::new()?;
+    create_config_toml(orbit_code_home.path(), &server.uri(), "never")?;
+    let conversation_id = create_rollout(orbit_code_home.path(), "2025-01-05T12-05-00")?;
 
-    let (mut process, bind_addr) = spawn_websocket_server(codex_home.path()).await?;
+    let (mut process, bind_addr) = spawn_websocket_server(orbit_code_home.path()).await?;
 
     let result = async {
         let mut ws1 = connect_websocket(bind_addr).await?;
@@ -143,9 +143,9 @@ async fn initialize_both_clients(ws1: &mut WsClient, ws2: &mut WsClient) -> Resu
     Ok(())
 }
 
-fn create_rollout(codex_home: &std::path::Path, filename_ts: &str) -> Result<String> {
+fn create_rollout(orbit_code_home: &std::path::Path, filename_ts: &str) -> Result<String> {
     create_fake_rollout_with_text_elements(
-        codex_home,
+        orbit_code_home,
         filename_ts,
         "2025-01-05T12:00:00Z",
         "Saved user message",

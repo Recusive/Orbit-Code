@@ -1,6 +1,4 @@
 use anyhow::Result;
-use codex_core::features::Feature;
-use codex_protocol::config_types::ServiceTier;
 use core_test_support::responses::WebSocketConnectionConfig;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
@@ -10,6 +8,8 @@ use core_test_support::responses::start_websocket_server;
 use core_test_support::responses::start_websocket_server_with_headers;
 use core_test_support::skip_if_no_network;
 use core_test_support::test_codex::test_codex;
+use orbit_code_core::features::Feature;
+use orbit_code_protocol::config_types::ServiceTier;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 use std::time::Duration;
@@ -17,7 +17,7 @@ use std::time::Duration;
 const WS_V2_BETA_HEADER_VALUE: &str = "responses_websockets=2026-02-06";
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn websocket_test_codex_shell_chain() -> Result<()> {
+async fn websocket_test_orbit_code_shell_chain() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let call_id = "shell-command-call";
@@ -164,7 +164,7 @@ async fn websocket_first_turn_handles_handshake_delay_with_startup_prewarm() -> 
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn websocket_v2_test_codex_shell_chain() -> Result<()> {
+async fn websocket_v2_test_orbit_code_shell_chain() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let call_id = "shell-command-call";

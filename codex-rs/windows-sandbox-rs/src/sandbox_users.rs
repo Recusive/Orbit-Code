@@ -34,14 +34,14 @@ use windows_sys::Win32::Security::LookupAccountNameW;
 use windows_sys::Win32::Security::LookupAccountSidW;
 use windows_sys::Win32::Security::SID_NAME_USE;
 
-use codex_windows_sandbox::dpapi_protect;
-use codex_windows_sandbox::sandbox_dir;
-use codex_windows_sandbox::sandbox_secrets_dir;
-use codex_windows_sandbox::string_from_sid_bytes;
-use codex_windows_sandbox::to_wide;
-use codex_windows_sandbox::SetupErrorCode;
-use codex_windows_sandbox::SetupFailure;
-use codex_windows_sandbox::SETUP_VERSION;
+use orbit_code_windows_sandbox::dpapi_protect;
+use orbit_code_windows_sandbox::sandbox_dir;
+use orbit_code_windows_sandbox::sandbox_secrets_dir;
+use orbit_code_windows_sandbox::string_from_sid_bytes;
+use orbit_code_windows_sandbox::to_wide;
+use orbit_code_windows_sandbox::SetupErrorCode;
+use orbit_code_windows_sandbox::SetupFailure;
+use orbit_code_windows_sandbox::SETUP_VERSION;
 
 pub const SANDBOX_USERS_GROUP: &str = "CodexSandboxUsers";
 const SANDBOX_USERS_GROUP_COMMENT: &str = "Codex sandbox internal group (managed)";
@@ -60,7 +60,7 @@ pub fn resolve_sandbox_users_group_sid() -> Result<Vec<u8>> {
 }
 
 pub fn provision_sandbox_users(
-    codex_home: &Path,
+    orbit_code_home: &Path,
     offline_username: &str,
     online_username: &str,
     log: &mut File,
@@ -75,7 +75,7 @@ pub fn provision_sandbox_users(
     ensure_sandbox_user(offline_username, &offline_password, log)?;
     ensure_sandbox_user(online_username, &online_password, log)?;
     write_secrets(
-        codex_home,
+        orbit_code_home,
         offline_username,
         &offline_password,
         online_username,
@@ -393,13 +393,13 @@ struct SetupMarker {
 }
 
 fn write_secrets(
-    codex_home: &Path,
+    orbit_code_home: &Path,
     offline_user: &str,
     offline_pwd: &str,
     online_user: &str,
     online_pwd: &str,
 ) -> Result<()> {
-    let sandbox_dir = sandbox_dir(codex_home);
+    let sandbox_dir = sandbox_dir(orbit_code_home);
     std::fs::create_dir_all(&sandbox_dir).map_err(|err| {
         anyhow::Error::new(SetupFailure::new(
             SetupErrorCode::HelperUsersFileWriteFailed,
@@ -409,7 +409,7 @@ fn write_secrets(
             ),
         ))
     })?;
-    let secrets_dir = sandbox_secrets_dir(codex_home);
+    let secrets_dir = sandbox_secrets_dir(orbit_code_home);
     std::fs::create_dir_all(&secrets_dir).map_err(|err| {
         anyhow::Error::new(SetupFailure::new(
             SetupErrorCode::HelperUsersFileWriteFailed,

@@ -3,7 +3,7 @@ use std::time::Duration;
 
 use anyhow::Error;
 use anyhow::Result;
-use codex_protocol::protocol::McpAuthStatus;
+use orbit_code_protocol::protocol::McpAuthStatus;
 use reqwest::Client;
 use reqwest::StatusCode;
 use reqwest::Url;
@@ -293,7 +293,7 @@ mod tests {
     #[tokio::test]
     #[serial(auth_status_env)]
     async fn determine_auth_status_uses_bearer_token_when_env_authorization_header_present() {
-        let _guard = EnvVarGuard::set("CODEX_RMCP_CLIENT_AUTH_STATUS_TEST_TOKEN", "Bearer token");
+        let _guard = EnvVarGuard::set("ORBIT_RMCP_CLIENT_AUTH_STATUS_TEST_TOKEN", "Bearer token");
         let status = determine_streamable_http_auth_status(
             "server",
             "not-a-url",
@@ -301,7 +301,7 @@ mod tests {
             None,
             Some(HashMap::from([(
                 "Authorization".to_string(),
-                "CODEX_RMCP_CLIENT_AUTH_STATUS_TEST_TOKEN".to_string(),
+                "ORBIT_RMCP_CLIENT_AUTH_STATUS_TEST_TOKEN".to_string(),
             )])),
             OAuthCredentialsStoreMode::Keyring,
         )

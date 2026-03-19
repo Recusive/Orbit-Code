@@ -2,13 +2,13 @@ use std::path::Path;
 
 use futures::future::join_all;
 
-use codex_protocol::protocol::HookCompletedEvent;
-use codex_protocol::protocol::HookEventName;
-use codex_protocol::protocol::HookExecutionMode;
-use codex_protocol::protocol::HookHandlerType;
-use codex_protocol::protocol::HookRunStatus;
-use codex_protocol::protocol::HookRunSummary;
-use codex_protocol::protocol::HookScope;
+use orbit_code_protocol::protocol::HookCompletedEvent;
+use orbit_code_protocol::protocol::HookEventName;
+use orbit_code_protocol::protocol::HookExecutionMode;
+use orbit_code_protocol::protocol::HookHandlerType;
+use orbit_code_protocol::protocol::HookRunStatus;
+use orbit_code_protocol::protocol::HookRunSummary;
+use orbit_code_protocol::protocol::HookScope;
 
 use super::CommandShell;
 use super::ConfiguredHandler;
@@ -87,7 +87,7 @@ pub(crate) fn completed_summary(
     handler: &ConfiguredHandler,
     run_result: &CommandRunResult,
     status: HookRunStatus,
-    entries: Vec<codex_protocol::protocol::HookOutputEntry>,
+    entries: Vec<orbit_code_protocol::protocol::HookOutputEntry>,
 ) -> HookRunSummary {
     HookRunSummary {
         id: handler.run_id(),
@@ -117,7 +117,7 @@ fn scope_for_event(event_name: HookEventName) -> HookScope {
 mod tests {
     use std::path::PathBuf;
 
-    use codex_protocol::protocol::HookEventName;
+    use orbit_code_protocol::protocol::HookEventName;
 
     use super::ConfiguredHandler;
     use super::select_handlers;

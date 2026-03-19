@@ -1,15 +1,15 @@
-extern crate codex_execpolicy_legacy;
+extern crate orbit_code_execpolicy_legacy;
 
 use std::vec;
 
-use codex_execpolicy_legacy::Error;
-use codex_execpolicy_legacy::ExecCall;
-use codex_execpolicy_legacy::MatchedExec;
-use codex_execpolicy_legacy::MatchedFlag;
-use codex_execpolicy_legacy::Policy;
-use codex_execpolicy_legacy::PositionalArg;
-use codex_execpolicy_legacy::ValidExec;
-use codex_execpolicy_legacy::get_default_policy;
+use orbit_code_execpolicy_legacy::Error;
+use orbit_code_execpolicy_legacy::ExecCall;
+use orbit_code_execpolicy_legacy::MatchedExec;
+use orbit_code_execpolicy_legacy::MatchedFlag;
+use orbit_code_execpolicy_legacy::Policy;
+use orbit_code_execpolicy_legacy::PositionalArg;
+use orbit_code_execpolicy_legacy::ValidExec;
+use orbit_code_execpolicy_legacy::get_default_policy;
 
 #[expect(clippy::expect_used)]
 fn setup() -> Policy {

@@ -8,11 +8,6 @@ use std::sync::Arc;
 use anyhow::Context;
 use anyhow::Result;
 use anyhow::bail;
-use codex_core::CodexThread;
-use codex_core::features::Feature;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::UndoCompletedEvent;
 use core_test_support::responses::ev_apply_patch_function_call;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
@@ -23,6 +18,11 @@ use core_test_support::skip_if_no_network;
 use core_test_support::test_codex::TestCodexHarness;
 use core_test_support::test_codex::test_codex;
 use core_test_support::wait_for_event_match;
+use orbit_code_core::CodexThread;
+use orbit_code_core::features::Feature;
+use orbit_code_protocol::protocol::EventMsg;
+use orbit_code_protocol::protocol::Op;
+use orbit_code_protocol::protocol::UndoCompletedEvent;
 use pretty_assertions::assert_eq;
 
 #[allow(clippy::expect_used)]

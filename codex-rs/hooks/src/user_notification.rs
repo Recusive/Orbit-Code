@@ -80,7 +80,7 @@ pub fn notify_hook(argv: Vec<String>) -> Hook {
 #[cfg(test)]
 mod tests {
     use anyhow::Result;
-    use codex_protocol::ThreadId;
+    use orbit_code_protocol::ThreadId;
     use pretty_assertions::assert_eq;
     use serde_json::Value;
     use serde_json::json;

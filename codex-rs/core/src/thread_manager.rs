@@ -7,7 +7,6 @@ use crate::codex::Codex;
 use crate::codex::CodexSpawnArgs;
 use crate::codex::CodexSpawnOk;
 use crate::codex::INITIAL_SUBMIT_ID;
-use crate::codex_thread::CodexThread;
 use crate::config::Config;
 use crate::error::CodexErr;
 use crate::error::Result as CodexResult;
@@ -16,6 +15,7 @@ use crate::file_watcher::FileWatcherEvent;
 use crate::mcp::McpManager;
 use crate::models_manager::collaboration_mode_presets::CollaborationModesConfig;
 use crate::models_manager::manager::ModelsManager;
+use crate::orbit_code_thread::CodexThread;
 use crate::plugins::PluginsManager;
 use crate::protocol::Event;
 use crate::protocol::EventMsg;
@@ -24,17 +24,17 @@ use crate::rollout::RolloutRecorder;
 use crate::rollout::truncation;
 use crate::shell_snapshot::ShellSnapshot;
 use crate::skills::SkillsManager;
-use codex_protocol::ThreadId;
-use codex_protocol::config_types::CollaborationModeMask;
-use codex_protocol::openai_models::ModelPreset;
-use codex_protocol::protocol::InitialHistory;
-use codex_protocol::protocol::McpServerRefreshConfig;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::RolloutItem;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::W3cTraceContext;
 use futures::StreamExt;
 use futures::stream::FuturesUnordered;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::config_types::CollaborationModeMask;
+use orbit_code_protocol::openai_models::ModelPreset;
+use orbit_code_protocol::protocol::InitialHistory;
+use orbit_code_protocol::protocol::McpServerRefreshConfig;
+use orbit_code_protocol::protocol::Op;
+use orbit_code_protocol::protocol::RolloutItem;
+use orbit_code_protocol::protocol::SessionSource;
+use orbit_code_protocol::protocol::W3cTraceContext;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -76,7 +76,10 @@ impl Drop for TempCodexHomeGuard {
     }
 }
 
-fn build_file_watcher(codex_home: PathBuf, skills_manager: Arc<SkillsManager>) -> Arc<FileWatcher> {
+fn build_file_watcher(
+    orbit_code_home: PathBuf,
+    skills_manager: Arc<SkillsManager>,
+) -> Arc<FileWatcher> {
     if should_use_test_thread_manager_behavior()
         && let Ok(handle) = Handle::try_current()
         && handle.runtime_flavor() == RuntimeFlavor::CurrentThread
@@ -87,7 +90,7 @@ fn build_file_watcher(codex_home: PathBuf, skills_manager: Arc<SkillsManager>) -
         return Arc::new(FileWatcher::noop());
     }
 
-    let file_watcher = match FileWatcher::new(codex_home) {
+    let file_watcher = match FileWatcher::new(orbit_code_home) {
         Ok(file_watcher) => Arc::new(file_watcher),
         Err(err) => {
             warn!("failed to initialize file watcher: {err}");
@@ -141,7 +144,7 @@ enum ShutdownOutcome {
 /// them in memory.
 pub struct ThreadManager {
     state: Arc<ThreadManagerState>,
-    _test_codex_home_guard: Option<TempCodexHomeGuard>,
+    _test_orbit_code_home_guard: Option<TempCodexHomeGuard>,
 }
 
 /// Shared, `Arc`-owned state for [`ThreadManager`]. This `Arc` is required to have a single
@@ -168,27 +171,27 @@ impl ThreadManager {
         session_source: SessionSource,
         collaboration_modes_config: CollaborationModesConfig,
     ) -> Self {
-        let codex_home = config.codex_home.clone();
+        let orbit_code_home = config.orbit_code_home.clone();
         let openai_models_provider = config
             .model_providers
             .get(OPENAI_PROVIDER_ID)
             .cloned()
             .unwrap_or_else(|| ModelProviderInfo::create_openai_provider(/*base_url*/ None));
         let (thread_created_tx, _) = broadcast::channel(THREAD_CREATED_CHANNEL_CAPACITY);
-        let plugins_manager = Arc::new(PluginsManager::new(codex_home.clone()));
+        let plugins_manager = Arc::new(PluginsManager::new(orbit_code_home.clone()));
         let mcp_manager = Arc::new(McpManager::new(Arc::clone(&plugins_manager)));
         let skills_manager = Arc::new(SkillsManager::new(
-            codex_home.clone(),
+            orbit_code_home.clone(),
             Arc::clone(&plugins_manager),
             config.bundled_skills_enabled(),
         ));
-        let file_watcher = build_file_watcher(codex_home.clone(), Arc::clone(&skills_manager));
+        let file_watcher = build_file_watcher(orbit_code_home.clone(), Arc::clone(&skills_manager));
         Self {
             state: Arc::new(ThreadManagerState {
                 threads: Arc::new(RwLock::new(HashMap::new())),
                 thread_created_tx,
                 models_manager: Arc::new(ModelsManager::new_with_provider(
-                    codex_home,
+                    orbit_code_home,
                     auth_manager.clone(),
                     config.model_catalog.clone(),
                     collaboration_modes_config,
@@ -203,7 +206,7 @@ impl ThreadManager {
                 ops_log: should_use_test_thread_manager_behavior()
                     .then(|| Arc::new(std::sync::Mutex::new(Vec::new()))),
             }),
-            _test_codex_home_guard: None,
+            _test_orbit_code_home_guard: None,
         }
     }
 
@@ -214,15 +217,17 @@ impl ThreadManager {
         provider: ModelProviderInfo,
     ) -> Self {
         set_thread_manager_test_mode_for_tests(/*enabled*/ true);
-        let codex_home = std::env::temp_dir().join(format!(
+        let orbit_code_home = std::env::temp_dir().join(format!(
             "codex-thread-manager-test-{}",
             uuid::Uuid::new_v4()
         ));
-        std::fs::create_dir_all(&codex_home)
+        std::fs::create_dir_all(&orbit_code_home)
             .unwrap_or_else(|err| panic!("temp codex home dir create failed: {err}"));
         let mut manager =
-            Self::with_models_provider_and_home_for_tests(auth, provider, codex_home.clone());
-        manager._test_codex_home_guard = Some(TempCodexHomeGuard { path: codex_home });
+            Self::with_models_provider_and_home_for_tests(auth, provider, orbit_code_home.clone());
+        manager._test_orbit_code_home_guard = Some(TempCodexHomeGuard {
+            path: orbit_code_home,
+        });
         manager
     }
 
@@ -231,25 +236,25 @@ impl ThreadManager {
     pub(crate) fn with_models_provider_and_home_for_tests(
         auth: CodexAuth,
         provider: ModelProviderInfo,
-        codex_home: PathBuf,
+        orbit_code_home: PathBuf,
     ) -> Self {
         set_thread_manager_test_mode_for_tests(/*enabled*/ true);
         let auth_manager = AuthManager::from_auth_for_testing(auth);
         let (thread_created_tx, _) = broadcast::channel(THREAD_CREATED_CHANNEL_CAPACITY);
-        let plugins_manager = Arc::new(PluginsManager::new(codex_home.clone()));
+        let plugins_manager = Arc::new(PluginsManager::new(orbit_code_home.clone()));
         let mcp_manager = Arc::new(McpManager::new(Arc::clone(&plugins_manager)));
         let skills_manager = Arc::new(SkillsManager::new(
-            codex_home.clone(),
+            orbit_code_home.clone(),
             Arc::clone(&plugins_manager),
             /*bundled_skills_enabled*/ true,
         ));
-        let file_watcher = build_file_watcher(codex_home.clone(), Arc::clone(&skills_manager));
+        let file_watcher = build_file_watcher(orbit_code_home.clone(), Arc::clone(&skills_manager));
         Self {
             state: Arc::new(ThreadManagerState {
                 threads: Arc::new(RwLock::new(HashMap::new())),
                 thread_created_tx,
                 models_manager: Arc::new(ModelsManager::with_provider_for_tests(
-                    codex_home,
+                    orbit_code_home,
                     auth_manager.clone(),
                     provider,
                 )),
@@ -262,7 +267,7 @@ impl ThreadManager {
                 ops_log: should_use_test_thread_manager_behavior()
                     .then(|| Arc::new(std::sync::Mutex::new(Vec::new()))),
             }),
-            _test_codex_home_guard: None,
+            _test_orbit_code_home_guard: None,
         }
     }
 
@@ -355,7 +360,7 @@ impl ThreadManager {
     pub async fn start_thread_with_tools(
         &self,
         config: Config,
-        dynamic_tools: Vec<codex_protocol::dynamic_tools::DynamicToolSpec>,
+        dynamic_tools: Vec<orbit_code_protocol::dynamic_tools::DynamicToolSpec>,
         persist_extended_history: bool,
     ) -> CodexResult<NewThread> {
         Box::pin(self.start_thread_with_tools_and_service_name(
@@ -371,7 +376,7 @@ impl ThreadManager {
     pub async fn start_thread_with_tools_and_service_name(
         &self,
         config: Config,
-        dynamic_tools: Vec<codex_protocol::dynamic_tools::DynamicToolSpec>,
+        dynamic_tools: Vec<orbit_code_protocol::dynamic_tools::DynamicToolSpec>,
         persist_extended_history: bool,
         metrics_service_name: Option<String>,
         parent_trace: Option<W3cTraceContext>,
@@ -710,7 +715,7 @@ impl ThreadManagerState {
         initial_history: InitialHistory,
         auth_manager: Arc<AuthManager>,
         agent_control: AgentControl,
-        dynamic_tools: Vec<codex_protocol::dynamic_tools::DynamicToolSpec>,
+        dynamic_tools: Vec<orbit_code_protocol::dynamic_tools::DynamicToolSpec>,
         persist_extended_history: bool,
         metrics_service_name: Option<String>,
         parent_trace: Option<W3cTraceContext>,
@@ -741,7 +746,7 @@ impl ThreadManagerState {
         auth_manager: Arc<AuthManager>,
         agent_control: AgentControl,
         session_source: SessionSource,
-        dynamic_tools: Vec<codex_protocol::dynamic_tools::DynamicToolSpec>,
+        dynamic_tools: Vec<orbit_code_protocol::dynamic_tools::DynamicToolSpec>,
         persist_extended_history: bool,
         metrics_service_name: Option<String>,
         inherited_shell_snapshot: Option<Arc<ShellSnapshot>>,

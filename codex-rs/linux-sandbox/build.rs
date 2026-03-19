@@ -5,7 +5,7 @@ use std::path::PathBuf;
 fn main() {
     // Tell rustc/clippy that this is an expected cfg value.
     println!("cargo:rustc-check-cfg=cfg(vendored_bwrap_available)");
-    println!("cargo:rerun-if-env-changed=CODEX_BWRAP_SOURCE_DIR");
+    println!("cargo:rerun-if-env-changed=ORBIT_BWRAP_SOURCE_DIR");
     println!("cargo:rerun-if-env-changed=PKG_CONFIG_ALLOW_CROSS");
     println!("cargo:rerun-if-env-changed=PKG_CONFIG_PATH");
     println!("cargo:rerun-if-env-changed=PKG_CONFIG_SYSROOT_DIR");
@@ -83,16 +83,16 @@ fn try_build_vendored_bwrap() -> Result<(), String> {
 /// Resolve the bubblewrap source directory used for build-time compilation.
 ///
 /// Priority:
-/// 1. `CODEX_BWRAP_SOURCE_DIR` points at an existing bubblewrap checkout.
+/// 1. `ORBIT_BWRAP_SOURCE_DIR` points at an existing bubblewrap checkout.
 /// 2. The vendored bubblewrap tree under `codex-rs/vendor/bubblewrap`.
 fn resolve_bwrap_source_dir(manifest_dir: &Path) -> Result<PathBuf, String> {
-    if let Ok(path) = env::var("CODEX_BWRAP_SOURCE_DIR") {
+    if let Ok(path) = env::var("ORBIT_BWRAP_SOURCE_DIR") {
         let src_dir = PathBuf::from(path);
         if src_dir.exists() {
             return Ok(src_dir);
         }
         return Err(format!(
-            "CODEX_BWRAP_SOURCE_DIR was set but does not exist: {}",
+            "ORBIT_BWRAP_SOURCE_DIR was set but does not exist: {}",
             src_dir.display()
         ));
     }
@@ -104,7 +104,7 @@ fn resolve_bwrap_source_dir(manifest_dir: &Path) -> Result<PathBuf, String> {
 
     Err(format!(
         "expected vendored bubblewrap at {}, but it was not found.\n\
-Set CODEX_BWRAP_SOURCE_DIR to an existing checkout or vendor bubblewrap under codex-rs/vendor.",
+Set ORBIT_BWRAP_SOURCE_DIR to an existing checkout or vendor bubblewrap under codex-rs/vendor.",
         vendor_dir.display()
     ))
 }

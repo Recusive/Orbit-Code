@@ -1,7 +1,7 @@
 use super::*;
-use codex_network_proxy::BlockedRequest;
-use codex_protocol::approvals::NetworkPolicyAmendment;
-use codex_protocol::approvals::NetworkPolicyRuleAction;
+use orbit_code_network_proxy::BlockedRequest;
+use orbit_code_protocol::approvals::NetworkPolicyAmendment;
+use orbit_code_protocol::approvals::NetworkPolicyRuleAction;
 use pretty_assertions::assert_eq;
 
 #[test]

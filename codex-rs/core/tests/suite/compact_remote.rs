@@ -4,22 +4,6 @@ use std::fs;
 use std::path::PathBuf;
 
 use anyhow::Result;
-use codex_core::CodexAuth;
-use codex_core::compact::SUMMARY_PREFIX;
-use codex_protocol::items::TurnItem;
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::protocol::ConversationStartParams;
-use codex_protocol::protocol::ErrorEvent;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::ItemCompletedEvent;
-use codex_protocol::protocol::ItemStartedEvent;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::RealtimeConversationRealtimeEvent;
-use codex_protocol::protocol::RealtimeEvent;
-use codex_protocol::protocol::RolloutItem;
-use codex_protocol::protocol::RolloutLine;
-use codex_protocol::user_input::UserInput;
 use core_test_support::context_snapshot;
 use core_test_support::context_snapshot::ContextSnapshotOptions;
 use core_test_support::context_snapshot::ContextSnapshotRenderMode;
@@ -33,6 +17,22 @@ use core_test_support::test_codex::TestCodexHarness;
 use core_test_support::test_codex::test_codex;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_match;
+use orbit_code_core::CodexAuth;
+use orbit_code_core::compact::SUMMARY_PREFIX;
+use orbit_code_protocol::items::TurnItem;
+use orbit_code_protocol::models::ContentItem;
+use orbit_code_protocol::models::ResponseItem;
+use orbit_code_protocol::protocol::ConversationStartParams;
+use orbit_code_protocol::protocol::ErrorEvent;
+use orbit_code_protocol::protocol::EventMsg;
+use orbit_code_protocol::protocol::ItemCompletedEvent;
+use orbit_code_protocol::protocol::ItemStartedEvent;
+use orbit_code_protocol::protocol::Op;
+use orbit_code_protocol::protocol::RealtimeConversationRealtimeEvent;
+use orbit_code_protocol::protocol::RealtimeEvent;
+use orbit_code_protocol::protocol::RolloutItem;
+use orbit_code_protocol::protocol::RolloutLine;
+use orbit_code_protocol::user_input::UserInput;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use wiremock::ResponseTemplate;
@@ -82,7 +82,7 @@ fn compacted_summary_only_output(summary: &str) -> Vec<ResponseItem> {
     }]
 }
 
-fn remote_realtime_test_codex_builder(
+fn remote_realtime_test_orbit_code_builder(
     realtime_server: &responses::WebSocketTestServer,
 ) -> TestCodexBuilder {
     let realtime_base_url = realtime_server.uri().to_string();
@@ -113,7 +113,7 @@ async fn start_remote_realtime_server() -> responses::WebSocketTestServer {
     .await
 }
 
-async fn start_realtime_conversation(codex: &codex_core::CodexThread) -> Result<()> {
+async fn start_realtime_conversation(codex: &orbit_code_core::CodexThread) -> Result<()> {
     codex
         .submit(Op::RealtimeConversationStart(ConversationStartParams {
             prompt: "backend prompt".to_string(),
@@ -140,7 +140,7 @@ async fn start_realtime_conversation(codex: &codex_core::CodexThread) -> Result<
     Ok(())
 }
 
-async fn close_realtime_conversation(codex: &codex_core::CodexThread) -> Result<()> {
+async fn close_realtime_conversation(codex: &orbit_code_core::CodexThread) -> Result<()> {
     codex.submit(Op::RealtimeConversationClose).await?;
     wait_for_event_match(codex, |msg| match msg {
         EventMsg::RealtimeConversationClosed(closed) => Some(closed.clone()),
@@ -1458,9 +1458,10 @@ async fn snapshot_request_shape_remote_pre_turn_compaction_restates_realtime_sta
 
     let server = wiremock::MockServer::start().await;
     let realtime_server = start_remote_realtime_server().await;
-    let mut builder = remote_realtime_test_codex_builder(&realtime_server).with_config(|config| {
-        config.model_auto_compact_token_limit = Some(200);
-    });
+    let mut builder =
+        remote_realtime_test_orbit_code_builder(&realtime_server).with_config(|config| {
+            config.model_auto_compact_token_limit = Some(200);
+        });
     let test = builder.build(&server).await?;
 
     let responses_mock = responses::mount_sse_sequence(
@@ -1545,7 +1546,7 @@ async fn remote_request_uses_custom_experimental_realtime_start_instructions() -
     let server = wiremock::MockServer::start().await;
     let realtime_server = start_remote_realtime_server().await;
     let custom_instructions = "custom realtime start instructions";
-    let mut builder = remote_realtime_test_codex_builder(&realtime_server).with_config({
+    let mut builder = remote_realtime_test_orbit_code_builder(&realtime_server).with_config({
         let custom_instructions = custom_instructions.to_string();
         move |config| {
             config.experimental_realtime_start_instructions = Some(custom_instructions);
@@ -1591,9 +1592,10 @@ async fn snapshot_request_shape_remote_pre_turn_compaction_restates_realtime_end
 
     let server = wiremock::MockServer::start().await;
     let realtime_server = start_remote_realtime_server().await;
-    let mut builder = remote_realtime_test_codex_builder(&realtime_server).with_config(|config| {
-        config.model_auto_compact_token_limit = Some(200);
-    });
+    let mut builder =
+        remote_realtime_test_orbit_code_builder(&realtime_server).with_config(|config| {
+            config.model_auto_compact_token_limit = Some(200);
+        });
     let test = builder.build(&server).await?;
 
     let responses_mock = responses::mount_sse_sequence(
@@ -1678,7 +1680,7 @@ async fn snapshot_request_shape_remote_manual_compact_restates_realtime_start() 
 
     let server = wiremock::MockServer::start().await;
     let realtime_server = start_remote_realtime_server().await;
-    let mut builder = remote_realtime_test_codex_builder(&realtime_server);
+    let mut builder = remote_realtime_test_orbit_code_builder(&realtime_server);
     let test = builder.build(&server).await?;
 
     let responses_mock = responses::mount_sse_sequence(
@@ -1766,9 +1768,10 @@ async fn snapshot_request_shape_remote_mid_turn_compaction_does_not_restate_real
 
     let server = wiremock::MockServer::start().await;
     let realtime_server = start_remote_realtime_server().await;
-    let mut builder = remote_realtime_test_codex_builder(&realtime_server).with_config(|config| {
-        config.model_auto_compact_token_limit = Some(200);
-    });
+    let mut builder =
+        remote_realtime_test_orbit_code_builder(&realtime_server).with_config(|config| {
+            config.model_auto_compact_token_limit = Some(200);
+        });
     let test = builder.build(&server).await?;
 
     let responses_mock = responses::mount_sse_sequence(
@@ -1866,7 +1869,7 @@ async fn snapshot_request_shape_remote_compact_resume_restates_realtime_end() ->
 
     let server = wiremock::MockServer::start().await;
     let realtime_server = start_remote_realtime_server().await;
-    let mut builder = remote_realtime_test_codex_builder(&realtime_server);
+    let mut builder = remote_realtime_test_orbit_code_builder(&realtime_server);
     let initial = builder.build(&server).await?;
     let home = initial.home.clone();
     let rollout_path = initial

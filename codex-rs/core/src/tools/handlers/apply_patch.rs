@@ -31,11 +31,11 @@ use crate::tools::sandboxing::ToolCtx;
 use crate::tools::spec::ApplyPatchToolArgs;
 use crate::tools::spec::JsonSchema;
 use async_trait::async_trait;
-use codex_apply_patch::ApplyPatchAction;
-use codex_apply_patch::ApplyPatchFileChange;
-use codex_protocol::models::FileSystemPermissions;
-use codex_protocol::models::PermissionProfile;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use orbit_code_apply_patch::ApplyPatchAction;
+use orbit_code_apply_patch::ApplyPatchFileChange;
+use orbit_code_protocol::models::FileSystemPermissions;
+use orbit_code_protocol::models::PermissionProfile;
+use orbit_code_utils_absolute_path::AbsolutePathBuf;
 use std::collections::BTreeSet;
 use std::sync::Arc;
 
@@ -99,7 +99,7 @@ async fn effective_patch_permissions(
 ) -> (
     Vec<AbsolutePathBuf>,
     crate::tools::handlers::EffectiveAdditionalPermissions,
-    codex_protocol::permissions::FileSystemSandboxPolicy,
+    orbit_code_protocol::permissions::FileSystemSandboxPolicy,
 ) {
     let file_paths = file_paths_for_action(action);
     let granted_permissions = merge_permission_profiles(
@@ -171,8 +171,8 @@ impl ToolHandler for ApplyPatchHandler {
         // Avoid building temporary ExecParams/command vectors; derive directly from inputs.
         let cwd = turn.cwd.clone();
         let command = vec!["apply_patch".to_string(), patch_input.clone()];
-        match codex_apply_patch::maybe_parse_apply_patch_verified(&command, &cwd) {
-            codex_apply_patch::MaybeApplyPatchVerified::Body(changes) => {
+        match orbit_code_apply_patch::maybe_parse_apply_patch_verified(&command, &cwd) {
+            orbit_code_apply_patch::MaybeApplyPatchVerified::Body(changes) => {
                 let (file_paths, effective_additional_permissions, file_system_sandbox_policy) =
                     effective_patch_permissions(session.as_ref(), turn.as_ref(), &changes).await;
                 match apply_patch::apply_patch(turn.as_ref(), &file_system_sandbox_policy, changes)
@@ -206,7 +206,7 @@ impl ToolHandler for ApplyPatchHandler {
                             permissions_preapproved: effective_additional_permissions
                                 .permissions_preapproved,
                             timeout_ms: None,
-                            codex_exe: turn.codex_linux_sandbox_exe.clone(),
+                            orbit_code_exe: turn.orbit_code_linux_sandbox_exe.clone(),
                         };
 
                         let mut orchestrator = ToolOrchestrator::new();
@@ -238,18 +238,18 @@ impl ToolHandler for ApplyPatchHandler {
                     }
                 }
             }
-            codex_apply_patch::MaybeApplyPatchVerified::CorrectnessError(parse_error) => {
+            orbit_code_apply_patch::MaybeApplyPatchVerified::CorrectnessError(parse_error) => {
                 Err(FunctionCallError::RespondToModel(format!(
                     "apply_patch verification failed: {parse_error}"
                 )))
             }
-            codex_apply_patch::MaybeApplyPatchVerified::ShellParseError(error) => {
+            orbit_code_apply_patch::MaybeApplyPatchVerified::ShellParseError(error) => {
                 tracing::trace!("Failed to parse apply_patch input, {error:?}");
                 Err(FunctionCallError::RespondToModel(
                     "apply_patch handler received invalid patch input".to_string(),
                 ))
             }
-            codex_apply_patch::MaybeApplyPatchVerified::NotApplyPatch => {
+            orbit_code_apply_patch::MaybeApplyPatchVerified::NotApplyPatch => {
                 Err(FunctionCallError::RespondToModel(
                     "apply_patch handler received non-apply_patch input".to_string(),
                 ))
@@ -269,8 +269,8 @@ pub(crate) async fn intercept_apply_patch(
     call_id: &str,
     tool_name: &str,
 ) -> Result<Option<FunctionToolOutput>, FunctionCallError> {
-    match codex_apply_patch::maybe_parse_apply_patch_verified(command, cwd) {
-        codex_apply_patch::MaybeApplyPatchVerified::Body(changes) => {
+    match orbit_code_apply_patch::maybe_parse_apply_patch_verified(command, cwd) {
+        orbit_code_apply_patch::MaybeApplyPatchVerified::Body(changes) => {
             session
                 .record_model_warning(
                     format!(
@@ -310,7 +310,7 @@ pub(crate) async fn intercept_apply_patch(
                         permissions_preapproved: effective_additional_permissions
                             .permissions_preapproved,
                         timeout_ms,
-                        codex_exe: turn.codex_linux_sandbox_exe.clone(),
+                        orbit_code_exe: turn.orbit_code_linux_sandbox_exe.clone(),
                     };
 
                     let mut orchestrator = ToolOrchestrator::new();
@@ -342,16 +342,16 @@ pub(crate) async fn intercept_apply_patch(
                 }
             }
         }
-        codex_apply_patch::MaybeApplyPatchVerified::CorrectnessError(parse_error) => {
+        orbit_code_apply_patch::MaybeApplyPatchVerified::CorrectnessError(parse_error) => {
             Err(FunctionCallError::RespondToModel(format!(
                 "apply_patch verification failed: {parse_error}"
             )))
         }
-        codex_apply_patch::MaybeApplyPatchVerified::ShellParseError(error) => {
+        orbit_code_apply_patch::MaybeApplyPatchVerified::ShellParseError(error) => {
             tracing::trace!("Failed to parse apply_patch input, {error:?}");
             Ok(None)
         }
-        codex_apply_patch::MaybeApplyPatchVerified::NotApplyPatch => Ok(None),
+        orbit_code_apply_patch::MaybeApplyPatchVerified::NotApplyPatch => Ok(None),
     }
 }
 

@@ -8,8 +8,8 @@ use crate::features::Feature;
 use crate::features::Features;
 use crate::features::FeaturesToml;
 use crate::protocol::SandboxPolicy;
-use codex_otel::sanitize_metric_tag_value;
-use codex_protocol::config_types::WindowsSandboxLevel;
+use orbit_code_otel::sanitize_metric_tag_value;
+use orbit_code_protocol::config_types::WindowsSandboxLevel;
 use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::path::Path;
@@ -130,20 +130,20 @@ pub fn legacy_windows_sandbox_mode_from_entries(
 }
 
 #[cfg(target_os = "windows")]
-pub fn sandbox_setup_is_complete(codex_home: &Path) -> bool {
-    codex_windows_sandbox::sandbox_setup_is_complete(codex_home)
+pub fn sandbox_setup_is_complete(orbit_code_home: &Path) -> bool {
+    orbit_code_windows_sandbox::sandbox_setup_is_complete(orbit_code_home)
 }
 
 #[cfg(not(target_os = "windows"))]
-pub fn sandbox_setup_is_complete(_codex_home: &Path) -> bool {
+pub fn sandbox_setup_is_complete(_orbit_code_home: &Path) -> bool {
     false
 }
 
 #[cfg(target_os = "windows")]
 pub fn elevated_setup_failure_details(err: &anyhow::Error) -> Option<(String, String)> {
-    let failure = codex_windows_sandbox::extract_setup_failure(err)?;
+    let failure = orbit_code_windows_sandbox::extract_setup_failure(err)?;
     let code = failure.code.as_str().to_string();
-    let message = codex_windows_sandbox::sanitize_setup_metric_tag_value(&failure.message);
+    let message = orbit_code_windows_sandbox::sanitize_setup_metric_tag_value(&failure.message);
     Some((code, message))
 }
 
@@ -154,10 +154,10 @@ pub fn elevated_setup_failure_details(_err: &anyhow::Error) -> Option<(String, S
 
 #[cfg(target_os = "windows")]
 pub fn elevated_setup_failure_metric_name(err: &anyhow::Error) -> &'static str {
-    if codex_windows_sandbox::extract_setup_failure(err).is_some_and(|failure| {
+    if orbit_code_windows_sandbox::extract_setup_failure(err).is_some_and(|failure| {
         matches!(
             failure.code,
-            codex_windows_sandbox::SetupErrorCode::OrchestratorHelperLaunchCanceled
+            orbit_code_windows_sandbox::SetupErrorCode::OrchestratorHelperLaunchCanceled
         )
     }) {
         "codex.windows_sandbox.elevated_setup_canceled"
@@ -177,14 +177,14 @@ pub fn run_elevated_setup(
     policy_cwd: &Path,
     command_cwd: &Path,
     env_map: &HashMap<String, String>,
-    codex_home: &Path,
+    orbit_code_home: &Path,
 ) -> anyhow::Result<()> {
-    codex_windows_sandbox::run_elevated_setup(
+    orbit_code_windows_sandbox::run_elevated_setup(
         policy,
         policy_cwd,
         command_cwd,
         env_map,
-        codex_home,
+        orbit_code_home,
         None,
         None,
     )
@@ -196,7 +196,7 @@ pub fn run_elevated_setup(
     _policy_cwd: &Path,
     _command_cwd: &Path,
     _env_map: &HashMap<String, String>,
-    _codex_home: &Path,
+    _orbit_code_home: &Path,
 ) -> anyhow::Result<()> {
     anyhow::bail!("elevated Windows sandbox setup is only supported on Windows")
 }
@@ -207,12 +207,12 @@ pub fn run_legacy_setup_preflight(
     policy_cwd: &Path,
     command_cwd: &Path,
     env_map: &HashMap<String, String>,
-    codex_home: &Path,
+    orbit_code_home: &Path,
 ) -> anyhow::Result<()> {
-    codex_windows_sandbox::run_windows_sandbox_legacy_preflight(
+    orbit_code_windows_sandbox::run_windows_sandbox_legacy_preflight(
         policy,
         policy_cwd,
-        codex_home,
+        orbit_code_home,
         command_cwd,
         env_map,
     )
@@ -224,15 +224,15 @@ pub fn run_setup_refresh_with_extra_read_roots(
     policy_cwd: &Path,
     command_cwd: &Path,
     env_map: &HashMap<String, String>,
-    codex_home: &Path,
+    orbit_code_home: &Path,
     extra_read_roots: Vec<PathBuf>,
 ) -> anyhow::Result<()> {
-    codex_windows_sandbox::run_setup_refresh_with_extra_read_roots(
+    orbit_code_windows_sandbox::run_setup_refresh_with_extra_read_roots(
         policy,
         policy_cwd,
         command_cwd,
         env_map,
-        codex_home,
+        orbit_code_home,
         extra_read_roots,
     )
 }
@@ -243,7 +243,7 @@ pub fn run_legacy_setup_preflight(
     _policy_cwd: &Path,
     _command_cwd: &Path,
     _env_map: &HashMap<String, String>,
-    _codex_home: &Path,
+    _orbit_code_home: &Path,
 ) -> anyhow::Result<()> {
     anyhow::bail!("legacy Windows sandbox setup is only supported on Windows")
 }
@@ -254,7 +254,7 @@ pub fn run_setup_refresh_with_extra_read_roots(
     _policy_cwd: &Path,
     _command_cwd: &Path,
     _env_map: &HashMap<String, String>,
-    _codex_home: &Path,
+    _orbit_code_home: &Path,
     _extra_read_roots: Vec<PathBuf>,
 ) -> anyhow::Result<()> {
     anyhow::bail!("Windows sandbox read-root refresh is only supported on Windows")
@@ -273,7 +273,7 @@ pub struct WindowsSandboxSetupRequest {
     pub policy_cwd: PathBuf,
     pub command_cwd: PathBuf,
     pub env_map: HashMap<String, String>,
-    pub codex_home: PathBuf,
+    pub orbit_code_home: PathBuf,
     pub active_profile: Option<String>,
 }
 
@@ -312,20 +312,20 @@ async fn run_windows_sandbox_setup_and_persist(
     let policy_cwd = request.policy_cwd;
     let command_cwd = request.command_cwd;
     let env_map = request.env_map;
-    let codex_home = request.codex_home;
+    let orbit_code_home = request.orbit_code_home;
     let active_profile = request.active_profile;
-    let setup_codex_home = codex_home.clone();
+    let setup_orbit_code_home = orbit_code_home.clone();
 
     let setup_result = tokio::task::spawn_blocking(move || -> anyhow::Result<()> {
         match mode {
             WindowsSandboxSetupMode::Elevated => {
-                if !sandbox_setup_is_complete(setup_codex_home.as_path()) {
+                if !sandbox_setup_is_complete(setup_orbit_code_home.as_path()) {
                     run_elevated_setup(
                         &policy,
                         policy_cwd.as_path(),
                         command_cwd.as_path(),
                         &env_map,
-                        setup_codex_home.as_path(),
+                        setup_orbit_code_home.as_path(),
                     )?;
                 }
             }
@@ -335,7 +335,7 @@ async fn run_windows_sandbox_setup_and_persist(
                     policy_cwd.as_path(),
                     command_cwd.as_path(),
                     &env_map,
-                    setup_codex_home.as_path(),
+                    setup_orbit_code_home.as_path(),
                 )?;
             }
         }
@@ -346,7 +346,7 @@ async fn run_windows_sandbox_setup_and_persist(
 
     setup_result?;
 
-    ConfigEditsBuilder::new(codex_home.as_path())
+    ConfigEditsBuilder::new(orbit_code_home.as_path())
         .with_profile(active_profile.as_deref())
         .set_windows_sandbox_mode(windows_sandbox_setup_mode_tag(mode))
         .clear_legacy_windows_sandbox_keys()
@@ -360,7 +360,7 @@ fn emit_windows_sandbox_setup_success_metrics(
     originator_tag: &str,
     duration: std::time::Duration,
 ) {
-    let Some(metrics) = codex_otel::metrics::global() else {
+    let Some(metrics) = orbit_code_otel::metrics::global() else {
         return;
     };
     let mode_tag = windows_sandbox_setup_mode_tag(mode);
@@ -386,7 +386,7 @@ fn emit_windows_sandbox_setup_failure_metrics(
     duration: std::time::Duration,
     _err: &anyhow::Error,
 ) {
-    let Some(metrics) = codex_otel::metrics::global() else {
+    let Some(metrics) = orbit_code_otel::metrics::global() else {
         return;
     };
     let mode_tag = windows_sandbox_setup_mode_tag(mode);

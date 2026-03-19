@@ -88,7 +88,7 @@ let previousBindings = [];
 let cellCounter = 0;
 let internalBindingCounter = 0;
 const internalBindingSalt = (() => {
-  const raw = process.env.CODEX_THREAD_ID ?? "";
+  const raw = process.env.ORBIT_THREAD_ID ?? "";
   const sanitized = raw.replace(/[^A-Za-z0-9_$]/g, "_");
   return sanitized || "session";
 })();
@@ -129,9 +129,9 @@ let toolCounter = 0;
 let emitImageCounter = 0;
 const execContextStorage = new AsyncLocalStorage();
 const cwd = process.cwd();
-const tmpDir = process.env.CODEX_JS_TMP_DIR || cwd;
+const tmpDir = process.env.ORBIT_JS_TMP_DIR || cwd;
 const homeDir = process.env.HOME ?? null;
-const nodeModuleDirEnv = process.env.CODEX_JS_REPL_NODE_MODULE_DIRS ?? "";
+const nodeModuleDirEnv = process.env.ORBIT_JS_REPL_NODE_MODULE_DIRS ?? "";
 const moduleSearchBases = (() => {
   const bases = [];
   const seen = new Set();
@@ -203,7 +203,7 @@ function setImportMeta(meta, mod, isMain = false) {
 function getRequireForBase(base) {
   let req = requireByBase.get(base);
   if (!req) {
-    req = createRequire(path.join(base, "__codex_js_repl__.cjs"));
+    req = createRequire(path.join(base, "__orbit_code_js_repl__.cjs"));
     requireByBase.set(base, req);
   }
   return req;
@@ -572,7 +572,7 @@ function nextInternalBindingName() {
   // a per-thread salt plus a counter instead. A user could still collide by
   // deliberately spelling the exact generated name, but the thread-id salt
   // keeps accidental collisions negligible while avoiding more AST bookkeeping.
-  return `__codex_internal_commit_${internalBindingSalt}_${internalBindingCounter++}`;
+  return `__orbit_code_internal_commit_${internalBindingSalt}_${internalBindingCounter++}`;
 }
 
 function buildMarkCommittedExpression(names, markCommittedFnName) {
@@ -1582,7 +1582,7 @@ async function handleExec(message) {
       await withCapturedConsole(context, async (logs) => {
         const cellIdentifier = path.join(
           cwd,
-          `.codex_js_repl_cell_${cellCounter++}.mjs`,
+          `.orbit_code_js_repl_cell_${cellCounter++}.mjs`,
         );
         module = new SourceTextModule(source, {
           context,

@@ -74,10 +74,10 @@ pub(crate) async fn maybe_emit_implicit_skill_invocation(
         invocation_type: InvocationType::Implicit,
     };
     let skill_scope = match invocation.skill_scope {
-        codex_protocol::protocol::SkillScope::User => "user",
-        codex_protocol::protocol::SkillScope::Repo => "repo",
-        codex_protocol::protocol::SkillScope::System => "system",
-        codex_protocol::protocol::SkillScope::Admin => "admin",
+        orbit_code_protocol::protocol::SkillScope::User => "user",
+        orbit_code_protocol::protocol::SkillScope::Repo => "repo",
+        orbit_code_protocol::protocol::SkillScope::System => "system",
+        orbit_code_protocol::protocol::SkillScope::Admin => "admin",
     };
     let skill_path = invocation.skill_path.to_string_lossy();
     let skill_name = invocation.skill_name.clone();

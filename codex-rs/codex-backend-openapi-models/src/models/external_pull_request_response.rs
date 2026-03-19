@@ -20,8 +20,11 @@ pub struct ExternalPullRequestResponse {
     pub assistant_turn_id: String,
     #[serde(rename = "pull_request")]
     pub pull_request: Box<models::GitPullRequest>,
-    #[serde(rename = "codex_updated_sha", skip_serializing_if = "Option::is_none")]
-    pub codex_updated_sha: Option<String>,
+    #[serde(
+        rename = "orbit_code_updated_sha",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub orbit_code_updated_sha: Option<String>,
 }
 
 impl ExternalPullRequestResponse {
@@ -34,7 +37,7 @@ impl ExternalPullRequestResponse {
             id,
             assistant_turn_id,
             pull_request: Box::new(pull_request),
-            codex_updated_sha: None,
+            orbit_code_updated_sha: None,
         }
     }
 }

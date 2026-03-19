@@ -1,11 +1,11 @@
 [package]
-name = "codex-environment"
+name = "orbit-code-environment"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [lib]
-name = "codex_environment"
+name = "orbit_code_environment"
 path = "src/lib.rs"
 
 [lints]
@@ -13,7 +13,7 @@ workspace = true
 
 [dependencies]
 async-trait = { workspace = true }
-codex-utils-absolute-path = { workspace = true }
+orbit-code-utils-absolute-path = { workspace = true }
 tokio = { workspace = true, features = ["fs", "io-util", "rt"] }
 
 [dev-dependencies]

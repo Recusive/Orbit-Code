@@ -86,7 +86,7 @@ workspace_root_test = rule(
     },
 )
 
-def codex_rust_crate(
+def orbit_code_rust_crate(
         name,
         crate_name,
         crate_features = [],
@@ -115,7 +115,7 @@ def codex_rust_crate(
         name: Bazel target name for the library, should be the directory name.
             Example: `app-server`.
         crate_name: Cargo crate name from Cargo.toml
-            Example: `codex_app_server`.
+            Example: `orbit_code_app_server`.
         crate_features: Cargo features to enable for this crate.
             Crates are only compiled in a single configuration across the workspace, i.e.
             with all features in this list enabled. So use sparingly, and prefer to refactor
@@ -140,7 +140,7 @@ def codex_rust_crate(
     test_env = {
         # The launcher resolves an absolute workspace root at runtime so
         # manifest-only platforms like macOS still point Insta at the real
-        # `codex-rs` checkout.
+        # `orbit-code-rs` checkout.
         "INSTA_WORKSPACE_ROOT": ".",
         "INSTA_SNAPSHOT_PATH": "src",
     }
@@ -188,13 +188,13 @@ def codex_rust_crate(
             name = unit_test_binary,
             crate = name,
             deps = all_crate_deps(normal = True, normal_dev = True) + maybe_deps + deps_extra,
-            # Bazel has emitted both `codex-rs/<crate>/...` and
-            # `../codex-rs/<crate>/...` paths for `file!()`. Strip either
+            # Bazel has emitted both `orbit-code-rs/<crate>/...` and
+            # `../orbit-code-rs/<crate>/...` paths for `file!()`. Strip either
             # prefix so the workspace-root launcher sees Cargo-like metadata
             # such as `tui/src/...`.
             rustc_flags = rustc_flags_extra + [
-                "--remap-path-prefix=../codex-rs=",
-                "--remap-path-prefix=codex-rs=",
+                "--remap-path-prefix=../orbit-code-rs=",
+                "--remap-path-prefix=orbit-code-rs=",
             ],
             rustc_env = rustc_env,
             data = test_data_extra,
@@ -205,7 +205,7 @@ def codex_rust_crate(
             name = name + "-unit-tests",
             env = test_env,
             test_bin = ":" + unit_test_binary,
-            workspace_root_marker = "//codex-rs/utils/cargo-bin:repo_root.marker",
+            workspace_root_marker = "//orbit-code-rs/utils/cargo-bin:repo_root.marker",
             tags = test_tags,
         )
 
@@ -249,16 +249,16 @@ def codex_rust_crate(
             data = native.glob(["tests/**"], allow_empty = True) + sanitized_binaries + test_data_extra,
             compile_data = native.glob(["tests/**"], allow_empty = True) + integration_compile_data_extra,
             deps = all_crate_deps(normal = True, normal_dev = True) + maybe_deps + deps_extra,
-            # Bazel has emitted both `codex-rs/<crate>/...` and
-            # `../codex-rs/<crate>/...` paths for `file!()`. Strip either
+            # Bazel has emitted both `orbit-code-rs/<crate>/...` and
+            # `../orbit-code-rs/<crate>/...` paths for `file!()`. Strip either
             # prefix so Insta records Cargo-like metadata such as `core/tests/...`.
             rustc_flags = rustc_flags_extra + [
-                "--remap-path-prefix=../codex-rs=",
-                "--remap-path-prefix=codex-rs=",
+                "--remap-path-prefix=../orbit-code-rs=",
+                "--remap-path-prefix=orbit-code-rs=",
             ],
             rustc_env = rustc_env,
             # Important: do not merge `test_env` here. Its unit-test-only
-            # `INSTA_WORKSPACE_ROOT="codex-rs"` is tuned for unit tests that
+            # `INSTA_WORKSPACE_ROOT="orbit-code-rs"` is tuned for unit tests that
             # execute from the repo root and can misplace integration snapshots.
             env = cargo_env,
             tags = test_tags,

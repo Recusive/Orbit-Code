@@ -7,21 +7,21 @@ use chrono::DateTime;
 use chrono::NaiveDateTime;
 use chrono::Timelike;
 use chrono::Utc;
-use codex_protocol::ThreadId;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::RolloutItem;
-use codex_protocol::protocol::SandboxPolicy;
-use codex_protocol::protocol::SessionMetaLine;
-use codex_protocol::protocol::SessionSource;
-use codex_state::BackfillState;
-use codex_state::BackfillStats;
-use codex_state::BackfillStatus;
-use codex_state::DB_ERROR_METRIC;
-use codex_state::DB_METRIC_BACKFILL;
-use codex_state::DB_METRIC_BACKFILL_DURATION_MS;
-use codex_state::ExtractionOutcome;
-use codex_state::ThreadMetadataBuilder;
-use codex_state::apply_rollout_item;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::protocol::AskForApproval;
+use orbit_code_protocol::protocol::RolloutItem;
+use orbit_code_protocol::protocol::SandboxPolicy;
+use orbit_code_protocol::protocol::SessionMetaLine;
+use orbit_code_protocol::protocol::SessionSource;
+use orbit_code_state::BackfillState;
+use orbit_code_state::BackfillStats;
+use orbit_code_state::BackfillStatus;
+use orbit_code_state::DB_ERROR_METRIC;
+use orbit_code_state::DB_METRIC_BACKFILL;
+use orbit_code_state::DB_METRIC_BACKFILL_DURATION_MS;
+use orbit_code_state::ExtractionOutcome;
+use orbit_code_state::ThreadMetadataBuilder;
+use orbit_code_state::apply_rollout_item;
 use std::path::Path;
 use std::path::PathBuf;
 use tracing::info;
@@ -130,8 +130,8 @@ pub(crate) async fn extract_metadata_from_rollout(
     })
 }
 
-pub(crate) async fn backfill_sessions(runtime: &codex_state::StateRuntime, config: &Config) {
-    let metric_client = codex_otel::metrics::global();
+pub(crate) async fn backfill_sessions(runtime: &orbit_code_state::StateRuntime, config: &Config) {
+    let metric_client = orbit_code_otel::metrics::global();
     let timer = metric_client
         .as_ref()
         .and_then(|otel| otel.start_timer(DB_METRIC_BACKFILL_DURATION_MS, &[]).ok());
@@ -140,7 +140,7 @@ pub(crate) async fn backfill_sessions(runtime: &codex_state::StateRuntime, confi
         Err(err) => {
             warn!(
                 "failed to read backfill state at {}: {err}",
-                config.codex_home.display()
+                config.orbit_code_home.display()
             );
             BackfillState::default()
         }
@@ -153,7 +153,7 @@ pub(crate) async fn backfill_sessions(runtime: &codex_state::StateRuntime, confi
         Err(err) => {
             warn!(
                 "failed to claim backfill worker at {}: {err}",
-                config.codex_home.display()
+                config.orbit_code_home.display()
             );
             return;
         }
@@ -161,7 +161,7 @@ pub(crate) async fn backfill_sessions(runtime: &codex_state::StateRuntime, confi
     if !claimed {
         info!(
             "state db backfill already running at {}; skipping duplicate worker",
-            config.codex_home.display()
+            config.orbit_code_home.display()
         );
         return;
     }
@@ -170,7 +170,7 @@ pub(crate) async fn backfill_sessions(runtime: &codex_state::StateRuntime, confi
         Err(err) => {
             warn!(
                 "failed to read claimed backfill state at {}: {err}",
-                config.codex_home.display()
+                config.orbit_code_home.display()
             );
             BackfillState {
                 status: BackfillStatus::Running,
@@ -182,15 +182,17 @@ pub(crate) async fn backfill_sessions(runtime: &codex_state::StateRuntime, confi
         if let Err(err) = runtime.mark_backfill_running().await {
             warn!(
                 "failed to mark backfill running at {}: {err}",
-                config.codex_home.display()
+                config.orbit_code_home.display()
             );
         } else {
             backfill_state.status = BackfillStatus::Running;
         }
     }
 
-    let sessions_root = config.codex_home.join(rollout::SESSIONS_SUBDIR);
-    let archived_root = config.codex_home.join(rollout::ARCHIVED_SESSIONS_SUBDIR);
+    let sessions_root = config.orbit_code_home.join(rollout::SESSIONS_SUBDIR);
+    let archived_root = config
+        .orbit_code_home
+        .join(rollout::ARCHIVED_SESSIONS_SUBDIR);
     let mut rollout_paths: Vec<BackfillRolloutPath> = Vec::new();
     for (root, archived) in [(sessions_root, false), (archived_root, true)] {
         if !tokio::fs::try_exists(&root).await.unwrap_or(false) {
@@ -199,7 +201,7 @@ pub(crate) async fn backfill_sessions(runtime: &codex_state::StateRuntime, confi
         match collect_rollout_paths(&root).await {
             Ok(paths) => {
                 rollout_paths.extend(paths.into_iter().map(|path| BackfillRolloutPath {
-                    watermark: backfill_watermark_for_path(config.codex_home.as_path(), &path),
+                    watermark: backfill_watermark_for_path(config.orbit_code_home.as_path(), &path),
                     path,
                     archived,
                 }));
@@ -307,7 +309,7 @@ pub(crate) async fn backfill_sessions(runtime: &codex_state::StateRuntime, confi
             {
                 warn!(
                     "failed to checkpoint backfill at {}: {err}",
-                    config.codex_home.display()
+                    config.orbit_code_home.display()
                 );
             } else {
                 last_watermark = Some(last_entry.watermark.clone());
@@ -320,7 +322,7 @@ pub(crate) async fn backfill_sessions(runtime: &codex_state::StateRuntime, confi
     {
         warn!(
             "failed to mark backfill complete at {}: {err}",
-            config.codex_home.display()
+            config.orbit_code_home.display()
         );
     }
 
@@ -359,8 +361,8 @@ struct BackfillRolloutPath {
     archived: bool,
 }
 
-fn backfill_watermark_for_path(codex_home: &Path, path: &Path) -> String {
-    path.strip_prefix(codex_home)
+fn backfill_watermark_for_path(orbit_code_home: &Path, path: &Path) -> String {
+    path.strip_prefix(orbit_code_home)
         .unwrap_or(path)
         .to_string_lossy()
         .replace('\\', "/")

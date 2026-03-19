@@ -2,8 +2,8 @@ use super::RealtimeHandoffState;
 use super::RealtimeSessionKind;
 use super::realtime_text_from_handoff_request;
 use async_channel::bounded;
-use codex_protocol::protocol::RealtimeHandoffRequested;
-use codex_protocol::protocol::RealtimeTranscriptEntry;
+use orbit_code_protocol::protocol::RealtimeHandoffRequested;
+use orbit_code_protocol::protocol::RealtimeTranscriptEntry;
 use pretty_assertions::assert_eq;
 
 #[test]

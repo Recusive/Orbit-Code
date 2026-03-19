@@ -53,7 +53,7 @@ pub(crate) struct GuardianEvidence {
 /// Structured output contract that the guardian reviewer must satisfy.
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub(crate) struct GuardianAssessment {
-    pub(crate) risk_level: codex_protocol::protocol::GuardianRiskLevel,
+    pub(crate) risk_level: orbit_code_protocol::protocol::GuardianRiskLevel,
     pub(crate) risk_score: u8,
     pub(crate) rationale: String,
     pub(crate) evidence: Vec<GuardianEvidence>,

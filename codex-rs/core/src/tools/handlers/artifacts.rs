@@ -1,10 +1,10 @@
 use async_trait::async_trait;
-use codex_artifacts::ArtifactBuildRequest;
-use codex_artifacts::ArtifactCommandOutput;
-use codex_artifacts::ArtifactRuntimeManager;
-use codex_artifacts::ArtifactRuntimeManagerConfig;
-use codex_artifacts::ArtifactsClient;
-use codex_artifacts::ArtifactsError;
+use orbit_code_artifacts::ArtifactBuildRequest;
+use orbit_code_artifacts::ArtifactCommandOutput;
+use orbit_code_artifacts::ArtifactRuntimeManager;
+use orbit_code_artifacts::ArtifactRuntimeManagerConfig;
+use orbit_code_artifacts::ArtifactsClient;
+use orbit_code_artifacts::ArtifactsError;
 use serde_json::Value as JsonValue;
 use std::time::Duration;
 use std::time::Instant;
@@ -80,7 +80,7 @@ impl ToolHandler for ArtifactsHandler {
         };
 
         let client = ArtifactsClient::from_runtime_manager(default_runtime_manager(
-            turn.config.codex_home.clone(),
+            turn.config.orbit_code_home.clone(),
         ));
 
         let started_at = Instant::now();
@@ -211,9 +211,9 @@ fn parse_pragma_prefix(line: &str) -> Option<&str> {
     line.strip_prefix(ARTIFACT_TOOL_PRAGMA_PREFIX)
 }
 
-fn default_runtime_manager(codex_home: std::path::PathBuf) -> ArtifactRuntimeManager {
+fn default_runtime_manager(orbit_code_home: std::path::PathBuf) -> ArtifactRuntimeManager {
     ArtifactRuntimeManager::new(ArtifactRuntimeManagerConfig::with_default_release(
-        codex_home,
+        orbit_code_home,
         versions::ARTIFACT_RUNTIME,
     ))
 }

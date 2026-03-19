@@ -10,28 +10,28 @@
 
 use std::path::PathBuf;
 
-use codex_app_server_protocol::McpServerStatus;
-use codex_chatgpt::connectors::AppInfo;
-use codex_file_search::FileMatch;
-use codex_protocol::ThreadId;
-use codex_protocol::openai_models::ModelPreset;
-use codex_protocol::protocol::GetHistoryEntryResponseEvent;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::RateLimitSnapshot;
-use codex_utils_approval_presets::ApprovalPreset;
+use orbit_code_app_server_protocol::McpServerStatus;
+use orbit_code_chatgpt::connectors::AppInfo;
+use orbit_code_file_search::FileMatch;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::openai_models::ModelPreset;
+use orbit_code_protocol::protocol::GetHistoryEntryResponseEvent;
+use orbit_code_protocol::protocol::Op;
+use orbit_code_protocol::protocol::RateLimitSnapshot;
+use orbit_code_utils_approval_presets::ApprovalPreset;
 
 use crate::bottom_pane::ApprovalRequest;
 use crate::bottom_pane::StatusLineItem;
 use crate::history_cell::HistoryCell;
 
-use codex_core::config::types::ApprovalsReviewer;
-use codex_core::features::Feature;
-use codex_protocol::config_types::CollaborationModeMask;
-use codex_protocol::config_types::Personality;
-use codex_protocol::config_types::ServiceTier;
-use codex_protocol::openai_models::ReasoningEffort;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::SandboxPolicy;
+use orbit_code_core::config::types::ApprovalsReviewer;
+use orbit_code_core::features::Feature;
+use orbit_code_protocol::config_types::CollaborationModeMask;
+use orbit_code_protocol::config_types::Personality;
+use orbit_code_protocol::config_types::ServiceTier;
+use orbit_code_protocol::openai_models::ReasoningEffort;
+use orbit_code_protocol::protocol::AskForApproval;
+use orbit_code_protocol::protocol::SandboxPolicy;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum RealtimeAudioDeviceKind {

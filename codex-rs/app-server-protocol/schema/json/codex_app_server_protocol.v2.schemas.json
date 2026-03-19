@@ -3134,7 +3134,7 @@
           "type": "object"
         },
         {
-          "description": "User config layer from $CODEX_HOME/config.toml. This layer is special in that it is expected to be: - writable by the user - generally outside the workspace directory",
+          "description": "User config layer from $ORBIT_HOME/config.toml. This layer is special in that it is expected to be: - writable by the user - generally outside the workspace directory",
           "properties": {
             "file": {
               "allOf": [
@@ -4394,7 +4394,7 @@
       "type": "object"
     },
     "FuzzyFileSearchResult": {
-      "description": "Superset of [`codex_file_search::FileMatch`]",
+      "description": "Superset of [`orbit_code_file_search::FileMatch`]",
       "properties": {
         "file_name": {
           "type": "string"

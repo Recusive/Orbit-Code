@@ -1,5 +1,5 @@
 use super::*;
-use codex_protocol::models::ContentItem;
+use orbit_code_protocol::models::ContentItem;
 use pretty_assertions::assert_eq;
 
 #[test]

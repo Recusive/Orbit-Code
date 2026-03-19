@@ -2,20 +2,20 @@ use crate::history_cell::CompositeHistoryCell;
 use crate::history_cell::HistoryCell;
 use crate::history_cell::PlainHistoryCell;
 use crate::history_cell::with_border_with_inner_width;
-use crate::version::CODEX_CLI_VERSION;
+use crate::version::ORBIT_CLI_VERSION;
 use chrono::DateTime;
 use chrono::Local;
-use codex_core::WireApi;
-use codex_core::config::Config;
-use codex_protocol::ThreadId;
-use codex_protocol::account::PlanType;
-use codex_protocol::openai_models::ReasoningEffort;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::NetworkAccess;
-use codex_protocol::protocol::SandboxPolicy;
-use codex_protocol::protocol::TokenUsage;
-use codex_protocol::protocol::TokenUsageInfo;
-use codex_utils_sandbox_summary::summarize_sandbox_policy;
+use orbit_code_core::WireApi;
+use orbit_code_core::config::Config;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::account::PlanType;
+use orbit_code_protocol::openai_models::ReasoningEffort;
+use orbit_code_protocol::protocol::AskForApproval;
+use orbit_code_protocol::protocol::NetworkAccess;
+use orbit_code_protocol::protocol::SandboxPolicy;
+use orbit_code_protocol::protocol::TokenUsage;
+use orbit_code_protocol::protocol::TokenUsageInfo;
+use orbit_code_utils_sandbox_summary::summarize_sandbox_policy;
 use ratatui::prelude::*;
 use ratatui::style::Stylize;
 use std::collections::BTreeSet;
@@ -42,7 +42,7 @@ use super::rate_limits::format_status_limit_summary;
 use super::rate_limits::render_status_limit_progress_bar;
 use crate::wrapping::RtOptions;
 use crate::wrapping::adaptive_wrap_lines;
-use codex_core::AuthManager;
+use orbit_code_core::AuthManager;
 
 #[derive(Debug, Clone)]
 struct StatusContextWindowData {
@@ -414,9 +414,9 @@ impl HistoryCell for StatusHistoryCell {
         let mut lines: Vec<Line<'static>> = Vec::new();
         lines.push(Line::from(vec![
             Span::from(format!("{}>_ ", FieldFormatter::INDENT)).dim(),
-            Span::from("OpenAI Codex").bold(),
+            Span::from("Orbit Code").bold(),
             Span::from(" ").dim(),
-            Span::from(format!("(v{CODEX_CLI_VERSION})")).dim(),
+            Span::from(format!("(v{ORBIT_CLI_VERSION})")).dim(),
         ]));
         lines.push(Line::from(Vec::<Span<'static>>::new()));
 

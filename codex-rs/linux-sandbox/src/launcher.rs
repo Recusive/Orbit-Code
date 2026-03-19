@@ -6,7 +6,7 @@ use std::os::unix::ffi::OsStrExt;
 use std::path::Path;
 
 use crate::vendored_bwrap::exec_vendored_bwrap;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use orbit_code_utils_absolute_path::AbsolutePathBuf;
 
 const SYSTEM_BWRAP_PATH: &str = "/usr/bin/bwrap";
 

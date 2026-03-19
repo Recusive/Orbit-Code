@@ -12,7 +12,7 @@ use crate::plugins::test_support::TEST_CURATED_PLUGIN_SHA;
 use crate::plugins::test_support::write_curated_plugin_sha_with as write_curated_plugin_sha;
 use crate::plugins::test_support::write_file;
 use crate::plugins::test_support::write_openai_curated_marketplace;
-use codex_app_server_protocol::ConfigLayerSource;
+use orbit_code_app_server_protocol::ConfigLayerSource;
 use pretty_assertions::assert_eq;
 use std::fs;
 use tempfile::TempDir;
@@ -57,33 +57,33 @@ fn plugin_config_toml(enabled: bool, plugins_feature_enabled: bool) -> String {
     toml::to_string(&Value::Table(root)).expect("plugin test config should serialize")
 }
 
-fn load_plugins_from_config(config_toml: &str, codex_home: &Path) -> PluginLoadOutcome {
-    write_file(&codex_home.join(CONFIG_TOML_FILE), config_toml);
-    let config = load_config_blocking(codex_home, codex_home);
-    PluginsManager::new(codex_home.to_path_buf()).plugins_for_config(&config)
+fn load_plugins_from_config(config_toml: &str, orbit_code_home: &Path) -> PluginLoadOutcome {
+    write_file(&orbit_code_home.join(CONFIG_TOML_FILE), config_toml);
+    let config = load_config_blocking(orbit_code_home, orbit_code_home);
+    PluginsManager::new(orbit_code_home.to_path_buf()).plugins_for_config(&config)
 }
 
-async fn load_config(codex_home: &Path, cwd: &Path) -> crate::config::Config {
+async fn load_config(orbit_code_home: &Path, cwd: &Path) -> crate::config::Config {
     ConfigBuilder::default()
-        .codex_home(codex_home.to_path_buf())
+        .orbit_code_home(orbit_code_home.to_path_buf())
         .fallback_cwd(Some(cwd.to_path_buf()))
         .build()
         .await
         .expect("config should load")
 }
 
-fn load_config_blocking(codex_home: &Path, cwd: &Path) -> crate::config::Config {
+fn load_config_blocking(orbit_code_home: &Path, cwd: &Path) -> crate::config::Config {
     tokio::runtime::Builder::new_current_thread()
         .enable_all()
         .build()
         .expect("tokio runtime should build")
-        .block_on(load_config(codex_home, cwd))
+        .block_on(load_config(orbit_code_home, cwd))
 }
 
 #[test]
 fn load_plugins_loads_default_skills_and_mcp_servers() {
-    let codex_home = TempDir::new().unwrap();
-    let plugin_root = codex_home
+    let orbit_code_home = TempDir::new().unwrap();
+    let plugin_root = orbit_code_home
         .path()
         .join("plugins/cache")
         .join("test/sample/local");
@@ -125,7 +125,7 @@ fn load_plugins_loads_default_skills_and_mcp_servers() {
 }"#,
     );
 
-    let outcome = load_plugins_from_config(&plugin_config_toml(true, true), codex_home.path());
+    let outcome = load_plugins_from_config(&plugin_config_toml(true, true), orbit_code_home.path());
 
     assert_eq!(
         outcome.plugins,
@@ -186,8 +186,8 @@ fn load_plugins_loads_default_skills_and_mcp_servers() {
 
 #[test]
 fn plugin_telemetry_metadata_uses_default_mcp_config_path() {
-    let codex_home = TempDir::new().unwrap();
-    let plugin_root = codex_home
+    let orbit_code_home = TempDir::new().unwrap();
+    let plugin_root = orbit_code_home
         .path()
         .join("plugins/cache")
         .join("test/sample/local");
@@ -230,8 +230,8 @@ fn plugin_telemetry_metadata_uses_default_mcp_config_path() {
 
 #[test]
 fn capability_summary_sanitizes_plugin_descriptions_to_one_line() {
-    let codex_home = TempDir::new().unwrap();
-    let plugin_root = codex_home
+    let orbit_code_home = TempDir::new().unwrap();
+    let plugin_root = orbit_code_home
         .path()
         .join("plugins/cache")
         .join("test/sample/local");
@@ -248,7 +248,7 @@ fn capability_summary_sanitizes_plugin_descriptions_to_one_line() {
         "---\nname: sample-search\ndescription: search sample data\n---\n",
     );
 
-    let outcome = load_plugins_from_config(&plugin_config_toml(true, true), codex_home.path());
+    let outcome = load_plugins_from_config(&plugin_config_toml(true, true), orbit_code_home.path());
 
     assert_eq!(
         outcome.plugins[0].manifest_description.as_deref(),
@@ -262,8 +262,8 @@ fn capability_summary_sanitizes_plugin_descriptions_to_one_line() {
 
 #[test]
 fn capability_summary_truncates_overlong_plugin_descriptions() {
-    let codex_home = TempDir::new().unwrap();
-    let plugin_root = codex_home
+    let orbit_code_home = TempDir::new().unwrap();
+    let plugin_root = orbit_code_home
         .path()
         .join("plugins/cache")
         .join("test/sample/local");
@@ -283,7 +283,7 @@ fn capability_summary_truncates_overlong_plugin_descriptions() {
         "---\nname: sample-search\ndescription: search sample data\n---\n",
     );
 
-    let outcome = load_plugins_from_config(&plugin_config_toml(true, true), codex_home.path());
+    let outcome = load_plugins_from_config(&plugin_config_toml(true, true), orbit_code_home.path());
 
     assert_eq!(
         outcome.plugins[0].manifest_description.as_deref(),
@@ -297,8 +297,8 @@ fn capability_summary_truncates_overlong_plugin_descriptions() {
 
 #[test]
 fn load_plugins_uses_manifest_configured_component_paths() {
-    let codex_home = TempDir::new().unwrap();
-    let plugin_root = codex_home
+    let orbit_code_home = TempDir::new().unwrap();
+    let plugin_root = orbit_code_home
         .path()
         .join("plugins/cache")
         .join("test/sample/local");
@@ -363,7 +363,7 @@ fn load_plugins_uses_manifest_configured_component_paths() {
 }"#,
     );
 
-    let outcome = load_plugins_from_config(&plugin_config_toml(true, true), codex_home.path());
+    let outcome = load_plugins_from_config(&plugin_config_toml(true, true), orbit_code_home.path());
 
     assert_eq!(
         outcome.plugins[0].skill_roots,
@@ -403,8 +403,8 @@ fn load_plugins_uses_manifest_configured_component_paths() {
 
 #[test]
 fn load_plugins_ignores_manifest_component_paths_without_dot_slash() {
-    let codex_home = TempDir::new().unwrap();
-    let plugin_root = codex_home
+    let orbit_code_home = TempDir::new().unwrap();
+    let plugin_root = orbit_code_home
         .path()
         .join("plugins/cache")
         .join("test/sample/local");
@@ -469,7 +469,7 @@ fn load_plugins_ignores_manifest_component_paths_without_dot_slash() {
 }"#,
     );
 
-    let outcome = load_plugins_from_config(&plugin_config_toml(true, true), codex_home.path());
+    let outcome = load_plugins_from_config(&plugin_config_toml(true, true), orbit_code_home.path());
 
     assert_eq!(
         outcome.plugins[0].skill_roots,
@@ -506,8 +506,8 @@ fn load_plugins_ignores_manifest_component_paths_without_dot_slash() {
 
 #[test]
 fn load_plugins_preserves_disabled_plugins_without_effective_contributions() {
-    let codex_home = TempDir::new().unwrap();
-    let plugin_root = codex_home
+    let orbit_code_home = TempDir::new().unwrap();
+    let plugin_root = orbit_code_home
         .path()
         .join("plugins/cache")
         .join("test/sample/local");
@@ -528,7 +528,8 @@ fn load_plugins_preserves_disabled_plugins_without_effective_contributions() {
 }"#,
     );
 
-    let outcome = load_plugins_from_config(&plugin_config_toml(false, true), codex_home.path());
+    let outcome =
+        load_plugins_from_config(&plugin_config_toml(false, true), orbit_code_home.path());
 
     assert_eq!(
         outcome.plugins,
@@ -550,12 +551,12 @@ fn load_plugins_preserves_disabled_plugins_without_effective_contributions() {
 
 #[test]
 fn effective_apps_dedupes_connector_ids_across_plugins() {
-    let codex_home = TempDir::new().unwrap();
-    let plugin_a_root = codex_home
+    let orbit_code_home = TempDir::new().unwrap();
+    let plugin_a_root = orbit_code_home
         .path()
         .join("plugins/cache")
         .join("test/plugin-a/local");
-    let plugin_b_root = codex_home
+    let plugin_b_root = orbit_code_home
         .path()
         .join("plugins/cache")
         .join("test/plugin-b/local");
@@ -611,7 +612,7 @@ fn effective_apps_dedupes_connector_ids_across_plugins() {
     let config_toml =
         toml::to_string(&Value::Table(root)).expect("plugin test config should serialize");
 
-    let outcome = load_plugins_from_config(&config_toml, codex_home.path());
+    let outcome = load_plugins_from_config(&config_toml, orbit_code_home.path());
 
     assert_eq!(
         outcome.effective_apps(),
@@ -624,7 +625,7 @@ fn effective_apps_dedupes_connector_ids_across_plugins() {
 
 #[test]
 fn capability_index_filters_inactive_and_zero_capability_plugins() {
-    let codex_home = TempDir::new().unwrap();
+    let orbit_code_home = TempDir::new().unwrap();
     let connector = |id: &str| AppConnectorId(id.to_string());
     let http_server = |url: &str| McpServerConfig {
         transport: McpServerTransportConfig::StreamableHttp {
@@ -647,7 +648,7 @@ fn capability_index_filters_inactive_and_zero_capability_plugins() {
         config_name: config_name.to_string(),
         manifest_name: Some(manifest_name.to_string()),
         manifest_description: None,
-        root: AbsolutePathBuf::try_from(codex_home.path().join(dir_name)).unwrap(),
+        root: AbsolutePathBuf::try_from(orbit_code_home.path().join(dir_name)).unwrap(),
         enabled: true,
         skill_roots: Vec::new(),
         mcp_servers: HashMap::new(),
@@ -662,7 +663,7 @@ fn capability_index_filters_inactive_and_zero_capability_plugins() {
     };
     let outcome = PluginLoadOutcome::from_plugins(vec![
         LoadedPlugin {
-            skill_roots: vec![codex_home.path().join("skills-plugin/skills")],
+            skill_roots: vec![orbit_code_home.path().join("skills-plugin/skills")],
             ..plugin("skills@test", "skills-plugin", "skills-plugin")
         },
         LoadedPlugin {
@@ -678,7 +679,7 @@ fn capability_index_filters_inactive_and_zero_capability_plugins() {
         plugin("empty@test", "empty-plugin", "empty-plugin"),
         LoadedPlugin {
             enabled: false,
-            skill_roots: vec![codex_home.path().join("disabled-plugin/skills")],
+            skill_roots: vec![orbit_code_home.path().join("disabled-plugin/skills")],
             apps: vec![connector("connector_hidden")],
             ..plugin("disabled@test", "disabled-plugin", "disabled-plugin")
         },
@@ -715,8 +716,8 @@ fn capability_index_filters_inactive_and_zero_capability_plugins() {
 
 #[test]
 fn plugin_namespace_for_skill_path_uses_manifest_name() {
-    let codex_home = TempDir::new().unwrap();
-    let plugin_root = codex_home.path().join("plugins/sample");
+    let orbit_code_home = TempDir::new().unwrap();
+    let plugin_root = orbit_code_home.path().join("plugins/sample");
     let skill_path = plugin_root.join("skills/search/SKILL.md");
 
     write_file(
@@ -733,8 +734,8 @@ fn plugin_namespace_for_skill_path_uses_manifest_name() {
 
 #[test]
 fn load_plugins_returns_empty_when_feature_disabled() {
-    let codex_home = TempDir::new().unwrap();
-    let plugin_root = codex_home
+    let orbit_code_home = TempDir::new().unwrap();
+    let plugin_root = orbit_code_home
         .path()
         .join("plugins/cache")
         .join("test/sample/local");
@@ -748,20 +749,21 @@ fn load_plugins_returns_empty_when_feature_disabled() {
         "---\nname: sample-search\ndescription: search sample data\n---\n",
     );
     write_file(
-        &codex_home.path().join(CONFIG_TOML_FILE),
+        &orbit_code_home.path().join(CONFIG_TOML_FILE),
         &plugin_config_toml(true, false),
     );
 
-    let config = load_config_blocking(codex_home.path(), codex_home.path());
-    let outcome = PluginsManager::new(codex_home.path().to_path_buf()).plugins_for_config(&config);
+    let config = load_config_blocking(orbit_code_home.path(), orbit_code_home.path());
+    let outcome =
+        PluginsManager::new(orbit_code_home.path().to_path_buf()).plugins_for_config(&config);
 
     assert_eq!(outcome, PluginLoadOutcome::default());
 }
 
 #[test]
 fn load_plugins_rejects_invalid_plugin_keys() {
-    let codex_home = TempDir::new().unwrap();
-    let plugin_root = codex_home
+    let orbit_code_home = TempDir::new().unwrap();
+    let plugin_root = orbit_code_home
         .path()
         .join("plugins/cache")
         .join("test/sample/local");
@@ -785,7 +787,7 @@ fn load_plugins_rejects_invalid_plugin_keys() {
 
     let outcome = load_plugins_from_config(
         &toml::to_string(&Value::Table(root)).expect("plugin test config should serialize"),
-        codex_home.path(),
+        orbit_code_home.path(),
     );
 
     assert_eq!(outcome.plugins.len(), 1);
@@ -1811,9 +1813,9 @@ fn refresh_curated_plugin_cache_returns_false_when_configured_plugins_are_curren
 
 #[test]
 fn load_plugins_ignores_project_config_files() {
-    let codex_home = TempDir::new().unwrap();
-    let project_root = codex_home.path().join("project");
-    let plugin_root = codex_home
+    let orbit_code_home = TempDir::new().unwrap();
+    let project_root = orbit_code_home.path().join("project");
+    let plugin_root = orbit_code_home
         .path()
         .join("plugins/cache")
         .join("test/sample/local");
@@ -1830,7 +1832,8 @@ fn load_plugins_ignores_project_config_files() {
     let stack = ConfigLayerStack::new(
         vec![ConfigLayerEntry::new(
             ConfigLayerSource::Project {
-                dot_codex_folder: AbsolutePathBuf::try_from(project_root.join(".codex")).unwrap(),
+                dot_orbit_code_folder: AbsolutePathBuf::try_from(project_root.join(".codex"))
+                    .unwrap(),
             },
             toml::from_str(&plugin_config_toml(true, true)).expect("project config should parse"),
         )],
@@ -1839,8 +1842,10 @@ fn load_plugins_ignores_project_config_files() {
     )
     .expect("config layer stack should build");
 
-    let outcome =
-        load_plugins_from_layer_stack(&stack, &PluginStore::new(codex_home.path().to_path_buf()));
+    let outcome = load_plugins_from_layer_stack(
+        &stack,
+        &PluginStore::new(orbit_code_home.path().to_path_buf()),
+    );
 
     assert_eq!(outcome, PluginLoadOutcome::default());
 }

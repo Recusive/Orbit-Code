@@ -8,7 +8,7 @@ mod worker;
 use std::sync::Arc;
 use std::time::Duration;
 
-use codex_protocol::models::FunctionCallOutputContentItem;
+use orbit_code_protocol::models::FunctionCallOutputContentItem;
 use serde_json::Value as JsonValue;
 
 use crate::client_common::tools::ToolSpec;

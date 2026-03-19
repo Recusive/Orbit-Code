@@ -11,12 +11,12 @@ use std::time::Instant;
 
 use anyhow::Context;
 use async_channel::unbounded;
-pub use codex_app_server_protocol::AppBranding;
-pub use codex_app_server_protocol::AppInfo;
-pub use codex_app_server_protocol::AppMetadata;
-use codex_connectors::AllConnectorsCacheKey;
-use codex_connectors::DirectoryListResponse;
-use codex_protocol::protocol::SandboxPolicy;
+pub use orbit_code_app_server_protocol::AppBranding;
+pub use orbit_code_app_server_protocol::AppInfo;
+pub use orbit_code_app_server_protocol::AppMetadata;
+use orbit_code_connectors::AllConnectorsCacheKey;
+use orbit_code_connectors::DirectoryListResponse;
+use orbit_code_protocol::protocol::SandboxPolicy;
 use rmcp::model::ToolAnnotations;
 use serde::Deserialize;
 use serde::de::DeserializeOwned;
@@ -34,13 +34,13 @@ use crate::default_client::create_client;
 use crate::default_client::is_first_party_chat_originator;
 use crate::default_client::originator;
 use crate::features::Feature;
-use crate::mcp::CODEX_APPS_MCP_SERVER_NAME;
 use crate::mcp::McpManager;
+use crate::mcp::ORBIT_APPS_MCP_SERVER_NAME;
 use crate::mcp::ToolPluginProvenance;
 use crate::mcp::auth::compute_auth_statuses;
-use crate::mcp::with_codex_apps_mcp;
+use crate::mcp::with_orbit_code_apps_mcp;
 use crate::mcp_connection_manager::McpConnectionManager;
-use crate::mcp_connection_manager::codex_apps_tools_cache_key;
+use crate::mcp_connection_manager::orbit_code_apps_tools_cache_key;
 use crate::plugins::AppConnectorId;
 use crate::plugins::PluginsManager;
 use crate::plugins::list_tool_suggest_discoverable_plugins;
@@ -48,7 +48,7 @@ use crate::token_data::TokenData;
 use crate::tools::discoverable::DiscoverablePluginInfo;
 use crate::tools::discoverable::DiscoverableTool;
 
-pub use codex_connectors::CONNECTORS_CACHE_TTL;
+pub use orbit_code_connectors::CONNECTORS_CACHE_TTL;
 const CONNECTORS_READY_TIMEOUT_ON_EMPTY_TOOLS: Duration = Duration::from_secs(30);
 const DIRECTORY_CONNECTORS_TIMEOUT: Duration = Duration::from_secs(60);
 
@@ -88,7 +88,7 @@ static ACCESSIBLE_CONNECTORS_CACHE: LazyLock<StdMutex<Option<CachedAccessibleCon
 #[derive(Debug, Clone)]
 pub struct AccessibleConnectorsStatus {
     pub connectors: Vec<AppInfo>,
-    pub codex_apps_ready: bool,
+    pub orbit_code_apps_ready: bool,
 }
 
 pub async fn list_accessible_connectors_from_mcp_tools(
@@ -174,11 +174,13 @@ pub async fn list_accessible_connectors_from_mcp_tools_with_options_and_status(
     if !config.features.apps_enabled_for_auth(auth.as_ref()) {
         return Ok(AccessibleConnectorsStatus {
             connectors: Vec::new(),
-            codex_apps_ready: true,
+            orbit_code_apps_ready: true,
         });
     }
     let cache_key = accessible_connectors_cache_key(config, auth.as_ref());
-    let mcp_manager = McpManager::new(Arc::new(PluginsManager::new(config.codex_home.clone())));
+    let mcp_manager = McpManager::new(Arc::new(PluginsManager::new(
+        config.orbit_code_home.clone(),
+    )));
     let tool_plugin_provenance = mcp_manager.tool_plugin_provenance(config);
     if !force_refetch && let Some(cached_connectors) = read_cached_accessible_connectors(&cache_key)
     {
@@ -186,11 +188,11 @@ pub async fn list_accessible_connectors_from_mcp_tools_with_options_and_status(
         let cached_connectors = with_app_plugin_sources(cached_connectors, &tool_plugin_provenance);
         return Ok(AccessibleConnectorsStatus {
             connectors: cached_connectors,
-            codex_apps_ready: true,
+            orbit_code_apps_ready: true,
         });
     }
 
-    let mcp_servers = with_codex_apps_mcp(
+    let mcp_servers = with_orbit_code_apps_mcp(
         HashMap::new(),
         /*connectors_enabled*/ true,
         auth.as_ref(),
@@ -199,7 +201,7 @@ pub async fn list_accessible_connectors_from_mcp_tools_with_options_and_status(
     if mcp_servers.is_empty() {
         return Ok(AccessibleConnectorsStatus {
             connectors: Vec::new(),
-            codex_apps_ready: true,
+            orbit_code_apps_ready: true,
         });
     }
 
@@ -211,7 +213,7 @@ pub async fn list_accessible_connectors_from_mcp_tools_with_options_and_status(
 
     let sandbox_state = SandboxState {
         sandbox_policy: SandboxPolicy::new_read_only_policy(),
-        codex_linux_sandbox_exe: config.codex_linux_sandbox_exe.clone(),
+        orbit_code_linux_sandbox_exe: config.orbit_code_linux_sandbox_exe.clone(),
         sandbox_cwd: env::current_dir().unwrap_or_else(|_| PathBuf::from("/")),
         use_legacy_landlock: config.features.use_legacy_landlock(),
     };
@@ -223,21 +225,21 @@ pub async fn list_accessible_connectors_from_mcp_tools_with_options_and_status(
         &config.permissions.approval_policy,
         tx_event,
         sandbox_state,
-        config.codex_home.clone(),
-        codex_apps_tools_cache_key(auth.as_ref()),
+        config.orbit_code_home.clone(),
+        orbit_code_apps_tools_cache_key(auth.as_ref()),
         ToolPluginProvenance::default(),
     )
     .await;
 
     let refreshed_tools = if force_refetch {
         match mcp_connection_manager
-            .hard_refresh_codex_apps_tools_cache()
+            .hard_refresh_orbit_code_apps_tools_cache()
             .await
         {
             Ok(tools) => Some(tools),
             Err(err) => {
                 warn!(
-                    "failed to force-refresh tools for MCP server '{CODEX_APPS_MCP_SERVER_NAME}', using cached/startup tools: {err:#}"
+                    "failed to force-refresh tools for MCP server '{ORBIT_APPS_MCP_SERVER_NAME}', using cached/startup tools: {err:#}"
                 );
                 None
             }
@@ -253,11 +255,11 @@ pub async fn list_accessible_connectors_from_mcp_tools_with_options_and_status(
         mcp_connection_manager.list_all_tools().await
     };
     let mut should_reload_tools = false;
-    let codex_apps_ready = if refreshed_tools_succeeded {
+    let orbit_code_apps_ready = if refreshed_tools_succeeded {
         true
-    } else if let Some(cfg) = mcp_servers.get(CODEX_APPS_MCP_SERVER_NAME) {
+    } else if let Some(cfg) = mcp_servers.get(ORBIT_APPS_MCP_SERVER_NAME) {
         let immediate_ready = mcp_connection_manager
-            .wait_for_server_ready(CODEX_APPS_MCP_SERVER_NAME, Duration::ZERO)
+            .wait_for_server_ready(ORBIT_APPS_MCP_SERVER_NAME, Duration::ZERO)
             .await;
         if immediate_ready {
             true
@@ -266,7 +268,7 @@ pub async fn list_accessible_connectors_from_mcp_tools_with_options_and_status(
                 .startup_timeout_sec
                 .unwrap_or(CONNECTORS_READY_TIMEOUT_ON_EMPTY_TOOLS);
             let ready = mcp_connection_manager
-                .wait_for_server_ready(CODEX_APPS_MCP_SERVER_NAME, timeout)
+                .wait_for_server_ready(ORBIT_APPS_MCP_SERVER_NAME, timeout)
                 .await;
             should_reload_tools = ready;
             ready
@@ -279,20 +281,20 @@ pub async fn list_accessible_connectors_from_mcp_tools_with_options_and_status(
     if should_reload_tools {
         tools = mcp_connection_manager.list_all_tools().await;
     }
-    if codex_apps_ready {
+    if orbit_code_apps_ready {
         cancel_token.cancel();
     }
 
     let accessible_connectors =
         filter_disallowed_connectors(accessible_connectors_from_mcp_tools(&tools));
-    if codex_apps_ready || !accessible_connectors.is_empty() {
+    if orbit_code_apps_ready || !accessible_connectors.is_empty() {
         write_cached_accessible_connectors(cache_key, &accessible_connectors);
     }
     let accessible_connectors =
         with_app_plugin_sources(accessible_connectors, &tool_plugin_provenance);
     Ok(AccessibleConnectorsStatus {
         connectors: accessible_connectors,
-        codex_apps_ready,
+        orbit_code_apps_ready,
     })
 }
 
@@ -377,7 +379,7 @@ fn filter_tool_suggest_discoverable_connectors(
 }
 
 fn tool_suggest_connector_ids(config: &Config) -> HashSet<String> {
-    let mut connector_ids = PluginsManager::new(config.codex_home.clone())
+    let mut connector_ids = PluginsManager::new(config.orbit_code_home.clone())
         .plugins_for_config(config)
         .capability_summaries()
         .iter()
@@ -430,7 +432,7 @@ async fn list_directory_connectors_for_tool_suggest_with_auth(
         is_workspace_account,
     );
 
-    codex_connectors::list_all_connectors_with_options(
+    orbit_code_connectors::list_all_connectors_with_options(
         cache_key,
         is_workspace_account,
         /*force_refetch*/ false,
@@ -483,8 +485,8 @@ async fn chatgpt_get_request_with_token<T: DeserializeOwned>(
 
 fn auth_manager_from_config(config: &Config) -> std::sync::Arc<AuthManager> {
     AuthManager::shared(
-        config.codex_home.clone(),
-        /*enable_codex_api_key_env*/ false,
+        config.orbit_code_home.clone(),
+        /*enable_orbit_code_api_key_env*/ false,
         config.cli_auth_credentials_store_mode,
     )
 }
@@ -503,7 +505,7 @@ pub(crate) fn accessible_connectors_from_mcp_tools(
     // ToolInfo already carries plugin provenance, so app-level plugin sources
     // can be derived here instead of requiring a separate enrichment pass.
     let tools = mcp_tools.values().filter_map(|tool| {
-        if tool.server_name != CODEX_APPS_MCP_SERVER_NAME {
+        if tool.server_name != ORBIT_APPS_MCP_SERVER_NAME {
             return None;
         }
         let connector_id = tool.connector_id.as_deref()?;
@@ -672,11 +674,11 @@ pub(crate) fn app_tool_policy(
     )
 }
 
-pub(crate) fn codex_app_tool_is_enabled(
+pub(crate) fn orbit_code_app_tool_is_enabled(
     config: &Config,
     tool_info: &crate::mcp_connection_manager::ToolInfo,
 ) -> bool {
-    if tool_info.server_name != CODEX_APPS_MCP_SERVER_NAME {
+    if tool_info.server_name != ORBIT_APPS_MCP_SERVER_NAME {
         return true;
     }
 
@@ -916,7 +918,7 @@ where
 fn plugin_app_to_app_info(connector_id: AppConnectorId) -> AppInfo {
     // Leave the placeholder name as the connector id so merge_connectors() can
     // replace it with canonical app metadata from directory fetches or
-    // connector_name values from codex_apps tool discovery.
+    // connector_name values from orbit_code_apps tool discovery.
     let connector_id = connector_id.0;
     let name = connector_id.clone();
     AppInfo {

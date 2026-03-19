@@ -1,14 +1,14 @@
 use std::path::PathBuf;
 
 use crate::app_command::AppCommand;
-use codex_protocol::ThreadId;
-use codex_protocol::approvals::ElicitationAction;
-use codex_protocol::mcp::RequestId as McpRequestId;
-use codex_protocol::protocol::ConversationAudioParams;
-use codex_protocol::protocol::ReviewDecision;
-use codex_protocol::protocol::ReviewRequest;
-use codex_protocol::request_permissions::RequestPermissionsResponse;
-use codex_protocol::request_user_input::RequestUserInputResponse;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::approvals::ElicitationAction;
+use orbit_code_protocol::mcp::RequestId as McpRequestId;
+use orbit_code_protocol::protocol::ConversationAudioParams;
+use orbit_code_protocol::protocol::ReviewDecision;
+use orbit_code_protocol::protocol::ReviewRequest;
+use orbit_code_protocol::request_permissions::RequestPermissionsResponse;
+use orbit_code_protocol::request_user_input::RequestUserInputResponse;
 use tokio::sync::mpsc::UnboundedSender;
 
 use crate::app_event::AppEvent;

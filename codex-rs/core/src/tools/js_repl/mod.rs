@@ -8,12 +8,12 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
 
-use codex_protocol::ThreadId;
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::FunctionCallOutputContentItem;
-use codex_protocol::models::FunctionCallOutputPayload;
-use codex_protocol::models::ImageDetail;
-use codex_protocol::models::ResponseInputItem;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::models::ContentItem;
+use orbit_code_protocol::models::FunctionCallOutputContentItem;
+use orbit_code_protocol::models::FunctionCallOutputPayload;
+use orbit_code_protocol::models::ImageDetail;
+use orbit_code_protocol::models::ResponseInputItem;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::Value as JsonValue;
@@ -1015,10 +1015,10 @@ impl JsReplManager {
             env.extend(dependency_env.clone());
         }
         env.insert(
-            "CODEX_JS_TMP_DIR".to_string(),
+            "ORBIT_JS_TMP_DIR".to_string(),
             self.tmp_dir.path().to_string_lossy().to_string(),
         );
-        let node_module_dirs_key = "CODEX_JS_REPL_NODE_MODULE_DIRS";
+        let node_module_dirs_key = "ORBIT_JS_REPL_NODE_MODULE_DIRS";
         if !self.node_module_dirs.is_empty() && !env.contains_key(node_module_dirs_key) {
             let joined = std::env::join_paths(&self.node_module_dirs)
                 .map_err(|err| format!("failed to join js_repl_node_module_dirs: {err}"))?;
@@ -1068,7 +1068,7 @@ impl JsReplManager {
                 sandbox_policy_cwd: &turn.cwd,
                 #[cfg(target_os = "macos")]
                 macos_seatbelt_profile_extensions: None,
-                codex_linux_sandbox_exe: turn.codex_linux_sandbox_exe.as_ref(),
+                orbit_code_linux_sandbox_exe: turn.orbit_code_linux_sandbox_exe.as_ref(),
                 use_legacy_landlock: turn.features.use_legacy_landlock(),
                 windows_sandbox_level: turn.windows_sandbox_level,
                 windows_sandbox_private_desktop: turn
@@ -1934,14 +1934,14 @@ async fn ensure_node_version(node_path: &Path) -> Result<(), String> {
 
 pub(crate) async fn resolve_compatible_node(config_path: Option<&Path>) -> Result<PathBuf, String> {
     let node_path = resolve_node(config_path).ok_or_else(|| {
-        "Node runtime not found; install Node or set CODEX_JS_REPL_NODE_PATH".to_string()
+        "Node runtime not found; install Node or set ORBIT_JS_REPL_NODE_PATH".to_string()
     })?;
     ensure_node_version(&node_path).await?;
     Ok(node_path)
 }
 
 pub(crate) fn resolve_node(config_path: Option<&Path>) -> Option<PathBuf> {
-    if let Some(path) = std::env::var_os("CODEX_JS_REPL_NODE_PATH") {
+    if let Some(path) = std::env::var_os("ORBIT_JS_REPL_NODE_PATH") {
         let p = PathBuf::from(path);
         if p.exists() {
             return Some(p);

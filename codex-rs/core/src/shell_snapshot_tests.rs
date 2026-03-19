@@ -376,8 +376,8 @@ async fn windows_powershell_snapshot_includes_sections() -> Result<()> {
     Ok(())
 }
 
-async fn write_rollout_stub(codex_home: &Path, session_id: ThreadId) -> Result<PathBuf> {
-    let dir = codex_home
+async fn write_rollout_stub(orbit_code_home: &Path, session_id: ThreadId) -> Result<PathBuf> {
+    let dir = orbit_code_home
         .join("sessions")
         .join("2025")
         .join("01")
@@ -391,8 +391,8 @@ async fn write_rollout_stub(codex_home: &Path, session_id: ThreadId) -> Result<P
 #[tokio::test]
 async fn cleanup_stale_snapshots_removes_orphans_and_keeps_live() -> Result<()> {
     let dir = tempdir()?;
-    let codex_home = dir.path();
-    let snapshot_dir = codex_home.join(SNAPSHOT_DIR);
+    let orbit_code_home = dir.path();
+    let snapshot_dir = orbit_code_home.join(SNAPSHOT_DIR);
     fs::create_dir_all(&snapshot_dir).await?;
 
     let live_session = ThreadId::new();
@@ -401,12 +401,12 @@ async fn cleanup_stale_snapshots_removes_orphans_and_keeps_live() -> Result<()> 
     let orphan_snapshot = snapshot_dir.join(format!("{orphan_session}.456.sh"));
     let invalid_snapshot = snapshot_dir.join("not-a-snapshot.txt");
 
-    write_rollout_stub(codex_home, live_session).await?;
+    write_rollout_stub(orbit_code_home, live_session).await?;
     fs::write(&live_snapshot, "live").await?;
     fs::write(&orphan_snapshot, "orphan").await?;
     fs::write(&invalid_snapshot, "invalid").await?;
 
-    cleanup_stale_snapshots(codex_home, ThreadId::new()).await?;
+    cleanup_stale_snapshots(orbit_code_home, ThreadId::new()).await?;
 
     assert_eq!(live_snapshot.exists(), true);
     assert_eq!(orphan_snapshot.exists(), false);
@@ -418,18 +418,18 @@ async fn cleanup_stale_snapshots_removes_orphans_and_keeps_live() -> Result<()> 
 #[tokio::test]
 async fn cleanup_stale_snapshots_removes_stale_rollouts() -> Result<()> {
     let dir = tempdir()?;
-    let codex_home = dir.path();
-    let snapshot_dir = codex_home.join(SNAPSHOT_DIR);
+    let orbit_code_home = dir.path();
+    let snapshot_dir = orbit_code_home.join(SNAPSHOT_DIR);
     fs::create_dir_all(&snapshot_dir).await?;
 
     let stale_session = ThreadId::new();
     let stale_snapshot = snapshot_dir.join(format!("{stale_session}.123.sh"));
-    let rollout_path = write_rollout_stub(codex_home, stale_session).await?;
+    let rollout_path = write_rollout_stub(orbit_code_home, stale_session).await?;
     fs::write(&stale_snapshot, "stale").await?;
 
     set_file_mtime(&rollout_path, SNAPSHOT_RETENTION + Duration::from_secs(60))?;
 
-    cleanup_stale_snapshots(codex_home, ThreadId::new()).await?;
+    cleanup_stale_snapshots(orbit_code_home, ThreadId::new()).await?;
 
     assert_eq!(stale_snapshot.exists(), false);
     Ok(())
@@ -439,18 +439,18 @@ async fn cleanup_stale_snapshots_removes_stale_rollouts() -> Result<()> {
 #[tokio::test]
 async fn cleanup_stale_snapshots_skips_active_session() -> Result<()> {
     let dir = tempdir()?;
-    let codex_home = dir.path();
-    let snapshot_dir = codex_home.join(SNAPSHOT_DIR);
+    let orbit_code_home = dir.path();
+    let snapshot_dir = orbit_code_home.join(SNAPSHOT_DIR);
     fs::create_dir_all(&snapshot_dir).await?;
 
     let active_session = ThreadId::new();
     let active_snapshot = snapshot_dir.join(format!("{active_session}.123.sh"));
-    let rollout_path = write_rollout_stub(codex_home, active_session).await?;
+    let rollout_path = write_rollout_stub(orbit_code_home, active_session).await?;
     fs::write(&active_snapshot, "active").await?;
 
     set_file_mtime(&rollout_path, SNAPSHOT_RETENTION + Duration::from_secs(60))?;
 
-    cleanup_stale_snapshots(codex_home, active_session).await?;
+    cleanup_stale_snapshots(orbit_code_home, active_session).await?;
 
     assert_eq!(active_snapshot.exists(), true);
     Ok(())

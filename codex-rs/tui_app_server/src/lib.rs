@@ -8,54 +8,54 @@ use app::App;
 pub use app::AppExitInfo;
 pub use app::ExitReason;
 use app_server_session::AppServerSession;
-use codex_app_server_client::AppServerClient;
-use codex_app_server_client::DEFAULT_IN_PROCESS_CHANNEL_CAPACITY;
-use codex_app_server_client::InProcessAppServerClient;
-use codex_app_server_client::InProcessClientStartArgs;
-use codex_app_server_client::RemoteAppServerClient;
-use codex_app_server_client::RemoteAppServerConnectArgs;
-use codex_app_server_protocol::AuthMode as AppServerAuthMode;
-use codex_app_server_protocol::ConfigWarningNotification;
-use codex_app_server_protocol::Thread as AppServerThread;
-use codex_app_server_protocol::ThreadListParams;
-use codex_app_server_protocol::ThreadSortKey as AppServerThreadSortKey;
-use codex_app_server_protocol::ThreadSourceKind;
-use codex_cloud_requirements::cloud_requirements_loader_for_storage;
-use codex_core::auth::enforce_login_restrictions;
-use codex_core::check_execpolicy_for_warnings;
-use codex_core::config::Config;
-use codex_core::config::ConfigBuilder;
-use codex_core::config::ConfigOverrides;
-use codex_core::config::find_codex_home;
-use codex_core::config::load_config_as_toml_with_cli_overrides;
-use codex_core::config::resolve_oss_provider;
-use codex_core::config_loader::CloudRequirementsLoader;
-use codex_core::config_loader::ConfigLoadError;
-use codex_core::config_loader::LoaderOverrides;
-use codex_core::config_loader::format_config_error_with_source;
-use codex_core::default_client::set_default_client_residency_requirement;
-use codex_core::format_exec_policy_error_with_source;
-use codex_core::path_utils;
-use codex_core::read_session_meta_line;
-use codex_core::state_db::get_state_db;
-use codex_core::terminal::Multiplexer;
-use codex_core::windows_sandbox::WindowsSandboxLevelExt;
-use codex_protocol::ThreadId;
-use codex_protocol::config_types::AltScreenMode;
-use codex_protocol::config_types::SandboxMode;
-use codex_protocol::config_types::WindowsSandboxLevel;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::RolloutItem;
-use codex_protocol::protocol::RolloutLine;
-use codex_protocol::protocol::TurnContextItem;
-use codex_state::log_db;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_oss::ensure_oss_provider_ready;
-use codex_utils_oss::get_default_model_for_oss_provider;
 use color_eyre::eyre::WrapErr;
 use cwd_prompt::CwdPromptAction;
 use cwd_prompt::CwdPromptOutcome;
 use cwd_prompt::CwdSelection;
+use orbit_code_app_server_client::AppServerClient;
+use orbit_code_app_server_client::DEFAULT_IN_PROCESS_CHANNEL_CAPACITY;
+use orbit_code_app_server_client::InProcessAppServerClient;
+use orbit_code_app_server_client::InProcessClientStartArgs;
+use orbit_code_app_server_client::RemoteAppServerClient;
+use orbit_code_app_server_client::RemoteAppServerConnectArgs;
+use orbit_code_app_server_protocol::AuthMode as AppServerAuthMode;
+use orbit_code_app_server_protocol::ConfigWarningNotification;
+use orbit_code_app_server_protocol::Thread as AppServerThread;
+use orbit_code_app_server_protocol::ThreadListParams;
+use orbit_code_app_server_protocol::ThreadSortKey as AppServerThreadSortKey;
+use orbit_code_app_server_protocol::ThreadSourceKind;
+use orbit_code_cloud_requirements::cloud_requirements_loader_for_storage;
+use orbit_code_core::auth::enforce_login_restrictions;
+use orbit_code_core::check_execpolicy_for_warnings;
+use orbit_code_core::config::Config;
+use orbit_code_core::config::ConfigBuilder;
+use orbit_code_core::config::ConfigOverrides;
+use orbit_code_core::config::find_orbit_code_home;
+use orbit_code_core::config::load_config_as_toml_with_cli_overrides;
+use orbit_code_core::config::resolve_oss_provider;
+use orbit_code_core::config_loader::CloudRequirementsLoader;
+use orbit_code_core::config_loader::ConfigLoadError;
+use orbit_code_core::config_loader::LoaderOverrides;
+use orbit_code_core::config_loader::format_config_error_with_source;
+use orbit_code_core::default_client::set_default_client_residency_requirement;
+use orbit_code_core::format_exec_policy_error_with_source;
+use orbit_code_core::path_utils;
+use orbit_code_core::read_session_meta_line;
+use orbit_code_core::state_db::get_state_db;
+use orbit_code_core::terminal::Multiplexer;
+use orbit_code_core::windows_sandbox::WindowsSandboxLevelExt;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::config_types::AltScreenMode;
+use orbit_code_protocol::config_types::SandboxMode;
+use orbit_code_protocol::config_types::WindowsSandboxLevel;
+use orbit_code_protocol::protocol::AskForApproval;
+use orbit_code_protocol::protocol::RolloutItem;
+use orbit_code_protocol::protocol::RolloutLine;
+use orbit_code_protocol::protocol::TurnContextItem;
+use orbit_code_state::log_db;
+use orbit_code_utils_absolute_path::AbsolutePathBuf;
+use orbit_code_utils_oss::ensure_oss_provider_ready;
+use orbit_code_utils_oss::get_default_model_for_oss_provider;
 use std::fs::OpenOptions;
 use std::future::Future;
 use std::path::Path;
@@ -154,8 +154,8 @@ mod voice;
 mod voice {
     use crate::app_event::AppEvent;
     use crate::app_event_sender::AppEventSender;
-    use codex_core::config::Config;
-    use codex_protocol::protocol::RealtimeAudioFrame;
+    use orbit_code_core::config::Config;
+    use orbit_code_protocol::protocol::RealtimeAudioFrame;
     use std::sync::Arc;
     use std::sync::Mutex;
     use std::sync::atomic::AtomicBool;
@@ -251,8 +251,8 @@ use crate::onboarding::onboarding_screen::OnboardingScreenArgs;
 use crate::onboarding::onboarding_screen::run_onboarding_app;
 use crate::tui::Tui;
 pub use cli::Cli;
-use codex_arg0::Arg0DispatchPaths;
 pub use markdown_render::render_markdown_text;
+use orbit_code_arg0::Arg0DispatchPaths;
 pub use public_widgets::composer_input::ComposerAction;
 pub use public_widgets::composer_input::ComposerInput;
 // (tests access modules directly within the crate)
@@ -263,7 +263,7 @@ async fn start_embedded_app_server(
     cli_kv_overrides: Vec<(String, toml::Value)>,
     loader_overrides: LoaderOverrides,
     cloud_requirements: CloudRequirementsLoader,
-    feedback: codex_feedback::CodexFeedback,
+    feedback: orbit_code_feedback::CodexFeedback,
 ) -> color_eyre::Result<InProcessAppServerClient> {
     start_embedded_app_server_with(
         arg0_paths,
@@ -357,7 +357,7 @@ async fn start_app_server(
     cli_kv_overrides: Vec<(String, toml::Value)>,
     loader_overrides: LoaderOverrides,
     cloud_requirements: CloudRequirementsLoader,
-    feedback: codex_feedback::CodexFeedback,
+    feedback: orbit_code_feedback::CodexFeedback,
 ) -> color_eyre::Result<AppServerClient> {
     match target {
         AppServerTarget::Embedded => start_embedded_app_server(
@@ -387,7 +387,7 @@ pub(crate) async fn start_app_server_for_picker(
         Vec::new(),
         LoaderOverrides::default(),
         CloudRequirementsLoader::default(),
-        codex_feedback::CodexFeedback::new(),
+        orbit_code_feedback::CodexFeedback::new(),
     )
     .await?;
     Ok(AppServerSession::new(app_server))
@@ -406,7 +406,7 @@ async fn start_embedded_app_server_with<F, Fut>(
     cli_kv_overrides: Vec<(String, toml::Value)>,
     loader_overrides: LoaderOverrides,
     cloud_requirements: CloudRequirementsLoader,
-    feedback: codex_feedback::CodexFeedback,
+    feedback: orbit_code_feedback::CodexFeedback,
     start_client: F,
 ) -> color_eyre::Result<InProcessAppServerClient>
 where
@@ -431,8 +431,8 @@ where
         cloud_requirements,
         feedback,
         config_warnings,
-        session_source: codex_protocol::protocol::SessionSource::Cli,
-        enable_codex_api_key_env: false,
+        session_source: orbit_code_protocol::protocol::SessionSource::Cli,
+        enable_orbit_code_api_key_env: false,
         client_name: "codex-tui".to_string(),
         client_version: env!("CARGO_PKG_VERSION").to_string(),
         experimental_api: true,
@@ -620,7 +620,7 @@ pub async fn run_main(
     // gpt-oss:20b) and ensure it is present locally. Also, force the built‑in
     let raw_overrides = cli.config_overrides.raw_overrides.clone();
     // `oss` model provider.
-    let overrides_cli = codex_utils_cli::CliConfigOverrides { raw_overrides };
+    let overrides_cli = orbit_code_utils_cli::CliConfigOverrides { raw_overrides };
     let cli_kv_overrides = match overrides_cli.parse_overrides() {
         // Parse `-c` overrides from the CLI.
         Ok(v) => v,
@@ -633,8 +633,8 @@ pub async fn run_main(
 
     // we load config.toml here to determine project state.
     #[allow(clippy::print_stderr)]
-    let codex_home = match find_codex_home() {
-        Ok(codex_home) => codex_home.to_path_buf(),
+    let orbit_code_home = match find_orbit_code_home() {
+        Ok(orbit_code_home) => orbit_code_home.to_path_buf(),
         Err(err) => {
             eprintln!("Error finding codex home: {err}");
             std::process::exit(1);
@@ -649,7 +649,7 @@ pub async fn run_main(
 
     #[allow(clippy::print_stderr)]
     let config_toml = match load_config_as_toml_with_cli_overrides(
-        &codex_home,
+        &orbit_code_home,
         &config_cwd,
         cli_kv_overrides.clone(),
     )
@@ -673,9 +673,11 @@ pub async fn run_main(
         }
     };
 
-    if let Err(err) =
-        codex_core::personality_migration::maybe_migrate_personality(&codex_home, &config_toml)
-            .await
+    if let Err(err) = orbit_code_core::personality_migration::maybe_migrate_personality(
+        &orbit_code_home,
+        &config_toml,
+    )
+    .await
     {
         tracing::warn!(error = %err, "failed to run personality migration");
     }
@@ -685,8 +687,8 @@ pub async fn run_main(
         .clone()
         .unwrap_or_else(|| "https://chatgpt.com/backend-api/".to_string());
     let cloud_requirements = cloud_requirements_loader_for_storage(
-        codex_home.to_path_buf(),
-        /*enable_codex_api_key_env*/ false,
+        orbit_code_home.to_path_buf(),
+        /*enable_orbit_code_api_key_env*/ false,
         config_toml.cli_auth_credentials_store.unwrap_or_default(),
         chatgpt_base_url,
     );
@@ -702,7 +704,7 @@ pub async fn run_main(
             Some(provider)
         } else {
             // No provider configured, prompt the user
-            let provider = oss_selection::select_oss_provider(&codex_home).await?;
+            let provider = oss_selection::select_oss_provider(&orbit_code_home).await?;
             if provider == "__CANCELLED__" {
                 return Err(std::io::Error::other(
                     "OSS provider selection was cancelled by user",
@@ -736,7 +738,7 @@ pub async fn run_main(
         cwd,
         model_provider: model_provider_override.clone(),
         config_profile: cli.config_profile.clone(),
-        codex_linux_sandbox_exe: arg0_paths.codex_linux_sandbox_exe.clone(),
+        orbit_code_linux_sandbox_exe: arg0_paths.orbit_code_linux_sandbox_exe.clone(),
         main_execve_wrapper_exe: arg0_paths.main_execve_wrapper_exe.clone(),
         show_raw_agent_reasoning: cli.oss.then_some(true),
         additional_writable_roots: additional_dirs,
@@ -782,7 +784,7 @@ pub async fn run_main(
         }
     }
 
-    let log_dir = codex_core::config::log_dir(&config)?;
+    let log_dir = orbit_code_core::config::log_dir(&config)?;
     std::fs::create_dir_all(&log_dir)?;
     // Open (or create) your log file, appending to it.
     let mut log_file_opts = OpenOptions::new();
@@ -806,7 +808,7 @@ pub async fn run_main(
     // use RUST_LOG env var, default to info for codex crates.
     let env_filter = || {
         EnvFilter::try_from_default_env().unwrap_or_else(|_| {
-            EnvFilter::new("codex_core=info,codex_tui=info,codex_rmcp_client=info")
+            EnvFilter::new("orbit_code_core=info,orbit_code_tui=info,orbit_code_rmcp_client=info")
         })
     };
 
@@ -823,7 +825,7 @@ pub async fn run_main(
         )
         .with_filter(env_filter());
 
-    let feedback = codex_feedback::CodexFeedback::new();
+    let feedback = orbit_code_feedback::CodexFeedback::new();
     let feedback_layer = feedback.logger_layer();
     let feedback_metadata_layer = feedback.metadata_layer();
 
@@ -843,7 +845,7 @@ pub async fn run_main(
     }
 
     let otel = match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        codex_core::otel_init::build_provider(
+        orbit_code_core::otel_init::build_provider(
             &config,
             env!("CARGO_PKG_VERSION"),
             /*service_name_override*/ None,
@@ -871,7 +873,7 @@ pub async fn run_main(
 
     let otel_tracing_layer = otel.as_ref().and_then(|o| o.tracing_layer());
 
-    let log_db_layer = codex_core::state_db::get_state_db(&config)
+    let log_db_layer = orbit_code_core::state_db::get_state_db(&config)
         .await
         .map(|db| log_db::start(db).with_filter(env_filter()));
 
@@ -910,7 +912,7 @@ async fn run_ratatui_app(
     overrides: ConfigOverrides,
     cli_kv_overrides: Vec<(String, toml::Value)>,
     mut cloud_requirements: CloudRequirementsLoader,
-    feedback: codex_feedback::CodexFeedback,
+    feedback: orbit_code_feedback::CodexFeedback,
     remote_url: Option<String>,
 ) -> color_eyre::Result<AppExitInfo> {
     let remote_mode = matches!(&app_server_target, AppServerTarget::Remote(_));
@@ -943,7 +945,7 @@ async fn run_ratatui_app(
                 UpdatePromptOutcome::RunUpdate(action) => {
                     crate::tui::restore()?;
                     return Ok(AppExitInfo {
-                        token_usage: codex_protocol::protocol::TokenUsage::default(),
+                        token_usage: orbit_code_protocol::protocol::TokenUsage::default(),
                         thread_id: None,
                         thread_name: None,
                         update_action: Some(action),
@@ -1013,7 +1015,7 @@ async fn run_ratatui_app(
             session_log::log_session_end();
             let _ = tui.terminal.clear();
             return Ok(AppExitInfo {
-                token_usage: codex_protocol::protocol::TokenUsage::default(),
+                token_usage: orbit_code_protocol::protocol::TokenUsage::default(),
                 thread_id: None,
                 thread_name: None,
                 update_action: None,
@@ -1026,8 +1028,8 @@ async fn run_ratatui_app(
         // status detection edge cases.
         if show_login_screen && !remote_mode {
             cloud_requirements = cloud_requirements_loader_for_storage(
-                initial_config.codex_home.clone(),
-                /*enable_codex_api_key_env*/ false,
+                initial_config.orbit_code_home.clone(),
+                /*enable_orbit_code_api_key_env*/ false,
                 initial_config.cli_auth_credentials_store_mode,
                 initial_config.chatgpt_base_url.clone(),
             );
@@ -1059,7 +1061,7 @@ async fn run_ratatui_app(
         session_log::log_session_end();
         let _ = tui.terminal.clear();
         Ok(AppExitInfo {
-            token_usage: codex_protocol::protocol::TokenUsage::default(),
+            token_usage: orbit_code_protocol::protocol::TokenUsage::default(),
             thread_id: None,
             thread_name: None,
             update_action: None,
@@ -1133,7 +1135,7 @@ async fn run_ratatui_app(
                     restore();
                     session_log::log_session_end();
                     return Ok(AppExitInfo {
-                        token_usage: codex_protocol::protocol::TokenUsage::default(),
+                        token_usage: orbit_code_protocol::protocol::TokenUsage::default(),
                         thread_id: None,
                         thread_name: None,
                         update_action: None,
@@ -1185,7 +1187,7 @@ async fn run_ratatui_app(
                 restore();
                 session_log::log_session_end();
                 return Ok(AppExitInfo {
-                    token_usage: codex_protocol::protocol::TokenUsage::default(),
+                    token_usage: orbit_code_protocol::protocol::TokenUsage::default(),
                     thread_id: None,
                     thread_name: None,
                     update_action: None,
@@ -1231,7 +1233,7 @@ async fn run_ratatui_app(
                         restore();
                         session_log::log_session_end();
                         return Ok(AppExitInfo {
-                            token_usage: codex_protocol::protocol::TokenUsage::default(),
+                            token_usage: orbit_code_protocol::protocol::TokenUsage::default(),
                             thread_id: None,
                             thread_name: None,
                             update_action: None,
@@ -1262,7 +1264,7 @@ async fn run_ratatui_app(
     // this must happen after the last possible reload.
     if let Some(w) = crate::render::highlight::set_theme_override(
         config.tui_theme.clone(),
-        find_codex_home().ok(),
+        find_orbit_code_home().ok(),
     ) {
         config.startup_warnings.push(w);
     }
@@ -1485,7 +1487,7 @@ fn determine_alt_screen_mode(no_alt_screen: bool, tui_alternate_screen: AltScree
             AltScreenMode::Always => true,
             AltScreenMode::Never => false,
             AltScreenMode::Auto => {
-                let terminal_info = codex_core::terminal::terminal_info();
+                let terminal_info = orbit_code_core::terminal::terminal_info();
                 !matches!(terminal_info.multiplexer, Some(Multiplexer::Zellij { .. }))
             }
         }
@@ -1580,27 +1582,27 @@ fn should_show_login_screen(login_status: LoginStatus, config: &Config) -> bool 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use codex_app_server_protocol::ClientRequest;
-    use codex_app_server_protocol::RequestId;
-    use codex_app_server_protocol::ThreadStartParams;
-    use codex_app_server_protocol::ThreadStartResponse;
-    use codex_core::config::ConfigBuilder;
-    use codex_core::config::ConfigOverrides;
-    use codex_core::config::ProjectConfig;
-    use codex_core::features::Feature;
-    use codex_protocol::protocol::AskForApproval;
-    use codex_protocol::protocol::RolloutItem;
-    use codex_protocol::protocol::RolloutLine;
-    use codex_protocol::protocol::SessionMeta;
-    use codex_protocol::protocol::SessionMetaLine;
-    use codex_protocol::protocol::SessionSource;
-    use codex_protocol::protocol::TurnContextItem;
+    use orbit_code_app_server_protocol::ClientRequest;
+    use orbit_code_app_server_protocol::RequestId;
+    use orbit_code_app_server_protocol::ThreadStartParams;
+    use orbit_code_app_server_protocol::ThreadStartResponse;
+    use orbit_code_core::config::ConfigBuilder;
+    use orbit_code_core::config::ConfigOverrides;
+    use orbit_code_core::config::ProjectConfig;
+    use orbit_code_core::features::Feature;
+    use orbit_code_protocol::protocol::AskForApproval;
+    use orbit_code_protocol::protocol::RolloutItem;
+    use orbit_code_protocol::protocol::RolloutLine;
+    use orbit_code_protocol::protocol::SessionMeta;
+    use orbit_code_protocol::protocol::SessionMetaLine;
+    use orbit_code_protocol::protocol::SessionSource;
+    use orbit_code_protocol::protocol::TurnContextItem;
     use serial_test::serial;
     use tempfile::TempDir;
 
     async fn build_config(temp_dir: &TempDir) -> std::io::Result<Config> {
         ConfigBuilder::default()
-            .codex_home(temp_dir.path().to_path_buf())
+            .orbit_code_home(temp_dir.path().to_path_buf())
             .build()
             .await
     }
@@ -1614,7 +1616,7 @@ mod tests {
             Vec::new(),
             LoaderOverrides::default(),
             CloudRequirementsLoader::default(),
-            codex_feedback::CodexFeedback::new(),
+            orbit_code_feedback::CodexFeedback::new(),
         )
         .await
     }
@@ -1768,7 +1770,7 @@ mod tests {
             Vec::new(),
             LoaderOverrides::default(),
             CloudRequirementsLoader::default(),
-            codex_feedback::CodexFeedback::new(),
+            orbit_code_feedback::CodexFeedback::new(),
             |_args| async { Err(std::io::Error::other("boom")) },
         )
         .await;
@@ -1808,7 +1810,7 @@ mod tests {
     }
     #[tokio::test]
     async fn untrusted_project_skips_trust_prompt() -> std::io::Result<()> {
-        use codex_protocol::config_types::TrustLevel;
+        use orbit_code_protocol::config_types::TrustLevel;
         let temp_dir = TempDir::new()?;
         let mut config = build_config(&temp_dir).await?;
         config.active_project = ProjectConfig {
@@ -1844,7 +1846,7 @@ mod tests {
             effort: config.model_reasoning_effort,
             summary: config
                 .model_reasoning_summary
-                .unwrap_or(codex_protocol::config_types::ReasoningSummary::Auto),
+                .unwrap_or(orbit_code_protocol::config_types::ReasoningSummary::Auto),
             user_instructions: None,
             developer_instructions: None,
             final_output_json_schema: None,
@@ -1932,7 +1934,7 @@ mod tests {
     #[tokio::test]
     async fn config_rebuild_changes_trust_defaults_with_cwd() -> std::io::Result<()> {
         let temp_dir = TempDir::new()?;
-        let codex_home = temp_dir.path().to_path_buf();
+        let orbit_code_home = temp_dir.path().to_path_buf();
         let trusted = temp_dir.path().join("trusted");
         let untrusted = temp_dir.path().join("untrusted");
         std::fs::create_dir_all(&trusted)?;
@@ -1956,7 +1958,7 @@ trust_level = "untrusted"
             ..Default::default()
         };
         let trusted_config = ConfigBuilder::default()
-            .codex_home(codex_home.clone())
+            .orbit_code_home(orbit_code_home.clone())
             .harness_overrides(trusted_overrides.clone())
             .build()
             .await?;
@@ -1970,7 +1972,7 @@ trust_level = "untrusted"
             ..trusted_overrides
         };
         let untrusted_config = ConfigBuilder::default()
-            .codex_home(codex_home)
+            .orbit_code_home(orbit_code_home)
             .harness_overrides(untrusted_overrides)
             .build()
             .await?;
@@ -2085,8 +2087,8 @@ trust_level = "untrusted"
             ),
         )?;
 
-        let runtime = codex_state::StateRuntime::init(
-            config.codex_home.clone(),
+        let runtime = orbit_code_state::StateRuntime::init(
+            config.orbit_code_home.clone(),
             config.model_provider_id.clone(),
         )
         .await
@@ -2096,7 +2098,7 @@ trust_level = "untrusted"
             .await
             .map_err(std::io::Error::other)?;
 
-        let mut builder = codex_state::ThreadMetadataBuilder::new(
+        let mut builder = orbit_code_state::ThreadMetadataBuilder::new(
             thread_id,
             rollout_path.clone(),
             chrono::Utc::now(),

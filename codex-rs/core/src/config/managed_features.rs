@@ -1,12 +1,12 @@
 use std::collections::BTreeMap;
 
-use codex_config::Constrained;
-use codex_config::ConstrainedWithSource;
-use codex_config::ConstraintError;
-use codex_config::ConstraintResult;
-use codex_config::FeatureRequirementsToml;
-use codex_config::RequirementSource;
-use codex_config::Sourced;
+use orbit_code_config::Constrained;
+use orbit_code_config::ConstrainedWithSource;
+use orbit_code_config::ConstraintError;
+use orbit_code_config::ConstraintResult;
+use orbit_code_config::FeatureRequirementsToml;
+use orbit_code_config::RequirementSource;
+use orbit_code_config::Sourced;
 
 use crate::config::ConfigToml;
 use crate::config::profile::ConfigProfile;

@@ -5,23 +5,24 @@ set positional-arguments
 help:
     just -l
 
-# `codex`
-alias c := codex
-codex *args:
-    cargo run --bin codex -- "$@"
+# `orbit-code`
+alias c := orbit-code
+alias codex := orbit-code
+orbit-code *args:
+    cargo run --bin orbit-code -- "$@"
 
-# `codex exec`
+# `orbit-code exec`
 exec *args:
-    cargo run --bin codex -- exec "$@"
+    cargo run --bin orbit-code -- exec "$@"
 
 # Run the CLI version of the file-search crate.
 file-search *args:
-    cargo run --bin codex-file-search -- "$@"
+    cargo run --bin orbit-code-file-search -- "$@"
 
 # Build the CLI and run the app-server test client
 app-server-test-client *args:
-    cargo build -p codex-cli
-    cargo run -p codex-app-server-test-client -- --codex-bin ./target/debug/codex "$@"
+    cargo build -p orbit-code
+    cargo run -p orbit-code-app-server-test-client -- --orbit-code-bin ./target/debug/orbit-code "$@"
 
 # format code
 fmt:
@@ -46,12 +47,12 @@ install:
 test:
     cargo nextest run --no-fail-fast
 
-# Build and run Codex from source using Bazel.
+# Build and run Orbit Code from source using Bazel.
 # Note we have to use the combination of `[no-cd]` and `--run_under="cd $PWD &&"`
 # to ensure that Bazel runs the command in the current working directory.
 [no-cd]
 bazel-codex *args:
-    bazel run //codex-rs/cli:codex --run_under="cd $PWD &&" -- "$@"
+    bazel run //codex-rs/cli:orbit-code --run_under="cd $PWD &&" -- "$@"
 
 [no-cd]
 bazel-lock-update:
@@ -72,19 +73,19 @@ build-for-release:
 
 # Run the MCP server
 mcp-server-run *args:
-    cargo run -p codex-mcp-server -- "$@"
+    cargo run -p orbit-code-mcp-server -- "$@"
 
 # Regenerate the json schema for config.toml from the current config types.
 write-config-schema:
-    cargo run -p codex-core --bin codex-write-config-schema
+    cargo run -p orbit-code-core --bin orbit-code-write-config-schema
 
 # Regenerate vendored app-server protocol schema artifacts.
 write-app-server-schema *args:
-    cargo run -p codex-app-server-protocol --bin write_schema_fixtures -- "$@"
+    cargo run -p orbit-code-app-server-protocol --bin write_schema_fixtures -- "$@"
 
 [no-cd]
 write-hooks-schema:
-    cargo run --manifest-path ./codex-rs/Cargo.toml -p codex-hooks --bin write_hooks_schema_fixtures
+    cargo run --manifest-path ./codex-rs/Cargo.toml -p orbit-code-hooks --bin write_hooks_schema_fixtures
 
 # Run the argument-comment Dylint checks across codex-rs.
 [no-cd]
@@ -93,4 +94,4 @@ argument-comment-lint *args:
 
 # Tail logs from the state SQLite database
 log *args:
-    if [ "${1:-}" = "--" ]; then shift; fi; cargo run -p codex-state --bin logs_client -- "$@"
+    if [ "${1:-}" = "--" ]; then shift; fi; cargo run -p orbit-code-state --bin logs_client -- "$@"

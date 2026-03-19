@@ -1,4 +1,4 @@
-use codex_tui::ComposerInput;
+use orbit_code_tui::ComposerInput;
 
 pub struct NewTaskPage {
     pub composer: ComposerInput,

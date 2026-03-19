@@ -40,10 +40,10 @@ use crate::features::Feature;
 use crate::skills::SkillMetadata;
 use crate::skills::loader::SkillRoot;
 use crate::skills::loader::load_skills_from_roots;
-use codex_app_server_protocol::ConfigValueWriteParams;
-use codex_app_server_protocol::MergeStrategy;
-use codex_protocol::protocol::SkillScope;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use orbit_code_app_server_protocol::ConfigValueWriteParams;
+use orbit_code_app_server_protocol::MergeStrategy;
+use orbit_code_protocol::protocol::SkillScope;
+use orbit_code_utils_absolute_path::AbsolutePathBuf;
 use serde::Deserialize;
 use serde_json::Map as JsonMap;
 use serde_json::Value as JsonValue;
@@ -457,7 +457,7 @@ impl From<RemotePluginFetchError> for PluginRemoteSyncError {
 }
 
 pub struct PluginsManager {
-    codex_home: PathBuf,
+    orbit_code_home: PathBuf,
     store: PluginStore,
     featured_plugin_ids_cache: RwLock<Option<CachedFeaturedPluginIds>>,
     cached_enabled_outcome: RwLock<Option<PluginLoadOutcome>>,
@@ -465,10 +465,10 @@ pub struct PluginsManager {
 }
 
 impl PluginsManager {
-    pub fn new(codex_home: PathBuf) -> Self {
+    pub fn new(orbit_code_home: PathBuf) -> Self {
         Self {
-            codex_home: codex_home.clone(),
-            store: PluginStore::new(codex_home),
+            orbit_code_home: orbit_code_home.clone(),
+            store: PluginStore::new(orbit_code_home),
             featured_plugin_ids_cache: RwLock::new(None),
             cached_enabled_outcome: RwLock::new(None),
             analytics_events_client: RwLock::new(None),
@@ -629,7 +629,7 @@ impl PluginsManager {
         let plugin_version =
             if resolved.plugin_id.marketplace_name == OPENAI_CURATED_MARKETPLACE_NAME {
                 Some(
-                    read_curated_plugins_sha(self.codex_home.as_path()).ok_or_else(|| {
+                    read_curated_plugins_sha(self.orbit_code_home.as_path()).ok_or_else(|| {
                         PluginStoreError::Invalid(
                             "local curated marketplace sha is not available".to_string(),
                         )
@@ -649,7 +649,7 @@ impl PluginsManager {
         .await
         .map_err(PluginInstallError::join)??;
 
-        ConfigService::new_with_defaults(self.codex_home.clone())
+        ConfigService::new_with_defaults(self.orbit_code_home.clone())
             .write_value(ConfigValueWriteParams {
                 key_path: format!("plugins.{}", result.plugin_id.as_key()),
                 value: json!({
@@ -705,17 +705,16 @@ impl PluginsManager {
     }
 
     async fn uninstall_plugin_id(&self, plugin_id: PluginId) -> Result<(), PluginUninstallError> {
-        let plugin_telemetry = self
-            .store
-            .active_plugin_root(&plugin_id)
-            .map(|_| installed_plugin_telemetry_metadata(self.codex_home.as_path(), &plugin_id));
+        let plugin_telemetry = self.store.active_plugin_root(&plugin_id).map(|_| {
+            installed_plugin_telemetry_metadata(self.orbit_code_home.as_path(), &plugin_id)
+        });
         let store = self.store.clone();
         let plugin_id_for_store = plugin_id.clone();
         tokio::task::spawn_blocking(move || store.uninstall(&plugin_id_for_store))
             .await
             .map_err(PluginUninstallError::join)??;
 
-        ConfigEditsBuilder::new(&self.codex_home)
+        ConfigEditsBuilder::new(&self.orbit_code_home)
             .with_edits([ConfigEdit::ClearPath {
                 segments: vec!["plugins".to_string(), plugin_id.as_key()],
             }])
@@ -749,7 +748,7 @@ impl PluginsManager {
             .await
             .map_err(PluginRemoteSyncError::from)?;
         let configured_plugins = configured_plugins_from_stack(&config.config_layer_stack);
-        let curated_marketplace_root = curated_plugins_repo_path(self.codex_home.as_path());
+        let curated_marketplace_root = curated_plugins_repo_path(self.orbit_code_home.as_path());
         let curated_marketplace_path = AbsolutePathBuf::try_from(
             curated_marketplace_root.join(".agents/plugins/marketplace.json"),
         )
@@ -763,7 +762,7 @@ impl PluginsManager {
         };
 
         let marketplace_name = curated_marketplace.name.clone();
-        let curated_plugin_version = read_curated_plugins_sha(self.codex_home.as_path())
+        let curated_plugin_version = read_curated_plugins_sha(self.orbit_code_home.as_path())
             .ok_or_else(|| {
                 PluginStoreError::Invalid(
                     "local curated marketplace sha is not available".to_string(),
@@ -900,7 +899,7 @@ impl PluginsManager {
         let config_result = if config_edits.is_empty() {
             Ok(())
         } else {
-            ConfigEditsBuilder::new(&self.codex_home)
+            ConfigEditsBuilder::new(&self.orbit_code_home)
                 .with_edits(config_edits)
                 .apply()
                 .await
@@ -1101,14 +1100,14 @@ impl PluginsManager {
             return;
         }
         let manager = Arc::clone(self);
-        let codex_home = self.codex_home.clone();
+        let orbit_code_home = self.orbit_code_home.clone();
         if let Err(err) = std::thread::Builder::new()
             .name("plugins-curated-repo-sync".to_string())
             .spawn(
-                move || match sync_openai_plugins_repo(codex_home.as_path()) {
+                move || match sync_openai_plugins_repo(orbit_code_home.as_path()) {
                     Ok(curated_plugin_version) => {
                         match refresh_curated_plugin_cache(
-                            codex_home.as_path(),
+                            orbit_code_home.as_path(),
                             &curated_plugin_version,
                             &configured_curated_plugin_ids,
                         ) {
@@ -1158,7 +1157,7 @@ impl PluginsManager {
         // Treat the curated catalog as an extra marketplace root so plugin listing can surface it
         // without requiring every caller to know where it is stored.
         let mut roots = additional_roots.to_vec();
-        let curated_repo_root = curated_plugins_repo_path(self.codex_home.as_path());
+        let curated_repo_root = curated_plugins_repo_path(self.orbit_code_home.as_path());
         if curated_repo_root.is_dir()
             && let Ok(curated_repo_root) = AbsolutePathBuf::try_from(curated_repo_root)
         {
@@ -1312,13 +1311,13 @@ pub(crate) fn plugin_namespace_for_skill_path(path: &Path) -> Option<String> {
 }
 
 fn refresh_curated_plugin_cache(
-    codex_home: &Path,
+    orbit_code_home: &Path,
     plugin_version: &str,
     configured_curated_plugin_ids: &[PluginId],
 ) -> Result<bool, String> {
-    let store = PluginStore::new(codex_home.to_path_buf());
+    let store = PluginStore::new(orbit_code_home.to_path_buf());
     let curated_marketplace_path = AbsolutePathBuf::try_from(
-        curated_plugins_repo_path(codex_home).join(".agents/plugins/marketplace.json"),
+        curated_plugins_repo_path(orbit_code_home).join(".agents/plugins/marketplace.json"),
     )
     .map_err(|_| "local curated marketplace is not available".to_string())?;
     let curated_marketplace = load_marketplace(&curated_marketplace_path)
@@ -1605,10 +1604,10 @@ pub fn plugin_telemetry_metadata_from_root(
 }
 
 pub fn installed_plugin_telemetry_metadata(
-    codex_home: &Path,
+    orbit_code_home: &Path,
     plugin_id: &PluginId,
 ) -> PluginTelemetryMetadata {
-    let store = PluginStore::new(codex_home.to_path_buf());
+    let store = PluginStore::new(orbit_code_home.to_path_buf());
     let Some(plugin_root) = store.active_plugin_root(plugin_id) else {
         return PluginTelemetryMetadata::from_plugin_id(plugin_id);
     };

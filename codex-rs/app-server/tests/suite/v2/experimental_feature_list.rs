@@ -3,15 +3,15 @@ use std::time::Duration;
 use anyhow::Result;
 use app_test_support::McpProcess;
 use app_test_support::to_response;
-use codex_app_server_protocol::ExperimentalFeature;
-use codex_app_server_protocol::ExperimentalFeatureListParams;
-use codex_app_server_protocol::ExperimentalFeatureListResponse;
-use codex_app_server_protocol::ExperimentalFeatureStage;
-use codex_app_server_protocol::JSONRPCResponse;
-use codex_app_server_protocol::RequestId;
-use codex_core::config::ConfigBuilder;
-use codex_core::features::FEATURES;
-use codex_core::features::Stage;
+use orbit_code_app_server_protocol::ExperimentalFeature;
+use orbit_code_app_server_protocol::ExperimentalFeatureListParams;
+use orbit_code_app_server_protocol::ExperimentalFeatureListResponse;
+use orbit_code_app_server_protocol::ExperimentalFeatureStage;
+use orbit_code_app_server_protocol::JSONRPCResponse;
+use orbit_code_app_server_protocol::RequestId;
+use orbit_code_core::config::ConfigBuilder;
+use orbit_code_core::features::FEATURES;
+use orbit_code_core::features::Stage;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 use tokio::time::timeout;
@@ -20,13 +20,13 @@ const DEFAULT_TIMEOUT: Duration = Duration::from_secs(10);
 
 #[tokio::test]
 async fn experimental_feature_list_returns_feature_metadata_with_stage() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
-        .fallback_cwd(Some(codex_home.path().to_path_buf()))
+        .orbit_code_home(orbit_code_home.path().to_path_buf())
+        .fallback_cwd(Some(orbit_code_home.path().to_path_buf()))
         .build()
         .await?;
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
 
     timeout(DEFAULT_TIMEOUT, mcp.initialize()).await??;
 

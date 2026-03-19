@@ -1,7 +1,7 @@
-use codex_protocol::protocol::HookCompletedEvent;
-use codex_protocol::protocol::HookOutputEntry;
-use codex_protocol::protocol::HookOutputEntryKind;
-use codex_protocol::protocol::HookRunStatus;
+use orbit_code_protocol::protocol::HookCompletedEvent;
+use orbit_code_protocol::protocol::HookOutputEntry;
+use orbit_code_protocol::protocol::HookOutputEntryKind;
+use orbit_code_protocol::protocol::HookRunStatus;
 
 use crate::engine::ConfiguredHandler;
 use crate::engine::dispatcher;

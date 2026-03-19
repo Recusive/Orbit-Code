@@ -1,7 +1,3 @@
-use codex_otel::AuthEnvTelemetryMetadata;
-use codex_otel::OtelProvider;
-use codex_otel::SessionTelemetry;
-use codex_otel::TelemetryAuthMode;
 use opentelemetry::KeyValue;
 use opentelemetry::logs::AnyValue;
 use opentelemetry::trace::TracerProvider as _;
@@ -10,6 +6,10 @@ use opentelemetry_sdk::logs::SdkLogRecord;
 use opentelemetry_sdk::logs::SdkLoggerProvider;
 use opentelemetry_sdk::trace::InMemorySpanExporter;
 use opentelemetry_sdk::trace::SdkTracerProvider;
+use orbit_code_otel::AuthEnvTelemetryMetadata;
+use orbit_code_otel::OtelProvider;
+use orbit_code_otel::SessionTelemetry;
+use orbit_code_otel::TelemetryAuthMode;
 use pretty_assertions::assert_eq;
 use std::borrow::Cow;
 use std::collections::BTreeMap;
@@ -18,12 +18,12 @@ use tracing_subscriber::Layer;
 use tracing_subscriber::filter::filter_fn;
 use tracing_subscriber::layer::SubscriberExt;
 
-use codex_protocol::ThreadId;
-use codex_protocol::config_types::ReasoningSummary;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::SandboxPolicy;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::user_input::UserInput;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::config_types::ReasoningSummary;
+use orbit_code_protocol::protocol::AskForApproval;
+use orbit_code_protocol::protocol::SandboxPolicy;
+use orbit_code_protocol::protocol::SessionSource;
+use orbit_code_protocol::user_input::UserInput;
 
 fn log_attributes(record: &SdkLogRecord) -> BTreeMap<String, String> {
     record
@@ -83,8 +83,8 @@ fn find_span_event_by_name_attr<'a>(
 fn auth_env_metadata() -> AuthEnvTelemetryMetadata {
     AuthEnvTelemetryMetadata {
         openai_api_key_env_present: true,
-        codex_api_key_env_present: false,
-        codex_api_key_env_enabled: true,
+        orbit_code_api_key_env_present: false,
+        orbit_code_api_key_env_enabled: true,
         provider_env_key_name: Some("configured".to_string()),
         provider_env_key_present: Some(true),
         refresh_token_url_override_present: true,
@@ -125,7 +125,7 @@ fn otel_export_routing_policy_routes_user_prompt_log_and_trace_events() {
             Some("account-id".to_string()),
             Some("engineer@example.com".to_string()),
             Some(TelemetryAuthMode::ApiKey),
-            "codex_exec".to_string(),
+            "orbit_code_exec".to_string(),
             true,
             "tty".to_string(),
             SessionSource::Cli,
@@ -151,8 +151,9 @@ fn otel_export_routing_policy_routes_user_prompt_log_and_trace_events() {
 
     let logs = log_exporter.get_emitted_logs().expect("log export");
     assert!(
-        logs.iter()
-            .all(|log| { log.record.target().map(Cow::as_ref) == Some("codex_otel.log_only") })
+        logs.iter().all(|log| {
+            log.record.target().map(Cow::as_ref) == Some("orbit_code_otel.log_only")
+        })
     );
 
     let prompt_log = find_log_by_event_name(&logs, "codex.user_prompt");
@@ -234,7 +235,7 @@ fn otel_export_routing_policy_routes_tool_result_log_and_trace_events() {
             Some("account-id".to_string()),
             Some("engineer@example.com".to_string()),
             Some(TelemetryAuthMode::ApiKey),
-            "codex_exec".to_string(),
+            "orbit_code_exec".to_string(),
             true,
             "tty".to_string(),
             SessionSource::Cli,
@@ -259,8 +260,9 @@ fn otel_export_routing_policy_routes_tool_result_log_and_trace_events() {
 
     let logs = log_exporter.get_emitted_logs().expect("log export");
     assert!(
-        logs.iter()
-            .all(|log| { log.record.target().map(Cow::as_ref) == Some("codex_otel.log_only") })
+        logs.iter().all(|log| {
+            log.record.target().map(Cow::as_ref) == Some("orbit_code_otel.log_only")
+        })
     );
 
     let tool_log = find_log_by_event_name(&logs, "codex.tool_result");
@@ -347,7 +349,7 @@ fn otel_export_routing_policy_routes_auth_recovery_log_and_trace_events() {
             Some("account-id".to_string()),
             Some("engineer@example.com".to_string()),
             Some(TelemetryAuthMode::Chatgpt),
-            "codex_exec".to_string(),
+            "orbit_code_exec".to_string(),
             true,
             "tty".to_string(),
             SessionSource::Cli,
@@ -493,7 +495,7 @@ fn otel_export_routing_policy_routes_api_request_auth_observability() {
             Some("account-id".to_string()),
             Some("engineer@example.com".to_string()),
             Some(TelemetryAuthMode::Chatgpt),
-            "codex_exec".to_string(),
+            "orbit_code_exec".to_string(),
             true,
             "tty".to_string(),
             SessionSource::Cli,
@@ -590,7 +592,7 @@ fn otel_export_routing_policy_routes_api_request_auth_observability() {
     );
     assert_eq!(
         request_log_attrs
-            .get("auth.env_codex_api_key_enabled")
+            .get("auth.env_orbit_code_api_key_enabled")
             .map(String::as_str),
         Some("true")
     );
@@ -678,7 +680,7 @@ fn otel_export_routing_policy_routes_websocket_connect_auth_observability() {
             Some("account-id".to_string()),
             Some("engineer@example.com".to_string()),
             Some(TelemetryAuthMode::Chatgpt),
-            "codex_exec".to_string(),
+            "orbit_code_exec".to_string(),
             true,
             "tty".to_string(),
             SessionSource::Cli,
@@ -795,7 +797,7 @@ fn otel_export_routing_policy_routes_websocket_request_transport_observability()
             Some("account-id".to_string()),
             Some("engineer@example.com".to_string()),
             Some(TelemetryAuthMode::Chatgpt),
-            "codex_exec".to_string(),
+            "orbit_code_exec".to_string(),
             true,
             "tty".to_string(),
             SessionSource::Cli,

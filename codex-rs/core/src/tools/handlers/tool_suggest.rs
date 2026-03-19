@@ -2,12 +2,12 @@ use std::collections::BTreeMap;
 use std::collections::HashSet;
 
 use async_trait::async_trait;
-use codex_app_server_protocol::AppInfo;
-use codex_app_server_protocol::McpElicitationObjectType;
-use codex_app_server_protocol::McpElicitationSchema;
-use codex_app_server_protocol::McpServerElicitationRequest;
-use codex_app_server_protocol::McpServerElicitationRequestParams;
-use codex_rmcp_client::ElicitationAction;
+use orbit_code_app_server_protocol::AppInfo;
+use orbit_code_app_server_protocol::McpElicitationObjectType;
+use orbit_code_app_server_protocol::McpElicitationSchema;
+use orbit_code_app_server_protocol::McpServerElicitationRequest;
+use orbit_code_app_server_protocol::McpServerElicitationRequestParams;
+use orbit_code_rmcp_client::ElicitationAction;
 use rmcp::model::RequestId;
 use serde::Deserialize;
 use serde::Serialize;
@@ -16,7 +16,7 @@ use tracing::warn;
 
 use crate::connectors;
 use crate::function_tool::FunctionCallError;
-use crate::mcp::CODEX_APPS_MCP_SERVER_NAME;
+use crate::mcp::ORBIT_APPS_MCP_SERVER_NAME;
 use crate::tools::context::FunctionToolOutput;
 use crate::tools::context::ToolInvocation;
 use crate::tools::context::ToolPayload;
@@ -54,7 +54,7 @@ struct ToolSuggestResult {
 
 #[derive(Debug, Serialize, PartialEq, Eq)]
 struct ToolSuggestMeta<'a> {
-    codex_approval_kind: &'static str,
+    orbit_code_approval_kind: &'static str,
     tool_type: DiscoverableToolType,
     suggest_type: DiscoverableToolAction,
     suggest_reason: &'a str,
@@ -205,7 +205,7 @@ fn build_tool_suggestion_elicitation_request(
     McpServerElicitationRequestParams {
         thread_id,
         turn_id: Some(turn_id),
-        server_name: CODEX_APPS_MCP_SERVER_NAME.to_string(),
+        server_name: ORBIT_APPS_MCP_SERVER_NAME.to_string(),
         request: McpServerElicitationRequest::Form {
             meta: Some(json!(build_tool_suggestion_meta(
                 args.tool_type,
@@ -235,7 +235,7 @@ fn build_tool_suggestion_meta<'a>(
     install_url: Option<&'a str>,
 ) -> ToolSuggestMeta<'a> {
     ToolSuggestMeta {
-        codex_approval_kind: TOOL_SUGGEST_APPROVAL_KIND_VALUE,
+        orbit_code_approval_kind: TOOL_SUGGEST_APPROVAL_KIND_VALUE,
         tool_type,
         suggest_type: action_type,
         suggest_reason,
@@ -254,7 +254,7 @@ async fn verify_tool_suggestion_completed(
     match tool {
         DiscoverableTool::Connector(connector) => {
             let manager = session.services.mcp_connection_manager.read().await;
-            match manager.hard_refresh_codex_apps_tools_cache().await {
+            match manager.hard_refresh_orbit_code_apps_tools_cache().await {
                 Ok(mcp_tools) => {
                     let accessible_connectors = connectors::with_app_enabled_state(
                         connectors::accessible_connectors_from_mcp_tools(&mcp_tools),

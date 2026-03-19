@@ -109,7 +109,7 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "properties": {
         "callId": {
-          "description": "Use to correlate this with [codex_protocol::protocol::PatchApplyBeginEvent] and [codex_protocol::protocol::PatchApplyEndEvent].",
+          "description": "Use to correlate this with [orbit_code_protocol::protocol::PatchApplyBeginEvent] and [orbit_code_protocol::protocol::PatchApplyEndEvent].",
           "type": "string"
         },
         "conversationId": {
@@ -1857,7 +1857,7 @@
           ]
         },
         "callId": {
-          "description": "Use to correlate this with [codex_protocol::protocol::ExecCommandBeginEvent] and [codex_protocol::protocol::ExecCommandEndEvent].",
+          "description": "Use to correlate this with [orbit_code_protocol::protocol::ExecCommandBeginEvent] and [orbit_code_protocol::protocol::ExecCommandEndEvent].",
           "type": "string"
         },
         "command": {
@@ -2108,7 +2108,7 @@
       "type": "object"
     },
     "FuzzyFileSearchResult": {
-      "description": "Superset of [`codex_file_search::FileMatch`]",
+      "description": "Superset of [`orbit_code_file_search::FileMatch`]",
       "properties": {
         "file_name": {
           "type": "string"
@@ -6501,7 +6501,7 @@
             "type": "object"
           },
           {
-            "description": "User config layer from $CODEX_HOME/config.toml. This layer is special in that it is expected to be: - writable by the user - generally outside the workspace directory",
+            "description": "User config layer from $ORBIT_HOME/config.toml. This layer is special in that it is expected to be: - writable by the user - generally outside the workspace directory",
             "properties": {
               "file": {
                 "allOf": [

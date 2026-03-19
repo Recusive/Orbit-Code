@@ -5,27 +5,27 @@ use app_test_support::create_fake_rollout;
 use app_test_support::create_mock_responses_server_repeating_assistant;
 use app_test_support::to_response;
 use app_test_support::write_chatgpt_auth;
-use codex_app_server_protocol::JSONRPCError;
-use codex_app_server_protocol::JSONRPCMessage;
-use codex_app_server_protocol::JSONRPCResponse;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::SessionSource;
-use codex_app_server_protocol::ThreadForkParams;
-use codex_app_server_protocol::ThreadForkResponse;
-use codex_app_server_protocol::ThreadItem;
-use codex_app_server_protocol::ThreadListParams;
-use codex_app_server_protocol::ThreadListResponse;
-use codex_app_server_protocol::ThreadStartParams;
-use codex_app_server_protocol::ThreadStartResponse;
-use codex_app_server_protocol::ThreadStartedNotification;
-use codex_app_server_protocol::ThreadStatus;
-use codex_app_server_protocol::ThreadStatusChangedNotification;
-use codex_app_server_protocol::TurnStartParams;
-use codex_app_server_protocol::TurnStartResponse;
-use codex_app_server_protocol::TurnStatus;
-use codex_app_server_protocol::UserInput;
-use codex_core::auth::AuthCredentialsStoreMode;
-use codex_core::auth::REFRESH_TOKEN_URL_OVERRIDE_ENV_VAR;
+use orbit_code_app_server_protocol::JSONRPCError;
+use orbit_code_app_server_protocol::JSONRPCMessage;
+use orbit_code_app_server_protocol::JSONRPCResponse;
+use orbit_code_app_server_protocol::RequestId;
+use orbit_code_app_server_protocol::SessionSource;
+use orbit_code_app_server_protocol::ThreadForkParams;
+use orbit_code_app_server_protocol::ThreadForkResponse;
+use orbit_code_app_server_protocol::ThreadItem;
+use orbit_code_app_server_protocol::ThreadListParams;
+use orbit_code_app_server_protocol::ThreadListResponse;
+use orbit_code_app_server_protocol::ThreadStartParams;
+use orbit_code_app_server_protocol::ThreadStartResponse;
+use orbit_code_app_server_protocol::ThreadStartedNotification;
+use orbit_code_app_server_protocol::ThreadStatus;
+use orbit_code_app_server_protocol::ThreadStatusChangedNotification;
+use orbit_code_app_server_protocol::TurnStartParams;
+use orbit_code_app_server_protocol::TurnStartResponse;
+use orbit_code_app_server_protocol::TurnStatus;
+use orbit_code_app_server_protocol::UserInput;
+use orbit_code_core::auth::AuthCredentialsStoreMode;
+use orbit_code_core::auth::REFRESH_TOKEN_URL_OVERRIDE_ENV_VAR;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 use serde_json::json;
@@ -43,12 +43,12 @@ const DEFAULT_READ_TIMEOUT: std::time::Duration = std::time::Duration::from_secs
 #[tokio::test]
 async fn thread_fork_creates_new_thread_and_emits_started() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path(), &server.uri())?;
+    let orbit_code_home = TempDir::new()?;
+    create_config_toml(orbit_code_home.path(), &server.uri())?;
 
     let preview = "Saved user message";
     let conversation_id = create_fake_rollout(
-        codex_home.path(),
+        orbit_code_home.path(),
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         preview,
@@ -56,7 +56,7 @@ async fn thread_fork_creates_new_thread_and_emits_started() -> Result<()> {
         None,
     )?;
 
-    let original_path = codex_home
+    let original_path = orbit_code_home
         .path()
         .join("sessions")
         .join("2025")
@@ -72,7 +72,7 @@ async fn thread_fork_creates_new_thread_and_emits_started() -> Result<()> {
     );
     let original_contents = std::fs::read_to_string(&original_path)?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     let fork_id = mcp
@@ -180,10 +180,10 @@ async fn thread_fork_creates_new_thread_and_emits_started() -> Result<()> {
 #[tokio::test]
 async fn thread_fork_rejects_unmaterialized_thread() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path(), &server.uri())?;
+    let orbit_code_home = TempDir::new()?;
+    create_config_toml(orbit_code_home.path(), &server.uri())?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     let start_id = mcp
@@ -242,16 +242,16 @@ async fn thread_fork_surfaces_cloud_requirements_load_errors() -> Result<()> {
         .mount(&server)
         .await;
 
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let model_server = create_mock_responses_server_repeating_assistant("Done").await;
     let chatgpt_base_url = format!("{}/backend-api", server.uri());
     create_config_toml_with_chatgpt_base_url(
-        codex_home.path(),
+        orbit_code_home.path(),
         &model_server.uri(),
         &chatgpt_base_url,
     )?;
     write_chatgpt_auth(
-        codex_home.path(),
+        orbit_code_home.path(),
         ChatGptAuthFixture::new("chatgpt-token")
             .refresh_token("stale-refresh-token")
             .plan_type("business")
@@ -262,7 +262,7 @@ async fn thread_fork_surfaces_cloud_requirements_load_errors() -> Result<()> {
     )?;
 
     let conversation_id = create_fake_rollout(
-        codex_home.path(),
+        orbit_code_home.path(),
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "Saved user message",
@@ -272,7 +272,7 @@ async fn thread_fork_surfaces_cloud_requirements_load_errors() -> Result<()> {
 
     let refresh_token_url = format!("{}/oauth/token", server.uri());
     let mut mcp = McpProcess::new_with_env(
-        codex_home.path(),
+        orbit_code_home.path(),
         &[
             ("OPENAI_API_KEY", None),
             (
@@ -321,12 +321,12 @@ async fn thread_fork_surfaces_cloud_requirements_load_errors() -> Result<()> {
 #[tokio::test]
 async fn thread_fork_ephemeral_remains_pathless_and_omits_listing() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path(), &server.uri())?;
+    let orbit_code_home = TempDir::new()?;
+    create_config_toml(orbit_code_home.path(), &server.uri())?;
 
     let preview = "Saved user message";
     let conversation_id = create_fake_rollout(
-        codex_home.path(),
+        orbit_code_home.path(),
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         preview,
@@ -334,7 +334,7 @@ async fn thread_fork_ephemeral_remains_pathless_and_omits_listing() -> Result<()
         None,
     )?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     let fork_id = mcp
@@ -482,8 +482,8 @@ async fn thread_fork_ephemeral_remains_pathless_and_omits_listing() -> Result<()
 }
 
 // Helper to create a config.toml pointing at the mock model server.
-fn create_config_toml(codex_home: &Path, server_uri: &str) -> std::io::Result<()> {
-    let config_toml = codex_home.join("config.toml");
+fn create_config_toml(orbit_code_home: &Path, server_uri: &str) -> std::io::Result<()> {
+    let config_toml = orbit_code_home.join("config.toml");
     std::fs::write(
         config_toml,
         format!(
@@ -506,11 +506,11 @@ stream_max_retries = 0
 }
 
 fn create_config_toml_with_chatgpt_base_url(
-    codex_home: &Path,
+    orbit_code_home: &Path,
     server_uri: &str,
     chatgpt_base_url: &str,
 ) -> std::io::Result<()> {
-    let config_toml = codex_home.join("config.toml");
+    let config_toml = orbit_code_home.join("config.toml");
     std::fs::write(
         config_toml,
         format!(

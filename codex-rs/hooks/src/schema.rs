@@ -411,7 +411,7 @@ mod tests {
     }
 
     #[test]
-    fn turn_scoped_hook_inputs_include_codex_turn_id_extension() {
+    fn turn_scoped_hook_inputs_include_orbit_code_turn_id_extension() {
         // Codex intentionally diverges from Claude's public hook docs here so
         // internal hook consumers can key off the active turn.
         let user_prompt_submit: Value = serde_json::from_slice(

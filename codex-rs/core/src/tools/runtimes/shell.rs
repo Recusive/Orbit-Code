@@ -34,10 +34,10 @@ use crate::tools::sandboxing::ToolError;
 use crate::tools::sandboxing::ToolRuntime;
 use crate::tools::sandboxing::sandbox_override_for_first_attempt;
 use crate::tools::sandboxing::with_cached_approval;
-use codex_network_proxy::NetworkProxy;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::protocol::ReviewDecision;
 use futures::future::BoxFuture;
+use orbit_code_network_proxy::NetworkProxy;
+use orbit_code_protocol::models::PermissionProfile;
+use orbit_code_protocol::protocol::ReviewDecision;
 use std::collections::HashMap;
 use std::path::PathBuf;
 

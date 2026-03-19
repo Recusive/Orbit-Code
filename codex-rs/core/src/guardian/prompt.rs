@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
-use codex_protocol::models::ResponseItem;
-use codex_protocol::user_input::UserInput;
+use orbit_code_protocol::models::ResponseItem;
+use orbit_code_protocol::user_input::UserInput;
 use serde_json::Value;
 
 use crate::codex::Session;

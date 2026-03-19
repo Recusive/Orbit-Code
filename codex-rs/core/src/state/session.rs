@@ -1,7 +1,7 @@
 //! Session-wide mutable state.
 
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::models::ResponseItem;
+use orbit_code_protocol::models::PermissionProfile;
+use orbit_code_protocol::models::ResponseItem;
 use std::collections::HashMap;
 use std::collections::HashSet;
 
@@ -14,7 +14,7 @@ use crate::protocol::TokenUsageInfo;
 use crate::sandboxing::merge_permission_profiles;
 use crate::session_startup_prewarm::SessionStartupPrewarmHandle;
 use crate::truncate::TruncationPolicy;
-use codex_protocol::protocol::TurnContextItem;
+use orbit_code_protocol::protocol::TurnContextItem;
 
 /// Persistent, session-scoped state previously stored directly on `Session`.
 pub(crate) struct SessionState {
@@ -31,7 +31,7 @@ pub(crate) struct SessionState {
     /// Startup prewarmed session prepared during session initialization.
     pub(crate) startup_prewarm: Option<SessionStartupPrewarmHandle>,
     pub(crate) active_connector_selection: HashSet<String>,
-    pub(crate) pending_session_start_source: Option<codex_hooks::SessionStartSource>,
+    pub(crate) pending_session_start_source: Option<orbit_code_hooks::SessionStartSource>,
     granted_permissions: Option<PermissionProfile>,
 }
 
@@ -195,14 +195,14 @@ impl SessionState {
 
     pub(crate) fn set_pending_session_start_source(
         &mut self,
-        value: Option<codex_hooks::SessionStartSource>,
+        value: Option<orbit_code_hooks::SessionStartSource>,
     ) {
         self.pending_session_start_source = value;
     }
 
     pub(crate) fn take_pending_session_start_source(
         &mut self,
-    ) -> Option<codex_hooks::SessionStartSource> {
+    ) -> Option<orbit_code_hooks::SessionStartSource> {
         self.pending_session_start_source.take()
     }
 

@@ -12,15 +12,15 @@ use crate::tools::context::ToolInvocation;
 use crate::tools::context::ToolOutput;
 use crate::tools::context::ToolPayload;
 use async_trait::async_trait;
-use codex_hooks::HookEvent;
-use codex_hooks::HookEventAfterToolUse;
-use codex_hooks::HookPayload;
-use codex_hooks::HookResult;
-use codex_hooks::HookToolInput;
-use codex_hooks::HookToolInputLocalShell;
-use codex_hooks::HookToolKind;
-use codex_protocol::models::ResponseInputItem;
-use codex_utils_readiness::Readiness;
+use orbit_code_hooks::HookEvent;
+use orbit_code_hooks::HookEventAfterToolUse;
+use orbit_code_hooks::HookPayload;
+use orbit_code_hooks::HookResult;
+use orbit_code_hooks::HookToolInput;
+use orbit_code_hooks::HookToolInputLocalShell;
+use orbit_code_hooks::HookToolKind;
+use orbit_code_protocol::models::ResponseInputItem;
+use orbit_code_utils_readiness::Readiness;
 use tracing::warn;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]

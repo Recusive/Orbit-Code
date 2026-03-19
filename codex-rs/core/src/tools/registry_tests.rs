@@ -22,7 +22,7 @@ impl ToolHandler for TestHandler {
 fn handler_looks_up_namespaced_aliases_explicitly() {
     let plain_handler = Arc::new(TestHandler) as Arc<dyn AnyToolHandler>;
     let namespaced_handler = Arc::new(TestHandler) as Arc<dyn AnyToolHandler>;
-    let namespace = "mcp__codex_apps__gmail";
+    let namespace = "mcp__orbit_code_apps__gmail";
     let tool_name = "gmail_get_recent_emails";
     let namespaced_name = tool_handler_key(tool_name, Some(namespace));
     let registry = ToolRegistry::new(HashMap::from([
@@ -32,7 +32,7 @@ fn handler_looks_up_namespaced_aliases_explicitly() {
 
     let plain = registry.handler(tool_name, None);
     let namespaced = registry.handler(tool_name, Some(namespace));
-    let missing_namespaced = registry.handler(tool_name, Some("mcp__codex_apps__calendar"));
+    let missing_namespaced = registry.handler(tool_name, Some("mcp__orbit_code_apps__calendar"));
 
     assert_eq!(plain.is_some(), true);
     assert_eq!(namespaced.is_some(), true);

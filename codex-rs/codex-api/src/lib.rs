@@ -9,9 +9,9 @@ pub mod sse;
 pub mod telemetry;
 
 pub use crate::requests::headers::build_conversation_headers;
-pub use codex_client::RequestTelemetry;
-pub use codex_client::ReqwestTransport;
-pub use codex_client::TransportError;
+pub use orbit_code_client::RequestTelemetry;
+pub use orbit_code_client::ReqwestTransport;
+pub use orbit_code_client::TransportError;
 
 pub use crate::auth::AuthProvider;
 pub use crate::common::CompactionInput;
@@ -45,5 +45,5 @@ pub use crate::provider::is_azure_responses_wire_base_url;
 pub use crate::sse::stream_from_fixture;
 pub use crate::telemetry::SseTelemetry;
 pub use crate::telemetry::WebsocketTelemetry;
-pub use codex_protocol::protocol::RealtimeAudioFrame;
-pub use codex_protocol::protocol::RealtimeEvent;
+pub use orbit_code_protocol::protocol::RealtimeAudioFrame;
+pub use orbit_code_protocol::protocol::RealtimeEvent;

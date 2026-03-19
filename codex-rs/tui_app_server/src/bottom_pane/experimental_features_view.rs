@@ -19,7 +19,7 @@ use crate::render::renderable::ColumnRenderable;
 use crate::render::renderable::Renderable;
 use crate::style::user_message_style;
 
-use codex_core::features::Feature;
+use orbit_code_core::features::Feature;
 
 use super::CancellationEvent;
 use super::bottom_pane_view::BottomPaneView;

@@ -1,6 +1,6 @@
-use codex_protocol::protocol::SessionSource;
 use http::HeaderMap;
 use http::HeaderValue;
+use orbit_code_protocol::protocol::SessionSource;
 
 pub fn build_conversation_headers(conversation_id: Option<String>) -> HeaderMap {
     let mut headers = HeaderMap::new();
@@ -15,15 +15,15 @@ pub(crate) fn subagent_header(source: &Option<SessionSource>) -> Option<String> 
         return None;
     };
     match sub {
-        codex_protocol::protocol::SubAgentSource::Review => Some("review".to_string()),
-        codex_protocol::protocol::SubAgentSource::Compact => Some("compact".to_string()),
-        codex_protocol::protocol::SubAgentSource::MemoryConsolidation => {
+        orbit_code_protocol::protocol::SubAgentSource::Review => Some("review".to_string()),
+        orbit_code_protocol::protocol::SubAgentSource::Compact => Some("compact".to_string()),
+        orbit_code_protocol::protocol::SubAgentSource::MemoryConsolidation => {
             Some("memory_consolidation".to_string())
         }
-        codex_protocol::protocol::SubAgentSource::ThreadSpawn { .. } => {
+        orbit_code_protocol::protocol::SubAgentSource::ThreadSpawn { .. } => {
             Some("collab_spawn".to_string())
         }
-        codex_protocol::protocol::SubAgentSource::Other(label) => Some(label.clone()),
+        orbit_code_protocol::protocol::SubAgentSource::Other(label) => Some(label.clone()),
     }
 }
 

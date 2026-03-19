@@ -8,15 +8,15 @@ use crate::truncate::TruncationPolicy;
 use crate::truncate::formatted_truncate_text;
 use crate::turn_diff_tracker::TurnDiffTracker;
 use crate::unified_exec::resolve_max_tokens;
-use codex_protocol::mcp::CallToolResult;
-use codex_protocol::models::FunctionCallOutputBody;
-use codex_protocol::models::FunctionCallOutputContentItem;
-use codex_protocol::models::FunctionCallOutputPayload;
-use codex_protocol::models::ResponseInputItem;
-use codex_protocol::models::SearchToolCallParams;
-use codex_protocol::models::ShellToolCallParams;
-use codex_protocol::models::function_call_output_content_items_to_text;
-use codex_utils_string::take_bytes_at_char_boundary;
+use orbit_code_protocol::mcp::CallToolResult;
+use orbit_code_protocol::models::FunctionCallOutputBody;
+use orbit_code_protocol::models::FunctionCallOutputContentItem;
+use orbit_code_protocol::models::FunctionCallOutputPayload;
+use orbit_code_protocol::models::ResponseInputItem;
+use orbit_code_protocol::models::SearchToolCallParams;
+use orbit_code_protocol::models::ShellToolCallParams;
+use orbit_code_protocol::models::function_call_output_content_items_to_text;
+use orbit_code_utils_string::take_bytes_at_char_boundary;
 use serde::Serialize;
 use serde_json::Value as JsonValue;
 use std::borrow::Cow;
@@ -348,7 +348,7 @@ impl ExecCommandToolOutput {
         if let Some(command) = &self.session_command {
             sections.push(format!(
                 "Command: {}",
-                codex_shell_command::parse_command::shlex_join(command)
+                orbit_code_shell_command::parse_command::shlex_join(command)
             ));
         }
 
@@ -384,11 +384,11 @@ pub(crate) fn response_input_to_code_mode_result(response: ResponseInputItem) ->
             &content
                 .into_iter()
                 .map(|item| match item {
-                    codex_protocol::models::ContentItem::InputText { text }
-                    | codex_protocol::models::ContentItem::OutputText { text } => {
+                    orbit_code_protocol::models::ContentItem::InputText { text }
+                    | orbit_code_protocol::models::ContentItem::OutputText { text } => {
                         FunctionCallOutputContentItem::InputText { text }
                     }
-                    codex_protocol::models::ContentItem::InputImage { image_url } => {
+                    orbit_code_protocol::models::ContentItem::InputImage { image_url } => {
                         FunctionCallOutputContentItem::InputImage {
                             image_url,
                             detail: None,

@@ -15,17 +15,6 @@ use crate::config_loader::RequirementSource;
 use crate::config_loader::Sourced;
 use crate::protocol::SandboxPolicy;
 use crate::test_support;
-use codex_network_proxy::NetworkProxyConfig;
-use codex_protocol::approvals::NetworkApprovalProtocol;
-use codex_protocol::config_types::ApprovalsReviewer;
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::GuardianAssessmentStatus;
-use codex_protocol::protocol::GuardianRiskLevel;
-use codex_protocol::protocol::ReviewDecision;
-use codex_utils_absolute_path::AbsolutePathBuf;
 use core_test_support::context_snapshot;
 use core_test_support::context_snapshot::ContextSnapshotOptions;
 use core_test_support::responses::ev_assistant_message;
@@ -40,6 +29,17 @@ use core_test_support::streaming_sse::StreamingSseChunk;
 use core_test_support::streaming_sse::start_streaming_sse_server;
 use insta::Settings;
 use insta::assert_snapshot;
+use orbit_code_network_proxy::NetworkProxyConfig;
+use orbit_code_protocol::approvals::NetworkApprovalProtocol;
+use orbit_code_protocol::config_types::ApprovalsReviewer;
+use orbit_code_protocol::models::ContentItem;
+use orbit_code_protocol::models::ResponseItem;
+use orbit_code_protocol::protocol::AskForApproval;
+use orbit_code_protocol::protocol::EventMsg;
+use orbit_code_protocol::protocol::GuardianAssessmentStatus;
+use orbit_code_protocol::protocol::GuardianRiskLevel;
+use orbit_code_protocol::protocol::ReviewDecision;
+use orbit_code_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use std::collections::BTreeMap;
 use std::path::PathBuf;
@@ -63,7 +63,7 @@ async fn guardian_test_session_and_turn_with_base_url(
     config.user_instructions = None;
     let config = Arc::new(config);
     let models_manager = Arc::new(test_support::models_manager_with_provider(
-        config.codex_home.clone(),
+        config.orbit_code_home.clone(),
         Arc::clone(&session.services.auth_manager),
         config.model_provider.clone(),
     ));
@@ -98,7 +98,7 @@ async fn seed_guardian_parent_history(session: &Arc<Session>, turn: &Arc<TurnCon
                 },
                 ResponseItem::FunctionCallOutput {
                     call_id: "call-1".to_string(),
-                    output: codex_protocol::models::FunctionCallOutputPayload::from_text(
+                    output: orbit_code_protocol::models::FunctionCallOutputPayload::from_text(
                         "repo visibility: public".to_string(),
                     ),
                 },
@@ -209,7 +209,7 @@ fn collect_guardian_transcript_entries_includes_recent_tool_calls_and_output() {
         },
         ResponseItem::FunctionCallOutput {
             call_id: "call-1".to_string(),
-            output: codex_protocol::models::FunctionCallOutputPayload::from_text(
+            output: orbit_code_protocol::models::FunctionCallOutputPayload::from_text(
                 "repo is public".to_string(),
             ),
         },
@@ -515,7 +515,7 @@ async fn guardian_review_request_layout_matches_model_visible_request_snapshot()
     config.model_provider.base_url = Some(format!("{}/v1", server.uri()));
     let config = Arc::new(config);
     let models_manager = Arc::new(test_support::models_manager_with_provider(
-        config.codex_home.clone(),
+        config.orbit_code_home.clone(),
         Arc::clone(&session.services.auth_manager),
         config.model_provider.clone(),
     ));
@@ -566,7 +566,7 @@ async fn guardian_review_request_layout_matches_model_visible_request_snapshot()
     settings.set_prepend_module_to_snapshot(false);
     settings.bind(|| {
         assert_snapshot!(
-            "codex_core__guardian__tests__guardian_review_request_layout",
+            "orbit_code_core__guardian__tests__guardian_review_request_layout",
             context_snapshot::format_labeled_requests_snapshot(
                 "Guardian review request layout",
                 &[("Guardian Review Request", &request)],
@@ -687,7 +687,7 @@ async fn guardian_reuses_prompt_cache_key_and_appends_prior_reviews() -> anyhow:
     settings.set_prepend_module_to_snapshot(false);
     settings.bind(|| {
         assert_snapshot!(
-            "codex_core__guardian__tests__guardian_followup_review_request_layout",
+            "orbit_code_core__guardian__tests__guardian_followup_review_request_layout",
             format!(
                 "{}\n\nshared_prompt_cache_key: {}\nfollowup_contains_first_rationale: {}",
                 context_snapshot::format_labeled_requests_snapshot(
@@ -877,7 +877,7 @@ fn guardian_review_session_config_preserves_parent_network_proxy() {
         &parent_config,
         None,
         "parent-active-model",
-        Some(codex_protocol::openai_models::ReasoningEffort::Low),
+        Some(orbit_code_protocol::openai_models::ReasoningEffort::Low),
     )
     .expect("guardian config");
 
@@ -888,7 +888,7 @@ fn guardian_review_session_config_preserves_parent_network_proxy() {
     );
     assert_eq!(
         guardian_config.model_reasoning_effort,
-        Some(codex_protocol::openai_models::ReasoningEffort::Low)
+        Some(orbit_code_protocol::openai_models::ReasoningEffort::Low)
     );
     assert_eq!(
         guardian_config.permissions.approval_policy,
@@ -994,7 +994,7 @@ fn guardian_review_session_config_uses_parent_active_model_instead_of_hardcoded_
 
 #[test]
 fn guardian_review_session_config_uses_requirements_guardian_override() {
-    let codex_home = tempfile::tempdir().expect("create temp dir");
+    let orbit_code_home = tempfile::tempdir().expect("create temp dir");
     let workspace = tempfile::tempdir().expect("create temp dir");
     let config_layer_stack = ConfigLayerStack::new(
         Vec::new(),
@@ -1013,7 +1013,7 @@ fn guardian_review_session_config_uses_requirements_guardian_override() {
             cwd: Some(workspace.path().to_path_buf()),
             ..Default::default()
         },
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
         config_layer_stack,
     )
     .expect("load config");
@@ -1030,7 +1030,7 @@ fn guardian_review_session_config_uses_requirements_guardian_override() {
 
 #[test]
 fn guardian_review_session_config_uses_default_guardian_policy_without_requirements_override() {
-    let codex_home = tempfile::tempdir().expect("create temp dir");
+    let orbit_code_home = tempfile::tempdir().expect("create temp dir");
     let workspace = tempfile::tempdir().expect("create temp dir");
     let config_layer_stack =
         ConfigLayerStack::new(Vec::new(), Default::default(), Default::default())
@@ -1041,7 +1041,7 @@ fn guardian_review_session_config_uses_default_guardian_policy_without_requireme
             cwd: Some(workspace.path().to_path_buf()),
             ..Default::default()
         },
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
         config_layer_stack,
     )
     .expect("load config");

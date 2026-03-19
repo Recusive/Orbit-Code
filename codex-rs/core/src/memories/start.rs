@@ -3,7 +3,7 @@ use crate::config::Config;
 use crate::features::Feature;
 use crate::memories::phase1;
 use crate::memories::phase2;
-use codex_protocol::protocol::SessionSource;
+use orbit_code_protocol::protocol::SessionSource;
 use std::sync::Arc;
 use tracing::warn;
 

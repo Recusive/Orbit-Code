@@ -15,7 +15,7 @@ mod storage;
 mod tests;
 pub(crate) mod usage;
 
-use codex_protocol::openai_models::ReasoningEffort;
+use orbit_code_protocol::openai_models::ReasoningEffort;
 
 pub(crate) use control::clear_memory_root_contents;
 /// Starts the memory startup pipeline for eligible root sessions.
@@ -98,8 +98,8 @@ mod metrics {
 use std::path::Path;
 use std::path::PathBuf;
 
-pub fn memory_root(codex_home: &Path) -> PathBuf {
-    codex_home.join("memories")
+pub fn memory_root(orbit_code_home: &Path) -> PathBuf {
+    orbit_code_home.join("memories")
 }
 
 fn rollout_summaries_dir(root: &Path) -> PathBuf {

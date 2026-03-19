@@ -1,11 +1,11 @@
 [package]
-name = "codex-arg0"
+name = "orbit-code-arg0"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [lib]
-name = "codex_arg0"
+name = "orbit_code_arg0"
 path = "src/lib.rs"
 
 [lints]
@@ -13,10 +13,10 @@ workspace = true
 
 [dependencies]
 anyhow = { workspace = true }
-codex-apply-patch = { workspace = true }
-codex-linux-sandbox = { workspace = true }
-codex-shell-escalation = { workspace = true }
-codex-utils-home-dir = { workspace = true }
+orbit-code-apply-patch = { workspace = true }
+orbit-code-linux-sandbox = { workspace = true }
+orbit-code-shell-escalation = { workspace = true }
+orbit-code-utils-home-dir = { workspace = true }
 dotenvy = { workspace = true }
 tempfile = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread"] }

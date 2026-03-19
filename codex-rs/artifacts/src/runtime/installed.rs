@@ -1,7 +1,7 @@
 use super::ArtifactRuntimeError;
 use super::ArtifactRuntimePlatform;
 use super::JsRuntime;
-use super::codex_app_runtime_candidates;
+use super::orbit_code_app_runtime_candidates;
 use super::resolve_js_runtime_from_candidates;
 use super::system_electron_runtime;
 use super::system_node_runtime;
@@ -103,7 +103,7 @@ impl InstalledArtifactRuntime {
         resolve_js_runtime_from_candidates(
             system_node_runtime(),
             system_electron_runtime(),
-            codex_app_runtime_candidates(),
+            orbit_code_app_runtime_candidates(),
         )
         .ok_or_else(|| ArtifactRuntimeError::MissingJsRuntime {
             root_dir: self.root_dir.clone(),
@@ -119,8 +119,8 @@ pub(crate) fn cached_runtime_install_dir(
     cache_root.join(runtime_version).join(platform.as_str())
 }
 
-pub(crate) fn default_cached_runtime_root(codex_home: &Path) -> PathBuf {
-    codex_home.join(super::DEFAULT_CACHE_ROOT_RELATIVE)
+pub(crate) fn default_cached_runtime_root(orbit_code_home: &Path) -> PathBuf {
+    orbit_code_home.join(super::DEFAULT_CACHE_ROOT_RELATIVE)
 }
 
 fn resolve_relative_runtime_path(

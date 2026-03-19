@@ -1,4 +1,4 @@
-use codex_utils_absolute_path::AbsolutePathBuf;
+use orbit_code_utils_absolute_path::AbsolutePathBuf;
 use serde::Deserialize;
 use serde_json::Value as JsonValue;
 use std::fs;

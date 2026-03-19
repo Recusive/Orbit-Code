@@ -1,8 +1,8 @@
-use codex_protocol::custom_prompts::CustomPrompt;
-use codex_protocol::custom_prompts::PROMPTS_CMD_PREFIX;
-use codex_protocol::user_input::ByteRange;
-use codex_protocol::user_input::TextElement;
 use lazy_static::lazy_static;
+use orbit_code_protocol::custom_prompts::CustomPrompt;
+use orbit_code_protocol::custom_prompts::PROMPTS_CMD_PREFIX;
+use orbit_code_protocol::user_input::ByteRange;
+use orbit_code_protocol::user_input::TextElement;
 use regex_lite::Regex;
 use shlex::Shlex;
 use std::collections::HashMap;
@@ -409,7 +409,7 @@ fn replace_text_elements_with_sentinels(
         let start = elem.byte_range.start;
         let end = elem.byte_range.end;
         out.push_str(&rest[cursor..start]);
-        let mut sentinel = format!("__CODEX_ELEM_{idx}__");
+        let mut sentinel = format!("__ORBIT_ELEM_{idx}__");
         // Ensure we never collide with user content so a sentinel can't be mistaken for text.
         while rest.contains(&sentinel) {
             sentinel.push('_');

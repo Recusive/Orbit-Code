@@ -5,11 +5,6 @@ use std::fs;
 use std::time::Duration;
 use std::time::Instant;
 
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::SandboxPolicy;
-use codex_protocol::user_input::UserInput;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_function_call;
@@ -25,6 +20,11 @@ use core_test_support::streaming_sse::start_streaming_sse_server;
 use core_test_support::test_codex::TestCodex;
 use core_test_support::test_codex::test_codex;
 use core_test_support::wait_for_event;
+use orbit_code_protocol::protocol::AskForApproval;
+use orbit_code_protocol::protocol::EventMsg;
+use orbit_code_protocol::protocol::Op;
+use orbit_code_protocol::protocol::SandboxPolicy;
+use orbit_code_protocol::user_input::UserInput;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 use serde_json::json;
@@ -64,7 +64,9 @@ async fn run_turn_and_measure(test: &TestCodex, prompt: &str) -> anyhow::Result<
 }
 
 #[allow(clippy::expect_used)]
-async fn build_codex_with_test_tool(server: &wiremock::MockServer) -> anyhow::Result<TestCodex> {
+async fn build_orbit_code_with_test_tool(
+    server: &wiremock::MockServer,
+) -> anyhow::Result<TestCodex> {
     let mut builder = test_codex().with_model("test-gpt-5.1-codex");
     builder.build(server).await
 }
@@ -82,7 +84,7 @@ async fn read_file_tools_run_in_parallel() -> anyhow::Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let test = build_codex_with_test_tool(&server).await?;
+    let test = build_orbit_code_with_test_tool(&server).await?;
 
     let warmup_args = json!({
         "sleep_after_ms": 10,
@@ -179,7 +181,7 @@ async fn mixed_parallel_tools_run_in_parallel() -> anyhow::Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let test = build_codex_with_test_tool(&server).await?;
+    let test = build_orbit_code_with_test_tool(&server).await?;
 
     let sync_args = json!({
         "sleep_after_ms": 300
@@ -215,7 +217,7 @@ async fn tool_results_grouped() -> anyhow::Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = start_mock_server().await;
-    let test = build_codex_with_test_tool(&server).await?;
+    let test = build_orbit_code_with_test_tool(&server).await?;
 
     let shell_args = serde_json::to_string(&json!({
         "command": "echo 'shell output'",

@@ -1,9 +1,9 @@
 use crate::config_loader::ResidencyRequirement;
 use crate::spawn::CODEX_SANDBOX_ENV_VAR;
-use codex_client::BuildCustomCaTransportError;
-use codex_client::CodexHttpClient;
-pub use codex_client::CodexRequestBuilder;
-use codex_client::build_reqwest_client_with_custom_ca;
+use orbit_code_client::BuildCustomCaTransportError;
+use orbit_code_client::CodexHttpClient;
+pub use orbit_code_client::CodexRequestBuilder;
+use orbit_code_client::build_reqwest_client_with_custom_ca;
 use reqwest::header::HeaderMap;
 use reqwest::header::HeaderValue;
 use std::sync::LazyLock;
@@ -26,8 +26,8 @@ use std::sync::RwLock;
 /// The full user agent string is returned from the mcp initialize response.
 /// Parenthesis will be added by Codex. This should only specify what goes inside of the parenthesis.
 pub static USER_AGENT_SUFFIX: LazyLock<Mutex<Option<String>>> = LazyLock::new(|| Mutex::new(None));
-pub const DEFAULT_ORIGINATOR: &str = "codex_cli_rs";
-pub const CODEX_INTERNAL_ORIGINATOR_OVERRIDE_ENV_VAR: &str = "CODEX_INTERNAL_ORIGINATOR_OVERRIDE";
+pub const DEFAULT_ORIGINATOR: &str = "orbit_code_cli_rs";
+pub const ORBIT_INTERNAL_ORIGINATOR_OVERRIDE_ENV_VAR: &str = "ORBIT_INTERNAL_ORIGINATOR_OVERRIDE";
 pub const RESIDENCY_HEADER_NAME: &str = "x-openai-internal-codex-residency";
 
 #[derive(Debug, Clone)]
@@ -46,7 +46,7 @@ pub enum SetOriginatorError {
 }
 
 fn get_originator_value(provided: Option<String>) -> Originator {
-    let value = std::env::var(CODEX_INTERNAL_ORIGINATOR_OVERRIDE_ENV_VAR)
+    let value = std::env::var(ORBIT_INTERNAL_ORIGINATOR_OVERRIDE_ENV_VAR)
         .ok()
         .or(provided)
         .unwrap_or(DEFAULT_ORIGINATOR.to_string());
@@ -96,7 +96,7 @@ pub fn originator() -> Originator {
         return originator.clone();
     }
 
-    if std::env::var(CODEX_INTERNAL_ORIGINATOR_OVERRIDE_ENV_VAR).is_ok() {
+    if std::env::var(ORBIT_INTERNAL_ORIGINATOR_OVERRIDE_ENV_VAR).is_ok() {
         let originator = get_originator_value(/*provided*/ None);
         if let Ok(mut guard) = ORIGINATOR.write() {
             match guard.as_ref() {
@@ -112,15 +112,15 @@ pub fn originator() -> Originator {
 
 pub fn is_first_party_originator(originator_value: &str) -> bool {
     originator_value == DEFAULT_ORIGINATOR
-        || originator_value == "codex_vscode"
+        || originator_value == "orbit_code_vscode"
         || originator_value.starts_with("Codex ")
 }
 
 pub fn is_first_party_chat_originator(originator_value: &str) -> bool {
-    originator_value == "codex_atlas" || originator_value == "codex_chatgpt_desktop"
+    originator_value == "orbit_code_atlas" || originator_value == "orbit_code_chatgpt_desktop"
 }
 
-pub fn get_codex_user_agent() -> String {
+pub fn get_orbit_code_user_agent() -> String {
     let build_version = env!("CARGO_PKG_VERSION");
     let os_info = os_info::get();
     let originator = originator();
@@ -187,7 +187,7 @@ pub fn create_client() -> CodexHttpClient {
 /// Builds the default reqwest client used for ordinary Codex HTTP traffic.
 ///
 /// This starts from the standard Codex user agent, default headers, and sandbox-specific proxy
-/// policy, then layers in shared custom CA handling from `CODEX_CA_CERTIFICATE` /
+/// policy, then layers in shared custom CA handling from `ORBIT_CA_CERTIFICATE` /
 /// `SSL_CERT_FILE`. The function remains infallible for compatibility with existing call sites, so
 /// a custom-CA or builder failure is logged and falls back to `reqwest::Client::new()`.
 pub fn build_reqwest_client() -> reqwest::Client {
@@ -202,7 +202,7 @@ pub fn build_reqwest_client() -> reqwest::Client {
 /// Callers that need a structured CA-loading failure instead of the legacy logged fallback can use
 /// this method directly.
 pub fn try_build_reqwest_client() -> Result<reqwest::Client, BuildCustomCaTransportError> {
-    let ua = get_codex_user_agent();
+    let ua = get_orbit_code_user_agent();
 
     let mut builder = reqwest::Client::builder()
         // Set UA via dedicated helper to avoid header validation pitfalls

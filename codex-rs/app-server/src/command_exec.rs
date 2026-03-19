@@ -6,29 +6,29 @@ use std::time::Duration;
 
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD;
-use codex_app_server_protocol::CommandExecOutputDeltaNotification;
-use codex_app_server_protocol::CommandExecOutputStream;
-use codex_app_server_protocol::CommandExecResizeParams;
-use codex_app_server_protocol::CommandExecResizeResponse;
-use codex_app_server_protocol::CommandExecResponse;
-use codex_app_server_protocol::CommandExecTerminalSize;
-use codex_app_server_protocol::CommandExecTerminateParams;
-use codex_app_server_protocol::CommandExecTerminateResponse;
-use codex_app_server_protocol::CommandExecWriteParams;
-use codex_app_server_protocol::CommandExecWriteResponse;
-use codex_app_server_protocol::JSONRPCErrorError;
-use codex_app_server_protocol::ServerNotification;
-use codex_core::bytes_to_string_smart;
-use codex_core::config::StartedNetworkProxy;
-use codex_core::exec::DEFAULT_EXEC_COMMAND_TIMEOUT_MS;
-use codex_core::exec::ExecExpiration;
-use codex_core::exec::IO_DRAIN_TIMEOUT_MS;
-use codex_core::exec::SandboxType;
-use codex_core::sandboxing::ExecRequest;
-use codex_utils_pty::DEFAULT_OUTPUT_BYTES_CAP;
-use codex_utils_pty::ProcessHandle;
-use codex_utils_pty::SpawnedProcess;
-use codex_utils_pty::TerminalSize;
+use orbit_code_app_server_protocol::CommandExecOutputDeltaNotification;
+use orbit_code_app_server_protocol::CommandExecOutputStream;
+use orbit_code_app_server_protocol::CommandExecResizeParams;
+use orbit_code_app_server_protocol::CommandExecResizeResponse;
+use orbit_code_app_server_protocol::CommandExecResponse;
+use orbit_code_app_server_protocol::CommandExecTerminalSize;
+use orbit_code_app_server_protocol::CommandExecTerminateParams;
+use orbit_code_app_server_protocol::CommandExecTerminateResponse;
+use orbit_code_app_server_protocol::CommandExecWriteParams;
+use orbit_code_app_server_protocol::CommandExecWriteResponse;
+use orbit_code_app_server_protocol::JSONRPCErrorError;
+use orbit_code_app_server_protocol::ServerNotification;
+use orbit_code_core::bytes_to_string_smart;
+use orbit_code_core::config::StartedNetworkProxy;
+use orbit_code_core::exec::DEFAULT_EXEC_COMMAND_TIMEOUT_MS;
+use orbit_code_core::exec::ExecExpiration;
+use orbit_code_core::exec::IO_DRAIN_TIMEOUT_MS;
+use orbit_code_core::exec::SandboxType;
+use orbit_code_core::sandboxing::ExecRequest;
+use orbit_code_utils_pty::DEFAULT_OUTPUT_BYTES_CAP;
+use orbit_code_utils_pty::ProcessHandle;
+use orbit_code_utils_pty::SpawnedProcess;
+use orbit_code_utils_pty::TerminalSize;
 use tokio::sync::Mutex;
 use tokio::sync::mpsc;
 use tokio::sync::oneshot;
@@ -201,8 +201,11 @@ impl CommandExecManager {
             let sessions = Arc::clone(&self.sessions);
             tokio::spawn(async move {
                 let _started_network_proxy = started_network_proxy;
-                match codex_core::sandboxing::execute_env(exec_request, /*stdout_stream*/ None)
-                    .await
+                match orbit_code_core::sandboxing::execute_env(
+                    exec_request,
+                    /*stdout_stream*/ None,
+                )
+                .await
                 {
                     Ok(output) => {
                         outgoing
@@ -263,7 +266,7 @@ impl CommandExecManager {
             );
         }
         let spawned = if tty {
-            codex_utils_pty::spawn_pty_process(
+            orbit_code_utils_pty::spawn_pty_process(
                 program,
                 args,
                 cwd.as_path(),
@@ -273,10 +276,17 @@ impl CommandExecManager {
             )
             .await
         } else if stream_stdin {
-            codex_utils_pty::spawn_pipe_process(program, args, cwd.as_path(), &env, &arg0).await
-        } else {
-            codex_utils_pty::spawn_pipe_process_no_stdin(program, args, cwd.as_path(), &env, &arg0)
+            orbit_code_utils_pty::spawn_pipe_process(program, args, cwd.as_path(), &env, &arg0)
                 .await
+        } else {
+            orbit_code_utils_pty::spawn_pipe_process_no_stdin(
+                program,
+                args,
+                cwd.as_path(),
+                &env,
+                &arg0,
+            )
+            .await
         };
         let spawned = match spawned {
             Ok(spawned) => spawned,
@@ -703,11 +713,11 @@ mod tests {
     use std::collections::HashMap;
     use std::path::PathBuf;
 
-    use codex_protocol::config_types::WindowsSandboxLevel;
-    use codex_protocol::permissions::FileSystemSandboxPolicy;
-    use codex_protocol::permissions::NetworkSandboxPolicy;
-    use codex_protocol::protocol::ReadOnlyAccess;
-    use codex_protocol::protocol::SandboxPolicy;
+    use orbit_code_protocol::config_types::WindowsSandboxLevel;
+    use orbit_code_protocol::permissions::FileSystemSandboxPolicy;
+    use orbit_code_protocol::permissions::NetworkSandboxPolicy;
+    use orbit_code_protocol::protocol::ReadOnlyAccess;
+    use orbit_code_protocol::protocol::SandboxPolicy;
     use pretty_assertions::assert_eq;
     #[cfg(not(target_os = "windows"))]
     use tokio::time::Duration;
@@ -736,7 +746,7 @@ mod tests {
             sandbox: SandboxType::WindowsRestrictedToken,
             windows_sandbox_level: WindowsSandboxLevel::Disabled,
             windows_sandbox_private_desktop: false,
-            sandbox_permissions: codex_core::sandboxing::SandboxPermissions::UseDefault,
+            sandbox_permissions: orbit_code_core::sandboxing::SandboxPermissions::UseDefault,
             sandbox_policy: sandbox_policy.clone(),
             file_system_sandbox_policy: FileSystemSandboxPolicy::from(&sandbox_policy),
             network_sandbox_policy: NetworkSandboxPolicy::from(&sandbox_policy),
@@ -754,7 +764,7 @@ mod tests {
                 outgoing: Arc::new(OutgoingMessageSender::new(tx)),
                 request_id: ConnectionRequestId {
                     connection_id: ConnectionId(1),
-                    request_id: codex_app_server_protocol::RequestId::Integer(42),
+                    request_id: orbit_code_app_server_protocol::RequestId::Integer(42),
                 },
                 process_id: Some("proc-42".to_string()),
                 exec_request: windows_sandbox_exec_request(),
@@ -782,7 +792,7 @@ mod tests {
         let manager = CommandExecManager::default();
         let request_id = ConnectionRequestId {
             connection_id: ConnectionId(7),
-            request_id: codex_app_server_protocol::RequestId::Integer(99),
+            request_id: orbit_code_app_server_protocol::RequestId::Integer(99),
         };
 
         manager
@@ -827,7 +837,7 @@ mod tests {
         let manager = CommandExecManager::default();
         let request_id = ConnectionRequestId {
             connection_id: ConnectionId(8),
-            request_id: codex_app_server_protocol::RequestId::Integer(100),
+            request_id: orbit_code_app_server_protocol::RequestId::Integer(100),
         };
         let sandbox_policy = SandboxPolicy::ReadOnly {
             access: ReadOnlyAccess::FullAccess,
@@ -848,7 +858,8 @@ mod tests {
                     sandbox: SandboxType::None,
                     windows_sandbox_level: WindowsSandboxLevel::Disabled,
                     windows_sandbox_private_desktop: false,
-                    sandbox_permissions: codex_core::sandboxing::SandboxPermissions::UseDefault,
+                    sandbox_permissions:
+                        orbit_code_core::sandboxing::SandboxPermissions::UseDefault,
                     sandbox_policy: sandbox_policy.clone(),
                     file_system_sandbox_policy: FileSystemSandboxPolicy::from(&sandbox_policy),
                     network_sandbox_policy: NetworkSandboxPolicy::from(&sandbox_policy),
@@ -911,7 +922,7 @@ mod tests {
         let manager = CommandExecManager::default();
         let request_id = ConnectionRequestId {
             connection_id: ConnectionId(11),
-            request_id: codex_app_server_protocol::RequestId::Integer(1),
+            request_id: orbit_code_app_server_protocol::RequestId::Integer(1),
         };
         let process_id = ConnectionProcessId {
             connection_id: request_id.connection_id,
@@ -947,7 +958,7 @@ mod tests {
         let manager = CommandExecManager::default();
         let request_id = ConnectionRequestId {
             connection_id: ConnectionId(12),
-            request_id: codex_app_server_protocol::RequestId::Integer(2),
+            request_id: orbit_code_app_server_protocol::RequestId::Integer(2),
         };
         let process_id = ConnectionProcessId {
             connection_id: request_id.connection_id,
@@ -981,7 +992,7 @@ mod tests {
         let manager = CommandExecManager::default();
         let request_id = ConnectionRequestId {
             connection_id: ConnectionId(13),
-            request_id: codex_app_server_protocol::RequestId::Integer(3),
+            request_id: orbit_code_app_server_protocol::RequestId::Integer(3),
         };
         let process_id = InternalProcessId::Client("proc-13".to_string());
         let (control_tx, mut control_rx) = mpsc::channel(1);

@@ -4,11 +4,11 @@ use std::path::PathBuf;
 use crate::ModelClient;
 use crate::error::CodexErr;
 use crate::error::Result;
-use codex_api::RawMemory as ApiRawMemory;
-use codex_api::RawMemoryMetadata as ApiRawMemoryMetadata;
-use codex_otel::SessionTelemetry;
-use codex_protocol::openai_models::ModelInfo;
-use codex_protocol::openai_models::ReasoningEffort as ReasoningEffortConfig;
+use orbit_code_api::RawMemory as ApiRawMemory;
+use orbit_code_api::RawMemoryMetadata as ApiRawMemoryMetadata;
+use orbit_code_otel::SessionTelemetry;
+use orbit_code_protocol::openai_models::ModelInfo;
+use orbit_code_protocol::openai_models::ReasoningEffort as ReasoningEffortConfig;
 use serde_json::Map;
 use serde_json::Value;
 

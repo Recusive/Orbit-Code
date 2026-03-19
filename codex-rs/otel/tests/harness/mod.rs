@@ -1,12 +1,12 @@
-use codex_otel::metrics::MetricsClient;
-use codex_otel::metrics::MetricsConfig;
-use codex_otel::metrics::Result;
 use opentelemetry::KeyValue;
 use opentelemetry_sdk::metrics::InMemoryMetricExporter;
 use opentelemetry_sdk::metrics::data::AggregatedMetrics;
 use opentelemetry_sdk::metrics::data::Metric;
 use opentelemetry_sdk::metrics::data::MetricData;
 use opentelemetry_sdk::metrics::data::ResourceMetrics;
+use orbit_code_otel::metrics::MetricsClient;
+use orbit_code_otel::metrics::MetricsConfig;
+use orbit_code_otel::metrics::Result;
 use std::collections::BTreeMap;
 
 pub(crate) fn build_metrics_with_defaults(

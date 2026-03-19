@@ -25,55 +25,55 @@ use anyhow::bail;
 use clap::ArgAction;
 use clap::Parser;
 use clap::Subcommand;
-use codex_app_server_protocol::AccountLoginCompletedNotification;
-use codex_app_server_protocol::AskForApproval;
-use codex_app_server_protocol::ClientInfo;
-use codex_app_server_protocol::ClientRequest;
-use codex_app_server_protocol::CommandExecutionApprovalDecision;
-use codex_app_server_protocol::CommandExecutionRequestApprovalParams;
-use codex_app_server_protocol::CommandExecutionRequestApprovalResponse;
-use codex_app_server_protocol::CommandExecutionStatus;
-use codex_app_server_protocol::DynamicToolSpec;
-use codex_app_server_protocol::FileChangeApprovalDecision;
-use codex_app_server_protocol::FileChangeRequestApprovalParams;
-use codex_app_server_protocol::FileChangeRequestApprovalResponse;
-use codex_app_server_protocol::GetAccountRateLimitsResponse;
-use codex_app_server_protocol::InitializeCapabilities;
-use codex_app_server_protocol::InitializeParams;
-use codex_app_server_protocol::InitializeResponse;
-use codex_app_server_protocol::JSONRPCMessage;
-use codex_app_server_protocol::JSONRPCNotification;
-use codex_app_server_protocol::JSONRPCRequest;
-use codex_app_server_protocol::JSONRPCResponse;
-use codex_app_server_protocol::LoginAccountResponse;
-use codex_app_server_protocol::ModelListParams;
-use codex_app_server_protocol::ModelListResponse;
-use codex_app_server_protocol::ReadOnlyAccess;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::SandboxPolicy;
-use codex_app_server_protocol::ServerNotification;
-use codex_app_server_protocol::ServerRequest;
-use codex_app_server_protocol::ThreadDecrementElicitationParams;
-use codex_app_server_protocol::ThreadDecrementElicitationResponse;
-use codex_app_server_protocol::ThreadIncrementElicitationParams;
-use codex_app_server_protocol::ThreadIncrementElicitationResponse;
-use codex_app_server_protocol::ThreadItem;
-use codex_app_server_protocol::ThreadListParams;
-use codex_app_server_protocol::ThreadListResponse;
-use codex_app_server_protocol::ThreadResumeParams;
-use codex_app_server_protocol::ThreadResumeResponse;
-use codex_app_server_protocol::ThreadStartParams;
-use codex_app_server_protocol::ThreadStartResponse;
-use codex_app_server_protocol::TurnStartParams;
-use codex_app_server_protocol::TurnStartResponse;
-use codex_app_server_protocol::TurnStatus;
-use codex_app_server_protocol::UserInput as V2UserInput;
-use codex_core::config::Config;
-use codex_otel::OtelProvider;
-use codex_otel::current_span_w3c_trace_context;
-use codex_protocol::openai_models::ReasoningEffort;
-use codex_protocol::protocol::W3cTraceContext;
-use codex_utils_cli::CliConfigOverrides;
+use orbit_code_app_server_protocol::AccountLoginCompletedNotification;
+use orbit_code_app_server_protocol::AskForApproval;
+use orbit_code_app_server_protocol::ClientInfo;
+use orbit_code_app_server_protocol::ClientRequest;
+use orbit_code_app_server_protocol::CommandExecutionApprovalDecision;
+use orbit_code_app_server_protocol::CommandExecutionRequestApprovalParams;
+use orbit_code_app_server_protocol::CommandExecutionRequestApprovalResponse;
+use orbit_code_app_server_protocol::CommandExecutionStatus;
+use orbit_code_app_server_protocol::DynamicToolSpec;
+use orbit_code_app_server_protocol::FileChangeApprovalDecision;
+use orbit_code_app_server_protocol::FileChangeRequestApprovalParams;
+use orbit_code_app_server_protocol::FileChangeRequestApprovalResponse;
+use orbit_code_app_server_protocol::GetAccountRateLimitsResponse;
+use orbit_code_app_server_protocol::InitializeCapabilities;
+use orbit_code_app_server_protocol::InitializeParams;
+use orbit_code_app_server_protocol::InitializeResponse;
+use orbit_code_app_server_protocol::JSONRPCMessage;
+use orbit_code_app_server_protocol::JSONRPCNotification;
+use orbit_code_app_server_protocol::JSONRPCRequest;
+use orbit_code_app_server_protocol::JSONRPCResponse;
+use orbit_code_app_server_protocol::LoginAccountResponse;
+use orbit_code_app_server_protocol::ModelListParams;
+use orbit_code_app_server_protocol::ModelListResponse;
+use orbit_code_app_server_protocol::ReadOnlyAccess;
+use orbit_code_app_server_protocol::RequestId;
+use orbit_code_app_server_protocol::SandboxPolicy;
+use orbit_code_app_server_protocol::ServerNotification;
+use orbit_code_app_server_protocol::ServerRequest;
+use orbit_code_app_server_protocol::ThreadDecrementElicitationParams;
+use orbit_code_app_server_protocol::ThreadDecrementElicitationResponse;
+use orbit_code_app_server_protocol::ThreadIncrementElicitationParams;
+use orbit_code_app_server_protocol::ThreadIncrementElicitationResponse;
+use orbit_code_app_server_protocol::ThreadItem;
+use orbit_code_app_server_protocol::ThreadListParams;
+use orbit_code_app_server_protocol::ThreadListResponse;
+use orbit_code_app_server_protocol::ThreadResumeParams;
+use orbit_code_app_server_protocol::ThreadResumeResponse;
+use orbit_code_app_server_protocol::ThreadStartParams;
+use orbit_code_app_server_protocol::ThreadStartResponse;
+use orbit_code_app_server_protocol::TurnStartParams;
+use orbit_code_app_server_protocol::TurnStartResponse;
+use orbit_code_app_server_protocol::TurnStatus;
+use orbit_code_app_server_protocol::UserInput as V2UserInput;
+use orbit_code_core::config::Config;
+use orbit_code_otel::OtelProvider;
+use orbit_code_otel::current_span_w3c_trace_context;
+use orbit_code_protocol::openai_models::ReasoningEffort;
+use orbit_code_protocol::protocol::W3cTraceContext;
+use orbit_code_utils_cli::CliConfigOverrides;
 use serde::Serialize;
 use serde::de::DeserializeOwned;
 use serde_json::Value;
@@ -101,7 +101,7 @@ const APP_SERVER_GRACEFUL_SHUTDOWN_POLL_INTERVAL: Duration = Duration::from_mill
 const DEFAULT_ANALYTICS_ENABLED: bool = true;
 const OTEL_SERVICE_NAME: &str = "codex-app-server-test-client";
 const TRACE_DISABLED_MESSAGE: &str =
-    "Not enabled - enable tracing in $CODEX_HOME/config.toml to get a trace URL!";
+    "Not enabled - enable tracing in $ORBIT_HOME/config.toml to get a trace URL!";
 
 /// Minimal launcher that initializes the Codex app-server and logs the handshake.
 #[derive(Parser)]
@@ -109,14 +109,14 @@ const TRACE_DISABLED_MESSAGE: &str =
 struct Cli {
     /// Path to the `codex` CLI binary. When set, requests use stdio by
     /// spawning `codex app-server` as a child process.
-    #[arg(long, env = "CODEX_BIN", global = true)]
-    codex_bin: Option<PathBuf>,
+    #[arg(long, env = "ORBIT_BIN", global = true)]
+    orbit_code_bin: Option<PathBuf>,
 
     /// Existing websocket server URL to connect to.
     ///
     /// If neither `--codex-bin` nor `--url` is provided, defaults to
     /// `ws://127.0.0.1:4222`.
-    #[arg(long, env = "CODEX_APP_SERVER_URL", global = true)]
+    #[arg(long, env = "ORBIT_APP_SERVER_URL", global = true)]
     url: Option<String>,
 
     /// Forwarded to the `codex` CLI as `--config key=value`. Repeatable.
@@ -255,7 +255,7 @@ enum CliCommand {
     #[command(name = "live-elicitation-timeout-pause")]
     LiveElicitationTimeoutPause {
         /// Model passed to `thread/start`.
-        #[arg(long, env = "CODEX_E2E_MODEL", default_value = "gpt-5")]
+        #[arg(long, env = "ORBIT_E2E_MODEL", default_value = "gpt-5")]
         model: String,
         /// Existing workspace path used as the turn cwd.
         #[arg(long, value_name = "path", default_value = ".")]
@@ -272,7 +272,7 @@ enum CliCommand {
 
 pub async fn run() -> Result<()> {
     let Cli {
-        codex_bin,
+        orbit_code_bin,
         url,
         config_overrides,
         dynamic_tools,
@@ -284,19 +284,19 @@ pub async fn run() -> Result<()> {
     match command {
         CliCommand::Serve { listen, kill } => {
             ensure_dynamic_tools_unused(&dynamic_tools, "serve")?;
-            let codex_bin = codex_bin.unwrap_or_else(|| PathBuf::from("codex"));
-            serve(&codex_bin, &config_overrides, &listen, kill)
+            let orbit_code_bin = orbit_code_bin.unwrap_or_else(|| PathBuf::from("codex"));
+            serve(&orbit_code_bin, &config_overrides, &listen, kill)
         }
         CliCommand::SendMessage { user_message } => {
             ensure_dynamic_tools_unused(&dynamic_tools, "send-message")?;
-            let endpoint = resolve_endpoint(codex_bin, url)?;
+            let endpoint = resolve_endpoint(orbit_code_bin, url)?;
             send_message(&endpoint, &config_overrides, user_message).await
         }
         CliCommand::SendMessageV2 {
             experimental_api,
             user_message,
         } => {
-            let endpoint = resolve_endpoint(codex_bin, url)?;
+            let endpoint = resolve_endpoint(orbit_code_bin, url)?;
             send_message_v2_endpoint(
                 &endpoint,
                 &config_overrides,
@@ -310,7 +310,7 @@ pub async fn run() -> Result<()> {
             thread_id,
             user_message,
         } => {
-            let endpoint = resolve_endpoint(codex_bin, url)?;
+            let endpoint = resolve_endpoint(orbit_code_bin, url)?;
             resume_message_v2(
                 &endpoint,
                 &config_overrides,
@@ -322,31 +322,31 @@ pub async fn run() -> Result<()> {
         }
         CliCommand::ThreadResume { thread_id } => {
             ensure_dynamic_tools_unused(&dynamic_tools, "thread-resume")?;
-            let endpoint = resolve_endpoint(codex_bin, url)?;
+            let endpoint = resolve_endpoint(orbit_code_bin, url)?;
             thread_resume_follow(&endpoint, &config_overrides, thread_id).await
         }
         CliCommand::Watch => {
             ensure_dynamic_tools_unused(&dynamic_tools, "watch")?;
-            let endpoint = resolve_endpoint(codex_bin, url)?;
+            let endpoint = resolve_endpoint(orbit_code_bin, url)?;
             watch(&endpoint, &config_overrides).await
         }
         CliCommand::TriggerCmdApproval { user_message } => {
-            let endpoint = resolve_endpoint(codex_bin, url)?;
+            let endpoint = resolve_endpoint(orbit_code_bin, url)?;
             trigger_cmd_approval(&endpoint, &config_overrides, user_message, &dynamic_tools).await
         }
         CliCommand::TriggerPatchApproval { user_message } => {
-            let endpoint = resolve_endpoint(codex_bin, url)?;
+            let endpoint = resolve_endpoint(orbit_code_bin, url)?;
             trigger_patch_approval(&endpoint, &config_overrides, user_message, &dynamic_tools).await
         }
         CliCommand::NoTriggerCmdApproval => {
-            let endpoint = resolve_endpoint(codex_bin, url)?;
+            let endpoint = resolve_endpoint(orbit_code_bin, url)?;
             no_trigger_cmd_approval(&endpoint, &config_overrides, &dynamic_tools).await
         }
         CliCommand::SendFollowUpV2 {
             first_message,
             follow_up_message,
         } => {
-            let endpoint = resolve_endpoint(codex_bin, url)?;
+            let endpoint = resolve_endpoint(orbit_code_bin, url)?;
             send_follow_up_v2(
                 &endpoint,
                 &config_overrides,
@@ -361,7 +361,7 @@ pub async fn run() -> Result<()> {
             min_approvals,
             abort_on,
         } => {
-            let endpoint = resolve_endpoint(codex_bin, url)?;
+            let endpoint = resolve_endpoint(orbit_code_bin, url)?;
             trigger_zsh_fork_multi_cmd_approval(
                 &endpoint,
                 &config_overrides,
@@ -374,32 +374,34 @@ pub async fn run() -> Result<()> {
         }
         CliCommand::TestLogin => {
             ensure_dynamic_tools_unused(&dynamic_tools, "test-login")?;
-            let endpoint = resolve_endpoint(codex_bin, url)?;
+            let endpoint = resolve_endpoint(orbit_code_bin, url)?;
             test_login(&endpoint, &config_overrides).await
         }
         CliCommand::GetAccountRateLimits => {
             ensure_dynamic_tools_unused(&dynamic_tools, "get-account-rate-limits")?;
-            let endpoint = resolve_endpoint(codex_bin, url)?;
+            let endpoint = resolve_endpoint(orbit_code_bin, url)?;
             get_account_rate_limits(&endpoint, &config_overrides).await
         }
         CliCommand::ModelList => {
             ensure_dynamic_tools_unused(&dynamic_tools, "model-list")?;
-            let endpoint = resolve_endpoint(codex_bin, url)?;
+            let endpoint = resolve_endpoint(orbit_code_bin, url)?;
             model_list(&endpoint, &config_overrides).await
         }
         CliCommand::ThreadList { limit } => {
             ensure_dynamic_tools_unused(&dynamic_tools, "thread-list")?;
-            let endpoint = resolve_endpoint(codex_bin, url)?;
+            let endpoint = resolve_endpoint(orbit_code_bin, url)?;
             thread_list(&endpoint, &config_overrides, limit).await
         }
         CliCommand::ThreadIncrementElicitation { thread_id } => {
             ensure_dynamic_tools_unused(&dynamic_tools, "thread-increment-elicitation")?;
-            let url = resolve_shared_websocket_url(codex_bin, url, "thread-increment-elicitation")?;
+            let url =
+                resolve_shared_websocket_url(orbit_code_bin, url, "thread-increment-elicitation")?;
             thread_increment_elicitation(&url, thread_id)
         }
         CliCommand::ThreadDecrementElicitation { thread_id } => {
             ensure_dynamic_tools_unused(&dynamic_tools, "thread-decrement-elicitation")?;
-            let url = resolve_shared_websocket_url(codex_bin, url, "thread-decrement-elicitation")?;
+            let url =
+                resolve_shared_websocket_url(orbit_code_bin, url, "thread-decrement-elicitation")?;
             thread_decrement_elicitation(&url, thread_id)
         }
         CliCommand::LiveElicitationTimeoutPause {
@@ -410,7 +412,7 @@ pub async fn run() -> Result<()> {
         } => {
             ensure_dynamic_tools_unused(&dynamic_tools, "live-elicitation-timeout-pause")?;
             live_elicitation_timeout_pause(
-                codex_bin,
+                orbit_code_bin,
                 url,
                 &config_overrides,
                 model,
@@ -432,12 +434,12 @@ struct BackgroundAppServer {
     url: String,
 }
 
-fn resolve_endpoint(codex_bin: Option<PathBuf>, url: Option<String>) -> Result<Endpoint> {
-    if codex_bin.is_some() && url.is_some() {
+fn resolve_endpoint(orbit_code_bin: Option<PathBuf>, url: Option<String>) -> Result<Endpoint> {
+    if orbit_code_bin.is_some() && url.is_some() {
         bail!("--codex-bin and --url are mutually exclusive");
     }
-    if let Some(codex_bin) = codex_bin {
-        return Ok(Endpoint::SpawnCodex(codex_bin));
+    if let Some(orbit_code_bin) = orbit_code_bin {
+        return Ok(Endpoint::SpawnCodex(orbit_code_bin));
     }
     if let Some(url) = url {
         return Ok(Endpoint::ConnectWs(url));
@@ -446,11 +448,11 @@ fn resolve_endpoint(codex_bin: Option<PathBuf>, url: Option<String>) -> Result<E
 }
 
 fn resolve_shared_websocket_url(
-    codex_bin: Option<PathBuf>,
+    orbit_code_bin: Option<PathBuf>,
     url: Option<String>,
     command: &str,
 ) -> Result<String> {
-    if codex_bin.is_some() {
+    if orbit_code_bin.is_some() {
         bail!(
             "{command} requires --url or an already-running websocket app-server; --codex-bin would spawn a private stdio app-server instead"
         );
@@ -460,16 +462,16 @@ fn resolve_shared_websocket_url(
 }
 
 impl BackgroundAppServer {
-    fn spawn(codex_bin: &Path, config_overrides: &[String]) -> Result<Self> {
+    fn spawn(orbit_code_bin: &Path, config_overrides: &[String]) -> Result<Self> {
         let listener = TcpListener::bind("127.0.0.1:0")
             .context("failed to reserve a local port for websocket app-server")?;
         let addr = listener.local_addr()?;
         drop(listener);
 
         let url = format!("ws://{addr}");
-        let mut cmd = Command::new(codex_bin);
-        if let Some(codex_bin_parent) = codex_bin.parent() {
-            let mut path = OsString::from(codex_bin_parent.as_os_str());
+        let mut cmd = Command::new(orbit_code_bin);
+        if let Some(orbit_code_bin_parent) = orbit_code_bin.parent() {
+            let mut path = OsString::from(orbit_code_bin_parent.as_os_str());
             if let Some(existing_path) = std::env::var_os("PATH") {
                 path.push(":");
                 path.push(existing_path);
@@ -487,7 +489,9 @@ impl BackgroundAppServer {
             .stdout(Stdio::null())
             .stderr(Stdio::inherit())
             .spawn()
-            .with_context(|| format!("failed to start `{}` app-server", codex_bin.display()))?;
+            .with_context(|| {
+                format!("failed to start `{}` app-server", orbit_code_bin.display())
+            })?;
 
         Ok(Self { process, url })
     }
@@ -505,7 +509,12 @@ impl Drop for BackgroundAppServer {
     }
 }
 
-fn serve(codex_bin: &Path, config_overrides: &[String], listen: &str, kill: bool) -> Result<()> {
+fn serve(
+    orbit_code_bin: &Path,
+    config_overrides: &[String],
+    listen: &str,
+    kill: bool,
+) -> Result<()> {
     let runtime_dir = PathBuf::from("/tmp/codex-app-server-test-client");
     fs::create_dir_all(&runtime_dir)
         .with_context(|| format!("failed to create runtime dir {}", runtime_dir.display()))?;
@@ -524,8 +533,8 @@ fn serve(codex_bin: &Path, config_overrides: &[String], listen: &str, kill: bool
         .with_context(|| format!("failed to clone log file handle {}", log_path.display()))?;
 
     let mut cmdline = format!(
-        "tail -f /dev/null | RUST_BACKTRACE=full RUST_LOG=warn,codex_=trace {}",
-        shell_quote(&codex_bin.display().to_string())
+        "tail -f /dev/null | RUST_BACKTRACE=full RUST_LOG=warn,orbit_code_=trace {}",
+        shell_quote(&orbit_code_bin.display().to_string())
     );
     for override_kv in config_overrides {
         cmdline.push_str(&format!(" --config {}", shell_quote(override_kv)));
@@ -540,7 +549,7 @@ fn serve(codex_bin: &Path, config_overrides: &[String], listen: &str, kill: bool
         .stdout(Stdio::from(log_file))
         .stderr(Stdio::from(log_file_stderr))
         .spawn()
-        .with_context(|| format!("failed to start `{}` app-server", codex_bin.display()))?;
+        .with_context(|| format!("failed to start `{}` app-server", orbit_code_bin.display()))?;
 
     let pid = child.id();
 
@@ -647,12 +656,12 @@ async fn send_message(
 }
 
 pub async fn send_message_v2(
-    codex_bin: &Path,
+    orbit_code_bin: &Path,
     config_overrides: &[String],
     user_message: String,
     dynamic_tools: &Option<Vec<DynamicToolSpec>>,
 ) -> Result<()> {
-    let endpoint = Endpoint::SpawnCodex(codex_bin.to_path_buf());
+    let endpoint = Endpoint::SpawnCodex(orbit_code_bin.to_path_buf());
     send_message_v2_endpoint(
         &endpoint,
         config_overrides,
@@ -1163,7 +1172,7 @@ fn thread_decrement_elicitation(url: &str, thread_id: String) -> Result<()> {
 }
 
 fn live_elicitation_timeout_pause(
-    codex_bin: Option<PathBuf>,
+    orbit_code_bin: Option<PathBuf>,
     url: Option<String>,
     config_overrides: &[String],
     model: String,
@@ -1179,10 +1188,10 @@ fn live_elicitation_timeout_pause(
     }
 
     let mut _background_server = None;
-    let websocket_url = match (codex_bin, url) {
+    let websocket_url = match (orbit_code_bin, url) {
         (Some(_), Some(_)) => bail!("--codex-bin and --url are mutually exclusive"),
-        (Some(codex_bin), None) => {
-            let server = BackgroundAppServer::spawn(&codex_bin, config_overrides)?;
+        (Some(orbit_code_bin), None) => {
+            let server = BackgroundAppServer::spawn(&orbit_code_bin, config_overrides)?;
             let websocket_url = server.url.clone();
             _background_server = Some(server);
             websocket_url
@@ -1402,16 +1411,18 @@ fn item_started_before_helper_done_is_unexpected(
 impl CodexClient {
     fn connect(endpoint: &Endpoint, config_overrides: &[String]) -> Result<Self> {
         match endpoint {
-            Endpoint::SpawnCodex(codex_bin) => Self::spawn_stdio(codex_bin, config_overrides),
+            Endpoint::SpawnCodex(orbit_code_bin) => {
+                Self::spawn_stdio(orbit_code_bin, config_overrides)
+            }
             Endpoint::ConnectWs(url) => Self::connect_websocket(url),
         }
     }
 
-    fn spawn_stdio(codex_bin: &Path, config_overrides: &[String]) -> Result<Self> {
-        let codex_bin_display = codex_bin.display();
-        let mut cmd = Command::new(codex_bin);
-        if let Some(codex_bin_parent) = codex_bin.parent() {
-            let mut path = OsString::from(codex_bin_parent.as_os_str());
+    fn spawn_stdio(orbit_code_bin: &Path, config_overrides: &[String]) -> Result<Self> {
+        let orbit_code_bin_display = orbit_code_bin.display();
+        let mut cmd = Command::new(orbit_code_bin);
+        if let Some(orbit_code_bin_parent) = orbit_code_bin.parent() {
+            let mut path = OsString::from(orbit_code_bin_parent.as_os_str());
             if let Some(existing_path) = std::env::var_os("PATH") {
                 path.push(":");
                 path.push(existing_path);
@@ -1421,26 +1432,26 @@ impl CodexClient {
         for override_kv in config_overrides {
             cmd.arg("--config").arg(override_kv);
         }
-        let mut codex_app_server = cmd
+        let mut orbit_code_app_server = cmd
             .arg("app-server")
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::inherit())
             .spawn()
-            .with_context(|| format!("failed to start `{codex_bin_display}` app-server"))?;
+            .with_context(|| format!("failed to start `{orbit_code_bin_display}` app-server"))?;
 
-        let stdin = codex_app_server
+        let stdin = orbit_code_app_server
             .stdin
             .take()
             .context("codex app-server stdin unavailable")?;
-        let stdout = codex_app_server
+        let stdout = orbit_code_app_server
             .stdout
             .take()
             .context("codex app-server stdout unavailable")?;
 
         Ok(Self {
             transport: ClientTransport::Stdio {
-                child: codex_app_server,
+                child: orbit_code_app_server,
                 stdin: Some(stdin),
                 stdout: BufReader::new(stdout),
             },
@@ -1584,7 +1595,7 @@ impl CodexClient {
         let request_id = self.request_id();
         let request = ClientRequest::LoginAccount {
             request_id: request_id.clone(),
-            params: codex_app_server_protocol::LoginAccountParams::Chatgpt,
+            params: orbit_code_app_server_protocol::LoginAccountParams::Chatgpt,
         };
 
         self.send_request(request, request_id, "account/login/start")
@@ -2100,7 +2111,7 @@ impl TestClientTracing {
         let config = Config::load_with_cli_overrides(cli_kv_overrides)
             .await
             .context("error loading config")?;
-        let otel_provider = codex_core::otel_init::build_provider(
+        let otel_provider = orbit_code_core::otel_init::build_provider(
             &config,
             env!("CARGO_PKG_VERSION"),
             Some(OTEL_SERVICE_NAME),

@@ -1,7 +1,7 @@
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 
-use codex_app_server_protocol::JSONRPCErrorError;
+use orbit_code_app_server_protocol::JSONRPCErrorError;
 
 use crate::protocol::InitializeResponse;
 use crate::server::jsonrpc::invalid_request;

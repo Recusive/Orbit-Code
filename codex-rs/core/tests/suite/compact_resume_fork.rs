@@ -11,15 +11,6 @@ use super::compact::COMPACT_WARNING_MESSAGE;
 use super::compact::FIRST_REPLY;
 use super::compact::SUMMARY_TEXT;
 use anyhow::Result;
-use codex_core::CodexThread;
-use codex_core::ThreadManager;
-use codex_core::compact::SUMMARIZATION_PROMPT;
-use codex_core::config::Config;
-use codex_core::spawn::CODEX_SANDBOX_NETWORK_DISABLED_ENV_VAR;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::WarningEvent;
-use codex_protocol::user_input::UserInput;
 use core_test_support::context_snapshot;
 use core_test_support::context_snapshot::ContextSnapshotOptions;
 use core_test_support::context_snapshot::ContextSnapshotRenderMode;
@@ -32,6 +23,15 @@ use core_test_support::responses::mount_sse_sequence;
 use core_test_support::responses::sse;
 use core_test_support::test_codex::test_codex;
 use core_test_support::wait_for_event;
+use orbit_code_core::CodexThread;
+use orbit_code_core::ThreadManager;
+use orbit_code_core::compact::SUMMARIZATION_PROMPT;
+use orbit_code_core::config::Config;
+use orbit_code_core::spawn::CODEX_SANDBOX_NETWORK_DISABLED_ENV_VAR;
+use orbit_code_protocol::protocol::EventMsg;
+use orbit_code_protocol::protocol::Op;
+use orbit_code_protocol::protocol::WarningEvent;
+use orbit_code_protocol::user_input::UserInput;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 use serde_json::json;
@@ -685,8 +685,8 @@ async fn resume_conversation(
     config: &Config,
     path: std::path::PathBuf,
 ) -> Arc<CodexThread> {
-    let auth_manager = codex_core::test_support::auth_manager_from_auth(
-        codex_core::CodexAuth::from_api_key("dummy"),
+    let auth_manager = orbit_code_core::test_support::auth_manager_from_auth(
+        orbit_code_core::CodexAuth::from_api_key("dummy"),
     );
     Box::pin(manager.resume_thread_from_rollout(config.clone(), path, auth_manager, None))
         .await

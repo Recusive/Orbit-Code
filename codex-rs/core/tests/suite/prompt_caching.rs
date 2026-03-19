@@ -1,22 +1,5 @@
 #![allow(clippy::unwrap_used)]
 
-use codex_apply_patch::APPLY_PATCH_TOOL_INSTRUCTIONS;
-use codex_core::features::Feature;
-use codex_core::shell::Shell;
-use codex_core::shell::default_user_shell;
-use codex_protocol::config_types::CollaborationMode;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::config_types::ReasoningSummary;
-use codex_protocol::config_types::Settings;
-use codex_protocol::config_types::WebSearchMode;
-use codex_protocol::openai_models::ReasoningEffort;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::ENVIRONMENT_CONTEXT_OPEN_TAG;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::SandboxPolicy;
-use codex_protocol::user_input::UserInput;
-use codex_utils_absolute_path::AbsolutePathBuf;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_response_created;
 use core_test_support::responses::mount_sse_once;
@@ -26,6 +9,23 @@ use core_test_support::skip_if_no_network;
 use core_test_support::test_codex::TestCodex;
 use core_test_support::test_codex::test_codex;
 use core_test_support::wait_for_event;
+use orbit_code_apply_patch::APPLY_PATCH_TOOL_INSTRUCTIONS;
+use orbit_code_core::features::Feature;
+use orbit_code_core::shell::Shell;
+use orbit_code_core::shell::default_user_shell;
+use orbit_code_protocol::config_types::CollaborationMode;
+use orbit_code_protocol::config_types::ModeKind;
+use orbit_code_protocol::config_types::ReasoningSummary;
+use orbit_code_protocol::config_types::Settings;
+use orbit_code_protocol::config_types::WebSearchMode;
+use orbit_code_protocol::openai_models::ReasoningEffort;
+use orbit_code_protocol::protocol::AskForApproval;
+use orbit_code_protocol::protocol::ENVIRONMENT_CONTEXT_OPEN_TAG;
+use orbit_code_protocol::protocol::EventMsg;
+use orbit_code_protocol::protocol::Op;
+use orbit_code_protocol::protocol::SandboxPolicy;
+use orbit_code_protocol::user_input::UserInput;
+use orbit_code_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 

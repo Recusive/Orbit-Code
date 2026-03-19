@@ -1,17 +1,17 @@
-use codex_core::NewThread;
-use codex_core::parse_turn_item;
-use codex_protocol::items::TurnItem;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::RolloutItem;
-use codex_protocol::protocol::RolloutLine;
-use codex_protocol::user_input::UserInput;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_response_created;
 use core_test_support::responses::sse;
 use core_test_support::skip_if_no_network;
 use core_test_support::test_codex::test_codex;
 use core_test_support::wait_for_event;
+use orbit_code_core::NewThread;
+use orbit_code_core::parse_turn_item;
+use orbit_code_protocol::items::TurnItem;
+use orbit_code_protocol::protocol::EventMsg;
+use orbit_code_protocol::protocol::Op;
+use orbit_code_protocol::protocol::RolloutItem;
+use orbit_code_protocol::protocol::RolloutLine;
+use orbit_code_protocol::user_input::UserInput;
 use wiremock::Mock;
 use wiremock::MockServer;
 use wiremock::ResponseTemplate;
@@ -107,14 +107,14 @@ async fn fork_thread_twice_drops_to_first_message() {
 
     // Fork once with n=1 → drops the last user input and everything after.
     let NewThread {
-        thread: codex_fork1,
+        thread: orbit_code_fork1,
         ..
     } = thread_manager
         .fork_thread(1, config_for_fork.clone(), base_path.clone(), false, None)
         .await
         .expect("fork 1");
 
-    let fork1_path = codex_fork1.rollout_path().expect("rollout path");
+    let fork1_path = orbit_code_fork1.rollout_path().expect("rollout path");
 
     // GetHistory on fork1 flushed; the file is ready.
     let fork1_items = read_items(&fork1_path);
@@ -126,14 +126,14 @@ async fn fork_thread_twice_drops_to_first_message() {
 
     // Fork again with n=0 → drops the (new) last user message, leaving only the first.
     let NewThread {
-        thread: codex_fork2,
+        thread: orbit_code_fork2,
         ..
     } = thread_manager
         .fork_thread(0, config_for_fork.clone(), fork1_path.clone(), false, None)
         .await
         .expect("fork 2");
 
-    let fork2_path = codex_fork2.rollout_path().expect("rollout path");
+    let fork2_path = orbit_code_fork2.rollout_path().expect("rollout path");
     // GetHistory on fork2 flushed; the file is ready.
     let fork1_items = read_items(&fork1_path);
     let fork1_user_inputs = find_user_input_positions(&fork1_items);

@@ -1,10 +1,10 @@
-use codex_protocol::ThreadId;
-use codex_protocol::approvals::ElicitationAction;
-use codex_protocol::mcp::RequestId as McpRequestId;
-use codex_protocol::protocol::Op;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyModifiers;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::approvals::ElicitationAction;
+use orbit_code_protocol::mcp::RequestId as McpRequestId;
+use orbit_code_protocol::protocol::Op;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Constraint;
 use ratatui::layout::Layout;
@@ -556,7 +556,7 @@ mod tests {
         AppLinkElicitationTarget {
             thread_id: ThreadId::try_from("00000000-0000-0000-0000-000000000001")
                 .expect("valid thread id"),
-            server_name: "codex_apps".to_string(),
+            server_name: "orbit_code_apps".to_string(),
             request_id: McpRequestId::String("request-1".to_string()),
         }
     }
@@ -784,7 +784,7 @@ mod tests {
                 assert_eq!(
                     op,
                     Op::ResolveElicitation {
-                        server_name: "codex_apps".to_string(),
+                        server_name: "orbit_code_apps".to_string(),
                         request_id: McpRequestId::String("request-1".to_string()),
                         decision: ElicitationAction::Accept,
                         content: None,
@@ -826,7 +826,7 @@ mod tests {
                 assert_eq!(
                     op,
                     Op::ResolveElicitation {
-                        server_name: "codex_apps".to_string(),
+                        server_name: "orbit_code_apps".to_string(),
                         request_id: McpRequestId::String("request-1".to_string()),
                         decision: ElicitationAction::Decline,
                         content: None,
@@ -876,7 +876,7 @@ mod tests {
                 assert_eq!(
                     op,
                     Op::ResolveElicitation {
-                        server_name: "codex_apps".to_string(),
+                        server_name: "orbit_code_apps".to_string(),
                         request_id: McpRequestId::String("request-1".to_string()),
                         decision: ElicitationAction::Accept,
                         content: None,

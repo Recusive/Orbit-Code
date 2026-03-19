@@ -1,12 +1,12 @@
 //! Configuration object accepted by the `codex` MCP tool-call.
 
-use codex_arg0::Arg0DispatchPaths;
-use codex_core::config::Config;
-use codex_core::config::ConfigOverrides;
-use codex_protocol::ThreadId;
-use codex_protocol::config_types::SandboxMode;
-use codex_protocol::protocol::AskForApproval;
-use codex_utils_json_to_toml::json_to_toml;
+use orbit_code_arg0::Arg0DispatchPaths;
+use orbit_code_core::config::Config;
+use orbit_code_core::config::ConfigOverrides;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::config_types::SandboxMode;
+use orbit_code_protocol::protocol::AskForApproval;
+use orbit_code_utils_json_to_toml::json_to_toml;
 use rmcp::model::JsonObject;
 use rmcp::model::Tool;
 use schemars::JsonSchema;
@@ -47,7 +47,7 @@ pub struct CodexToolCallParam {
     pub sandbox: Option<CodexToolCallSandboxMode>,
 
     /// Individual config settings that will override what is in
-    /// CODEX_HOME/config.toml.
+    /// ORBIT_HOME/config.toml.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub config: Option<HashMap<String, serde_json::Value>>,
 
@@ -107,7 +107,7 @@ impl From<CodexToolCallSandboxMode> for SandboxMode {
 }
 
 /// Builds a `Tool` definition (JSON schema etc.) for the Codex tool-call.
-pub(crate) fn create_tool_for_codex_tool_call_param() -> Tool {
+pub(crate) fn create_tool_for_orbit_code_tool_call_param() -> Tool {
     let schema = SchemaSettings::draft2019_09()
         .with(|s| {
             s.inline_subschemas = true;
@@ -122,7 +122,7 @@ pub(crate) fn create_tool_for_codex_tool_call_param() -> Tool {
         name: "codex".into(),
         title: Some("Codex".to_string()),
         input_schema,
-        output_schema: Some(codex_tool_output_schema()),
+        output_schema: Some(orbit_code_tool_output_schema()),
         description: Some(
             "Run a Codex session. Accepts configuration parameters matching the Codex Config struct."
                 .into(),
@@ -134,7 +134,7 @@ pub(crate) fn create_tool_for_codex_tool_call_param() -> Tool {
     }
 }
 
-fn codex_tool_output_schema() -> Arc<JsonObject> {
+fn orbit_code_tool_output_schema() -> Arc<JsonObject> {
     let schema = serde_json::json!({
         "type": "object",
         "properties": {
@@ -176,7 +176,7 @@ impl CodexToolCallParam {
             cwd: cwd.map(PathBuf::from),
             approval_policy: approval_policy.map(Into::into),
             sandbox_mode: sandbox.map(Into::into),
-            codex_linux_sandbox_exe: arg0_paths.codex_linux_sandbox_exe.clone(),
+            orbit_code_linux_sandbox_exe: arg0_paths.orbit_code_linux_sandbox_exe.clone(),
             main_execve_wrapper_exe: arg0_paths.main_execve_wrapper_exe.clone(),
             base_instructions,
             developer_instructions,
@@ -231,7 +231,7 @@ impl CodexToolCallReplyParam {
 }
 
 /// Builds a `Tool` definition for the `codex-reply` tool-call.
-pub(crate) fn create_tool_for_codex_tool_call_reply_param() -> Tool {
+pub(crate) fn create_tool_for_orbit_code_tool_call_reply_param() -> Tool {
     let schema = SchemaSettings::draft2019_09()
         .with(|s| {
             s.inline_subschemas = true;
@@ -246,7 +246,7 @@ pub(crate) fn create_tool_for_codex_tool_call_reply_param() -> Tool {
         name: "codex-reply".into(),
         title: Some("Codex Reply".to_string()),
         input_schema,
-        output_schema: Some(codex_tool_output_schema()),
+        output_schema: Some(orbit_code_tool_output_schema()),
         description: Some(
             "Continue a Codex conversation by providing the thread id and prompt.".into(),
         ),
@@ -298,8 +298,8 @@ mod tests {
     /// As of 2025-05-04, there is an open PR for this:
     /// https://github.com/modelcontextprotocol/inspector/pull/196
     #[test]
-    fn verify_codex_tool_json_schema() {
-        let tool = create_tool_for_codex_tool_call_param();
+    fn verify_orbit_code_tool_json_schema() {
+        let tool = create_tool_for_orbit_code_tool_call_param();
         let tool_json = serde_json::to_value(&tool).expect("tool serializes");
         let expected_tool_json = serde_json::json!({
           "description": "Run a Codex session. Accepts configuration parameters matching the Codex Config struct.",
@@ -325,7 +325,7 @@ mod tests {
               },
               "config": {
                 "additionalProperties": true,
-                "description": "Individual config settings that will override what is in CODEX_HOME/config.toml.",
+                "description": "Individual config settings that will override what is in ORBIT_HOME/config.toml.",
                 "type": "object"
               },
               "cwd": {
@@ -385,8 +385,8 @@ mod tests {
     }
 
     #[test]
-    fn verify_codex_tool_reply_json_schema() {
-        let tool = create_tool_for_codex_tool_call_reply_param();
+    fn verify_orbit_code_tool_reply_json_schema() {
+        let tool = create_tool_for_orbit_code_tool_call_reply_param();
         let tool_json = serde_json::to_value(&tool).expect("tool serializes");
         let expected_tool_json = serde_json::json!({
           "description": "Continue a Codex conversation by providing the thread id and prompt.",

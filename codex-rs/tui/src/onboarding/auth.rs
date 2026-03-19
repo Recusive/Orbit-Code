@@ -1,18 +1,18 @@
 #![allow(clippy::unwrap_used)]
 
-use codex_core::AuthManager;
-use codex_core::auth::AuthCredentialsStoreMode;
-use codex_core::auth::CLIENT_ID;
-use codex_core::auth::login_with_api_key;
-use codex_core::auth::read_openai_api_key_from_env;
-use codex_login::DeviceCode;
-use codex_login::ServerOptions;
-use codex_login::ShutdownHandle;
-use codex_login::run_login_server;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyEventKind;
 use crossterm::event::KeyModifiers;
+use orbit_code_core::AuthManager;
+use orbit_code_core::auth::AuthCredentialsStoreMode;
+use orbit_code_core::auth::CLIENT_ID;
+use orbit_code_core::auth::login_with_api_key;
+use orbit_code_core::auth::read_openai_api_key_from_env;
+use orbit_code_login::DeviceCode;
+use orbit_code_login::ServerOptions;
+use orbit_code_login::ShutdownHandle;
+use orbit_code_login::run_login_server;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Constraint;
 use ratatui::layout::Layout;
@@ -30,8 +30,8 @@ use ratatui::widgets::Paragraph;
 use ratatui::widgets::WidgetRef;
 use ratatui::widgets::Wrap;
 
-use codex_core::auth::AuthMode;
-use codex_protocol::config_types::ForcedLoginMethod;
+use orbit_code_core::auth::AuthMode;
+use orbit_code_protocol::config_types::ForcedLoginMethod;
 use std::sync::RwLock;
 
 use crate::LoginStatus;
@@ -198,7 +198,7 @@ pub(crate) struct AuthModeWidget {
     pub highlighted_mode: SignInOption,
     pub error: Option<String>,
     pub sign_in_state: Arc<RwLock<SignInState>>,
-    pub codex_home: PathBuf,
+    pub orbit_code_home: PathBuf,
     pub cli_auth_credentials_store_mode: AuthCredentialsStoreMode,
     pub login_status: LoginStatus,
     pub auth_manager: Arc<AuthManager>,
@@ -674,7 +674,7 @@ impl AuthModeWidget {
             return;
         }
         match login_with_api_key(
-            &self.codex_home,
+            &self.orbit_code_home,
             &api_key,
             self.cli_auth_credentials_store_mode,
         ) {
@@ -724,7 +724,7 @@ impl AuthModeWidget {
 
         self.error = None;
         let opts = ServerOptions::new(
-            self.codex_home.clone(),
+            self.orbit_code_home.clone(),
             CLIENT_ID.to_string(),
             self.forced_chatgpt_workspace_id.clone(),
             self.cli_auth_credentials_store_mode,
@@ -777,7 +777,7 @@ impl AuthModeWidget {
 
         self.error = None;
         let opts = ServerOptions::new(
-            self.codex_home.clone(),
+            self.orbit_code_home.clone(),
             CLIENT_ID.to_string(),
             self.forced_chatgpt_workspace_id.clone(),
             self.cli_auth_credentials_store_mode,
@@ -835,21 +835,21 @@ mod tests {
     use pretty_assertions::assert_eq;
     use tempfile::TempDir;
 
-    use codex_core::auth::AuthCredentialsStoreMode;
+    use orbit_code_core::auth::AuthCredentialsStoreMode;
 
     fn widget_forced_chatgpt() -> (AuthModeWidget, TempDir) {
-        let codex_home = TempDir::new().unwrap();
-        let codex_home_path = codex_home.path().to_path_buf();
+        let orbit_code_home = TempDir::new().unwrap();
+        let orbit_code_home_path = orbit_code_home.path().to_path_buf();
         let widget = AuthModeWidget {
             request_frame: FrameRequester::test_dummy(),
             highlighted_mode: SignInOption::ChatGpt,
             error: None,
             sign_in_state: Arc::new(RwLock::new(SignInState::PickMode)),
-            codex_home: codex_home_path.clone(),
+            orbit_code_home: orbit_code_home_path.clone(),
             cli_auth_credentials_store_mode: AuthCredentialsStoreMode::File,
             login_status: LoginStatus::NotAuthenticated,
             auth_manager: AuthManager::shared(
-                codex_home_path,
+                orbit_code_home_path,
                 false,
                 AuthCredentialsStoreMode::File,
             ),
@@ -857,7 +857,7 @@ mod tests {
             forced_login_method: Some(ForcedLoginMethod::Chatgpt),
             animations_enabled: true,
         };
-        (widget, codex_home)
+        (widget, orbit_code_home)
     }
 
     #[test]

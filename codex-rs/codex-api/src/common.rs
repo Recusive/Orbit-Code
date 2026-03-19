@@ -1,12 +1,12 @@
 use crate::error::ApiError;
-use codex_protocol::config_types::ReasoningSummary as ReasoningSummaryConfig;
-use codex_protocol::config_types::Verbosity as VerbosityConfig;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::openai_models::ReasoningEffort as ReasoningEffortConfig;
-use codex_protocol::protocol::RateLimitSnapshot;
-use codex_protocol::protocol::TokenUsage;
-use codex_protocol::protocol::W3cTraceContext;
 use futures::Stream;
+use orbit_code_protocol::config_types::ReasoningSummary as ReasoningSummaryConfig;
+use orbit_code_protocol::config_types::Verbosity as VerbosityConfig;
+use orbit_code_protocol::models::ResponseItem;
+use orbit_code_protocol::openai_models::ReasoningEffort as ReasoningEffortConfig;
+use orbit_code_protocol::protocol::RateLimitSnapshot;
+use orbit_code_protocol::protocol::TokenUsage;
+use orbit_code_protocol::protocol::W3cTraceContext;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::Value;
@@ -263,7 +263,7 @@ pub fn create_text_param_for_request(
             r#type: TextFormatType::JsonSchema,
             strict: true,
             schema: schema.clone(),
-            name: "codex_output_schema".to_string(),
+            name: "orbit_code_output_schema".to_string(),
         }),
     })
 }

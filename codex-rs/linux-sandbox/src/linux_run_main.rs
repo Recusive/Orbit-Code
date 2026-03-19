@@ -14,9 +14,9 @@ use crate::landlock::apply_sandbox_policy_to_current_thread;
 use crate::launcher::exec_bwrap;
 use crate::proxy_routing::activate_proxy_routes_in_netns;
 use crate::proxy_routing::prepare_host_proxy_route_spec;
-use codex_protocol::protocol::FileSystemSandboxPolicy;
-use codex_protocol::protocol::NetworkSandboxPolicy;
-use codex_protocol::protocol::SandboxPolicy;
+use orbit_code_protocol::protocol::FileSystemSandboxPolicy;
+use orbit_code_protocol::protocol::NetworkSandboxPolicy;
+use orbit_code_protocol::protocol::SandboxPolicy;
 
 #[derive(Debug, Parser)]
 /// CLI surface for the Linux sandbox helper.

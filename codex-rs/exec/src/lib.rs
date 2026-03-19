@@ -13,69 +13,69 @@ pub mod exec_events;
 pub use cli::Cli;
 pub use cli::Command;
 pub use cli::ReviewArgs;
-use codex_app_server_client::DEFAULT_IN_PROCESS_CHANNEL_CAPACITY;
-use codex_app_server_client::InProcessAppServerClient;
-use codex_app_server_client::InProcessClientStartArgs;
-use codex_app_server_client::InProcessServerEvent;
-use codex_app_server_protocol::ChatgptAuthTokensRefreshResponse;
-use codex_app_server_protocol::ClientRequest;
-use codex_app_server_protocol::ConfigWarningNotification;
-use codex_app_server_protocol::JSONRPCErrorError;
-use codex_app_server_protocol::JSONRPCNotification;
-use codex_app_server_protocol::McpServerElicitationAction;
-use codex_app_server_protocol::McpServerElicitationRequestResponse;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::ReviewStartParams;
-use codex_app_server_protocol::ReviewStartResponse;
-use codex_app_server_protocol::ReviewTarget as ApiReviewTarget;
-use codex_app_server_protocol::ServerNotification;
-use codex_app_server_protocol::ServerRequest;
-use codex_app_server_protocol::ThreadResumeParams;
-use codex_app_server_protocol::ThreadResumeResponse;
-use codex_app_server_protocol::ThreadStartParams;
-use codex_app_server_protocol::ThreadStartResponse;
-use codex_app_server_protocol::ThreadUnsubscribeParams;
-use codex_app_server_protocol::ThreadUnsubscribeResponse;
-use codex_app_server_protocol::TurnInterruptParams;
-use codex_app_server_protocol::TurnInterruptResponse;
-use codex_app_server_protocol::TurnStartParams;
-use codex_app_server_protocol::TurnStartResponse;
-use codex_arg0::Arg0DispatchPaths;
-use codex_cloud_requirements::cloud_requirements_loader;
-use codex_core::AuthManager;
-use codex_core::LMSTUDIO_OSS_PROVIDER_ID;
-use codex_core::OLLAMA_OSS_PROVIDER_ID;
-use codex_core::auth::enforce_login_restrictions;
-use codex_core::check_execpolicy_for_warnings;
-use codex_core::config::Config;
-use codex_core::config::ConfigBuilder;
-use codex_core::config::ConfigOverrides;
-use codex_core::config::find_codex_home;
-use codex_core::config::load_config_as_toml_with_cli_overrides;
-use codex_core::config::resolve_oss_provider;
-use codex_core::config_loader::ConfigLoadError;
-use codex_core::config_loader::LoaderOverrides;
-use codex_core::config_loader::format_config_error_with_source;
-use codex_core::format_exec_policy_error_with_source;
-use codex_core::git_info::get_git_repo_root;
-use codex_feedback::CodexFeedback;
-use codex_otel::set_parent_from_context;
-use codex_otel::traceparent_context_from_env;
-use codex_protocol::account::PlanType as AccountPlanType;
-use codex_protocol::config_types::SandboxMode;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::Event;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::ReviewRequest;
-use codex_protocol::protocol::ReviewTarget;
-use codex_protocol::protocol::SessionConfiguredEvent;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::user_input::UserInput;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_oss::ensure_oss_provider_ready;
-use codex_utils_oss::get_default_model_for_oss_provider;
 use event_processor_with_human_output::EventProcessorWithHumanOutput;
 use event_processor_with_jsonl_output::EventProcessorWithJsonOutput;
+use orbit_code_app_server_client::DEFAULT_IN_PROCESS_CHANNEL_CAPACITY;
+use orbit_code_app_server_client::InProcessAppServerClient;
+use orbit_code_app_server_client::InProcessClientStartArgs;
+use orbit_code_app_server_client::InProcessServerEvent;
+use orbit_code_app_server_protocol::ChatgptAuthTokensRefreshResponse;
+use orbit_code_app_server_protocol::ClientRequest;
+use orbit_code_app_server_protocol::ConfigWarningNotification;
+use orbit_code_app_server_protocol::JSONRPCErrorError;
+use orbit_code_app_server_protocol::JSONRPCNotification;
+use orbit_code_app_server_protocol::McpServerElicitationAction;
+use orbit_code_app_server_protocol::McpServerElicitationRequestResponse;
+use orbit_code_app_server_protocol::RequestId;
+use orbit_code_app_server_protocol::ReviewStartParams;
+use orbit_code_app_server_protocol::ReviewStartResponse;
+use orbit_code_app_server_protocol::ReviewTarget as ApiReviewTarget;
+use orbit_code_app_server_protocol::ServerNotification;
+use orbit_code_app_server_protocol::ServerRequest;
+use orbit_code_app_server_protocol::ThreadResumeParams;
+use orbit_code_app_server_protocol::ThreadResumeResponse;
+use orbit_code_app_server_protocol::ThreadStartParams;
+use orbit_code_app_server_protocol::ThreadStartResponse;
+use orbit_code_app_server_protocol::ThreadUnsubscribeParams;
+use orbit_code_app_server_protocol::ThreadUnsubscribeResponse;
+use orbit_code_app_server_protocol::TurnInterruptParams;
+use orbit_code_app_server_protocol::TurnInterruptResponse;
+use orbit_code_app_server_protocol::TurnStartParams;
+use orbit_code_app_server_protocol::TurnStartResponse;
+use orbit_code_arg0::Arg0DispatchPaths;
+use orbit_code_cloud_requirements::cloud_requirements_loader;
+use orbit_code_core::AuthManager;
+use orbit_code_core::LMSTUDIO_OSS_PROVIDER_ID;
+use orbit_code_core::OLLAMA_OSS_PROVIDER_ID;
+use orbit_code_core::auth::enforce_login_restrictions;
+use orbit_code_core::check_execpolicy_for_warnings;
+use orbit_code_core::config::Config;
+use orbit_code_core::config::ConfigBuilder;
+use orbit_code_core::config::ConfigOverrides;
+use orbit_code_core::config::find_orbit_code_home;
+use orbit_code_core::config::load_config_as_toml_with_cli_overrides;
+use orbit_code_core::config::resolve_oss_provider;
+use orbit_code_core::config_loader::ConfigLoadError;
+use orbit_code_core::config_loader::LoaderOverrides;
+use orbit_code_core::config_loader::format_config_error_with_source;
+use orbit_code_core::format_exec_policy_error_with_source;
+use orbit_code_core::git_info::get_git_repo_root;
+use orbit_code_feedback::CodexFeedback;
+use orbit_code_otel::set_parent_from_context;
+use orbit_code_otel::traceparent_context_from_env;
+use orbit_code_protocol::account::PlanType as AccountPlanType;
+use orbit_code_protocol::config_types::SandboxMode;
+use orbit_code_protocol::protocol::AskForApproval;
+use orbit_code_protocol::protocol::Event;
+use orbit_code_protocol::protocol::EventMsg;
+use orbit_code_protocol::protocol::ReviewRequest;
+use orbit_code_protocol::protocol::ReviewTarget;
+use orbit_code_protocol::protocol::SessionConfiguredEvent;
+use orbit_code_protocol::protocol::SessionSource;
+use orbit_code_protocol::user_input::UserInput;
+use orbit_code_utils_absolute_path::AbsolutePathBuf;
+use orbit_code_utils_oss::ensure_oss_provider_ready;
+use orbit_code_utils_oss::get_default_model_for_oss_provider;
 use serde_json::Value;
 use std::collections::HashMap;
 use std::collections::HashSet;
@@ -98,10 +98,10 @@ use uuid::Uuid;
 use crate::cli::Command as ExecCommand;
 use crate::event_processor::CodexStatus;
 use crate::event_processor::EventProcessor;
-use codex_core::default_client::set_default_client_residency_requirement;
-use codex_core::default_client::set_default_originator;
-use codex_core::find_thread_path_by_id_str;
-use codex_core::find_thread_path_by_name_str;
+use orbit_code_core::default_client::set_default_client_residency_requirement;
+use orbit_code_core::default_client::set_default_originator;
+use orbit_code_core::find_thread_path_by_id_str;
+use orbit_code_core::find_thread_path_by_name_str;
 
 const DEFAULT_ANALYTICS_ENABLED: bool = true;
 
@@ -159,7 +159,7 @@ fn exec_root_span() -> tracing::Span {
 }
 
 pub async fn run_main(cli: Cli, arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
-    if let Err(err) = set_default_originator("codex_exec".to_string()) {
+    if let Err(err) = set_default_originator("orbit_code_exec".to_string()) {
         tracing::warn!(?err, "Failed to set codex exec originator override {err:?}");
     }
 
@@ -252,8 +252,8 @@ pub async fn run_main(cli: Cli, arg0_paths: Arg0DispatchPaths) -> anyhow::Result
 
     // we load config.toml here to determine project state.
     #[allow(clippy::print_stderr)]
-    let codex_home = match find_codex_home() {
-        Ok(codex_home) => codex_home,
+    let orbit_code_home = match find_orbit_code_home() {
+        Ok(orbit_code_home) => orbit_code_home,
         Err(err) => {
             eprintln!("Error finding codex home: {err}");
             std::process::exit(1);
@@ -262,7 +262,7 @@ pub async fn run_main(cli: Cli, arg0_paths: Arg0DispatchPaths) -> anyhow::Result
 
     #[allow(clippy::print_stderr)]
     let config_toml = match load_config_as_toml_with_cli_overrides(
-        &codex_home,
+        &orbit_code_home,
         &config_cwd,
         cli_kv_overrides.clone(),
     )
@@ -287,8 +287,8 @@ pub async fn run_main(cli: Cli, arg0_paths: Arg0DispatchPaths) -> anyhow::Result
     };
 
     let cloud_auth_manager = AuthManager::shared(
-        codex_home.clone(),
-        /*enable_codex_api_key_env*/ false,
+        orbit_code_home.clone(),
+        /*enable_orbit_code_api_key_env*/ false,
         config_toml.cli_auth_credentials_store.unwrap_or_default(),
     );
     let chatgpt_base_url = config_toml
@@ -296,8 +296,11 @@ pub async fn run_main(cli: Cli, arg0_paths: Arg0DispatchPaths) -> anyhow::Result
         .clone()
         .unwrap_or_else(|| "https://chatgpt.com/backend-api/".to_string());
     // TODO(gt): Make cloud requirements failures blocking once we can fail-closed.
-    let cloud_requirements =
-        cloud_requirements_loader(cloud_auth_manager, chatgpt_base_url, codex_home.clone());
+    let cloud_requirements = cloud_requirements_loader(
+        cloud_auth_manager,
+        chatgpt_base_url,
+        orbit_code_home.clone(),
+    );
     let run_cli_overrides = cli_kv_overrides.clone();
     let run_loader_overrides = LoaderOverrides::default();
     let run_cloud_requirements = cloud_requirements.clone();
@@ -344,7 +347,7 @@ pub async fn run_main(cli: Cli, arg0_paths: Arg0DispatchPaths) -> anyhow::Result
         cwd: resolved_cwd,
         model_provider: model_provider.clone(),
         service_tier: None,
-        codex_linux_sandbox_exe: arg0_paths.codex_linux_sandbox_exe.clone(),
+        orbit_code_linux_sandbox_exe: arg0_paths.orbit_code_linux_sandbox_exe.clone(),
         main_execve_wrapper_exe: arg0_paths.main_execve_wrapper_exe.clone(),
         js_repl_node_path: None,
         js_repl_node_module_dirs: None,
@@ -387,7 +390,7 @@ pub async fn run_main(cli: Cli, arg0_paths: Arg0DispatchPaths) -> anyhow::Result
     }
 
     let otel = match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        codex_core::otel_init::build_provider(
+        orbit_code_core::otel_init::build_provider(
             &config,
             env!("CARGO_PKG_VERSION"),
             /*service_name_override*/ None,
@@ -438,7 +441,7 @@ pub async fn run_main(cli: Cli, arg0_paths: Arg0DispatchPaths) -> anyhow::Result
         feedback: CodexFeedback::new(),
         config_warnings,
         session_source: SessionSource::Exec,
-        enable_codex_api_key_env: true,
+        enable_orbit_code_api_key_env: true,
         client_name: "codex-exec".to_string(),
         client_version: env!("CARGO_PKG_VERSION").to_string(),
         experimental_api: true,
@@ -603,7 +606,7 @@ async fn run_exec_session(args: ExecRunArgs) -> anyhow::Result<()> {
     let (initial_operation, prompt_summary) = match (command.as_ref(), prompt, images) {
         (Some(ExecCommand::Review(review_cli)), _, _) => {
             let review_request = build_review_request(review_cli)?;
-            let summary = codex_core::review_prompts::user_facing_hint(&review_request.target);
+            let summary = orbit_code_core::review_prompts::user_facing_hint(&review_request.target);
             (InitialOperation::Review { review_request }, summary)
         }
         (Some(ExecCommand::Resume(args)), root_prompt, imgs) => {
@@ -663,10 +666,10 @@ async fn run_exec_session(args: ExecRunArgs) -> anyhow::Result<()> {
     // Print the effective configuration and initial request so users can see what Codex
     // is using.
     event_processor.print_config_summary(&config, &prompt_summary, &session_configured);
-    if !json_mode && let Some(message) = codex_core::config::missing_system_bwrap_warning() {
+    if !json_mode && let Some(message) = orbit_code_core::config::missing_system_bwrap_warning() {
         let _ = event_processor.process_event(Event {
             id: String::new(),
-            msg: EventMsg::Warning(codex_protocol::protocol::WarningEvent { message }),
+            msg: EventMsg::Warning(orbit_code_protocol::protocol::WarningEvent { message }),
         });
     }
 
@@ -833,7 +836,7 @@ async fn run_exec_session(args: ExecRunArgs) -> anyhow::Result<()> {
                     }
                     EventMsg::McpStartupUpdate(update) => {
                         if required_mcp_servers.contains(&update.server)
-                            && let codex_protocol::protocol::McpStartupStatus::Failed { error } =
+                            && let orbit_code_protocol::protocol::McpStartupStatus::Failed { error } =
                                 &update.status
                         {
                             error_seen = true;
@@ -882,7 +885,7 @@ async fn run_exec_session(args: ExecRunArgs) -> anyhow::Result<()> {
                 warn!("{message}");
                 let _ = event_processor.process_event(Event {
                     id: String::new(),
-                    msg: EventMsg::Warning(codex_protocol::protocol::WarningEvent { message }),
+                    msg: EventMsg::Warning(orbit_code_protocol::protocol::WarningEvent { message }),
                 });
             }
         }
@@ -900,19 +903,19 @@ async fn run_exec_session(args: ExecRunArgs) -> anyhow::Result<()> {
 }
 
 fn sandbox_mode_from_policy(
-    sandbox_policy: &codex_protocol::protocol::SandboxPolicy,
-) -> Option<codex_app_server_protocol::SandboxMode> {
+    sandbox_policy: &orbit_code_protocol::protocol::SandboxPolicy,
+) -> Option<orbit_code_app_server_protocol::SandboxMode> {
     match sandbox_policy {
-        codex_protocol::protocol::SandboxPolicy::DangerFullAccess => {
-            Some(codex_app_server_protocol::SandboxMode::DangerFullAccess)
+        orbit_code_protocol::protocol::SandboxPolicy::DangerFullAccess => {
+            Some(orbit_code_app_server_protocol::SandboxMode::DangerFullAccess)
         }
-        codex_protocol::protocol::SandboxPolicy::ReadOnly { .. } => {
-            Some(codex_app_server_protocol::SandboxMode::ReadOnly)
+        orbit_code_protocol::protocol::SandboxPolicy::ReadOnly { .. } => {
+            Some(orbit_code_app_server_protocol::SandboxMode::ReadOnly)
         }
-        codex_protocol::protocol::SandboxPolicy::WorkspaceWrite { .. } => {
-            Some(codex_app_server_protocol::SandboxMode::WorkspaceWrite)
+        orbit_code_protocol::protocol::SandboxPolicy::WorkspaceWrite { .. } => {
+            Some(orbit_code_app_server_protocol::SandboxMode::WorkspaceWrite)
         }
-        codex_protocol::protocol::SandboxPolicy::ExternalSandbox { .. } => None,
+        orbit_code_protocol::protocol::SandboxPolicy::ExternalSandbox { .. } => None,
     }
 }
 
@@ -954,7 +957,7 @@ fn config_request_overrides_from_config(config: &Config) -> Option<HashMap<Strin
 
 fn approvals_reviewer_override_from_config(
     config: &Config,
-) -> Option<codex_app_server_protocol::ApprovalsReviewer> {
+) -> Option<orbit_code_app_server_protocol::ApprovalsReviewer> {
     Some(config.approvals_reviewer.into())
 }
 
@@ -1031,14 +1034,14 @@ fn session_configured_from_thread_response(
     rollout_path: Option<PathBuf>,
     model: String,
     model_provider_id: String,
-    service_tier: Option<codex_protocol::config_types::ServiceTier>,
+    service_tier: Option<orbit_code_protocol::config_types::ServiceTier>,
     approval_policy: AskForApproval,
-    approvals_reviewer: codex_protocol::config_types::ApprovalsReviewer,
-    sandbox_policy: codex_protocol::protocol::SandboxPolicy,
+    approvals_reviewer: orbit_code_protocol::config_types::ApprovalsReviewer,
+    sandbox_policy: orbit_code_protocol::protocol::SandboxPolicy,
     cwd: PathBuf,
-    reasoning_effort: Option<codex_protocol::openai_models::ReasoningEffort>,
+    reasoning_effort: Option<orbit_code_protocol::openai_models::ReasoningEffort>,
 ) -> Result<SessionConfiguredEvent, String> {
-    let session_id = codex_protocol::ThreadId::from_string(thread_id)
+    let session_id = orbit_code_protocol::ThreadId::from_string(thread_id)
         .map_err(|err| format!("thread id `{thread_id}` is invalid: {err}"))?;
 
     Ok(SessionConfiguredEvent {
@@ -1362,8 +1365,8 @@ fn local_external_chatgpt_tokens(
     config: &Config,
 ) -> Result<ChatgptAuthTokensRefreshResponse, String> {
     let auth_manager = AuthManager::shared(
-        config.codex_home.clone(),
-        /*enable_codex_api_key_env*/ false,
+        config.orbit_code_home.clone(),
+        /*enable_orbit_code_api_key_env*/ false,
         config.cli_auth_credentials_store_mode,
     );
     auth_manager.set_forced_chatgpt_workspace_id(config.forced_chatgpt_workspace_id.clone());
@@ -1412,11 +1415,11 @@ async fn resolve_resume_path(
         } else {
             Some(config.cwd.as_path())
         };
-        match codex_core::RolloutRecorder::find_latest_thread_path(
+        match orbit_code_core::RolloutRecorder::find_latest_thread_path(
             config,
             /*page_size*/ 1,
             /*cursor*/ None,
-            codex_core::ThreadSortKey::UpdatedAt,
+            orbit_code_core::ThreadSortKey::UpdatedAt,
             &[],
             Some(default_provider_filter.as_slice()),
             &config.model_provider_id,
@@ -1432,10 +1435,10 @@ async fn resolve_resume_path(
         }
     } else if let Some(id_str) = args.session_id.as_deref() {
         if Uuid::parse_str(id_str).is_ok() {
-            let path = find_thread_path_by_id_str(&config.codex_home, id_str).await?;
+            let path = find_thread_path_by_id_str(&config.orbit_code_home, id_str).await?;
             Ok(path)
         } else {
-            let path = find_thread_path_by_name_str(&config.codex_home, id_str).await?;
+            let path = find_thread_path_by_name_str(&config.orbit_code_home, id_str).await?;
             Ok(path)
         }
     } else {
@@ -1615,12 +1618,12 @@ fn build_review_request(args: &ReviewArgs) -> anyhow::Result<ReviewRequest> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use codex_otel::set_parent_from_w3c_trace_context;
-    use codex_protocol::config_types::ApprovalsReviewer;
     use opentelemetry::trace::TraceContextExt;
     use opentelemetry::trace::TraceId;
     use opentelemetry::trace::TracerProvider as _;
     use opentelemetry_sdk::trace::SdkTracerProvider;
+    use orbit_code_otel::set_parent_from_w3c_trace_context;
+    use orbit_code_protocol::config_types::ApprovalsReviewer;
     use pretty_assertions::assert_eq;
     use tempfile::tempdir;
     use tracing_opentelemetry::OpenTelemetrySpanExt;
@@ -1641,7 +1644,7 @@ mod tests {
         let subscriber = test_tracing_subscriber();
         let _guard = tracing::subscriber::set_default(subscriber);
 
-        let parent = codex_protocol::protocol::W3cTraceContext {
+        let parent = orbit_code_protocol::protocol::W3cTraceContext {
             traceparent: Some("00-00000000000000000000000000000077-0000000000000088-01".into()),
             tracestate: Some("vendor=value".into()),
         };
@@ -1816,9 +1819,9 @@ mod tests {
         assert_eq!(decoded.conversation_id.as_deref(), Some("thread-123"));
         assert!(matches!(
             decoded.event.msg,
-            EventMsg::Error(codex_protocol::protocol::ErrorEvent {
+            EventMsg::Error(orbit_code_protocol::protocol::ErrorEvent {
                 message,
-                codex_error_info: None,
+                orbit_code_error_info: None,
             }) if message == "boom"
         ));
     }
@@ -1842,10 +1845,10 @@ mod tests {
 
     #[tokio::test]
     async fn thread_start_params_include_review_policy_when_review_policy_is_manual_only() {
-        let codex_home = tempdir().expect("create temp codex home");
+        let orbit_code_home = tempdir().expect("create temp codex home");
         let cwd = tempdir().expect("create temp cwd");
         let config = ConfigBuilder::default()
-            .codex_home(codex_home.path().to_path_buf())
+            .orbit_code_home(orbit_code_home.path().to_path_buf())
             .fallback_cwd(Some(cwd.path().to_path_buf()))
             .build()
             .await
@@ -1855,21 +1858,21 @@ mod tests {
 
         assert_eq!(
             params.approvals_reviewer,
-            Some(codex_app_server_protocol::ApprovalsReviewer::User)
+            Some(orbit_code_app_server_protocol::ApprovalsReviewer::User)
         );
     }
 
     #[tokio::test]
     async fn thread_start_params_include_review_policy_when_auto_review_is_enabled() {
-        let codex_home = tempdir().expect("create temp codex home");
+        let orbit_code_home = tempdir().expect("create temp codex home");
         let cwd = tempdir().expect("create temp cwd");
         std::fs::write(
-            codex_home.path().join("config.toml"),
+            orbit_code_home.path().join("config.toml"),
             "approvals_reviewer = \"guardian_subagent\"\n",
         )
         .expect("write auto-review config");
         let config = ConfigBuilder::default()
-            .codex_home(codex_home.path().to_path_buf())
+            .orbit_code_home(orbit_code_home.path().to_path_buf())
             .fallback_cwd(Some(cwd.path().to_path_buf()))
             .build()
             .await
@@ -1879,25 +1882,25 @@ mod tests {
 
         assert_eq!(
             params.approvals_reviewer,
-            Some(codex_app_server_protocol::ApprovalsReviewer::GuardianSubagent)
+            Some(orbit_code_app_server_protocol::ApprovalsReviewer::GuardianSubagent)
         );
     }
 
     #[test]
     fn session_configured_from_thread_response_uses_review_policy_from_response() {
         let response = ThreadStartResponse {
-            thread: codex_app_server_protocol::Thread {
+            thread: orbit_code_app_server_protocol::Thread {
                 id: "67e55044-10b1-426f-9247-bb680e5fe0c8".to_string(),
                 preview: String::new(),
                 ephemeral: false,
                 model_provider: "openai".to_string(),
                 created_at: 0,
                 updated_at: 0,
-                status: codex_app_server_protocol::ThreadStatus::Idle,
+                status: orbit_code_app_server_protocol::ThreadStatus::Idle,
                 path: Some(PathBuf::from("/tmp/rollout.jsonl")),
                 cwd: PathBuf::from("/tmp"),
                 cli_version: "0.0.0".to_string(),
-                source: codex_app_server_protocol::SessionSource::Cli,
+                source: orbit_code_app_server_protocol::SessionSource::Cli,
                 agent_nickname: None,
                 agent_role: None,
                 git_info: None,
@@ -1908,11 +1911,11 @@ mod tests {
             model_provider: "openai".to_string(),
             service_tier: None,
             cwd: PathBuf::from("/tmp"),
-            approval_policy: codex_app_server_protocol::AskForApproval::OnRequest,
-            approvals_reviewer: codex_app_server_protocol::ApprovalsReviewer::GuardianSubagent,
-            sandbox: codex_app_server_protocol::SandboxPolicy::WorkspaceWrite {
+            approval_policy: orbit_code_app_server_protocol::AskForApproval::OnRequest,
+            approvals_reviewer: orbit_code_app_server_protocol::ApprovalsReviewer::GuardianSubagent,
+            sandbox: orbit_code_app_server_protocol::SandboxPolicy::WorkspaceWrite {
                 writable_roots: vec![],
-                read_only_access: codex_app_server_protocol::ReadOnlyAccess::FullAccess,
+                read_only_access: orbit_code_app_server_protocol::ReadOnlyAccess::FullAccess,
                 network_access: false,
                 exclude_tmpdir_env_var: false,
                 exclude_slash_tmp: false,

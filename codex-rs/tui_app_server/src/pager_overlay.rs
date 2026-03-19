@@ -808,9 +808,9 @@ fn render_offset_content(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use codex_protocol::protocol::ExecCommandSource;
-    use codex_protocol::protocol::ReviewDecision;
     use insta::assert_snapshot;
+    use orbit_code_protocol::protocol::ExecCommandSource;
+    use orbit_code_protocol::protocol::ReviewDecision;
     use pretty_assertions::assert_eq;
     use std::collections::HashMap;
     use std::path::PathBuf;
@@ -821,8 +821,8 @@ mod tests {
     use crate::history_cell;
     use crate::history_cell::HistoryCell;
     use crate::history_cell::new_patch_event;
-    use codex_protocol::parse_command::ParsedCommand;
-    use codex_protocol::protocol::FileChange;
+    use orbit_code_protocol::parse_command::ParsedCommand;
+    use orbit_code_protocol::protocol::FileChange;
     use ratatui::Terminal;
     use ratatui::backend::TestBackend;
     use ratatui::text::Text;

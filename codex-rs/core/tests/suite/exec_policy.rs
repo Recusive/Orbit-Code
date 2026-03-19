@@ -1,15 +1,6 @@
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 
 use anyhow::Result;
-use codex_core::features::Feature;
-use codex_protocol::config_types::CollaborationMode;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::config_types::Settings;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::SandboxPolicy;
-use codex_protocol::user_input::UserInput;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_function_call;
@@ -19,6 +10,15 @@ use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
 use core_test_support::test_codex::test_codex;
 use core_test_support::wait_for_event;
+use orbit_code_core::features::Feature;
+use orbit_code_protocol::config_types::CollaborationMode;
+use orbit_code_protocol::config_types::ModeKind;
+use orbit_code_protocol::config_types::Settings;
+use orbit_code_protocol::protocol::AskForApproval;
+use orbit_code_protocol::protocol::EventMsg;
+use orbit_code_protocol::protocol::Op;
+use orbit_code_protocol::protocol::SandboxPolicy;
+use orbit_code_protocol::user_input::UserInput;
 use serde_json::Value;
 use serde_json::json;
 use std::fs;
@@ -81,7 +81,7 @@ async fn execpolicy_blocks_shell_invocation() -> Result<()> {
     }
 
     let mut builder = test_codex().with_config(|config| {
-        let policy_path = config.codex_home.join("rules").join("policy.rules");
+        let policy_path = config.orbit_code_home.join("rules").join("policy.rules");
         fs::create_dir_all(
             policy_path
                 .parent()

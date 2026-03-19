@@ -10,7 +10,7 @@ use tokio::process::ChildStdin;
 use tokio::process::ChildStdout;
 
 use anyhow::Context;
-use codex_mcp_server::CodexToolCallParam;
+use orbit_code_mcp_server::CodexToolCallParam;
 
 use pretty_assertions::assert_eq;
 use rmcp::model::CallToolRequestParams;
@@ -43,8 +43,8 @@ pub struct McpProcess {
 }
 
 impl McpProcess {
-    pub async fn new(codex_home: &Path) -> anyhow::Result<Self> {
-        Self::new_with_env(codex_home, &[]).await
+    pub async fn new(orbit_code_home: &Path) -> anyhow::Result<Self> {
+        Self::new_with_env(orbit_code_home, &[]).await
     }
 
     /// Creates a new MCP process, allowing tests to override or remove
@@ -53,17 +53,17 @@ impl McpProcess {
     /// Pass a tuple of (key, Some(value)) to set/override, or (key, None) to
     /// remove a variable from the child's environment.
     pub async fn new_with_env(
-        codex_home: &Path,
+        orbit_code_home: &Path,
         env_overrides: &[(&str, Option<&str>)],
     ) -> anyhow::Result<Self> {
-        let program = codex_utils_cargo_bin::cargo_bin("codex-mcp-server")
+        let program = orbit_code_utils_cargo_bin::cargo_bin("codex-mcp-server")
             .context("should find binary for codex-mcp-server")?;
         let mut cmd = Command::new(program);
 
         cmd.stdin(Stdio::piped());
         cmd.stdout(Stdio::piped());
         cmd.stderr(Stdio::piped());
-        cmd.env("CODEX_HOME", codex_home);
+        cmd.env("ORBIT_HOME", orbit_code_home);
         cmd.env("RUST_LOG", "debug");
 
         for (k, v) in env_overrides {
@@ -150,13 +150,13 @@ impl McpProcess {
         let initialized = self.read_jsonrpc_message().await?;
         let os_info = os_info::get();
         let build_version = env!("CARGO_PKG_VERSION");
-        let originator = codex_core::default_client::originator().value;
+        let originator = orbit_code_core::default_client::originator().value;
         let user_agent = format!(
             "{originator}/{build_version} ({} {}; {}) {} (elicitation test; 0.0.0)",
             os_info.os_type(),
             os_info.version(),
             os_info.architecture().unwrap_or("unknown"),
-            codex_core::terminal::user_agent()
+            orbit_code_core::terminal::user_agent()
         );
         let JsonRpcMessage::Response(JsonRpcResponse {
             jsonrpc,
@@ -198,11 +198,11 @@ impl McpProcess {
 
     /// Returns the id used to make the request so it can be used when
     /// correlating notifications.
-    pub async fn send_codex_tool_call(
+    pub async fn send_orbit_code_tool_call(
         &mut self,
         params: CodexToolCallParam,
     ) -> anyhow::Result<i64> {
-        let codex_tool_call_params = CallToolRequestParams {
+        let orbit_code_tool_call_params = CallToolRequestParams {
             meta: None,
             name: "codex".into(),
             arguments: Some(match serde_json::to_value(params)? {
@@ -213,7 +213,7 @@ impl McpProcess {
         };
         self.send_request(
             "tools/call",
-            Some(serde_json::to_value(codex_tool_call_params)?),
+            Some(serde_json::to_value(orbit_code_tool_call_params)?),
         )
         .await
     }

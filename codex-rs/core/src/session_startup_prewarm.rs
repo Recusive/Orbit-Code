@@ -14,10 +14,10 @@ use crate::codex::Session;
 use crate::codex::build_prompt;
 use crate::codex::built_tools;
 use crate::error::Result as CodexResult;
-use codex_otel::SessionTelemetry;
-use codex_otel::metrics::names::STARTUP_PREWARM_AGE_AT_FIRST_TURN_METRIC;
-use codex_otel::metrics::names::STARTUP_PREWARM_DURATION_METRIC;
-use codex_protocol::models::BaseInstructions;
+use orbit_code_otel::SessionTelemetry;
+use orbit_code_otel::metrics::names::STARTUP_PREWARM_AGE_AT_FIRST_TURN_METRIC;
+use orbit_code_otel::metrics::names::STARTUP_PREWARM_DURATION_METRIC;
+use orbit_code_protocol::models::BaseInstructions;
 
 pub(crate) struct SessionStartupPrewarmHandle {
     task: JoinHandle<CodexResult<ModelClientSession>>,

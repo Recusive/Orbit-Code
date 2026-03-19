@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use codex_protocol::models::ResponseItem;
+use orbit_code_protocol::models::ResponseItem;
 
 use crate::codex::TurnContext;
 use crate::contextual_user_message::USER_SHELL_COMMAND_FRAGMENT;

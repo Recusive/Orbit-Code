@@ -1,7 +1,7 @@
 use serde::Deserialize;
 use serde::Serialize;
 
-use codex_protocol::models::ResponseItem;
+use orbit_code_protocol::models::ResponseItem;
 
 use crate::contextual_user_message::AGENTS_MD_FRAGMENT;
 use crate::contextual_user_message::SKILL_FRAGMENT;

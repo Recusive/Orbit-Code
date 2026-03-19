@@ -6,10 +6,10 @@ use crate::config::ConfigBuilder;
 use crate::token_data::IdTokenInfo;
 use crate::token_data::KnownPlan as InternalKnownPlan;
 use crate::token_data::PlanType as InternalPlanType;
-use codex_protocol::account::PlanType as AccountPlanType;
+use orbit_code_protocol::account::PlanType as AccountPlanType;
 
 use base64::Engine;
-use codex_protocol::config_types::ForcedLoginMethod;
+use orbit_code_protocol::config_types::ForcedLoginMethod;
 use pretty_assertions::assert_eq;
 use serde::Serialize;
 use serde_json::json;
@@ -18,19 +18,19 @@ use tempfile::tempdir;
 
 #[tokio::test]
 async fn refresh_without_id_token() {
-    let codex_home = tempdir().unwrap();
+    let orbit_code_home = tempdir().unwrap();
     let fake_jwt = write_auth_file(
         AuthFileParams {
             openai_api_key: None,
             chatgpt_plan_type: Some("pro".to_string()),
             chatgpt_account_id: None,
         },
-        codex_home.path(),
+        orbit_code_home.path(),
     )
     .expect("failed to write auth file");
 
     let storage = create_auth_storage(
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
         AuthCredentialsStoreMode::File,
     );
     let updated = super::persist_tokens(
@@ -86,22 +86,26 @@ fn missing_auth_json_returns_none() {
 }
 
 #[tokio::test]
-#[serial(codex_api_key)]
+#[serial(orbit_code_api_key)]
 async fn pro_account_with_no_api_key_uses_chatgpt_auth() {
-    let codex_home = tempdir().unwrap();
+    let orbit_code_home = tempdir().unwrap();
     let fake_jwt = write_auth_file(
         AuthFileParams {
             openai_api_key: None,
             chatgpt_plan_type: Some("pro".to_string()),
             chatgpt_account_id: None,
         },
-        codex_home.path(),
+        orbit_code_home.path(),
     )
     .expect("failed to write auth file");
 
-    let auth = super::load_auth(codex_home.path(), false, AuthCredentialsStoreMode::File)
-        .unwrap()
-        .unwrap();
+    let auth = super::load_auth(
+        orbit_code_home.path(),
+        false,
+        AuthCredentialsStoreMode::File,
+    )
+    .unwrap()
+    .unwrap();
     assert_eq!(None, auth.api_key());
     assert_eq!(AuthMode::Chatgpt, auth.auth_mode());
     assert_eq!(auth.get_chatgpt_user_id().as_deref(), Some("user-12345"));
@@ -136,7 +140,7 @@ async fn pro_account_with_no_api_key_uses_chatgpt_auth() {
 }
 
 #[tokio::test]
-#[serial(codex_api_key)]
+#[serial(orbit_code_api_key)]
 async fn loads_api_key_from_auth_json() {
     let dir = tempdir().unwrap();
     let auth_file = dir.path().join("auth.json");
@@ -205,8 +209,8 @@ struct AuthFileParams {
     chatgpt_account_id: Option<String>,
 }
 
-fn write_auth_file(params: AuthFileParams, codex_home: &Path) -> std::io::Result<String> {
-    let auth_file = get_auth_file(codex_home);
+fn write_auth_file(params: AuthFileParams, orbit_code_home: &Path) -> std::io::Result<String> {
+    let auth_file = get_auth_file(orbit_code_home);
     // Create a minimal valid JWT for the id_token field.
     #[derive(Serialize)]
     struct Header {
@@ -257,12 +261,12 @@ fn write_auth_file(params: AuthFileParams, codex_home: &Path) -> std::io::Result
 }
 
 async fn build_config(
-    codex_home: &Path,
+    orbit_code_home: &Path,
     forced_login_method: Option<ForcedLoginMethod>,
     forced_chatgpt_workspace_id: Option<String>,
 ) -> Config {
     let mut config = ConfigBuilder::default()
-        .codex_home(codex_home.to_path_buf())
+        .orbit_code_home(orbit_code_home.to_path_buf())
         .build()
         .await
         .expect("config should load");
@@ -304,65 +308,74 @@ impl Drop for EnvVarGuard {
 
 #[tokio::test]
 async fn enforce_login_restrictions_logs_out_for_method_mismatch() {
-    let codex_home = tempdir().unwrap();
-    login_with_api_key(codex_home.path(), "sk-test", AuthCredentialsStoreMode::File)
-        .expect("seed api key");
+    let orbit_code_home = tempdir().unwrap();
+    login_with_api_key(
+        orbit_code_home.path(),
+        "sk-test",
+        AuthCredentialsStoreMode::File,
+    )
+    .expect("seed api key");
 
-    let config = build_config(codex_home.path(), Some(ForcedLoginMethod::Chatgpt), None).await;
+    let config = build_config(
+        orbit_code_home.path(),
+        Some(ForcedLoginMethod::Chatgpt),
+        None,
+    )
+    .await;
 
     let err =
         super::enforce_login_restrictions(&config).expect_err("expected method mismatch to error");
     assert!(err.to_string().contains("ChatGPT login is required"));
     assert!(
-        !codex_home.path().join("auth.json").exists(),
+        !orbit_code_home.path().join("auth.json").exists(),
         "auth.json should be removed on mismatch"
     );
 }
 
 #[tokio::test]
-#[serial(codex_api_key)]
+#[serial(orbit_code_api_key)]
 async fn enforce_login_restrictions_logs_out_for_workspace_mismatch() {
-    let codex_home = tempdir().unwrap();
+    let orbit_code_home = tempdir().unwrap();
     let _jwt = write_auth_file(
         AuthFileParams {
             openai_api_key: None,
             chatgpt_plan_type: Some("pro".to_string()),
             chatgpt_account_id: Some("org_another_org".to_string()),
         },
-        codex_home.path(),
+        orbit_code_home.path(),
     )
     .expect("failed to write auth file");
 
-    let config = build_config(codex_home.path(), None, Some("org_mine".to_string())).await;
+    let config = build_config(orbit_code_home.path(), None, Some("org_mine".to_string())).await;
 
     let err = super::enforce_login_restrictions(&config)
         .expect_err("expected workspace mismatch to error");
     assert!(err.to_string().contains("workspace org_mine"));
     assert!(
-        !codex_home.path().join("auth.json").exists(),
+        !orbit_code_home.path().join("auth.json").exists(),
         "auth.json should be removed on mismatch"
     );
 }
 
 #[tokio::test]
-#[serial(codex_api_key)]
+#[serial(orbit_code_api_key)]
 async fn enforce_login_restrictions_allows_matching_workspace() {
-    let codex_home = tempdir().unwrap();
+    let orbit_code_home = tempdir().unwrap();
     let _jwt = write_auth_file(
         AuthFileParams {
             openai_api_key: None,
             chatgpt_plan_type: Some("pro".to_string()),
             chatgpt_account_id: Some("org_mine".to_string()),
         },
-        codex_home.path(),
+        orbit_code_home.path(),
     )
     .expect("failed to write auth file");
 
-    let config = build_config(codex_home.path(), None, Some("org_mine".to_string())).await;
+    let config = build_config(orbit_code_home.path(), None, Some("org_mine".to_string())).await;
 
     super::enforce_login_restrictions(&config).expect("matching workspace should succeed");
     assert!(
-        codex_home.path().join("auth.json").exists(),
+        orbit_code_home.path().join("auth.json").exists(),
         "auth.json should remain when restrictions pass"
     );
 }
@@ -370,26 +383,35 @@ async fn enforce_login_restrictions_allows_matching_workspace() {
 #[tokio::test]
 async fn enforce_login_restrictions_allows_api_key_if_login_method_not_set_but_forced_chatgpt_workspace_id_is_set()
  {
-    let codex_home = tempdir().unwrap();
-    login_with_api_key(codex_home.path(), "sk-test", AuthCredentialsStoreMode::File)
-        .expect("seed api key");
+    let orbit_code_home = tempdir().unwrap();
+    login_with_api_key(
+        orbit_code_home.path(),
+        "sk-test",
+        AuthCredentialsStoreMode::File,
+    )
+    .expect("seed api key");
 
-    let config = build_config(codex_home.path(), None, Some("org_mine".to_string())).await;
+    let config = build_config(orbit_code_home.path(), None, Some("org_mine".to_string())).await;
 
     super::enforce_login_restrictions(&config).expect("matching workspace should succeed");
     assert!(
-        codex_home.path().join("auth.json").exists(),
+        orbit_code_home.path().join("auth.json").exists(),
         "auth.json should remain when restrictions pass"
     );
 }
 
 #[tokio::test]
-#[serial(codex_api_key)]
+#[serial(orbit_code_api_key)]
 async fn enforce_login_restrictions_blocks_env_api_key_when_chatgpt_required() {
-    let _guard = EnvVarGuard::set(CODEX_API_KEY_ENV_VAR, "sk-env");
-    let codex_home = tempdir().unwrap();
+    let _guard = EnvVarGuard::set(ORBIT_API_KEY_ENV_VAR, "sk-env");
+    let orbit_code_home = tempdir().unwrap();
 
-    let config = build_config(codex_home.path(), Some(ForcedLoginMethod::Chatgpt), None).await;
+    let config = build_config(
+        orbit_code_home.path(),
+        Some(ForcedLoginMethod::Chatgpt),
+        None,
+    )
+    .await;
 
     let err = super::enforce_login_restrictions(&config)
         .expect_err("environment API key should not satisfy forced ChatGPT login");
@@ -400,61 +422,94 @@ async fn enforce_login_restrictions_blocks_env_api_key_when_chatgpt_required() {
 }
 
 #[test]
+#[serial(orbit_code_api_key)]
+fn read_orbit_api_key_from_env_prefers_orbit_over_legacy_codex_env_var() {
+    let _orbit_guard = EnvVarGuard::set(ORBIT_API_KEY_ENV_VAR, "sk-orbit");
+    let _legacy_guard = EnvVarGuard::set(LEGACY_CODEX_API_KEY_ENV_VAR, "sk-codex");
+
+    let api_key = super::read_orbit_api_key_from_env();
+
+    assert_eq!(api_key.as_deref(), Some("sk-orbit"));
+}
+
+#[test]
+#[serial(orbit_code_api_key)]
+fn read_orbit_api_key_from_env_falls_back_to_legacy_codex_env_var() {
+    let _legacy_guard = EnvVarGuard::set(LEGACY_CODEX_API_KEY_ENV_VAR, "sk-codex");
+
+    let api_key = super::read_orbit_api_key_from_env();
+
+    assert_eq!(api_key.as_deref(), Some("sk-codex"));
+}
+
+#[test]
 fn plan_type_maps_known_plan() {
-    let codex_home = tempdir().unwrap();
+    let orbit_code_home = tempdir().unwrap();
     let _jwt = write_auth_file(
         AuthFileParams {
             openai_api_key: None,
             chatgpt_plan_type: Some("pro".to_string()),
             chatgpt_account_id: None,
         },
-        codex_home.path(),
+        orbit_code_home.path(),
     )
     .expect("failed to write auth file");
 
-    let auth = super::load_auth(codex_home.path(), false, AuthCredentialsStoreMode::File)
-        .expect("load auth")
-        .expect("auth available");
+    let auth = super::load_auth(
+        orbit_code_home.path(),
+        false,
+        AuthCredentialsStoreMode::File,
+    )
+    .expect("load auth")
+    .expect("auth available");
 
     pretty_assertions::assert_eq!(auth.account_plan_type(), Some(AccountPlanType::Pro));
 }
 
 #[test]
 fn plan_type_maps_unknown_to_unknown() {
-    let codex_home = tempdir().unwrap();
+    let orbit_code_home = tempdir().unwrap();
     let _jwt = write_auth_file(
         AuthFileParams {
             openai_api_key: None,
             chatgpt_plan_type: Some("mystery-tier".to_string()),
             chatgpt_account_id: None,
         },
-        codex_home.path(),
+        orbit_code_home.path(),
     )
     .expect("failed to write auth file");
 
-    let auth = super::load_auth(codex_home.path(), false, AuthCredentialsStoreMode::File)
-        .expect("load auth")
-        .expect("auth available");
+    let auth = super::load_auth(
+        orbit_code_home.path(),
+        false,
+        AuthCredentialsStoreMode::File,
+    )
+    .expect("load auth")
+    .expect("auth available");
 
     pretty_assertions::assert_eq!(auth.account_plan_type(), Some(AccountPlanType::Unknown));
 }
 
 #[test]
 fn missing_plan_type_maps_to_unknown() {
-    let codex_home = tempdir().unwrap();
+    let orbit_code_home = tempdir().unwrap();
     let _jwt = write_auth_file(
         AuthFileParams {
             openai_api_key: None,
             chatgpt_plan_type: None,
             chatgpt_account_id: None,
         },
-        codex_home.path(),
+        orbit_code_home.path(),
     )
     .expect("failed to write auth file");
 
-    let auth = super::load_auth(codex_home.path(), false, AuthCredentialsStoreMode::File)
-        .expect("load auth")
-        .expect("auth available");
+    let auth = super::load_auth(
+        orbit_code_home.path(),
+        false,
+        AuthCredentialsStoreMode::File,
+    )
+    .expect("load auth")
+    .expect("auth available");
 
     pretty_assertions::assert_eq!(auth.account_plan_type(), Some(AccountPlanType::Unknown));
 }

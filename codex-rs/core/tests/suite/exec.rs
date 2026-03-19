@@ -3,21 +3,21 @@
 use std::collections::HashMap;
 use std::string::ToString;
 
-use codex_core::exec::ExecParams;
-use codex_core::exec::ExecToolCallOutput;
-use codex_core::exec::SandboxType;
-use codex_core::exec::process_exec_tool_call;
-use codex_core::sandboxing::SandboxPermissions;
-use codex_core::spawn::CODEX_SANDBOX_ENV_VAR;
-use codex_protocol::config_types::WindowsSandboxLevel;
-use codex_protocol::permissions::FileSystemSandboxPolicy;
-use codex_protocol::permissions::NetworkSandboxPolicy;
-use codex_protocol::protocol::SandboxPolicy;
+use orbit_code_core::exec::ExecParams;
+use orbit_code_core::exec::ExecToolCallOutput;
+use orbit_code_core::exec::SandboxType;
+use orbit_code_core::exec::process_exec_tool_call;
+use orbit_code_core::sandboxing::SandboxPermissions;
+use orbit_code_core::spawn::CODEX_SANDBOX_ENV_VAR;
+use orbit_code_protocol::config_types::WindowsSandboxLevel;
+use orbit_code_protocol::permissions::FileSystemSandboxPolicy;
+use orbit_code_protocol::permissions::NetworkSandboxPolicy;
+use orbit_code_protocol::protocol::SandboxPolicy;
 use tempfile::TempDir;
 
-use codex_core::error::Result;
+use orbit_code_core::error::Result;
 
-use codex_core::get_platform_sandbox;
+use orbit_code_core::get_platform_sandbox;
 
 fn skip_test() -> bool {
     if std::env::var(CODEX_SANDBOX_ENV_VAR) == Ok("seatbelt".to_string()) {

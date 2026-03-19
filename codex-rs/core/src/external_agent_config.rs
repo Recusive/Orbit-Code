@@ -33,23 +33,23 @@ pub struct ExternalAgentConfigMigrationItem {
 
 #[derive(Clone)]
 pub struct ExternalAgentConfigService {
-    codex_home: PathBuf,
+    orbit_code_home: PathBuf,
     claude_home: PathBuf,
 }
 
 impl ExternalAgentConfigService {
-    pub fn new(codex_home: PathBuf) -> Self {
+    pub fn new(orbit_code_home: PathBuf) -> Self {
         let claude_home = default_claude_home();
         Self {
-            codex_home,
+            orbit_code_home,
             claude_home,
         }
     }
 
     #[cfg(test)]
-    fn new_for_test(codex_home: PathBuf, claude_home: PathBuf) -> Self {
+    fn new_for_test(orbit_code_home: PathBuf, claude_home: PathBuf) -> Self {
         Self {
-            codex_home,
+            orbit_code_home,
             claude_home,
         }
     }
@@ -118,7 +118,7 @@ impl ExternalAgentConfigService {
             |repo_root| repo_root.join(".claude").join("settings.json"),
         );
         let target_config = repo_root.map_or_else(
-            || self.codex_home.join("config.toml"),
+            || self.orbit_code_home.join("config.toml"),
             |repo_root| repo_root.join(".codex").join("config.toml"),
         );
         if source_settings.is_file() {
@@ -192,7 +192,7 @@ impl ExternalAgentConfigService {
             is_non_empty_text_file(&path)?.then_some(path)
         };
         let target_agents_md = repo_root.map_or_else(
-            || self.codex_home.join("AGENTS.md"),
+            || self.orbit_code_home.join("AGENTS.md"),
             |repo_root| repo_root.join("AGENTS.md"),
         );
         if let Some(source_agents_md) = source_agents_md
@@ -218,7 +218,7 @@ impl ExternalAgentConfigService {
     }
 
     fn home_target_skills_dir(&self) -> PathBuf {
-        self.codex_home
+        self.orbit_code_home
             .parent()
             .map(|parent| parent.join(".agents").join("skills"))
             .unwrap_or_else(|| PathBuf::from(".agents").join("skills"))
@@ -235,7 +235,7 @@ impl ExternalAgentConfigService {
         } else {
             (
                 self.claude_home.join("settings.json"),
-                self.codex_home.join("config.toml"),
+                self.orbit_code_home.join("config.toml"),
             )
         };
         if !source_settings.is_file() {
@@ -327,7 +327,7 @@ impl ExternalAgentConfigService {
         } else {
             (
                 self.claude_home.join("CLAUDE.md"),
-                self.codex_home.join("AGENTS.md"),
+                self.orbit_code_home.join("AGENTS.md"),
             )
         };
         if !is_non_empty_text_file(&source_agents_md)?
@@ -676,7 +676,7 @@ fn emit_migration_metric(
     item_type: ExternalAgentConfigMigrationItemType,
     skills_count: Option<usize>,
 ) {
-    let Some(metrics) = codex_otel::metrics::global() else {
+    let Some(metrics) = orbit_code_otel::metrics::global() else {
         return;
     };
     let tags = migration_metric_tags(item_type, skills_count);

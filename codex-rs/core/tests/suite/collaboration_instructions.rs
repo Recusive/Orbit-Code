@@ -1,12 +1,4 @@
 use anyhow::Result;
-use codex_protocol::config_types::CollaborationMode;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::config_types::Settings;
-use codex_protocol::protocol::COLLABORATION_MODE_CLOSE_TAG;
-use codex_protocol::protocol::COLLABORATION_MODE_OPEN_TAG;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::Op;
-use codex_protocol::user_input::UserInput;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_response_created;
 use core_test_support::responses::mount_sse_once;
@@ -15,6 +7,14 @@ use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
 use core_test_support::test_codex::test_codex;
 use core_test_support::wait_for_event;
+use orbit_code_protocol::config_types::CollaborationMode;
+use orbit_code_protocol::config_types::ModeKind;
+use orbit_code_protocol::config_types::Settings;
+use orbit_code_protocol::protocol::COLLABORATION_MODE_CLOSE_TAG;
+use orbit_code_protocol::protocol::COLLABORATION_MODE_OPEN_TAG;
+use orbit_code_protocol::protocol::EventMsg;
+use orbit_code_protocol::protocol::Op;
+use orbit_code_protocol::user_input::UserInput;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 
@@ -184,7 +184,7 @@ async fn collaboration_instructions_added_on_user_turn() -> Result<()> {
             summary: Some(
                 test.config
                     .model_reasoning_summary
-                    .unwrap_or(codex_protocol::config_types::ReasoningSummary::Auto),
+                    .unwrap_or(orbit_code_protocol::config_types::ReasoningSummary::Auto),
             ),
             service_tier: None,
             collaboration_mode: Some(collaboration_mode),
@@ -299,7 +299,7 @@ async fn user_turn_overrides_collaboration_instructions_after_override() -> Resu
             summary: Some(
                 test.config
                     .model_reasoning_summary
-                    .unwrap_or(codex_protocol::config_types::ReasoningSummary::Auto),
+                    .unwrap_or(orbit_code_protocol::config_types::ReasoningSummary::Auto),
             ),
             service_tier: None,
             collaboration_mode: Some(turn_mode),

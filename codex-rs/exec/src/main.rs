@@ -10,11 +10,11 @@
 //! This allows us to ship a completely separate set of functionality as part
 //! of the `codex-exec` binary.
 use clap::Parser;
-use codex_arg0::Arg0DispatchPaths;
-use codex_arg0::arg0_dispatch_or_else;
-use codex_exec::Cli;
-use codex_exec::run_main;
-use codex_utils_cli::CliConfigOverrides;
+use orbit_code_arg0::Arg0DispatchPaths;
+use orbit_code_arg0::arg0_dispatch_or_else;
+use orbit_code_exec::Cli;
+use orbit_code_exec::run_main;
+use orbit_code_utils_cli::CliConfigOverrides;
 
 #[derive(Parser, Debug)]
 struct TopCli {
@@ -62,7 +62,7 @@ mod tests {
             PROMPT,
         ]);
 
-        let Some(codex_exec::Command::Resume(args)) = cli.inner.command else {
+        let Some(orbit_code_exec::Command::Resume(args)) = cli.inner.command else {
             panic!("expected resume command");
         };
         let effective_prompt = args.prompt.clone().or_else(|| {

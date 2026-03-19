@@ -3,9 +3,9 @@ use std::collections::HashSet;
 use std::env;
 use std::sync::Arc;
 
-use codex_protocol::request_user_input::RequestUserInputArgs;
-use codex_protocol::request_user_input::RequestUserInputQuestion;
-use codex_protocol::request_user_input::RequestUserInputResponse;
+use orbit_code_protocol::request_user_input::RequestUserInputArgs;
+use orbit_code_protocol::request_user_input::RequestUserInputQuestion;
+use orbit_code_protocol::request_user_input::RequestUserInputResponse;
 use tracing::warn;
 
 use crate::codex::Session;

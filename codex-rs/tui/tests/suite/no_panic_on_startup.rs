@@ -8,15 +8,15 @@ use tokio::time::timeout;
 #[tokio::test]
 #[ignore = "TODO(mbolin): flaky"]
 async fn malformed_rules_should_not_panic() -> anyhow::Result<()> {
-    // run_codex_cli() does not work on Windows due to PTY limitations.
+    // run_orbit_code_cli() does not work on Windows due to PTY limitations.
     if cfg!(windows) {
         return Ok(());
     }
 
     let tmp = tempfile::tempdir()?;
-    let codex_home = tmp.path();
+    let orbit_code_home = tmp.path();
     std::fs::write(
-        codex_home.join("rules"),
+        orbit_code_home.join("rules"),
         "rules should be a directory not a file",
     )?;
 
@@ -33,9 +33,9 @@ model_provider = "ollama"
 "#,
         cwd = cwd.display()
     );
-    std::fs::write(codex_home.join("config.toml"), config_contents)?;
+    std::fs::write(orbit_code_home.join("config.toml"), config_contents)?;
 
-    let CodexCliOutput { exit_code, output } = run_codex_cli(codex_home, cwd).await?;
+    let CodexCliOutput { exit_code, output } = run_orbit_code_cli(orbit_code_home, cwd).await?;
     assert_ne!(0, exit_code, "Codex CLI should exit nonzero.");
     assert!(
         output.contains("ERROR: Failed to initialize codex:"),
@@ -53,35 +53,35 @@ struct CodexCliOutput {
     output: String,
 }
 
-async fn run_codex_cli(
-    codex_home: impl AsRef<Path>,
+async fn run_orbit_code_cli(
+    orbit_code_home: impl AsRef<Path>,
     cwd: impl AsRef<Path>,
 ) -> anyhow::Result<CodexCliOutput> {
-    let codex_cli = codex_utils_cargo_bin::cargo_bin("codex")?;
+    let orbit_code_cli = orbit_code_utils_cargo_bin::cargo_bin("orbit-code")?;
     let mut env = HashMap::new();
     env.insert(
-        "CODEX_HOME".to_string(),
-        codex_home.as_ref().display().to_string(),
+        "ORBIT_HOME".to_string(),
+        orbit_code_home.as_ref().display().to_string(),
     );
 
     let args = vec!["-c".to_string(), "analytics.enabled=false".to_string()];
-    let spawned = codex_utils_pty::spawn_pty_process(
-        codex_cli.to_string_lossy().as_ref(),
+    let spawned = orbit_code_utils_pty::spawn_pty_process(
+        orbit_code_cli.to_string_lossy().as_ref(),
         &args,
         cwd.as_ref(),
         &env,
         &None,
-        codex_utils_pty::TerminalSize::default(),
+        orbit_code_utils_pty::TerminalSize::default(),
     )
     .await?;
     let mut output = Vec::new();
-    let codex_utils_pty::SpawnedProcess {
+    let orbit_code_utils_pty::SpawnedProcess {
         session,
         stdout_rx,
         stderr_rx,
         exit_rx,
     } = spawned;
-    let mut output_rx = codex_utils_pty::combine_output_receivers(stdout_rx, stderr_rx);
+    let mut output_rx = orbit_code_utils_pty::combine_output_receivers(stdout_rx, stderr_rx);
     let mut exit_rx = exit_rx;
     let writer_tx = session.writer_sender();
     let exit_code_result = timeout(Duration::from_secs(10), async {

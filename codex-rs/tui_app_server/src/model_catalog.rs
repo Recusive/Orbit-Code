@@ -1,9 +1,9 @@
-use codex_core::models_manager::collaboration_mode_presets::CollaborationModesConfig;
-use codex_protocol::config_types::CollaborationModeMask;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::config_types::TUI_VISIBLE_COLLABORATION_MODES;
-use codex_protocol::openai_models::ModelPreset;
-use codex_protocol::openai_models::ReasoningEffort;
+use orbit_code_core::models_manager::collaboration_mode_presets::CollaborationModesConfig;
+use orbit_code_protocol::config_types::CollaborationModeMask;
+use orbit_code_protocol::config_types::ModeKind;
+use orbit_code_protocol::config_types::TUI_VISIBLE_COLLABORATION_MODES;
+use orbit_code_protocol::openai_models::ModelPreset;
+use orbit_code_protocol::openai_models::ReasoningEffort;
 use std::convert::Infallible;
 
 const COLLABORATION_MODE_PLAN: &str =

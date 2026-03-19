@@ -1,7 +1,7 @@
 use crate::features::Feature;
 use crate::features::Features;
-use codex_protocol::models::ImageDetail;
-use codex_protocol::openai_models::ModelInfo;
+use orbit_code_protocol::models::ImageDetail;
+use orbit_code_protocol::openai_models::ModelInfo;
 
 pub(crate) fn can_request_original_image_detail(
     features: &Features,

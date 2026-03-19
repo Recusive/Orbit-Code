@@ -2,16 +2,16 @@ use crate::endpoint::realtime_websocket::protocol_common::parse_error_event;
 use crate::endpoint::realtime_websocket::protocol_common::parse_realtime_payload;
 use crate::endpoint::realtime_websocket::protocol_common::parse_session_updated_event;
 use crate::endpoint::realtime_websocket::protocol_common::parse_transcript_delta_event;
-use codex_protocol::protocol::RealtimeAudioFrame;
-use codex_protocol::protocol::RealtimeEvent;
-use codex_protocol::protocol::RealtimeHandoffRequested;
-use codex_protocol::protocol::RealtimeInputAudioSpeechStarted;
-use codex_protocol::protocol::RealtimeResponseCancelled;
+use orbit_code_protocol::protocol::RealtimeAudioFrame;
+use orbit_code_protocol::protocol::RealtimeEvent;
+use orbit_code_protocol::protocol::RealtimeHandoffRequested;
+use orbit_code_protocol::protocol::RealtimeInputAudioSpeechStarted;
+use orbit_code_protocol::protocol::RealtimeResponseCancelled;
 use serde_json::Map as JsonMap;
 use serde_json::Value;
 use tracing::debug;
 
-const CODEX_TOOL_NAME: &str = "codex";
+const ORBIT_TOOL_NAME: &str = "codex";
 const DEFAULT_AUDIO_SAMPLE_RATE: u32 = 24_000;
 const DEFAULT_AUDIO_CHANNELS: u16 = 1;
 const TOOL_ARGUMENT_KEYS: [&str; 5] = ["input_transcript", "input", "text", "prompt", "query"];
@@ -133,7 +133,7 @@ fn parse_response_done_handoff_requested_event(parsed: &Value) -> Option<Realtim
         .iter()
         .find(|item| {
             item.get("type").and_then(Value::as_str) == Some("function_call")
-                && item.get("name").and_then(Value::as_str) == Some(CODEX_TOOL_NAME)
+                && item.get("name").and_then(Value::as_str) == Some(ORBIT_TOOL_NAME)
         })?
         .as_object()?;
 
@@ -143,7 +143,7 @@ fn parse_response_done_handoff_requested_event(parsed: &Value) -> Option<Realtim
 fn parse_handoff_requested_event(item: &JsonMap<String, Value>) -> Option<RealtimeEvent> {
     let item_type = item.get("type").and_then(Value::as_str);
     let item_name = item.get("name").and_then(Value::as_str);
-    if item_type != Some("function_call") || item_name != Some(CODEX_TOOL_NAME) {
+    if item_type != Some("function_call") || item_name != Some(ORBIT_TOOL_NAME) {
         return None;
     }
 

@@ -1,10 +1,10 @@
 use assert_cmd::Command as AssertCommand;
-use codex_core::auth::CODEX_API_KEY_ENV_VAR;
-use codex_protocol::protocol::GitInfo;
-use codex_utils_cargo_bin::find_resource;
 use core_test_support::fs_wait;
 use core_test_support::responses;
 use core_test_support::skip_if_no_network;
+use orbit_code_core::auth::ORBIT_API_KEY_ENV_VAR;
+use orbit_code_protocol::protocol::GitInfo;
+use orbit_code_utils_cargo_bin::find_resource;
 use std::time::Duration;
 use tempfile::TempDir;
 use uuid::Uuid;
@@ -12,7 +12,7 @@ use wiremock::MockServer;
 
 fn repo_root() -> std::path::PathBuf {
     #[expect(clippy::expect_used)]
-    codex_utils_cargo_bin::repo_root().expect("failed to resolve repo root")
+    orbit_code_utils_cargo_bin::repo_root().expect("failed to resolve repo root")
 }
 
 fn cli_responses_fixture() -> std::path::PathBuf {
@@ -39,7 +39,7 @@ async fn responses_mode_stream_cli() {
         "model_providers.mock={{ name = \"mock\", base_url = \"{}/v1\", env_key = \"PATH\", wire_api = \"responses\" }}",
         server.uri()
     );
-    let bin = codex_utils_cargo_bin::cargo_bin("codex").unwrap();
+    let bin = orbit_code_utils_cargo_bin::cargo_bin("orbit-code").unwrap();
     let mut cmd = AssertCommand::new(bin);
     cmd.timeout(Duration::from_secs(30));
     cmd.arg("exec")
@@ -51,7 +51,7 @@ async fn responses_mode_stream_cli() {
         .arg("-C")
         .arg(&repo_root)
         .arg("hello?");
-    cmd.env("CODEX_HOME", home.path())
+    cmd.env("ORBIT_HOME", home.path())
         .env("OPENAI_API_KEY", "dummy");
 
     let output = cmd.output().unwrap();
@@ -73,7 +73,7 @@ async fn responses_mode_stream_cli() {
     //     home.path(),
     //     10,
     //     None,
-    //     codex_core::ThreadSortKey::UpdatedAt,
+    //     orbit_code_core::ThreadSortKey::UpdatedAt,
     //     &[],
     //     Some(provider_filter.as_slice()),
     //     "mock",
@@ -103,7 +103,7 @@ async fn responses_mode_stream_cli_supports_openai_base_url_env_fallback() {
     let resp_mock = responses::mount_sse_once(&server, sse).await;
 
     let home = TempDir::new().unwrap();
-    let bin = codex_utils_cargo_bin::cargo_bin("codex").unwrap();
+    let bin = orbit_code_utils_cargo_bin::cargo_bin("orbit-code").unwrap();
     let mut cmd = AssertCommand::new(bin);
     cmd.timeout(Duration::from_secs(30));
     cmd.arg("exec")
@@ -111,7 +111,7 @@ async fn responses_mode_stream_cli_supports_openai_base_url_env_fallback() {
         .arg("-C")
         .arg(&repo_root)
         .arg("hello?");
-    cmd.env("CODEX_HOME", home.path())
+    cmd.env("ORBIT_HOME", home.path())
         .env("OPENAI_API_KEY", "dummy")
         .env("OPENAI_BASE_URL", format!("{}/v1", server.uri()));
 
@@ -137,7 +137,7 @@ async fn responses_mode_stream_cli_supports_openai_base_url_config_override() {
     let resp_mock = responses::mount_sse_once(&server, sse).await;
 
     let home = TempDir::new().unwrap();
-    let bin = codex_utils_cargo_bin::cargo_bin("codex").unwrap();
+    let bin = orbit_code_utils_cargo_bin::cargo_bin("orbit-code").unwrap();
     let mut cmd = AssertCommand::new(bin);
     cmd.timeout(Duration::from_secs(30));
     cmd.arg("exec")
@@ -147,7 +147,7 @@ async fn responses_mode_stream_cli_supports_openai_base_url_config_override() {
         .arg("-C")
         .arg(&repo_root)
         .arg("hello?");
-    cmd.env("CODEX_HOME", home.path())
+    cmd.env("ORBIT_HOME", home.path())
         .env("OPENAI_API_KEY", "dummy");
 
     let output = cmd.output().unwrap();
@@ -190,7 +190,7 @@ async fn exec_cli_applies_model_instructions_file() {
 
     let home = TempDir::new().unwrap();
     let repo_root = repo_root();
-    let bin = codex_utils_cargo_bin::cargo_bin("codex").unwrap();
+    let bin = orbit_code_utils_cargo_bin::cargo_bin("orbit-code").unwrap();
     let mut cmd = AssertCommand::new(bin);
     cmd.arg("exec")
         .arg("--skip-git-repo-check")
@@ -203,7 +203,7 @@ async fn exec_cli_applies_model_instructions_file() {
         .arg("-C")
         .arg(&repo_root)
         .arg("hello?\n");
-    cmd.env("CODEX_HOME", home.path())
+    cmd.env("ORBIT_HOME", home.path())
         .env("OPENAI_API_KEY", "dummy");
 
     let output = cmd.output().unwrap();
@@ -227,7 +227,7 @@ async fn exec_cli_applies_model_instructions_file() {
     );
 }
 
-/// Verify that `codex exec --profile ...` preserves the active profile when it
+/// Verify that `orbit-code exec --profile ...` preserves the active profile when it
 /// starts the in-process app-server thread, so profile-scoped
 /// `model_instructions_file` is applied to the outbound request.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
@@ -260,7 +260,7 @@ async fn exec_cli_profile_applies_model_instructions_file() {
     .unwrap();
 
     let repo_root = repo_root();
-    let bin = codex_utils_cargo_bin::cargo_bin("codex").unwrap();
+    let bin = orbit_code_utils_cargo_bin::cargo_bin("orbit-code").unwrap();
     let mut cmd = AssertCommand::new(bin);
     cmd.arg("exec")
         .arg("--skip-git-repo-check")
@@ -273,7 +273,7 @@ async fn exec_cli_profile_applies_model_instructions_file() {
         .arg("-C")
         .arg(&repo_root)
         .arg("hello?\n");
-    cmd.env("CODEX_HOME", home.path())
+    cmd.env("ORBIT_HOME", home.path())
         .env("OPENAI_API_KEY", "dummy")
         .env("OPENAI_BASE_URL", format!("{}/v1", server.uri()));
 
@@ -299,7 +299,7 @@ async fn exec_cli_profile_applies_model_instructions_file() {
 /// Tests streaming responses through the CLI using a local SSE fixture file.
 /// This test:
 /// 1. Uses a pre-recorded SSE response fixture instead of a live server
-/// 2. Configures codex to read from this fixture via CODEX_RS_SSE_FIXTURE env var
+/// 2. Configures codex to read from this fixture via ORBIT_RS_SSE_FIXTURE env var
 /// 3. Sends a "hello?" prompt and verifies the response
 /// 4. Ensures the fixture content is correctly streamed through the CLI
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
@@ -310,7 +310,7 @@ async fn responses_api_stream_cli() {
     let repo_root = repo_root();
 
     let home = TempDir::new().unwrap();
-    let bin = codex_utils_cargo_bin::cargo_bin("codex").unwrap();
+    let bin = orbit_code_utils_cargo_bin::cargo_bin("orbit-code").unwrap();
     let mut cmd = AssertCommand::new(bin);
     cmd.arg("exec")
         .arg("--skip-git-repo-check")
@@ -319,9 +319,9 @@ async fn responses_api_stream_cli() {
         .arg("-C")
         .arg(&repo_root)
         .arg("hello?");
-    cmd.env("CODEX_HOME", home.path())
+    cmd.env("ORBIT_HOME", home.path())
         .env("OPENAI_API_KEY", "dummy")
-        .env("CODEX_RS_SSE_FIXTURE", fixture);
+        .env("ORBIT_RS_SSE_FIXTURE", fixture);
 
     let output = cmd.output().unwrap();
     assert!(output.status.success());
@@ -347,7 +347,7 @@ async fn integration_creates_and_checks_session_file() -> anyhow::Result<()> {
     let repo_root = repo_root();
 
     // 4. Run the codex CLI and invoke `exec`, which is what records a session.
-    let bin = codex_utils_cargo_bin::cargo_bin("codex").unwrap();
+    let bin = orbit_code_utils_cargo_bin::cargo_bin("orbit-code").unwrap();
     let mut cmd = AssertCommand::new(bin);
     cmd.arg("exec")
         .arg("--skip-git-repo-check")
@@ -356,9 +356,9 @@ async fn integration_creates_and_checks_session_file() -> anyhow::Result<()> {
         .arg("-C")
         .arg(&repo_root)
         .arg(&prompt);
-    cmd.env("CODEX_HOME", home.path())
-        .env(CODEX_API_KEY_ENV_VAR, "dummy")
-        .env("CODEX_RS_SSE_FIXTURE", &fixture);
+    cmd.env("ORBIT_HOME", home.path())
+        .env(ORBIT_API_KEY_ENV_VAR, "dummy")
+        .env("ORBIT_RS_SSE_FIXTURE", &fixture);
 
     let output = cmd.output().unwrap();
     assert!(
@@ -468,7 +468,7 @@ async fn integration_creates_and_checks_session_file() -> anyhow::Result<()> {
     // Second run: resume should update the existing file.
     let marker2 = format!("integration-resume-{}", Uuid::new_v4());
     let prompt2 = format!("echo {marker2}");
-    let bin2 = codex_utils_cargo_bin::cargo_bin("codex").unwrap();
+    let bin2 = orbit_code_utils_cargo_bin::cargo_bin("orbit-code").unwrap();
     let mut cmd2 = AssertCommand::new(bin2);
     cmd2.arg("exec")
         .arg("--skip-git-repo-check")
@@ -479,9 +479,9 @@ async fn integration_creates_and_checks_session_file() -> anyhow::Result<()> {
         .arg(&prompt2)
         .arg("resume")
         .arg("--last");
-    cmd2.env("CODEX_HOME", home.path())
+    cmd2.env("ORBIT_HOME", home.path())
         .env("OPENAI_API_KEY", "dummy")
-        .env("CODEX_RS_SSE_FIXTURE", &fixture);
+        .env("ORBIT_RS_SSE_FIXTURE", &fixture);
 
     let output2 = cmd2.output().unwrap();
     assert!(output2.status.success(), "resume codex-cli run failed");
@@ -596,7 +596,7 @@ async fn integration_git_info_unit_test() {
         .unwrap();
 
     // 3. Test git info collection directly
-    let git_info = codex_core::git_info::collect_git_info(&git_repo).await;
+    let git_info = orbit_code_core::git_info::collect_git_info(&git_repo).await;
 
     // 4. Verify git info is present and contains expected data
     assert!(git_info.is_some(), "Git info should be collected");

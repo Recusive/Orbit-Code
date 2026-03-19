@@ -1,46 +1,46 @@
-use codex_core::config::Config;
-use codex_core::web_search::web_search_detail;
-use codex_protocol::items::TurnItem;
-use codex_protocol::num_format::format_with_separators;
-use codex_protocol::protocol::AgentMessageEvent;
-use codex_protocol::protocol::AgentReasoningRawContentEvent;
-use codex_protocol::protocol::AgentStatus;
-use codex_protocol::protocol::BackgroundEventEvent;
-use codex_protocol::protocol::CollabAgentInteractionBeginEvent;
-use codex_protocol::protocol::CollabAgentInteractionEndEvent;
-use codex_protocol::protocol::CollabAgentSpawnBeginEvent;
-use codex_protocol::protocol::CollabAgentSpawnEndEvent;
-use codex_protocol::protocol::CollabCloseBeginEvent;
-use codex_protocol::protocol::CollabCloseEndEvent;
-use codex_protocol::protocol::CollabWaitingBeginEvent;
-use codex_protocol::protocol::CollabWaitingEndEvent;
-use codex_protocol::protocol::DeprecationNoticeEvent;
-use codex_protocol::protocol::ErrorEvent;
-use codex_protocol::protocol::Event;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::ExecCommandBeginEvent;
-use codex_protocol::protocol::ExecCommandEndEvent;
-use codex_protocol::protocol::FileChange;
-use codex_protocol::protocol::HookCompletedEvent;
-use codex_protocol::protocol::HookEventName;
-use codex_protocol::protocol::HookOutputEntryKind;
-use codex_protocol::protocol::HookRunStatus;
-use codex_protocol::protocol::HookStartedEvent;
-use codex_protocol::protocol::ItemCompletedEvent;
-use codex_protocol::protocol::McpInvocation;
-use codex_protocol::protocol::McpToolCallBeginEvent;
-use codex_protocol::protocol::McpToolCallEndEvent;
-use codex_protocol::protocol::PatchApplyBeginEvent;
-use codex_protocol::protocol::PatchApplyEndEvent;
-use codex_protocol::protocol::SessionConfiguredEvent;
-use codex_protocol::protocol::StreamErrorEvent;
-use codex_protocol::protocol::TurnAbortReason;
-use codex_protocol::protocol::TurnCompleteEvent;
-use codex_protocol::protocol::TurnDiffEvent;
-use codex_protocol::protocol::WarningEvent;
-use codex_protocol::protocol::WebSearchEndEvent;
-use codex_utils_elapsed::format_duration;
-use codex_utils_elapsed::format_elapsed;
+use orbit_code_core::config::Config;
+use orbit_code_core::web_search::web_search_detail;
+use orbit_code_protocol::items::TurnItem;
+use orbit_code_protocol::num_format::format_with_separators;
+use orbit_code_protocol::protocol::AgentMessageEvent;
+use orbit_code_protocol::protocol::AgentReasoningRawContentEvent;
+use orbit_code_protocol::protocol::AgentStatus;
+use orbit_code_protocol::protocol::BackgroundEventEvent;
+use orbit_code_protocol::protocol::CollabAgentInteractionBeginEvent;
+use orbit_code_protocol::protocol::CollabAgentInteractionEndEvent;
+use orbit_code_protocol::protocol::CollabAgentSpawnBeginEvent;
+use orbit_code_protocol::protocol::CollabAgentSpawnEndEvent;
+use orbit_code_protocol::protocol::CollabCloseBeginEvent;
+use orbit_code_protocol::protocol::CollabCloseEndEvent;
+use orbit_code_protocol::protocol::CollabWaitingBeginEvent;
+use orbit_code_protocol::protocol::CollabWaitingEndEvent;
+use orbit_code_protocol::protocol::DeprecationNoticeEvent;
+use orbit_code_protocol::protocol::ErrorEvent;
+use orbit_code_protocol::protocol::Event;
+use orbit_code_protocol::protocol::EventMsg;
+use orbit_code_protocol::protocol::ExecCommandBeginEvent;
+use orbit_code_protocol::protocol::ExecCommandEndEvent;
+use orbit_code_protocol::protocol::FileChange;
+use orbit_code_protocol::protocol::HookCompletedEvent;
+use orbit_code_protocol::protocol::HookEventName;
+use orbit_code_protocol::protocol::HookOutputEntryKind;
+use orbit_code_protocol::protocol::HookRunStatus;
+use orbit_code_protocol::protocol::HookStartedEvent;
+use orbit_code_protocol::protocol::ItemCompletedEvent;
+use orbit_code_protocol::protocol::McpInvocation;
+use orbit_code_protocol::protocol::McpToolCallBeginEvent;
+use orbit_code_protocol::protocol::McpToolCallEndEvent;
+use orbit_code_protocol::protocol::PatchApplyBeginEvent;
+use orbit_code_protocol::protocol::PatchApplyEndEvent;
+use orbit_code_protocol::protocol::SessionConfiguredEvent;
+use orbit_code_protocol::protocol::StreamErrorEvent;
+use orbit_code_protocol::protocol::TurnAbortReason;
+use orbit_code_protocol::protocol::TurnCompleteEvent;
+use orbit_code_protocol::protocol::TurnDiffEvent;
+use orbit_code_protocol::protocol::WarningEvent;
+use orbit_code_protocol::protocol::WebSearchEndEvent;
+use orbit_code_utils_elapsed::format_duration;
+use orbit_code_utils_elapsed::format_elapsed;
 use owo_colors::OwoColorize;
 use owo_colors::Style;
 use serde::Deserialize;
@@ -55,9 +55,9 @@ use std::time::Instant;
 use crate::event_processor::CodexStatus;
 use crate::event_processor::EventProcessor;
 use crate::event_processor::handle_last_message;
-use codex_protocol::plan_tool::StepStatus;
-use codex_protocol::plan_tool::UpdatePlanArgs;
-use codex_utils_sandbox_summary::create_config_summary_entries;
+use orbit_code_protocol::plan_tool::StepStatus;
+use orbit_code_protocol::plan_tool::UpdatePlanArgs;
+use orbit_code_utils_sandbox_summary::create_config_summary_entries;
 
 /// This should be configurable. When used in CI, users may not want to impose
 /// a limit so they can see the full transcript.
@@ -82,7 +82,7 @@ pub(crate) struct EventProcessorWithHumanOutput {
     show_agent_reasoning: bool,
     show_raw_agent_reasoning: bool,
     last_message_path: Option<PathBuf>,
-    last_total_token_usage: Option<codex_protocol::protocol::TokenUsageInfo>,
+    last_total_token_usage: Option<orbit_code_protocol::protocol::TokenUsageInfo>,
     final_message: Option<String>,
     last_proposed_plan: Option<String>,
     progress_active: bool,
@@ -187,7 +187,7 @@ impl EventProcessor for EventProcessorWithHumanOutput {
         const VERSION: &str = env!("CARGO_PKG_VERSION");
         ts_msg!(
             self,
-            "OpenAI Codex v{} (research preview)\n--------",
+            "Orbit Code v{} (research preview)\n--------",
             VERSION
         );
 
@@ -250,12 +250,14 @@ impl EventProcessor for EventProcessorWithHumanOutput {
             }
             EventMsg::McpStartupUpdate(update) => {
                 let status_text = match update.status {
-                    codex_protocol::protocol::McpStartupStatus::Starting => "starting".to_string(),
-                    codex_protocol::protocol::McpStartupStatus::Ready => "ready".to_string(),
-                    codex_protocol::protocol::McpStartupStatus::Cancelled => {
+                    orbit_code_protocol::protocol::McpStartupStatus::Starting => {
+                        "starting".to_string()
+                    }
+                    orbit_code_protocol::protocol::McpStartupStatus::Ready => "ready".to_string(),
+                    orbit_code_protocol::protocol::McpStartupStatus::Cancelled => {
                         "cancelled".to_string()
                     }
-                    codex_protocol::protocol::McpStartupStatus::Failed { ref error } => {
+                    orbit_code_protocol::protocol::McpStartupStatus::Failed { ref error } => {
                         format!("failed: {error}")
                     }
                 };
@@ -1298,7 +1300,7 @@ fn is_collab_status_failure(status: &AgentStatus) -> bool {
     matches!(status, AgentStatus::Errored(_) | AgentStatus::NotFound)
 }
 
-fn format_receiver_list(ids: &[codex_protocol::ThreadId]) -> String {
+fn format_receiver_list(ids: &[orbit_code_protocol::ThreadId]) -> String {
     if ids.is_empty() {
         return "none".to_string();
     }
@@ -1339,16 +1341,16 @@ fn format_mcp_invocation(invocation: &McpInvocation) -> String {
 mod tests {
     use std::path::PathBuf;
 
-    use codex_protocol::protocol::EventMsg;
-    use codex_protocol::protocol::HookCompletedEvent;
-    use codex_protocol::protocol::HookEventName;
-    use codex_protocol::protocol::HookExecutionMode;
-    use codex_protocol::protocol::HookHandlerType;
-    use codex_protocol::protocol::HookOutputEntry;
-    use codex_protocol::protocol::HookRunStatus;
-    use codex_protocol::protocol::HookRunSummary;
-    use codex_protocol::protocol::HookScope;
-    use codex_protocol::protocol::HookStartedEvent;
+    use orbit_code_protocol::protocol::EventMsg;
+    use orbit_code_protocol::protocol::HookCompletedEvent;
+    use orbit_code_protocol::protocol::HookEventName;
+    use orbit_code_protocol::protocol::HookExecutionMode;
+    use orbit_code_protocol::protocol::HookHandlerType;
+    use orbit_code_protocol::protocol::HookOutputEntry;
+    use orbit_code_protocol::protocol::HookRunStatus;
+    use orbit_code_protocol::protocol::HookRunSummary;
+    use orbit_code_protocol::protocol::HookScope;
+    use orbit_code_protocol::protocol::HookStartedEvent;
 
     use super::EventProcessorWithHumanOutput;
     use super::should_print_final_message_to_stdout;

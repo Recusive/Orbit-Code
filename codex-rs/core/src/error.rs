@@ -8,11 +8,11 @@ use chrono::DateTime;
 use chrono::Datelike;
 use chrono::Local;
 use chrono::Utc;
-use codex_async_utils::CancelErr;
-use codex_protocol::ThreadId;
-use codex_protocol::protocol::CodexErrorInfo;
-use codex_protocol::protocol::ErrorEvent;
-use codex_protocol::protocol::RateLimitSnapshot;
+use orbit_code_async_utils::CancelErr;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::protocol::CodexErrorInfo;
+use orbit_code_protocol::protocol::ErrorEvent;
+use orbit_code_protocol::protocol::RateLimitSnapshot;
 use reqwest::StatusCode;
 use serde_json;
 use std::io;
@@ -580,7 +580,7 @@ impl CodexErr {
     }
 
     /// Translate core error to client-facing protocol error.
-    pub fn to_codex_protocol_error(&self) -> CodexErrorInfo {
+    pub fn to_orbit_code_protocol_error(&self) -> CodexErrorInfo {
         match self {
             CodexErr::ContextWindowExceeded => CodexErrorInfo::ContextWindowExceeded,
             CodexErr::UsageLimitReached(_)
@@ -616,7 +616,7 @@ impl CodexErr {
         };
         ErrorEvent {
             message,
-            codex_error_info: Some(self.to_codex_protocol_error()),
+            orbit_code_error_info: Some(self.to_orbit_code_protocol_error()),
         }
     }
 

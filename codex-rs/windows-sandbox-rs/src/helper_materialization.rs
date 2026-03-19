@@ -40,8 +40,8 @@ enum CopyOutcome {
 
 static HELPER_PATH_CACHE: OnceLock<Mutex<HashMap<String, PathBuf>>> = OnceLock::new();
 
-pub(crate) fn helper_bin_dir(codex_home: &Path) -> PathBuf {
-    sandbox_bin_dir(codex_home)
+pub(crate) fn helper_bin_dir(orbit_code_home: &Path) -> PathBuf {
+    sandbox_bin_dir(orbit_code_home)
 }
 
 pub(crate) fn legacy_lookup(kind: HelperExecutable) -> PathBuf {
@@ -58,10 +58,10 @@ pub(crate) fn legacy_lookup(kind: HelperExecutable) -> PathBuf {
 
 pub(crate) fn resolve_helper_for_launch(
     kind: HelperExecutable,
-    codex_home: &Path,
+    orbit_code_home: &Path,
     log_dir: Option<&Path>,
 ) -> PathBuf {
-    match copy_helper_if_needed(kind, codex_home, log_dir) {
+    match copy_helper_if_needed(kind, orbit_code_home, log_dir) {
         Ok(path) => {
             log_note(
                 &format!(
@@ -89,7 +89,7 @@ pub(crate) fn resolve_helper_for_launch(
 }
 
 pub fn resolve_current_exe_for_launch(
-    codex_home: &Path,
+    orbit_code_home: &Path,
     fallback_executable: &str,
 ) -> PathBuf {
     let source = match std::env::current_exe() {
@@ -99,11 +99,11 @@ pub fn resolve_current_exe_for_launch(
     let Some(file_name) = source.file_name() else {
         return source;
     };
-    let destination = helper_bin_dir(codex_home).join(file_name);
+    let destination = helper_bin_dir(orbit_code_home).join(file_name);
     match copy_from_source_if_needed(&source, &destination) {
         Ok(_) => destination,
         Err(err) => {
-            let sandbox_log_dir = crate::sandbox_dir(codex_home);
+            let sandbox_log_dir = crate::sandbox_dir(orbit_code_home);
             log_note(
                 &format!(
                     "helper copy failed for current executable: {err:#}; falling back to legacy path {}",
@@ -118,10 +118,10 @@ pub fn resolve_current_exe_for_launch(
 
 pub(crate) fn copy_helper_if_needed(
     kind: HelperExecutable,
-    codex_home: &Path,
+    orbit_code_home: &Path,
     log_dir: Option<&Path>,
 ) -> Result<PathBuf> {
-    let cache_key = format!("{}|{}", kind.file_name(), codex_home.display());
+    let cache_key = format!("{}|{}", kind.file_name(), orbit_code_home.display());
     if let Some(path) = cached_helper_path(&cache_key) {
         log_note(
             &format!(
@@ -135,7 +135,7 @@ pub(crate) fn copy_helper_if_needed(
     }
 
     let source = sibling_source_path(kind)?;
-    let destination = helper_bin_dir(codex_home).join(kind.file_name());
+    let destination = helper_bin_dir(orbit_code_home).join(kind.file_name());
     log_note(
         &format!(
             "helper copy: validating {} source={} destination={}",
@@ -349,22 +349,22 @@ mod tests {
 
     #[test]
     fn helper_bin_dir_is_under_sandbox_bin() {
-        let codex_home = Path::new(r"C:\Users\example\.codex");
+        let orbit_code_home = Path::new(r"C:\Users\example\.codex");
 
         assert_eq!(
             PathBuf::from(r"C:\Users\example\.codex\.sandbox-bin"),
-            helper_bin_dir(codex_home)
+            helper_bin_dir(orbit_code_home)
         );
     }
 
     #[test]
     fn copy_runner_into_shared_bin_dir() {
         let tmp = TempDir::new().expect("tempdir");
-        let codex_home = tmp.path().join("codex-home");
+        let orbit_code_home = tmp.path().join("codex-home");
         let source_dir = tmp.path().join("sibling-source");
         fs::create_dir_all(&source_dir).expect("create source dir");
         let runner_source = source_dir.join("codex-command-runner.exe");
-        let runner_destination = helper_bin_dir(&codex_home).join("codex-command-runner.exe");
+        let runner_destination = helper_bin_dir(&orbit_code_home).join("codex-command-runner.exe");
         fs::write(&runner_source, b"runner").expect("runner");
 
         let runner_outcome =

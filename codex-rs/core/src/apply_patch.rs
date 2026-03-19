@@ -5,8 +5,8 @@ use crate::protocol::FileSystemSandboxPolicy;
 use crate::safety::SafetyCheck;
 use crate::safety::assess_patch_safety;
 use crate::tools::sandboxing::ExecApprovalRequirement;
-use codex_apply_patch::ApplyPatchAction;
-use codex_apply_patch::ApplyPatchFileChange;
+use orbit_code_apply_patch::ApplyPatchAction;
+use orbit_code_apply_patch::ApplyPatchFileChange;
 use std::collections::HashMap;
 use std::path::PathBuf;
 
@@ -19,7 +19,7 @@ pub(crate) enum InternalApplyPatchInvocation {
     /// The `apply_patch` call was approved, either automatically because it
     /// appears that it should be allowed based on the user's sandbox policy
     /// *or* because the user explicitly approved it. In either case, we use
-    /// exec with [`codex_apply_patch::CODEX_CORE_APPLY_PATCH_ARG1`] to realize
+    /// exec with [`orbit_code_apply_patch::ORBIT_CORE_APPLY_PATCH_ARG1`] to realize
     /// the `apply_patch` call,
     /// but [`ApplyPatchExec::auto_approved`] is used to determine the sandbox
     /// used with the `exec()`.

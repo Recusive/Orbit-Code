@@ -25,7 +25,7 @@ use crate::unified_exec::UnifiedExecContext;
 use crate::unified_exec::UnifiedExecProcessManager;
 use crate::unified_exec::WriteStdinRequest;
 use async_trait::async_trait;
-use codex_protocol::models::PermissionProfile;
+use orbit_code_protocol::models::PermissionProfile;
 use serde::Deserialize;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -160,7 +160,8 @@ impl ToolHandler for UnifiedExecHandler {
                     turn.tools_config.allow_login_shell,
                 )
                 .map_err(FunctionCallError::RespondToModel)?;
-                let command_for_display = codex_shell_command::parse_command::shlex_join(&command);
+                let command_for_display =
+                    orbit_code_shell_command::parse_command::shlex_join(&command);
 
                 let ExecCommandArgs {
                     workdir,
@@ -195,7 +196,7 @@ impl ToolHandler for UnifiedExecHandler {
                     && !effective_additional_permissions.permissions_preapproved
                     && !matches!(
                         context.turn.approval_policy.value(),
-                        codex_protocol::protocol::AskForApproval::OnRequest
+                        orbit_code_protocol::protocol::AskForApproval::OnRequest
                     )
                 {
                     let approval_policy = context.turn.approval_policy.value();

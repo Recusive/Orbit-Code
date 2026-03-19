@@ -6,7 +6,7 @@ use super::split_string;
 use super::truncate_function_output_items_with_policy;
 use super::truncate_text;
 use super::truncate_with_token_budget;
-use codex_protocol::models::FunctionCallOutputContentItem;
+use orbit_code_protocol::models::FunctionCallOutputContentItem;
 use pretty_assertions::assert_eq;
 
 #[test]

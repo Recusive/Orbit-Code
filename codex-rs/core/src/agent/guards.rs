@@ -1,8 +1,8 @@
 use crate::error::CodexErr;
 use crate::error::Result;
-use codex_protocol::ThreadId;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::SubAgentSource;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::protocol::SessionSource;
+use orbit_code_protocol::protocol::SubAgentSource;
 use rand::prelude::IndexedRandom;
 use std::collections::HashMap;
 use std::collections::HashSet;
@@ -137,7 +137,7 @@ impl Guards {
             } else {
                 active_agents.used_agent_nicknames.clear();
                 active_agents.nickname_reset_count += 1;
-                if let Some(metrics) = codex_otel::metrics::global() {
+                if let Some(metrics) = orbit_code_otel::metrics::global() {
                     let _ = metrics.counter(
                         "codex.multi_agent.nickname_pool_reset",
                         /*inc*/ 1,

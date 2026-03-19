@@ -1,12 +1,12 @@
 use std::path::PathBuf;
 
-use codex_protocol::ThreadId;
-use codex_protocol::protocol::HookCompletedEvent;
-use codex_protocol::protocol::HookEventName;
-use codex_protocol::protocol::HookOutputEntry;
-use codex_protocol::protocol::HookOutputEntryKind;
-use codex_protocol::protocol::HookRunStatus;
-use codex_protocol::protocol::HookRunSummary;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::protocol::HookCompletedEvent;
+use orbit_code_protocol::protocol::HookEventName;
+use orbit_code_protocol::protocol::HookOutputEntry;
+use orbit_code_protocol::protocol::HookOutputEntryKind;
+use orbit_code_protocol::protocol::HookRunStatus;
+use orbit_code_protocol::protocol::HookRunSummary;
 
 use super::common;
 use crate::engine::CommandShell;
@@ -270,10 +270,10 @@ fn serialization_failure_outcome(hook_events: Vec<HookCompletedEvent>) -> UserPr
 mod tests {
     use std::path::PathBuf;
 
-    use codex_protocol::protocol::HookEventName;
-    use codex_protocol::protocol::HookOutputEntry;
-    use codex_protocol::protocol::HookOutputEntryKind;
-    use codex_protocol::protocol::HookRunStatus;
+    use orbit_code_protocol::protocol::HookEventName;
+    use orbit_code_protocol::protocol::HookOutputEntry;
+    use orbit_code_protocol::protocol::HookOutputEntryKind;
+    use orbit_code_protocol::protocol::HookRunStatus;
     use pretty_assertions::assert_eq;
 
     use super::UserPromptSubmitHandlerData;

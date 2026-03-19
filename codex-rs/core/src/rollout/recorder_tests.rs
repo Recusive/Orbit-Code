@@ -2,13 +2,13 @@ use super::*;
 use crate::config::ConfigBuilder;
 use crate::features::Feature;
 use chrono::TimeZone;
-use codex_protocol::config_types::ReasoningSummary as ReasoningSummaryConfig;
-use codex_protocol::protocol::AgentMessageEvent;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::SandboxPolicy;
-use codex_protocol::protocol::TurnContextItem;
-use codex_protocol::protocol::UserMessageEvent;
+use orbit_code_protocol::config_types::ReasoningSummary as ReasoningSummaryConfig;
+use orbit_code_protocol::protocol::AgentMessageEvent;
+use orbit_code_protocol::protocol::AskForApproval;
+use orbit_code_protocol::protocol::EventMsg;
+use orbit_code_protocol::protocol::SandboxPolicy;
+use orbit_code_protocol::protocol::TurnContextItem;
+use orbit_code_protocol::protocol::UserMessageEvent;
 use pretty_assertions::assert_eq;
 use std::fs::File;
 use std::fs::{self};
@@ -55,7 +55,7 @@ fn write_session_file(root: &Path, ts: &str, uuid: Uuid) -> std::io::Result<Path
 async fn recorder_materializes_only_after_explicit_persist() -> std::io::Result<()> {
     let home = TempDir::new().expect("temp dir");
     let config = ConfigBuilder::default()
-        .codex_home(home.path().to_path_buf())
+        .orbit_code_home(home.path().to_path_buf())
         .build()
         .await?;
     let thread_id = ThreadId::new();
@@ -142,7 +142,7 @@ async fn recorder_materializes_only_after_explicit_persist() -> std::io::Result<
 async fn metadata_irrelevant_events_touch_state_db_updated_at() -> std::io::Result<()> {
     let home = TempDir::new().expect("temp dir");
     let mut config = ConfigBuilder::default()
-        .codex_home(home.path().to_path_buf())
+        .orbit_code_home(home.path().to_path_buf())
         .build()
         .await?;
     config
@@ -230,7 +230,7 @@ async fn metadata_irrelevant_events_fall_back_to_upsert_when_thread_missing() ->
 {
     let home = TempDir::new().expect("temp dir");
     let mut config = ConfigBuilder::default()
-        .codex_home(home.path().to_path_buf())
+        .orbit_code_home(home.path().to_path_buf())
         .build()
         .await?;
     config
@@ -281,7 +281,7 @@ async fn metadata_irrelevant_events_fall_back_to_upsert_when_thread_missing() ->
 async fn list_threads_db_disabled_does_not_skip_paginated_items() -> std::io::Result<()> {
     let home = TempDir::new().expect("temp dir");
     let mut config = ConfigBuilder::default()
-        .codex_home(home.path().to_path_buf())
+        .orbit_code_home(home.path().to_path_buf())
         .build()
         .await?;
     config
@@ -329,7 +329,7 @@ async fn list_threads_db_disabled_does_not_skip_paginated_items() -> std::io::Re
 async fn list_threads_db_enabled_drops_missing_rollout_paths() -> std::io::Result<()> {
     let home = TempDir::new().expect("temp dir");
     let mut config = ConfigBuilder::default()
-        .codex_home(home.path().to_path_buf())
+        .orbit_code_home(home.path().to_path_buf())
         .build()
         .await?;
     config
@@ -343,7 +343,7 @@ async fn list_threads_db_enabled_drops_missing_rollout_paths() -> std::io::Resul
         "sessions/2099/01/01/rollout-2099-01-01T00-00-00-{uuid}.jsonl"
     ));
 
-    let runtime = codex_state::StateRuntime::init(
+    let runtime = orbit_code_state::StateRuntime::init(
         home.path().to_path_buf(),
         config.model_provider_id.clone(),
     )
@@ -357,7 +357,7 @@ async fn list_threads_db_enabled_drops_missing_rollout_paths() -> std::io::Resul
         .with_ymd_and_hms(2025, 1, 3, 13, 0, 0)
         .single()
         .expect("valid datetime");
-    let mut builder = codex_state::ThreadMetadataBuilder::new(
+    let mut builder = orbit_code_state::ThreadMetadataBuilder::new(
         thread_id,
         stale_path,
         created_at,
@@ -397,7 +397,7 @@ async fn list_threads_db_enabled_drops_missing_rollout_paths() -> std::io::Resul
 async fn list_threads_db_enabled_repairs_stale_rollout_paths() -> std::io::Result<()> {
     let home = TempDir::new().expect("temp dir");
     let mut config = ConfigBuilder::default()
-        .codex_home(home.path().to_path_buf())
+        .orbit_code_home(home.path().to_path_buf())
         .build()
         .await?;
     config
@@ -412,7 +412,7 @@ async fn list_threads_db_enabled_repairs_stale_rollout_paths() -> std::io::Resul
         "sessions/2099/01/01/rollout-2099-01-01T00-00-00-{uuid}.jsonl"
     ));
 
-    let runtime = codex_state::StateRuntime::init(
+    let runtime = orbit_code_state::StateRuntime::init(
         home.path().to_path_buf(),
         config.model_provider_id.clone(),
     )
@@ -426,7 +426,7 @@ async fn list_threads_db_enabled_repairs_stale_rollout_paths() -> std::io::Resul
         .with_ymd_and_hms(2025, 1, 3, 13, 0, 0)
         .single()
         .expect("valid datetime");
-    let mut builder = codex_state::ThreadMetadataBuilder::new(
+    let mut builder = orbit_code_state::ThreadMetadataBuilder::new(
         thread_id,
         stale_path,
         created_at,

@@ -63,24 +63,24 @@ use crate::outgoing_message::OutgoingMessageSender;
 use crate::transport::CHANNEL_CAPACITY;
 use crate::transport::OutboundConnectionState;
 use crate::transport::route_outgoing_envelope;
-use codex_app_server_protocol::ClientNotification;
-use codex_app_server_protocol::ClientRequest;
-use codex_app_server_protocol::ConfigWarningNotification;
-use codex_app_server_protocol::InitializeParams;
-use codex_app_server_protocol::JSONRPCErrorError;
-use codex_app_server_protocol::JSONRPCNotification;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::Result;
-use codex_app_server_protocol::ServerNotification;
-use codex_app_server_protocol::ServerRequest;
-use codex_arg0::Arg0DispatchPaths;
-use codex_core::AuthManager;
-use codex_core::ThreadManager;
-use codex_core::config::Config;
-use codex_core::config_loader::CloudRequirementsLoader;
-use codex_core::config_loader::LoaderOverrides;
-use codex_feedback::CodexFeedback;
-use codex_protocol::protocol::SessionSource;
+use orbit_code_app_server_protocol::ClientNotification;
+use orbit_code_app_server_protocol::ClientRequest;
+use orbit_code_app_server_protocol::ConfigWarningNotification;
+use orbit_code_app_server_protocol::InitializeParams;
+use orbit_code_app_server_protocol::JSONRPCErrorError;
+use orbit_code_app_server_protocol::JSONRPCNotification;
+use orbit_code_app_server_protocol::RequestId;
+use orbit_code_app_server_protocol::Result;
+use orbit_code_app_server_protocol::ServerNotification;
+use orbit_code_app_server_protocol::ServerRequest;
+use orbit_code_arg0::Arg0DispatchPaths;
+use orbit_code_core::AuthManager;
+use orbit_code_core::ThreadManager;
+use orbit_code_core::config::Config;
+use orbit_code_core::config_loader::CloudRequirementsLoader;
+use orbit_code_core::config_loader::LoaderOverrides;
+use orbit_code_feedback::CodexFeedback;
+use orbit_code_protocol::protocol::SessionSource;
 use tokio::sync::mpsc;
 use tokio::sync::oneshot;
 use tokio::time::timeout;
@@ -134,8 +134,8 @@ pub struct InProcessStartArgs {
     pub config_warnings: Vec<ConfigWarningNotification>,
     /// Session source stamped into thread/session metadata.
     pub session_source: SessionSource,
-    /// Whether auth loading should honor the `CODEX_API_KEY` environment variable.
-    pub enable_codex_api_key_env: bool,
+    /// Whether auth loading should honor the `ORBIT_API_KEY` environment variable.
+    pub enable_orbit_code_api_key_env: bool,
     /// Initialize params used for initial handshake.
     pub initialize: InitializeParams,
     /// Capacity used for all runtime queues (clamped to at least 1).
@@ -145,7 +145,7 @@ pub struct InProcessStartArgs {
 /// Event emitted from the app-server to the in-process client.
 ///
 /// The stream carries three event families because CLI surfaces are mid-migration
-/// from the legacy `codex_protocol::Event` model to the typed app-server
+/// from the legacy `orbit_code_protocol::Event` model to the typed app-server
 /// notification model. Once all surfaces consume only [`ServerNotification`],
 /// [`LegacyNotification`](Self::LegacyNotification) can be removed.
 ///
@@ -416,7 +416,7 @@ fn start_uninitialized(args: InProcessStartArgs) -> InProcessClientHandle {
                 log_db: None,
                 config_warnings: args.config_warnings,
                 session_source: args.session_source,
-                enable_codex_api_key_env: args.enable_codex_api_key_env,
+                enable_orbit_code_api_key_env: args.enable_orbit_code_api_key_env,
             });
             let mut thread_created_rx = processor.thread_created_receiver();
             let mut session = ConnectionSessionState::default();
@@ -730,15 +730,15 @@ fn start_uninitialized(args: InProcessStartArgs) -> InProcessClientHandle {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use codex_app_server_protocol::ClientInfo;
-    use codex_app_server_protocol::ConfigRequirementsReadResponse;
-    use codex_app_server_protocol::SessionSource as ApiSessionSource;
-    use codex_app_server_protocol::ThreadStartParams;
-    use codex_app_server_protocol::ThreadStartResponse;
-    use codex_app_server_protocol::Turn;
-    use codex_app_server_protocol::TurnCompletedNotification;
-    use codex_app_server_protocol::TurnStatus;
-    use codex_core::config::ConfigBuilder;
+    use orbit_code_app_server_protocol::ClientInfo;
+    use orbit_code_app_server_protocol::ConfigRequirementsReadResponse;
+    use orbit_code_app_server_protocol::SessionSource as ApiSessionSource;
+    use orbit_code_app_server_protocol::ThreadStartParams;
+    use orbit_code_app_server_protocol::ThreadStartResponse;
+    use orbit_code_app_server_protocol::Turn;
+    use orbit_code_app_server_protocol::TurnCompletedNotification;
+    use orbit_code_app_server_protocol::TurnStatus;
+    use orbit_code_core::config::ConfigBuilder;
     use pretty_assertions::assert_eq;
 
     async fn build_test_config() -> Config {
@@ -764,7 +764,7 @@ mod tests {
             feedback: CodexFeedback::new(),
             config_warnings: Vec::new(),
             session_source,
-            enable_codex_api_key_env: false,
+            enable_orbit_code_api_key_env: false,
             initialize: InitializeParams {
                 client_info: ClientInfo {
                     name: "codex-in-process-test".to_string(),

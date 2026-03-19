@@ -16,13 +16,13 @@ use crate::protocol::SessionSource;
 use crate::protocol::SubAgentSource;
 use crate::tools::context::ToolOutput;
 use crate::turn_diff_tracker::TurnDiffTracker;
-use codex_protocol::ThreadId;
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::FunctionCallOutputBody;
-use codex_protocol::models::ResponseInputItem;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::protocol::InitialHistory;
-use codex_protocol::protocol::RolloutItem;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::models::ContentItem;
+use orbit_code_protocol::models::FunctionCallOutputBody;
+use orbit_code_protocol::models::ResponseInputItem;
+use orbit_code_protocol::models::ResponseItem;
+use orbit_code_protocol::protocol::InitialHistory;
+use orbit_code_protocol::protocol::RolloutItem;
 use pretty_assertions::assert_eq;
 use serde::Deserialize;
 use serde_json::json;
@@ -79,7 +79,7 @@ where
             let content = match output.body {
                 FunctionCallOutputBody::Text(text) => text,
                 FunctionCallOutputBody::ContentItems(items) => {
-                    codex_protocol::models::function_call_output_content_items_to_text(&items)
+                    orbit_code_protocol::models::function_call_output_content_items_to_text(&items)
                         .unwrap_or_default()
                 }
             };
@@ -1035,7 +1035,7 @@ async fn build_agent_spawn_config_uses_turn_context_values() {
     };
     let temp_dir = tempfile::tempdir().expect("temp dir");
     turn.cwd = temp_dir.path().to_path_buf();
-    turn.codex_linux_sandbox_exe = Some(PathBuf::from("/bin/echo"));
+    turn.orbit_code_linux_sandbox_exe = Some(PathBuf::from("/bin/echo"));
     let sandbox_policy = pick_allowed_sandbox_policy(
         &turn.config.permissions.sandbox_policy,
         turn.config.permissions.sandbox_policy.get().clone(),
@@ -1062,7 +1062,7 @@ async fn build_agent_spawn_config_uses_turn_context_values() {
     expected.developer_instructions = turn.developer_instructions.clone();
     expected.compact_prompt = turn.compact_prompt.clone();
     expected.permissions.shell_environment_policy = turn.shell_environment_policy.clone();
-    expected.codex_linux_sandbox_exe = turn.codex_linux_sandbox_exe.clone();
+    expected.orbit_code_linux_sandbox_exe = turn.orbit_code_linux_sandbox_exe.clone();
     expected.cwd = turn.cwd.clone();
     expected
         .permissions
@@ -1116,7 +1116,7 @@ async fn build_agent_resume_config_clears_base_instructions() {
     expected.developer_instructions = turn.developer_instructions.clone();
     expected.compact_prompt = turn.compact_prompt.clone();
     expected.permissions.shell_environment_policy = turn.shell_environment_policy.clone();
-    expected.codex_linux_sandbox_exe = turn.codex_linux_sandbox_exe.clone();
+    expected.orbit_code_linux_sandbox_exe = turn.orbit_code_linux_sandbox_exe.clone();
     expected.cwd = turn.cwd.clone();
     expected
         .permissions

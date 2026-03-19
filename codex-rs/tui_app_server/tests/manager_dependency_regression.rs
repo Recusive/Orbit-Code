@@ -21,7 +21,7 @@ fn rust_sources_under(dir: &Path) -> Vec<PathBuf> {
 
 #[test]
 fn tui_app_server_runtime_source_does_not_depend_on_manager_escape_hatches() {
-    let src_dir = codex_utils_cargo_bin::find_resource!("src")
+    let src_dir = orbit_code_utils_cargo_bin::find_resource!("src")
         .unwrap_or_else(|err| panic!("failed to resolve src runfile: {err}"));
     let sources = rust_sources_under(&src_dir);
     let forbidden = [

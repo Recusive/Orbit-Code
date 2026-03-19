@@ -34,16 +34,16 @@ use crate::history_cell::UserHistoryCell;
 use crate::pager_overlay::Overlay;
 use crate::tui;
 use crate::tui::TuiEvent;
-use codex_protocol::ThreadId;
-use codex_protocol::protocol::CodexErrorInfo;
-use codex_protocol::protocol::ErrorEvent;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::Op;
-use codex_protocol::user_input::TextElement;
 use color_eyre::eyre::Result;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyEventKind;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::protocol::CodexErrorInfo;
+use orbit_code_protocol::protocol::ErrorEvent;
+use orbit_code_protocol::protocol::EventMsg;
+use orbit_code_protocol::protocol::Op;
+use orbit_code_protocol::user_input::TextElement;
 
 /// Aggregates all backtrack-related state used by the App.
 #[derive(Default)]
@@ -482,7 +482,7 @@ impl App {
                 }
             }
             EventMsg::Error(ErrorEvent {
-                codex_error_info: Some(CodexErrorInfo::ThreadRollbackFailed),
+                orbit_code_error_info: Some(CodexErrorInfo::ThreadRollbackFailed),
                 ..
             }) => {
                 // Core rejected the rollback; clear the guard so the user can retry.

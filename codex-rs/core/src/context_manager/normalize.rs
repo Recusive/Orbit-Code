@@ -1,8 +1,8 @@
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::FunctionCallOutputContentItem;
-use codex_protocol::models::FunctionCallOutputPayload;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::openai_models::InputModality;
+use orbit_code_protocol::models::ContentItem;
+use orbit_code_protocol::models::FunctionCallOutputContentItem;
+use orbit_code_protocol::models::FunctionCallOutputPayload;
+use orbit_code_protocol::models::ResponseItem;
+use orbit_code_protocol::openai_models::InputModality;
 use std::collections::HashSet;
 
 use crate::util::error_or_panic;

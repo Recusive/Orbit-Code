@@ -4,7 +4,7 @@ use chrono::DateTime;
 use chrono::Duration as ChronoDuration;
 use chrono::TimeZone;
 use chrono::Utc;
-use codex_protocol::protocol::RateLimitWindow;
+use orbit_code_protocol::protocol::RateLimitWindow;
 use pretty_assertions::assert_eq;
 use reqwest::Response;
 use reqwest::ResponseBuilderExt;
@@ -65,7 +65,7 @@ fn usage_limit_reached_error_formats_plus_plan() {
 fn server_overloaded_maps_to_protocol() {
     let err = CodexErr::ServerOverloaded;
     assert_eq!(
-        err.to_codex_protocol_error(),
+        err.to_orbit_code_protocol_error(),
         CodexErrorInfo::ServerOverloaded
     );
 }
@@ -141,7 +141,7 @@ fn to_error_event_handles_response_stream_failed() {
         "prefix: Error while reading the server response: HTTP status client error (429 Too Many Requests) for url (http://example.com/), request id: req-123"
     );
     assert_eq!(
-        event.codex_error_info,
+        event.orbit_code_error_info,
         Some(CodexErrorInfo::ResponseStreamConnectionFailed {
             http_status_code: Some(429)
         })
@@ -277,7 +277,7 @@ fn usage_limit_reached_error_formats_pro_plan_with_reset() {
 }
 
 #[test]
-fn usage_limit_reached_error_hides_upsell_for_non_codex_limit_name() {
+fn usage_limit_reached_error_hides_upsell_for_non_orbit_code_limit_name() {
     let base = Utc.with_ymd_and_hms(2024, 1, 1, 0, 0, 0).unwrap();
     let resets_at = base + ChronoDuration::hours(1);
     with_now_override(base, move || {
@@ -286,8 +286,8 @@ fn usage_limit_reached_error_hides_upsell_for_non_codex_limit_name() {
             plan_type: Some(PlanType::Known(KnownPlan::Plus)),
             resets_at: Some(resets_at),
             rate_limits: Some(Box::new(RateLimitSnapshot {
-                limit_id: Some("codex_other".to_string()),
-                limit_name: Some("codex_other".to_string()),
+                limit_id: Some("orbit_code_other".to_string()),
+                limit_name: Some("orbit_code_other".to_string()),
                 ..rate_limit_snapshot()
             })),
             promo_message: Some(
@@ -296,7 +296,7 @@ fn usage_limit_reached_error_hides_upsell_for_non_codex_limit_name() {
             ),
         };
         let expected = format!(
-            "You've hit your usage limit for codex_other. Switch to another model now, or try again at {expected_time}."
+            "You've hit your usage limit for orbit_code_other. Switch to another model now, or try again at {expected_time}."
         );
         assert_eq!(err.to_string(), expected);
     });

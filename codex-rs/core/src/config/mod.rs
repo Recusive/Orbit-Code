@@ -63,28 +63,28 @@ use crate::unified_exec::MIN_EMPTY_YIELD_TIME_MS;
 use crate::windows_sandbox::WindowsSandboxLevelExt;
 use crate::windows_sandbox::resolve_windows_sandbox_mode;
 use crate::windows_sandbox::resolve_windows_sandbox_private_desktop;
-use codex_app_server_protocol::Tools;
-use codex_app_server_protocol::UserSavedConfig;
-use codex_protocol::config_types::AltScreenMode;
-use codex_protocol::config_types::ForcedLoginMethod;
-use codex_protocol::config_types::Personality;
-use codex_protocol::config_types::ReasoningSummary;
-use codex_protocol::config_types::SandboxMode;
-use codex_protocol::config_types::ServiceTier;
-use codex_protocol::config_types::TrustLevel;
-use codex_protocol::config_types::Verbosity;
-use codex_protocol::config_types::WebSearchConfig;
-use codex_protocol::config_types::WebSearchMode;
-use codex_protocol::config_types::WebSearchToolConfig;
-use codex_protocol::config_types::WindowsSandboxLevel;
-use codex_protocol::models::MacOsSeatbeltProfileExtensions;
-use codex_protocol::openai_models::ModelsResponse;
-use codex_protocol::openai_models::ReasoningEffort;
-use codex_protocol::permissions::FileSystemSandboxPolicy;
-use codex_protocol::permissions::NetworkSandboxPolicy;
-use codex_rmcp_client::OAuthCredentialsStoreMode;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_absolute_path::AbsolutePathBufGuard;
+use orbit_code_app_server_protocol::Tools;
+use orbit_code_app_server_protocol::UserSavedConfig;
+use orbit_code_protocol::config_types::AltScreenMode;
+use orbit_code_protocol::config_types::ForcedLoginMethod;
+use orbit_code_protocol::config_types::Personality;
+use orbit_code_protocol::config_types::ReasoningSummary;
+use orbit_code_protocol::config_types::SandboxMode;
+use orbit_code_protocol::config_types::ServiceTier;
+use orbit_code_protocol::config_types::TrustLevel;
+use orbit_code_protocol::config_types::Verbosity;
+use orbit_code_protocol::config_types::WebSearchConfig;
+use orbit_code_protocol::config_types::WebSearchMode;
+use orbit_code_protocol::config_types::WebSearchToolConfig;
+use orbit_code_protocol::config_types::WindowsSandboxLevel;
+use orbit_code_protocol::models::MacOsSeatbeltProfileExtensions;
+use orbit_code_protocol::openai_models::ModelsResponse;
+use orbit_code_protocol::openai_models::ReasoningEffort;
+use orbit_code_protocol::permissions::FileSystemSandboxPolicy;
+use orbit_code_protocol::permissions::NetworkSandboxPolicy;
+use orbit_code_rmcp_client::OAuthCredentialsStoreMode;
+use orbit_code_utils_absolute_path::AbsolutePathBuf;
+use orbit_code_utils_absolute_path::AbsolutePathBufGuard;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Deserializer;
@@ -99,7 +99,7 @@ use std::path::PathBuf;
 use crate::config::permissions::compile_permission_profile;
 use crate::config::permissions::network_proxy_config_from_profile_network;
 use crate::config::profile::ConfigProfile;
-use codex_network_proxy::NetworkProxyConfig;
+use orbit_code_network_proxy::NetworkProxyConfig;
 use toml::Value as TomlValue;
 use toml_edit::DocumentMut;
 use toml_edit::value;
@@ -113,10 +113,10 @@ pub mod profile;
 pub mod schema;
 pub mod service;
 pub mod types;
-pub use codex_config::Constrained;
-pub use codex_config::ConstraintError;
-pub use codex_config::ConstraintResult;
-pub use codex_network_proxy::NetworkProxyAuditMetadata;
+pub use orbit_code_config::Constrained;
+pub use orbit_code_config::ConstraintError;
+pub use orbit_code_config::ConstraintResult;
+pub use orbit_code_network_proxy::NetworkProxyAuditMetadata;
 
 pub use managed_features::ManagedFeatures;
 pub use network_proxy_spec::NetworkProxySpec;
@@ -131,7 +131,7 @@ pub use service::ConfigService;
 pub use service::ConfigServiceError;
 pub use types::ApprovalsReviewer;
 
-pub use codex_git::GhostSnapshotConfig;
+pub use orbit_code_git::GhostSnapshotConfig;
 
 /// Maximum number of bytes of the documentation that will be embedded. Larger
 /// files are *silently truncated* to this size so we do not take up too much of
@@ -168,7 +168,7 @@ pub fn missing_system_bwrap_warning() -> Option<String> {
 }
 
 fn resolve_sqlite_home_env(resolved_cwd: &Path) -> Option<PathBuf> {
-    let raw = std::env::var(codex_state::SQLITE_HOME_ENV).ok()?;
+    let raw = std::env::var(orbit_code_state::SQLITE_HOME_ENV).ok()?;
     let trimmed = raw.trim();
     if trimmed.is_empty() {
         return None;
@@ -182,11 +182,11 @@ fn resolve_sqlite_home_env(resolved_cwd: &Path) -> Option<PathBuf> {
 }
 #[cfg(test)]
 pub(crate) fn test_config() -> Config {
-    let codex_home = tempfile::tempdir().expect("create temp dir");
+    let orbit_code_home = tempfile::tempdir().expect("create temp dir");
     Config::load_from_base_config_with_overrides(
         ConfigToml::default(),
         ConfigOverrides::default(),
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
     )
     .expect("load default test config")
 }
@@ -380,7 +380,7 @@ pub struct Config {
     /// keyring: Use an OS-specific keyring service.
     ///          Credentials stored in the keyring will only be readable by Codex unless the user explicitly grants access via OS-level keyring access.
     ///          https://github.com/openai/codex/blob/main/codex-rs/rmcp-client/src/oauth.rs#L2
-    /// file: CODEX_HOME/.credentials.json
+    /// file: ORBIT_HOME/.credentials.json
     ///       This file will be readable to Codex and other applications running as the same user.
     /// auto (default): keyring if available, otherwise file.
     pub mcp_oauth_credentials_store_mode: OAuthCredentialsStoreMode,
@@ -424,13 +424,13 @@ pub struct Config {
     pub memories: MemoriesConfig,
 
     /// Directory containing all Codex state (defaults to `~/.codex` but can be
-    /// overridden by the `CODEX_HOME` environment variable).
-    pub codex_home: PathBuf,
+    /// overridden by the `ORBIT_HOME` environment variable).
+    pub orbit_code_home: PathBuf,
 
     /// Directory where Codex stores the SQLite state DB.
     pub sqlite_home: PathBuf,
 
-    /// Directory where Codex writes log files (defaults to `$CODEX_HOME/log`).
+    /// Directory where Codex writes log files (defaults to `$ORBIT_HOME/log`).
     pub log_dir: PathBuf,
 
     /// Settings that govern if and what will be written to `~/.codex/history.jsonl`.
@@ -449,7 +449,7 @@ pub struct Config {
     /// [`ConfigOverrides`].
     ///
     /// When this program is invoked, arg0 will be set to `codex-linux-sandbox`.
-    pub codex_linux_sandbox_exe: Option<PathBuf>,
+    pub orbit_code_linux_sandbox_exe: Option<PathBuf>,
 
     /// Path to the `codex-execve-wrapper` executable used for shell
     /// escalation. This cannot be set in the config file: it must be set in
@@ -592,7 +592,7 @@ pub struct Config {
 
 #[derive(Debug, Clone, Default)]
 pub struct ConfigBuilder {
-    codex_home: Option<PathBuf>,
+    orbit_code_home: Option<PathBuf>,
     cli_overrides: Option<Vec<(String, TomlValue)>>,
     harness_overrides: Option<ConfigOverrides>,
     loader_overrides: Option<LoaderOverrides>,
@@ -601,8 +601,8 @@ pub struct ConfigBuilder {
 }
 
 impl ConfigBuilder {
-    pub fn codex_home(mut self, codex_home: PathBuf) -> Self {
-        self.codex_home = Some(codex_home);
+    pub fn orbit_code_home(mut self, orbit_code_home: PathBuf) -> Self {
+        self.orbit_code_home = Some(orbit_code_home);
         self
     }
 
@@ -633,15 +633,16 @@ impl ConfigBuilder {
 
     pub async fn build(self) -> std::io::Result<Config> {
         let Self {
-            codex_home,
+            orbit_code_home,
             cli_overrides,
             harness_overrides,
             loader_overrides,
             cloud_requirements,
             fallback_cwd,
         } = self;
-        let codex_home = codex_home.map_or_else(find_codex_home, std::io::Result::Ok)?;
-        if let Err(err) = maybe_migrate_smart_approvals_alias(&codex_home).await {
+        let orbit_code_home =
+            orbit_code_home.map_or_else(find_orbit_code_home, std::io::Result::Ok)?;
+        if let Err(err) = maybe_migrate_smart_approvals_alias(&orbit_code_home).await {
             tracing::warn!(error = %err, "failed to migrate smart_approvals feature alias");
         }
         let cli_overrides = cli_overrides.unwrap_or_default();
@@ -654,7 +655,7 @@ impl ConfigBuilder {
         };
         harness_overrides.cwd = Some(cwd.to_path_buf());
         let config_layer_stack = load_config_layers_state(
-            &codex_home,
+            &orbit_code_home,
             Some(cwd),
             &cli_overrides,
             loader_overrides,
@@ -685,7 +686,7 @@ impl ConfigBuilder {
         Config::load_config_with_layer_stack(
             config_toml,
             harness_overrides,
-            codex_home,
+            orbit_code_home,
             config_layer_stack,
         )
     }
@@ -747,8 +748,8 @@ fn push_smart_approvals_alias_migration_edits(
 /// migrated feature value is `true`.
 /// In all cases it removes the deprecated `smart_approvals` entry so future
 /// loads only see the canonical feature flag name.
-async fn maybe_migrate_smart_approvals_alias(codex_home: &Path) -> std::io::Result<bool> {
-    let config_path = codex_home.join(CONFIG_TOML_FILE);
+async fn maybe_migrate_smart_approvals_alias(orbit_code_home: &Path) -> std::io::Result<bool> {
+    let config_path = orbit_code_home.join(CONFIG_TOML_FILE);
     if !tokio::fs::try_exists(&config_path).await? {
         return Ok(false);
     }
@@ -786,7 +787,7 @@ async fn maybe_migrate_smart_approvals_alias(codex_home: &Path) -> std::io::Resu
         return Ok(false);
     }
 
-    ConfigEditsBuilder::new(codex_home)
+    ConfigEditsBuilder::new(orbit_code_home)
         .with_edits(edits)
         .apply()
         .await
@@ -811,7 +812,7 @@ impl Config {
     pub fn load_default_with_cli_overrides(
         cli_overrides: Vec<(String, TomlValue)>,
     ) -> std::io::Result<Self> {
-        let codex_home = find_codex_home()?;
+        let orbit_code_home = find_orbit_code_home()?;
         let mut merged = toml::Value::try_from(ConfigToml::default()).map_err(|e| {
             std::io::Error::new(
                 std::io::ErrorKind::InvalidData,
@@ -820,11 +821,11 @@ impl Config {
         })?;
         let cli_layer = crate::config_loader::build_cli_overrides_layer(&cli_overrides);
         crate::config_loader::merge_toml_values(&mut merged, &cli_layer);
-        let config_toml = deserialize_config_toml_with_base(merged, &codex_home)?;
+        let config_toml = deserialize_config_toml_with_base(merged, &orbit_code_home)?;
         Self::load_config_with_layer_stack(
             config_toml,
             ConfigOverrides::default(),
-            codex_home,
+            orbit_code_home,
             ConfigLayerStack::default(),
         )
     }
@@ -835,7 +836,7 @@ impl Config {
     /// designed to use [AskForApproval::Never] exclusively.
     ///
     /// Further, [ConfigOverrides] contains some options that are not supported
-    /// in [ConfigToml], such as `cwd`, `codex_linux_sandbox_exe`, and
+    /// in [ConfigToml], such as `cwd`, `orbit_code_linux_sandbox_exe`, and
     /// `main_execve_wrapper_exe`.
     pub async fn load_with_cli_overrides_and_harness_overrides(
         cli_overrides: Vec<(String, TomlValue)>,
@@ -853,15 +854,15 @@ impl Config {
 /// with [ConfigToml] directly means that [ConfigRequirements] have not been
 /// applied yet, which risks failing to enforce required constraints.
 pub async fn load_config_as_toml_with_cli_overrides(
-    codex_home: &Path,
+    orbit_code_home: &Path,
     cwd: &AbsolutePathBuf,
     cli_overrides: Vec<(String, TomlValue)>,
 ) -> std::io::Result<ConfigToml> {
-    if let Err(err) = maybe_migrate_smart_approvals_alias(codex_home).await {
+    if let Err(err) = maybe_migrate_smart_approvals_alias(orbit_code_home).await {
         tracing::warn!(error = %err, "failed to migrate smart_approvals feature alias");
     }
     let config_layer_stack = load_config_layers_state(
-        codex_home,
+        orbit_code_home,
         Some(cwd.clone()),
         &cli_overrides,
         LoaderOverrides::default(),
@@ -870,7 +871,7 @@ pub async fn load_config_as_toml_with_cli_overrides(
     .await?;
 
     let merged_toml = config_layer_stack.effective_config();
-    let cfg = deserialize_config_toml_with_base(merged_toml, codex_home).map_err(|e| {
+    let cfg = deserialize_config_toml_with_base(merged_toml, orbit_code_home).map_err(|e| {
         tracing::error!("Failed to deserialize overridden config: {e}");
         e
     })?;
@@ -1017,7 +1018,7 @@ fn mcp_server_matches_requirement(
 }
 
 pub async fn load_global_mcp_servers(
-    codex_home: &Path,
+    orbit_code_home: &Path,
 ) -> std::io::Result<BTreeMap<String, McpServerConfig>> {
     // In general, Config::load_with_cli_overrides() should be used to load the
     // full config with requirements.toml applied, but in this case, we need
@@ -1031,7 +1032,7 @@ pub async fn load_global_mcp_servers(
     // MCP servers defined in in-repo .codex/ folders.
     let cwd: Option<AbsolutePathBuf> = None;
     let config_layer_stack = load_config_layers_state(
-        codex_home,
+        orbit_code_home,
         cwd,
         &cli_overrides,
         LoaderOverrides::default(),
@@ -1141,22 +1142,22 @@ pub(crate) fn set_project_trust_level_inner(
     Ok(())
 }
 
-/// Patch `CODEX_HOME/config.toml` project state to set trust level.
+/// Patch `ORBIT_HOME/config.toml` project state to set trust level.
 /// Use with caution.
 pub fn set_project_trust_level(
-    codex_home: &Path,
+    orbit_code_home: &Path,
     project_path: &Path,
     trust_level: TrustLevel,
 ) -> anyhow::Result<()> {
     use crate::config::edit::ConfigEditsBuilder;
 
-    ConfigEditsBuilder::new(codex_home)
+    ConfigEditsBuilder::new(orbit_code_home)
         .set_project_trust_level(project_path, trust_level)
         .apply_blocking()
 }
 
 /// Save the default OSS provider preference to config.toml
-pub fn set_default_oss_provider(codex_home: &Path, provider: &str) -> std::io::Result<()> {
+pub fn set_default_oss_provider(orbit_code_home: &Path, provider: &str) -> std::io::Result<()> {
     // Validate that the provider is one of the known OSS providers
     match provider {
         LMSTUDIO_OSS_PROVIDER_ID | OLLAMA_OSS_PROVIDER_ID => {
@@ -1184,7 +1185,7 @@ pub fn set_default_oss_provider(codex_home: &Path, provider: &str) -> std::io::R
         value: value(provider),
     }];
 
-    ConfigEditsBuilder::new(codex_home)
+    ConfigEditsBuilder::new(orbit_code_home)
         .with_edits(edits)
         .apply_blocking()
         .map_err(|err| std::io::Error::other(format!("failed to persist config.toml: {err}")))
@@ -1346,11 +1347,11 @@ pub struct ConfigToml {
     pub history: Option<History>,
 
     /// Directory where Codex stores the SQLite state DB.
-    /// Defaults to `$CODEX_SQLITE_HOME` when set. Otherwise uses `$CODEX_HOME`.
+    /// Defaults to `$ORBIT_SQLITE_HOME` when set. Otherwise uses `$ORBIT_HOME`.
     pub sqlite_home: Option<AbsolutePathBuf>,
 
     /// Directory where Codex writes log files, for example `codex-tui.log`.
-    /// Defaults to `$CODEX_HOME/log`.
+    /// Defaults to `$ORBIT_HOME/log`.
     pub log_dir: Option<AbsolutePathBuf>,
 
     /// Optional URI-based file opener. If set, citations to files in the model
@@ -1565,7 +1566,7 @@ pub enum RealtimeWsMode {
     Transcription,
 }
 
-pub use codex_protocol::protocol::RealtimeConversationVersion as RealtimeWsVersion;
+pub use orbit_code_protocol::protocol::RealtimeConversationVersion as RealtimeWsVersion;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq, Eq, JsonSchema)]
 #[schemars(deny_unknown_fields)]
@@ -1752,7 +1753,7 @@ impl ConfigToml {
                     if p.is_trusted() || p.is_untrusted() {
                         if cfg!(target_os = "windows")
                             && windows_sandbox_level
-                                == codex_protocol::config_types::WindowsSandboxLevel::Disabled
+                                == orbit_code_protocol::config_types::WindowsSandboxLevel::Disabled
                         {
                             Some(SandboxMode::ReadOnly)
                         } else {
@@ -1787,7 +1788,7 @@ impl ConfigToml {
             if cfg!(target_os = "windows")
                 // If the experimental Windows sandbox is enabled, do not force a downgrade.
                 && windows_sandbox_level
-                    == codex_protocol::config_types::WindowsSandboxLevel::Disabled
+                    == orbit_code_protocol::config_types::WindowsSandboxLevel::Disabled
                 && matches!(&*policy, SandboxPolicy::WorkspaceWrite { .. })
             {
                 *policy = SandboxPolicy::new_read_only_policy();
@@ -1912,15 +1913,17 @@ fn add_additional_file_system_writes(
         let exists = file_system_sandbox_policy.entries.iter().any(|entry| {
             matches!(
                 &entry.path,
-                codex_protocol::permissions::FileSystemPath::Path { path: existing }
-                    if existing == path && entry.access == codex_protocol::permissions::FileSystemAccessMode::Write
+                orbit_code_protocol::permissions::FileSystemPath::Path { path: existing }
+                    if existing == path && entry.access == orbit_code_protocol::permissions::FileSystemAccessMode::Write
             )
         });
         if !exists {
             file_system_sandbox_policy.entries.push(
-                codex_protocol::permissions::FileSystemSandboxEntry {
-                    path: codex_protocol::permissions::FileSystemPath::Path { path: path.clone() },
-                    access: codex_protocol::permissions::FileSystemAccessMode::Write,
+                orbit_code_protocol::permissions::FileSystemSandboxEntry {
+                    path: orbit_code_protocol::permissions::FileSystemPath::Path {
+                        path: path.clone(),
+                    },
+                    access: orbit_code_protocol::permissions::FileSystemAccessMode::Write,
                 },
             );
         }
@@ -1939,7 +1942,7 @@ pub struct ConfigOverrides {
     pub model_provider: Option<String>,
     pub service_tier: Option<Option<ServiceTier>>,
     pub config_profile: Option<String>,
-    pub codex_linux_sandbox_exe: Option<PathBuf>,
+    pub orbit_code_linux_sandbox_exe: Option<PathBuf>,
     pub main_execve_wrapper_exe: Option<PathBuf>,
     pub js_repl_node_path: Option<PathBuf>,
     pub js_repl_node_module_dirs: Option<Vec<PathBuf>>,
@@ -2095,17 +2098,17 @@ impl Config {
     fn load_from_base_config_with_overrides(
         cfg: ConfigToml,
         overrides: ConfigOverrides,
-        codex_home: PathBuf,
+        orbit_code_home: PathBuf,
     ) -> std::io::Result<Self> {
         // Note this ignores requirements.toml enforcement for tests.
         let config_layer_stack = ConfigLayerStack::default();
-        Self::load_config_with_layer_stack(cfg, overrides, codex_home, config_layer_stack)
+        Self::load_config_with_layer_stack(cfg, overrides, orbit_code_home, config_layer_stack)
     }
 
     pub(crate) fn load_config_with_layer_stack(
         cfg: ConfigToml,
         overrides: ConfigOverrides,
-        codex_home: PathBuf,
+        orbit_code_home: PathBuf,
         config_layer_stack: ConfigLayerStack,
     ) -> std::io::Result<Self> {
         validate_reserved_model_provider_ids(&cfg.model_providers)
@@ -2123,7 +2126,7 @@ impl Config {
             network: network_requirements,
         } = config_layer_stack.requirements().clone();
 
-        let user_instructions = Self::load_instructions(Some(&codex_home));
+        let user_instructions = Self::load_instructions(Some(&orbit_code_home));
         let mut startup_warnings = Vec::new();
 
         // Destructure ConfigOverrides fully to ensure all overrides are applied.
@@ -2137,7 +2140,7 @@ impl Config {
             model_provider,
             service_tier: service_tier_override,
             config_profile: config_profile_key,
-            codex_linux_sandbox_exe,
+            orbit_code_linux_sandbox_exe,
             main_execve_wrapper_exe,
             js_repl_node_path: js_repl_node_path_override,
             js_repl_node_module_dirs: js_repl_node_module_dirs_override,
@@ -2234,7 +2237,7 @@ impl Config {
             Some(WindowsSandboxModeToml::Unelevated) => WindowsSandboxLevel::RestrictedToken,
             None => WindowsSandboxLevel::from_features(&features),
         };
-        let memories_root = memory_root(&codex_home);
+        let memories_root = memory_root(&orbit_code_home);
         std::fs::create_dir_all(&memories_root)?;
         let memories_root = AbsolutePathBuf::from_absolute_path(&memories_root)?;
         if !additional_writable_roots
@@ -2574,7 +2577,7 @@ impl Config {
             .as_ref()
             .map(AbsolutePathBuf::to_path_buf)
             .unwrap_or_else(|| {
-                let mut p = codex_home.clone();
+                let mut p = orbit_code_home.clone();
                 p.push("log");
                 p
             });
@@ -2583,7 +2586,7 @@ impl Config {
             .as_ref()
             .map(AbsolutePathBuf::to_path_buf)
             .or_else(|| resolve_sqlite_home_env(&resolved_cwd))
-            .unwrap_or_else(|| codex_home.to_path_buf());
+            .unwrap_or_else(|| orbit_code_home.to_path_buf());
         let original_sandbox_policy = sandbox_policy.clone();
 
         apply_requirement_constrained_value(
@@ -2710,14 +2713,14 @@ impl Config {
             agent_roles,
             memories: cfg.memories.unwrap_or_default().into(),
             agent_job_max_runtime_seconds,
-            codex_home,
+            orbit_code_home,
             sqlite_home,
             log_dir,
             config_layer_stack,
             history,
             ephemeral: ephemeral.unwrap_or_default(),
             file_opener: cfg.file_opener.unwrap_or(UriBasedFileOpener::VsCode),
-            codex_linux_sandbox_exe,
+            orbit_code_linux_sandbox_exe,
             main_execve_wrapper_exe,
             js_repl_node_path,
             js_repl_node_module_dirs,
@@ -2836,8 +2839,8 @@ impl Config {
         Ok(config)
     }
 
-    fn load_instructions(codex_dir: Option<&Path>) -> Option<String> {
-        let base = codex_dir?;
+    fn load_instructions(orbit_code_dir: Option<&Path>) -> Option<String> {
+        let base = orbit_code_dir?;
         for candidate in [LOCAL_PROJECT_DOC_FILENAME, DEFAULT_PROJECT_DOC_FILENAME] {
             let mut path = base.to_path_buf();
             path.push(candidate);
@@ -2954,16 +2957,23 @@ fn toml_uses_deprecated_instructions_file(value: &TomlValue) -> bool {
     })
 }
 
-/// Returns the path to the Codex configuration directory, which can be
-/// specified by the `CODEX_HOME` environment variable. If not set, defaults to
-/// `~/.codex`.
+/// Returns the path to the Orbit Code configuration directory, which can be
+/// specified by the `ORBIT_HOME` environment variable.
 ///
-/// - If `CODEX_HOME` is set, the value must exist and be a directory. The
+/// - If `ORBIT_HOME` is set, the value must exist and be a directory. The
 ///   value will be canonicalized and this function will Err otherwise.
-/// - If `CODEX_HOME` is not set, this function does not verify that the
+/// - If `ORBIT_HOME` is not set, this function does not verify that the
 ///   directory exists.
+pub fn find_orbit_home() -> std::io::Result<PathBuf> {
+    orbit_code_utils_home_dir::find_orbit_home()
+}
+
+pub fn find_orbit_code_home() -> std::io::Result<PathBuf> {
+    find_orbit_home()
+}
+
 pub fn find_codex_home() -> std::io::Result<PathBuf> {
-    codex_utils_home_dir::find_codex_home()
+    find_orbit_home()
 }
 
 /// Returns the path to the folder where Codex logs are stored. Does not verify

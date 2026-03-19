@@ -1,7 +1,7 @@
 use crate::exec::SandboxType;
 use crate::protocol::SandboxPolicy;
 use crate::safety::get_platform_sandbox;
-use codex_protocol::config_types::WindowsSandboxLevel;
+use orbit_code_protocol::config_types::WindowsSandboxLevel;
 
 pub(crate) fn sandbox_tag(
     policy: &SandboxPolicy,

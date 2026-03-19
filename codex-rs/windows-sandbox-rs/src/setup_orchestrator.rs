@@ -58,24 +58,24 @@ const WINDOWS_PLATFORM_DEFAULT_READ_ROOTS: &[&str] = &[
     r"C:\ProgramData",
 ];
 
-pub fn sandbox_dir(codex_home: &Path) -> PathBuf {
-    codex_home.join(".sandbox")
+pub fn sandbox_dir(orbit_code_home: &Path) -> PathBuf {
+    orbit_code_home.join(".sandbox")
 }
 
-pub fn sandbox_bin_dir(codex_home: &Path) -> PathBuf {
-    codex_home.join(".sandbox-bin")
+pub fn sandbox_bin_dir(orbit_code_home: &Path) -> PathBuf {
+    orbit_code_home.join(".sandbox-bin")
 }
 
-pub fn sandbox_secrets_dir(codex_home: &Path) -> PathBuf {
-    codex_home.join(".sandbox-secrets")
+pub fn sandbox_secrets_dir(orbit_code_home: &Path) -> PathBuf {
+    orbit_code_home.join(".sandbox-secrets")
 }
 
-pub fn setup_marker_path(codex_home: &Path) -> PathBuf {
-    sandbox_dir(codex_home).join("setup_marker.json")
+pub fn setup_marker_path(orbit_code_home: &Path) -> PathBuf {
+    sandbox_dir(orbit_code_home).join("setup_marker.json")
 }
 
-pub fn sandbox_users_path(codex_home: &Path) -> PathBuf {
-    sandbox_secrets_dir(codex_home).join("sandbox_users.json")
+pub fn sandbox_users_path(orbit_code_home: &Path) -> PathBuf {
+    sandbox_secrets_dir(orbit_code_home).join("sandbox_users.json")
 }
 
 pub fn run_setup_refresh(
@@ -83,14 +83,14 @@ pub fn run_setup_refresh(
     policy_cwd: &Path,
     command_cwd: &Path,
     env_map: &HashMap<String, String>,
-    codex_home: &Path,
+    orbit_code_home: &Path,
 ) -> Result<()> {
     run_setup_refresh_inner(
         policy,
         policy_cwd,
         command_cwd,
         env_map,
-        codex_home,
+        orbit_code_home,
         None,
         None,
     )
@@ -101,17 +101,17 @@ pub fn run_setup_refresh_with_extra_read_roots(
     policy_cwd: &Path,
     command_cwd: &Path,
     env_map: &HashMap<String, String>,
-    codex_home: &Path,
+    orbit_code_home: &Path,
     extra_read_roots: Vec<PathBuf>,
 ) -> Result<()> {
-    let mut read_roots = gather_read_roots(command_cwd, policy, codex_home);
+    let mut read_roots = gather_read_roots(command_cwd, policy, orbit_code_home);
     read_roots.extend(extra_read_roots);
     run_setup_refresh_inner(
         policy,
         policy_cwd,
         command_cwd,
         env_map,
-        codex_home,
+        orbit_code_home,
         Some(read_roots),
         Some(Vec::new()),
     )
@@ -122,7 +122,7 @@ fn run_setup_refresh_inner(
     policy_cwd: &Path,
     command_cwd: &Path,
     env_map: &HashMap<String, String>,
-    codex_home: &Path,
+    orbit_code_home: &Path,
     read_roots_override: Option<Vec<PathBuf>>,
     write_roots_override: Option<Vec<PathBuf>>,
 ) -> Result<()> {
@@ -138,7 +138,7 @@ fn run_setup_refresh_inner(
         policy_cwd,
         command_cwd,
         env_map,
-        codex_home,
+        orbit_code_home,
         read_roots_override,
         write_roots_override,
     );
@@ -146,7 +146,7 @@ fn run_setup_refresh_inner(
         version: SETUP_VERSION,
         offline_username: OFFLINE_USERNAME.to_string(),
         online_username: ONLINE_USERNAME.to_string(),
-        codex_home: codex_home.to_path_buf(),
+        orbit_code_home: orbit_code_home.to_path_buf(),
         command_cwd: command_cwd.to_path_buf(),
         read_roots,
         write_roots,
@@ -159,7 +159,7 @@ fn run_setup_refresh_inner(
     // Refresh should never request elevation; ensure verb isn't set and we don't trigger UAC.
     let mut cmd = Command::new(&exe);
     cmd.arg(&b64).stdout(Stdio::null()).stderr(Stdio::null());
-    let cwd = std::env::current_dir().unwrap_or_else(|_| codex_home.to_path_buf());
+    let cwd = std::env::current_dir().unwrap_or_else(|_| orbit_code_home.to_path_buf());
     log_note(
         &format!(
             "setup refresh: spawning {} (cwd={}, payload_len={})",
@@ -167,14 +167,14 @@ fn run_setup_refresh_inner(
             cwd.display(),
             b64.len()
         ),
-        Some(&sandbox_dir(codex_home)),
+        Some(&sandbox_dir(orbit_code_home)),
     );
     let status = cmd
         .status()
         .map_err(|e| {
             log_note(
                 &format!("setup refresh: failed to spawn {}: {e}", exe.display()),
-                Some(&sandbox_dir(codex_home)),
+                Some(&sandbox_dir(orbit_code_home)),
             );
             e
         })
@@ -182,7 +182,7 @@ fn run_setup_refresh_inner(
     if !status.success() {
         log_note(
             &format!("setup refresh: exited with status {status:?}"),
-            Some(&sandbox_dir(codex_home)),
+            Some(&sandbox_dir(orbit_code_home)),
         );
         return Err(anyhow!("setup refresh failed with status {}", status));
     }
@@ -287,14 +287,14 @@ fn profile_read_roots(user_profile: &Path) -> Vec<PathBuf> {
         .collect()
 }
 
-fn gather_helper_read_roots(codex_home: &Path) -> Vec<PathBuf> {
+fn gather_helper_read_roots(orbit_code_home: &Path) -> Vec<PathBuf> {
     let mut roots = Vec::new();
     if let Ok(exe) = std::env::current_exe() {
         if let Some(dir) = exe.parent() {
             roots.push(dir.to_path_buf());
         }
     }
-    let helper_dir = helper_bin_dir(codex_home);
+    let helper_dir = helper_bin_dir(orbit_code_home);
     let _ = std::fs::create_dir_all(&helper_dir);
     roots.push(helper_dir);
     roots
@@ -303,9 +303,9 @@ fn gather_helper_read_roots(codex_home: &Path) -> Vec<PathBuf> {
 fn gather_legacy_full_read_roots(
     command_cwd: &Path,
     policy: &SandboxPolicy,
-    codex_home: &Path,
+    orbit_code_home: &Path,
 ) -> Vec<PathBuf> {
-    let mut roots = gather_helper_read_roots(codex_home);
+    let mut roots = gather_helper_read_roots(orbit_code_home);
     roots.extend(
         WINDOWS_PLATFORM_DEFAULT_READ_ROOTS
             .iter()
@@ -326,9 +326,9 @@ fn gather_legacy_full_read_roots(
 fn gather_restricted_read_roots(
     command_cwd: &Path,
     policy: &SandboxPolicy,
-    codex_home: &Path,
+    orbit_code_home: &Path,
 ) -> Vec<PathBuf> {
-    let mut roots = gather_helper_read_roots(codex_home);
+    let mut roots = gather_helper_read_roots(orbit_code_home);
     if policy.include_platform_defaults() {
         roots.extend(
             WINDOWS_PLATFORM_DEFAULT_READ_ROOTS
@@ -348,12 +348,12 @@ fn gather_restricted_read_roots(
 pub(crate) fn gather_read_roots(
     command_cwd: &Path,
     policy: &SandboxPolicy,
-    codex_home: &Path,
+    orbit_code_home: &Path,
 ) -> Vec<PathBuf> {
     if policy.has_full_disk_read_access() {
-        gather_legacy_full_read_roots(command_cwd, policy, codex_home)
+        gather_legacy_full_read_roots(command_cwd, policy, orbit_code_home)
     } else {
-        gather_restricted_read_roots(command_cwd, policy, codex_home)
+        gather_restricted_read_roots(command_cwd, policy, orbit_code_home)
     }
 }
 
@@ -386,7 +386,7 @@ struct ElevationPayload {
     version: u32,
     offline_username: String,
     online_username: String,
-    codex_home: PathBuf,
+    orbit_code_home: PathBuf,
     command_cwd: PathBuf,
     read_roots: Vec<PathBuf>,
     write_roots: Vec<PathBuf>,
@@ -444,7 +444,7 @@ fn find_setup_exe() -> PathBuf {
 }
 
 fn report_helper_failure(
-    codex_home: &Path,
+    orbit_code_home: &Path,
     cleared_report: bool,
     exit_code: Option<i32>,
 ) -> anyhow::Error {
@@ -452,7 +452,7 @@ fn report_helper_failure(
     if !cleared_report {
         return failure(SetupErrorCode::OrchestratorHelperExitNonzero, exit_detail);
     }
-    match read_setup_error_report(codex_home) {
+    match read_setup_error_report(orbit_code_home) {
         Ok(Some(report)) => anyhow::Error::new(SetupFailure::from_report(report)),
         Ok(None) => failure(SetupErrorCode::OrchestratorHelperExitNonzero, exit_detail),
         Err(err) => failure(
@@ -465,7 +465,7 @@ fn report_helper_failure(
 fn run_setup_exe(
     payload: &ElevationPayload,
     needs_elevation: bool,
-    codex_home: &Path,
+    orbit_code_home: &Path,
 ) -> Result<()> {
     use windows_sys::Win32::System::Threading::GetExitCodeProcess;
     use windows_sys::Win32::System::Threading::WaitForSingleObject;
@@ -481,14 +481,14 @@ fn run_setup_exe(
         )
     })?;
     let payload_b64 = BASE64_STANDARD.encode(payload_json.as_bytes());
-    let cleared_report = match clear_setup_error_report(codex_home) {
+    let cleared_report = match clear_setup_error_report(orbit_code_home) {
         Ok(()) => true,
         Err(err) => {
             log_note(
                 &format!(
                     "setup orchestrator: failed to clear setup_error.json before launch: {err}"
                 ),
-                Some(&sandbox_dir(codex_home)),
+                Some(&sandbox_dir(orbit_code_home)),
             );
             false
         }
@@ -510,17 +510,17 @@ fn run_setup_exe(
             })?;
         if !status.success() {
             return Err(report_helper_failure(
-                codex_home,
+                orbit_code_home,
                 cleared_report,
                 status.code(),
             ));
         }
-        if let Err(err) = clear_setup_error_report(codex_home) {
+        if let Err(err) = clear_setup_error_report(orbit_code_home) {
             log_note(
                 &format!(
                     "setup orchestrator: failed to clear setup_error.json after success: {err}"
                 ),
-                Some(&sandbox_dir(codex_home)),
+                Some(&sandbox_dir(orbit_code_home)),
             );
         }
         return Ok(());
@@ -558,16 +558,16 @@ fn run_setup_exe(
         CloseHandle(sei.hProcess);
         if code != 0 {
             return Err(report_helper_failure(
-                codex_home,
+                orbit_code_home,
                 cleared_report,
                 Some(code as i32),
             ));
         }
     }
-    if let Err(err) = clear_setup_error_report(codex_home) {
+    if let Err(err) = clear_setup_error_report(orbit_code_home) {
         log_note(
             &format!("setup orchestrator: failed to clear setup_error.json after success: {err}"),
-            Some(&sandbox_dir(codex_home)),
+            Some(&sandbox_dir(orbit_code_home)),
         );
     }
     Ok(())
@@ -578,12 +578,12 @@ pub fn run_elevated_setup(
     policy_cwd: &Path,
     command_cwd: &Path,
     env_map: &HashMap<String, String>,
-    codex_home: &Path,
+    orbit_code_home: &Path,
     read_roots_override: Option<Vec<PathBuf>>,
     write_roots_override: Option<Vec<PathBuf>>,
 ) -> Result<()> {
     // Ensure the shared sandbox directory exists before we send it to the elevated helper.
-    let sbx_dir = sandbox_dir(codex_home);
+    let sbx_dir = sandbox_dir(orbit_code_home);
     std::fs::create_dir_all(&sbx_dir).map_err(|err| {
         failure(
             SetupErrorCode::OrchestratorSandboxDirCreateFailed,
@@ -595,7 +595,7 @@ pub fn run_elevated_setup(
         policy_cwd,
         command_cwd,
         env_map,
-        codex_home,
+        orbit_code_home,
         read_roots_override,
         write_roots_override,
     );
@@ -603,7 +603,7 @@ pub fn run_elevated_setup(
         version: SETUP_VERSION,
         offline_username: OFFLINE_USERNAME.to_string(),
         online_username: ONLINE_USERNAME.to_string(),
-        codex_home: codex_home.to_path_buf(),
+        orbit_code_home: orbit_code_home.to_path_buf(),
         command_cwd: command_cwd.to_path_buf(),
         read_roots,
         write_roots,
@@ -616,7 +616,7 @@ pub fn run_elevated_setup(
             format!("failed to determine elevation state: {err}"),
         )
     })?;
-    run_setup_exe(&payload, needs_elevation, codex_home)
+    run_setup_exe(&payload, needs_elevation, orbit_code_home)
 }
 
 fn build_payload_roots(
@@ -624,7 +624,7 @@ fn build_payload_roots(
     policy_cwd: &Path,
     command_cwd: &Path,
     env_map: &HashMap<String, String>,
-    codex_home: &Path,
+    orbit_code_home: &Path,
     read_roots_override: Option<Vec<PathBuf>>,
     write_roots_override: Option<Vec<PathBuf>>,
 ) -> (Vec<PathBuf>, Vec<PathBuf>) {
@@ -633,32 +633,32 @@ fn build_payload_roots(
     } else {
         gather_write_roots(policy, policy_cwd, command_cwd, env_map)
     };
-    let write_roots = filter_sensitive_write_roots(write_roots, codex_home);
+    let write_roots = filter_sensitive_write_roots(write_roots, orbit_code_home);
     let mut read_roots = if let Some(roots) = read_roots_override {
         canonical_existing(&roots)
     } else {
-        gather_read_roots(command_cwd, policy, codex_home)
+        gather_read_roots(command_cwd, policy, orbit_code_home)
     };
     let write_root_set: HashSet<PathBuf> = write_roots.iter().cloned().collect();
     read_roots.retain(|root| !write_root_set.contains(root));
     (read_roots, write_roots)
 }
 
-fn filter_sensitive_write_roots(mut roots: Vec<PathBuf>, codex_home: &Path) -> Vec<PathBuf> {
-    // Never grant capability write access to CODEX_HOME or anything under CODEX_HOME/.sandbox,
-    // CODEX_HOME/.sandbox-bin, or CODEX_HOME/.sandbox-secrets. These locations contain sandbox
+fn filter_sensitive_write_roots(mut roots: Vec<PathBuf>, orbit_code_home: &Path) -> Vec<PathBuf> {
+    // Never grant capability write access to ORBIT_HOME or anything under ORBIT_HOME/.sandbox,
+    // ORBIT_HOME/.sandbox-bin, or ORBIT_HOME/.sandbox-secrets. These locations contain sandbox
     // control/state and helper binaries and must remain tamper-resistant.
-    let codex_home_key = canonical_path_key(codex_home);
-    let sbx_dir_key = canonical_path_key(&sandbox_dir(codex_home));
+    let orbit_code_home_key = canonical_path_key(orbit_code_home);
+    let sbx_dir_key = canonical_path_key(&sandbox_dir(orbit_code_home));
     let sbx_dir_prefix = format!("{}/", sbx_dir_key.trim_end_matches('/'));
-    let sbx_bin_dir_key = canonical_path_key(&sandbox_bin_dir(codex_home));
+    let sbx_bin_dir_key = canonical_path_key(&sandbox_bin_dir(orbit_code_home));
     let sbx_bin_dir_prefix = format!("{}/", sbx_bin_dir_key.trim_end_matches('/'));
-    let secrets_dir_key = canonical_path_key(&sandbox_secrets_dir(codex_home));
+    let secrets_dir_key = canonical_path_key(&sandbox_secrets_dir(orbit_code_home));
     let secrets_dir_prefix = format!("{}/", secrets_dir_key.trim_end_matches('/'));
 
     roots.retain(|root| {
         let key = canonical_path_key(root);
-        key != codex_home_key
+        key != orbit_code_home_key
             && key != sbx_dir_key
             && !key.starts_with(&sbx_dir_prefix)
             && key != sbx_bin_dir_key
@@ -677,8 +677,8 @@ mod tests {
     use super::WINDOWS_PLATFORM_DEFAULT_READ_ROOTS;
     use crate::helper_materialization::helper_bin_dir;
     use crate::policy::SandboxPolicy;
-    use codex_protocol::protocol::ReadOnlyAccess;
-    use codex_utils_absolute_path::AbsolutePathBuf;
+    use orbit_code_protocol::protocol::ReadOnlyAccess;
+    use orbit_code_utils_absolute_path::AbsolutePathBuf;
     use pretty_assertions::assert_eq;
     use std::collections::HashSet;
     use std::fs;
@@ -726,14 +726,14 @@ mod tests {
     #[test]
     fn gather_read_roots_includes_helper_bin_dir() {
         let tmp = TempDir::new().expect("tempdir");
-        let codex_home = tmp.path().join("codex-home");
+        let orbit_code_home = tmp.path().join("codex-home");
         let command_cwd = tmp.path().join("workspace");
         fs::create_dir_all(&command_cwd).expect("create workspace");
         let policy = SandboxPolicy::new_read_only_policy();
 
-        let roots = gather_read_roots(&command_cwd, &policy, &codex_home);
+        let roots = gather_read_roots(&command_cwd, &policy, &orbit_code_home);
         let expected =
-            dunce::canonicalize(helper_bin_dir(&codex_home)).expect("canonical helper dir");
+            dunce::canonicalize(helper_bin_dir(&orbit_code_home)).expect("canonical helper dir");
 
         assert!(roots.contains(&expected));
     }
@@ -741,7 +741,7 @@ mod tests {
     #[test]
     fn restricted_read_roots_skip_platform_defaults_when_disabled() {
         let tmp = TempDir::new().expect("tempdir");
-        let codex_home = tmp.path().join("codex-home");
+        let orbit_code_home = tmp.path().join("codex-home");
         let command_cwd = tmp.path().join("workspace");
         let readable_root = tmp.path().join("docs");
         fs::create_dir_all(&command_cwd).expect("create workspace");
@@ -755,9 +755,9 @@ mod tests {
             network_access: false,
         };
 
-        let roots = gather_read_roots(&command_cwd, &policy, &codex_home);
+        let roots = gather_read_roots(&command_cwd, &policy, &orbit_code_home);
         let expected_helper =
-            dunce::canonicalize(helper_bin_dir(&codex_home)).expect("canonical helper dir");
+            dunce::canonicalize(helper_bin_dir(&orbit_code_home)).expect("canonical helper dir");
         let expected_cwd = dunce::canonicalize(&command_cwd).expect("canonical workspace");
         let expected_readable =
             dunce::canonicalize(&readable_root).expect("canonical readable root");
@@ -773,7 +773,7 @@ mod tests {
     #[test]
     fn restricted_read_roots_include_platform_defaults_when_enabled() {
         let tmp = TempDir::new().expect("tempdir");
-        let codex_home = tmp.path().join("codex-home");
+        let orbit_code_home = tmp.path().join("codex-home");
         let command_cwd = tmp.path().join("workspace");
         fs::create_dir_all(&command_cwd).expect("create workspace");
         let policy = SandboxPolicy::ReadOnly {
@@ -784,7 +784,7 @@ mod tests {
             network_access: false,
         };
 
-        let roots = gather_read_roots(&command_cwd, &policy, &codex_home);
+        let roots = gather_read_roots(&command_cwd, &policy, &orbit_code_home);
 
         assert!(canonical_windows_platform_default_roots()
             .into_iter()
@@ -794,7 +794,7 @@ mod tests {
     #[test]
     fn restricted_workspace_write_roots_remain_readable() {
         let tmp = TempDir::new().expect("tempdir");
-        let codex_home = tmp.path().join("codex-home");
+        let orbit_code_home = tmp.path().join("codex-home");
         let command_cwd = tmp.path().join("workspace");
         let writable_root = tmp.path().join("extra-write-root");
         fs::create_dir_all(&command_cwd).expect("create workspace");
@@ -811,7 +811,7 @@ mod tests {
             exclude_slash_tmp: true,
         };
 
-        let roots = gather_read_roots(&command_cwd, &policy, &codex_home);
+        let roots = gather_read_roots(&command_cwd, &policy, &orbit_code_home);
         let expected_writable =
             dunce::canonicalize(&writable_root).expect("canonical writable root");
 
@@ -821,12 +821,12 @@ mod tests {
     #[test]
     fn full_read_roots_preserve_legacy_platform_defaults() {
         let tmp = TempDir::new().expect("tempdir");
-        let codex_home = tmp.path().join("codex-home");
+        let orbit_code_home = tmp.path().join("codex-home");
         let command_cwd = tmp.path().join("workspace");
         fs::create_dir_all(&command_cwd).expect("create workspace");
         let policy = SandboxPolicy::new_read_only_policy();
 
-        let roots = gather_legacy_full_read_roots(&command_cwd, &policy, &codex_home);
+        let roots = gather_legacy_full_read_roots(&command_cwd, &policy, &orbit_code_home);
 
         assert!(canonical_windows_platform_default_roots()
             .into_iter()

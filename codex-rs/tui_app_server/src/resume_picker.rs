@@ -13,24 +13,24 @@ use crate::tui::Tui;
 use crate::tui::TuiEvent;
 use chrono::DateTime;
 use chrono::Utc;
-use codex_app_server_protocol::Thread;
-use codex_app_server_protocol::ThreadListParams;
-use codex_app_server_protocol::ThreadSortKey as AppServerThreadSortKey;
-use codex_app_server_protocol::ThreadSourceKind;
-use codex_core::Cursor;
-use codex_core::INTERACTIVE_SESSION_SOURCES;
-use codex_core::RolloutRecorder;
-use codex_core::ThreadItem;
-use codex_core::ThreadSortKey;
-use codex_core::ThreadsPage;
-use codex_core::config::Config;
-use codex_core::find_thread_names_by_ids;
-use codex_core::path_utils;
-use codex_protocol::ThreadId;
 use color_eyre::eyre::Result;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyEventKind;
+use orbit_code_app_server_protocol::Thread;
+use orbit_code_app_server_protocol::ThreadListParams;
+use orbit_code_app_server_protocol::ThreadSortKey as AppServerThreadSortKey;
+use orbit_code_app_server_protocol::ThreadSourceKind;
+use orbit_code_core::Cursor;
+use orbit_code_core::INTERACTIVE_SESSION_SOURCES;
+use orbit_code_core::RolloutRecorder;
+use orbit_code_core::ThreadItem;
+use orbit_code_core::ThreadSortKey;
+use orbit_code_core::ThreadsPage;
+use orbit_code_core::config::Config;
+use orbit_code_core::find_thread_names_by_ids;
+use orbit_code_core::path_utils;
+use orbit_code_protocol::ThreadId;
 use ratatui::layout::Constraint;
 use ratatui::layout::Layout;
 use ratatui::layout::Rect;
@@ -238,7 +238,7 @@ async fn run_session_picker_with_loader(
     } else {
         ProviderFilter::MatchDefault(config.model_provider_id.to_string())
     };
-    let codex_home = config.codex_home.as_path();
+    let orbit_code_home = config.orbit_code_home.as_path();
     let filter_cwd = if show_all || is_remote {
         // Remote sessions live in the server's filesystem namespace, so the client
         // process cwd is not a meaningful default filter. A real remote cwd filter
@@ -249,7 +249,7 @@ async fn run_session_picker_with_loader(
     };
 
     let mut state = PickerState::new(
-        codex_home.to_path_buf(),
+        orbit_code_home.to_path_buf(),
         alt.tui.frame_requester(),
         page_loader,
         provider_filter,
@@ -402,7 +402,7 @@ impl Drop for AltScreenGuard<'_> {
 }
 
 struct PickerState {
-    codex_home: PathBuf,
+    orbit_code_home: PathBuf,
     requester: FrameRequester,
     pagination: PaginationState,
     all_rows: Vec<Row>,
@@ -543,7 +543,7 @@ impl Row {
 
 impl PickerState {
     fn new(
-        codex_home: PathBuf,
+        orbit_code_home: PathBuf,
         requester: FrameRequester,
         page_loader: PageLoader,
         provider_filter: ProviderFilter,
@@ -552,7 +552,7 @@ impl PickerState {
         action: SessionPickerAction,
     ) -> Self {
         Self {
-            codex_home,
+            orbit_code_home,
             requester,
             pagination: PaginationState {
                 next_cursor: None,
@@ -795,7 +795,7 @@ impl PickerState {
             return;
         }
 
-        let names = find_thread_names_by_ids(&self.codex_home, &missing_ids)
+        let names = find_thread_names_by_ids(&self.orbit_code_home, &missing_ids)
             .await
             .unwrap_or_default();
         for thread_id in missing_ids {
@@ -1605,7 +1605,7 @@ fn column_visibility(
 mod tests {
     use super::*;
     use chrono::Duration;
-    use codex_protocol::ThreadId;
+    use orbit_code_protocol::ThreadId;
 
     use crossterm::event::KeyCode;
     use crossterm::event::KeyEvent;
@@ -2075,7 +2075,7 @@ mod tests {
     //     );
     //
     //     let page = RolloutRecorder::list_threads(
-    //         &state.codex_home,
+    //         &state.orbit_code_home,
     //         PAGE_SIZE,
     //         None,
     //         ThreadSortKey::CreatedAt,
@@ -2565,11 +2565,11 @@ mod tests {
             model_provider: String::from("openai"),
             created_at: 1,
             updated_at: 2,
-            status: codex_app_server_protocol::ThreadStatus::Idle,
+            status: orbit_code_app_server_protocol::ThreadStatus::Idle,
             path: None,
             cwd: PathBuf::from("/tmp"),
             cli_version: String::from("0.0.0"),
-            source: codex_app_server_protocol::SessionSource::Cli,
+            source: orbit_code_app_server_protocol::SessionSource::Cli,
             agent_nickname: None,
             agent_role: None,
             git_info: None,

@@ -1,6 +1,6 @@
 use crate::rate_limits::RateLimitError;
-use codex_client::TransportError;
 use http::StatusCode;
+use orbit_code_client::TransportError;
 use std::time::Duration;
 use thiserror::Error;
 

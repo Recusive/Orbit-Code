@@ -3,13 +3,13 @@ use std::time::Duration;
 use anyhow::Result;
 use app_test_support::McpProcess;
 use app_test_support::to_response;
-use codex_app_server_protocol::JSONRPCResponse;
-use codex_app_server_protocol::PluginAuthPolicy;
-use codex_app_server_protocol::PluginInstallPolicy;
-use codex_app_server_protocol::PluginReadParams;
-use codex_app_server_protocol::PluginReadResponse;
-use codex_app_server_protocol::RequestId;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use orbit_code_app_server_protocol::JSONRPCResponse;
+use orbit_code_app_server_protocol::PluginAuthPolicy;
+use orbit_code_app_server_protocol::PluginInstallPolicy;
+use orbit_code_app_server_protocol::PluginReadParams;
+use orbit_code_app_server_protocol::PluginReadResponse;
+use orbit_code_app_server_protocol::RequestId;
+use orbit_code_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 use tokio::time::timeout;
@@ -18,7 +18,7 @@ const DEFAULT_TIMEOUT: Duration = Duration::from_secs(10);
 
 #[tokio::test]
 async fn plugin_read_returns_plugin_details_with_bundle_contents() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let repo_root = TempDir::new()?;
     let plugin_root = repo_root.path().join("plugins/demo-plugin");
     std::fs::create_dir_all(repo_root.path().join(".git"))?;
@@ -102,7 +102,7 @@ description: Summarize email threads
 }"#,
     )?;
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        orbit_code_home.path().join("config.toml"),
         r#"[features]
 plugins = true
 
@@ -110,9 +110,9 @@ plugins = true
 enabled = true
 "#,
     )?;
-    write_installed_plugin(&codex_home, "codex-curated", "demo-plugin")?;
+    write_installed_plugin(&orbit_code_home, "codex-curated", "demo-plugin")?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_TIMEOUT, mcp.initialize()).await??;
 
     let marketplace_path =
@@ -202,7 +202,7 @@ enabled = true
 
 #[tokio::test]
 async fn plugin_read_accepts_legacy_string_default_prompt() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let repo_root = TempDir::new()?;
     let plugin_root = repo_root.path().join("plugins/demo-plugin");
     std::fs::create_dir_all(repo_root.path().join(".git"))?;
@@ -232,9 +232,9 @@ async fn plugin_read_accepts_legacy_string_default_prompt() -> Result<()> {
   }
 }"##,
     )?;
-    write_plugins_enabled_config(&codex_home)?;
+    write_plugins_enabled_config(&orbit_code_home)?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_TIMEOUT, mcp.initialize()).await??;
 
     let request_id = mcp
@@ -267,7 +267,7 @@ async fn plugin_read_accepts_legacy_string_default_prompt() -> Result<()> {
 
 #[tokio::test]
 async fn plugin_read_returns_invalid_request_when_plugin_is_missing() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let repo_root = TempDir::new()?;
     std::fs::create_dir_all(repo_root.path().join(".git"))?;
     std::fs::create_dir_all(repo_root.path().join(".agents/plugins"))?;
@@ -286,9 +286,9 @@ async fn plugin_read_returns_invalid_request_when_plugin_is_missing() -> Result<
   ]
 }"#,
     )?;
-    write_plugins_enabled_config(&codex_home)?;
+    write_plugins_enabled_config(&orbit_code_home)?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_TIMEOUT, mcp.initialize()).await??;
 
     let request_id = mcp
@@ -317,7 +317,7 @@ async fn plugin_read_returns_invalid_request_when_plugin_is_missing() -> Result<
 
 #[tokio::test]
 async fn plugin_read_returns_invalid_request_when_plugin_manifest_is_missing() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let repo_root = TempDir::new()?;
     let plugin_root = repo_root.path().join("plugins/demo-plugin");
     std::fs::create_dir_all(repo_root.path().join(".git"))?;
@@ -338,9 +338,9 @@ async fn plugin_read_returns_invalid_request_when_plugin_manifest_is_missing() -
   ]
 }"#,
     )?;
-    write_plugins_enabled_config(&codex_home)?;
+    write_plugins_enabled_config(&orbit_code_home)?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_TIMEOUT, mcp.initialize()).await??;
 
     let request_id = mcp
@@ -368,11 +368,11 @@ async fn plugin_read_returns_invalid_request_when_plugin_manifest_is_missing() -
 }
 
 fn write_installed_plugin(
-    codex_home: &TempDir,
+    orbit_code_home: &TempDir,
     marketplace_name: &str,
     plugin_name: &str,
 ) -> Result<()> {
-    let plugin_root = codex_home
+    let plugin_root = orbit_code_home
         .path()
         .join("plugins/cache")
         .join(marketplace_name)
@@ -386,9 +386,9 @@ fn write_installed_plugin(
     Ok(())
 }
 
-fn write_plugins_enabled_config(codex_home: &TempDir) -> Result<()> {
+fn write_plugins_enabled_config(orbit_code_home: &TempDir) -> Result<()> {
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        orbit_code_home.path().join("config.toml"),
         r#"[features]
 plugins = true
 "#,

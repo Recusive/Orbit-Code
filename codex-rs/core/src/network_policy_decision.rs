@@ -1,12 +1,12 @@
-use codex_execpolicy::Decision as ExecPolicyDecision;
-use codex_execpolicy::NetworkRuleProtocol as ExecPolicyNetworkRuleProtocol;
-use codex_network_proxy::BlockedRequest;
-use codex_network_proxy::NetworkDecisionSource;
-use codex_network_proxy::NetworkPolicyDecision;
-use codex_protocol::approvals::NetworkApprovalContext;
-use codex_protocol::approvals::NetworkApprovalProtocol;
-use codex_protocol::approvals::NetworkPolicyAmendment;
-use codex_protocol::approvals::NetworkPolicyRuleAction;
+use orbit_code_execpolicy::Decision as ExecPolicyDecision;
+use orbit_code_execpolicy::NetworkRuleProtocol as ExecPolicyNetworkRuleProtocol;
+use orbit_code_network_proxy::BlockedRequest;
+use orbit_code_network_proxy::NetworkDecisionSource;
+use orbit_code_network_proxy::NetworkPolicyDecision;
+use orbit_code_protocol::approvals::NetworkApprovalContext;
+use orbit_code_protocol::approvals::NetworkApprovalProtocol;
+use orbit_code_protocol::approvals::NetworkPolicyAmendment;
+use orbit_code_protocol::approvals::NetworkPolicyRuleAction;
 use serde::Deserialize;
 
 #[derive(Debug, Clone, Deserialize, PartialEq, Eq)]

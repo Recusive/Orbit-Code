@@ -4,7 +4,7 @@ use std::io;
 use std::path::Path;
 use std::path::PathBuf;
 
-use codex_utils_absolute_path::AbsolutePathBuf;
+use orbit_code_utils_absolute_path::AbsolutePathBuf;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;
@@ -1135,7 +1135,7 @@ mod tests {
     use tempfile::TempDir;
 
     #[cfg(unix)]
-    const SYMLINKED_TMPDIR_TEST_ENV: &str = "CODEX_PROTOCOL_TEST_SYMLINKED_TMPDIR";
+    const SYMLINKED_TMPDIR_TEST_ENV: &str = "ORBIT_PROTOCOL_TEST_SYMLINKED_TMPDIR";
 
     #[cfg(unix)]
     fn symlink_dir(original: &Path, link: &Path) -> std::io::Result<()> {
@@ -1176,10 +1176,10 @@ mod tests {
         let real_root = cwd.path().join("real");
         let link_root = cwd.path().join("link");
         let blocked = real_root.join("blocked");
-        let codex_dir = real_root.join(".codex");
+        let orbit_code_dir = real_root.join(".codex");
 
         fs::create_dir_all(&blocked).expect("create blocked");
-        fs::create_dir_all(&codex_dir).expect("create .codex");
+        fs::create_dir_all(&orbit_code_dir).expect("create .codex");
         symlink_dir(&real_root, &link_root).expect("create symlinked root");
 
         let link_root =
@@ -1194,7 +1194,7 @@ mod tests {
         )
         .expect("absolute canonical blocked");
         let expected_codex = AbsolutePathBuf::from_absolute_path(
-            codex_dir.canonicalize().expect("canonicalize .codex"),
+            orbit_code_dir.canonicalize().expect("canonicalize .codex"),
         )
         .expect("absolute canonical .codex");
 
@@ -1237,11 +1237,11 @@ mod tests {
         let link_root = cwd.path().join("link");
         let blocked = real_root.join("blocked");
         let agents_dir = real_root.join(".agents");
-        let codex_dir = real_root.join(".codex");
+        let orbit_code_dir = real_root.join(".codex");
 
         fs::create_dir_all(&blocked).expect("create blocked");
         fs::create_dir_all(&agents_dir).expect("create .agents");
-        fs::create_dir_all(&codex_dir).expect("create .codex");
+        fs::create_dir_all(&orbit_code_dir).expect("create .codex");
         symlink_dir(&real_root, &link_root).expect("create symlinked cwd");
 
         let link_blocked =
@@ -1259,7 +1259,7 @@ mod tests {
         )
         .expect("absolute canonical .agents");
         let expected_codex = AbsolutePathBuf::from_absolute_path(
-            codex_dir.canonicalize().expect("canonicalize .codex"),
+            orbit_code_dir.canonicalize().expect("canonicalize .codex"),
         )
         .expect("absolute canonical .codex");
 
@@ -1518,10 +1518,10 @@ mod tests {
         let real_tmpdir = cwd.path().join("real-tmpdir");
         let link_tmpdir = cwd.path().join("link-tmpdir");
         let blocked = real_tmpdir.join("blocked");
-        let codex_dir = real_tmpdir.join(".codex");
+        let orbit_code_dir = real_tmpdir.join(".codex");
 
         fs::create_dir_all(&blocked).expect("create blocked");
-        fs::create_dir_all(&codex_dir).expect("create .codex");
+        fs::create_dir_all(&orbit_code_dir).expect("create .codex");
         symlink_dir(&real_tmpdir, &link_tmpdir).expect("create symlinked tmpdir");
 
         let link_blocked =
@@ -1537,7 +1537,7 @@ mod tests {
         )
         .expect("absolute canonical blocked");
         let expected_codex = AbsolutePathBuf::from_absolute_path(
-            codex_dir.canonicalize().expect("canonicalize .codex"),
+            orbit_code_dir.canonicalize().expect("canonicalize .codex"),
         )
         .expect("absolute canonical .codex");
 

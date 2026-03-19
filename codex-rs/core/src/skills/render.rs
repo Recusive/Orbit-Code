@@ -1,6 +1,6 @@
 use crate::skills::model::SkillMetadata;
-use codex_protocol::protocol::SKILLS_INSTRUCTIONS_CLOSE_TAG;
-use codex_protocol::protocol::SKILLS_INSTRUCTIONS_OPEN_TAG;
+use orbit_code_protocol::protocol::SKILLS_INSTRUCTIONS_CLOSE_TAG;
+use orbit_code_protocol::protocol::SKILLS_INSTRUCTIONS_OPEN_TAG;
 
 pub fn render_skills_section(skills: &[SkillMetadata]) -> Option<String> {
     if skills.is_empty() {

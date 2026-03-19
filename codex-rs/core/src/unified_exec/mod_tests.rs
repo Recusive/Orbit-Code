@@ -21,9 +21,9 @@ async fn test_session_and_turn() -> (Arc<Session>, Arc<TurnContext>) {
         .set(SandboxPolicy::DangerFullAccess)
         .expect("test setup should allow updating sandbox policy");
     turn.file_system_sandbox_policy =
-        codex_protocol::permissions::FileSystemSandboxPolicy::from(turn.sandbox_policy.get());
+        orbit_code_protocol::permissions::FileSystemSandboxPolicy::from(turn.sandbox_policy.get());
     turn.network_sandbox_policy =
-        codex_protocol::permissions::NetworkSandboxPolicy::from(turn.sandbox_policy.get());
+        orbit_code_protocol::permissions::NetworkSandboxPolicy::from(turn.sandbox_policy.get());
     (Arc::new(session), Arc::new(turn))
 }
 
@@ -127,7 +127,7 @@ async fn unified_exec_persists_across_requests() -> anyhow::Result<()> {
     write_stdin(
         &session,
         process_id,
-        "export CODEX_INTERACTIVE_SHELL_VAR=codex\n",
+        "export ORBIT_INTERACTIVE_SHELL_VAR=codex\n",
         2_500,
     )
     .await?;
@@ -135,7 +135,7 @@ async fn unified_exec_persists_across_requests() -> anyhow::Result<()> {
     let out_2 = write_stdin(
         &session,
         process_id,
-        "echo $CODEX_INTERACTIVE_SHELL_VAR\n",
+        "echo $ORBIT_INTERACTIVE_SHELL_VAR\n",
         2_500,
     )
     .await?;
@@ -159,12 +159,12 @@ async fn multi_unified_exec_sessions() -> anyhow::Result<()> {
     write_stdin(
         &session,
         session_a,
-        "export CODEX_INTERACTIVE_SHELL_VAR=codex\n",
+        "export ORBIT_INTERACTIVE_SHELL_VAR=codex\n",
         2_500,
     )
     .await?;
 
-    let out_2 = exec_command(&session, &turn, "echo $CODEX_INTERACTIVE_SHELL_VAR", 2_500).await?;
+    let out_2 = exec_command(&session, &turn, "echo $ORBIT_INTERACTIVE_SHELL_VAR", 2_500).await?;
     tokio::time::sleep(Duration::from_secs(2)).await;
     assert!(
         out_2.process_id.is_none(),
@@ -178,7 +178,7 @@ async fn multi_unified_exec_sessions() -> anyhow::Result<()> {
     let out_3 = write_stdin(
         &session,
         shell_a.process_id.expect("expected process id"),
-        "echo $CODEX_INTERACTIVE_SHELL_VAR\n",
+        "echo $ORBIT_INTERACTIVE_SHELL_VAR\n",
         2_500,
     )
     .await?;
@@ -204,7 +204,7 @@ async fn unified_exec_timeouts() -> anyhow::Result<()> {
     write_stdin(
         &session,
         process_id,
-        format!("export CODEX_INTERACTIVE_SHELL_VAR={TEST_VAR_VALUE}\n").as_str(),
+        format!("export ORBIT_INTERACTIVE_SHELL_VAR={TEST_VAR_VALUE}\n").as_str(),
         2_500,
     )
     .await?;
@@ -212,7 +212,7 @@ async fn unified_exec_timeouts() -> anyhow::Result<()> {
     let out_2 = write_stdin(
         &session,
         process_id,
-        "sleep 5 && echo $CODEX_INTERACTIVE_SHELL_VAR\n",
+        "sleep 5 && echo $ORBIT_INTERACTIVE_SHELL_VAR\n",
         10,
     )
     .await?;

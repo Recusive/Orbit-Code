@@ -1,8 +1,8 @@
-load("//:defs.bzl", "codex_rust_crate", "multiplatform_binaries")
+load("//:defs.bzl", "orbit_code_rust_crate", "multiplatform_binaries")
 
-codex_rust_crate(
+orbit_code_rust_crate(
     name = "cli",
-    crate_name = "codex_cli",
+    crate_name = "orbit_code_cli",
 )
 
 multiplatform_binaries(

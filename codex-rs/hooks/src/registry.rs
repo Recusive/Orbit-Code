@@ -1,4 +1,4 @@
-use codex_config::ConfigLayerStack;
+use orbit_code_config::ConfigLayerStack;
 use tokio::process::Command;
 
 use crate::engine::ClaudeHooksEngine;
@@ -88,7 +88,7 @@ impl Hooks {
     pub fn preview_session_start(
         &self,
         request: &SessionStartRequest,
-    ) -> Vec<codex_protocol::protocol::HookRunSummary> {
+    ) -> Vec<orbit_code_protocol::protocol::HookRunSummary> {
         self.engine.preview_session_start(request)
     }
 
@@ -103,7 +103,7 @@ impl Hooks {
     pub fn preview_user_prompt_submit(
         &self,
         request: &UserPromptSubmitRequest,
-    ) -> Vec<codex_protocol::protocol::HookRunSummary> {
+    ) -> Vec<orbit_code_protocol::protocol::HookRunSummary> {
         self.engine.preview_user_prompt_submit(request)
     }
 
@@ -117,7 +117,7 @@ impl Hooks {
     pub fn preview_stop(
         &self,
         request: &StopRequest,
-    ) -> Vec<codex_protocol::protocol::HookRunSummary> {
+    ) -> Vec<orbit_code_protocol::protocol::HookRunSummary> {
         self.engine.preview_stop(request)
     }
 

@@ -1,11 +1,11 @@
 [package]
-name = "codex-artifacts"
+name = "orbit-code-artifacts"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [dependencies]
-codex-package-manager = { workspace = true }
+orbit-code-package-manager = { workspace = true }
 reqwest = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }

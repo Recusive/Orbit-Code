@@ -1,9 +1,9 @@
-use codex_client::Request;
-use codex_client::RequestCompression;
-use codex_client::RetryOn;
-use codex_client::RetryPolicy;
 use http::Method;
 use http::header::HeaderMap;
+use orbit_code_client::Request;
+use orbit_code_client::RequestCompression;
+use orbit_code_client::RetryOn;
+use orbit_code_client::RetryPolicy;
 use std::collections::HashMap;
 use std::time::Duration;
 use url::Url;

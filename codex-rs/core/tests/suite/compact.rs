@@ -1,23 +1,4 @@
 #![allow(clippy::expect_used)]
-use codex_core::CodexAuth;
-use codex_core::ModelProviderInfo;
-use codex_core::built_in_model_providers;
-use codex_core::compact::SUMMARIZATION_PROMPT;
-use codex_core::compact::SUMMARY_PREFIX;
-use codex_core::config::Config;
-use codex_protocol::items::TurnItem;
-use codex_protocol::openai_models::ModelInfo;
-use codex_protocol::openai_models::ModelsResponse;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::ItemCompletedEvent;
-use codex_protocol::protocol::ItemStartedEvent;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::RolloutItem;
-use codex_protocol::protocol::RolloutLine;
-use codex_protocol::protocol::SandboxPolicy;
-use codex_protocol::protocol::WarningEvent;
-use codex_protocol::user_input::UserInput;
 use core_test_support::context_snapshot;
 use core_test_support::context_snapshot::ContextSnapshotOptions;
 use core_test_support::context_snapshot::ContextSnapshotRenderMode;
@@ -28,6 +9,25 @@ use core_test_support::skip_if_no_network;
 use core_test_support::test_codex::test_codex;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_match;
+use orbit_code_core::CodexAuth;
+use orbit_code_core::ModelProviderInfo;
+use orbit_code_core::built_in_model_providers;
+use orbit_code_core::compact::SUMMARIZATION_PROMPT;
+use orbit_code_core::compact::SUMMARY_PREFIX;
+use orbit_code_core::config::Config;
+use orbit_code_protocol::items::TurnItem;
+use orbit_code_protocol::openai_models::ModelInfo;
+use orbit_code_protocol::openai_models::ModelsResponse;
+use orbit_code_protocol::protocol::AskForApproval;
+use orbit_code_protocol::protocol::EventMsg;
+use orbit_code_protocol::protocol::ItemCompletedEvent;
+use orbit_code_protocol::protocol::ItemStartedEvent;
+use orbit_code_protocol::protocol::Op;
+use orbit_code_protocol::protocol::RolloutItem;
+use orbit_code_protocol::protocol::RolloutLine;
+use orbit_code_protocol::protocol::SandboxPolicy;
+use orbit_code_protocol::protocol::WarningEvent;
+use orbit_code_protocol::user_input::UserInput;
 use std::path::PathBuf;
 
 use core_test_support::responses::ev_assistant_message;
@@ -139,7 +139,9 @@ fn assert_pre_sampling_switch_compaction_requests(
     );
 }
 
-async fn assert_compaction_uses_turn_lifecycle_id(codex: &std::sync::Arc<codex_core::CodexThread>) {
+async fn assert_compaction_uses_turn_lifecycle_id(
+    codex: &std::sync::Arc<orbit_code_core::CodexThread>,
+) {
     let mut turn_started_id = None;
     let mut turn_completed_id = None;
     let mut compact_started_id = None;
@@ -1582,16 +1584,16 @@ async fn auto_compact_runs_after_resume_when_token_usage_is_over_limit() {
     let remote_summary = "REMOTE_COMPACT_SUMMARY";
 
     let compacted_history = vec![
-        codex_protocol::models::ResponseItem::Message {
+        orbit_code_protocol::models::ResponseItem::Message {
             id: None,
             role: "assistant".to_string(),
-            content: vec![codex_protocol::models::ContentItem::OutputText {
+            content: vec![orbit_code_protocol::models::ContentItem::OutputText {
                 text: remote_summary.to_string(),
             }],
             end_turn: None,
             phase: None,
         },
-        codex_protocol::models::ResponseItem::Compaction {
+        orbit_code_protocol::models::ResponseItem::Compaction {
             encrypted_content: "ENCRYPTED_COMPACTION_SUMMARY".to_string(),
         },
     ];
@@ -2791,16 +2793,16 @@ async fn auto_compact_counts_encrypted_reasoning_before_last_user() {
     .await;
 
     let compacted_history = vec![
-        codex_protocol::models::ResponseItem::Message {
+        orbit_code_protocol::models::ResponseItem::Message {
             id: None,
             role: "assistant".to_string(),
-            content: vec![codex_protocol::models::ContentItem::OutputText {
+            content: vec![orbit_code_protocol::models::ContentItem::OutputText {
                 text: "REMOTE_COMPACT_SUMMARY".to_string(),
             }],
             end_turn: None,
             phase: None,
         },
-        codex_protocol::models::ResponseItem::Compaction {
+        orbit_code_protocol::models::ResponseItem::Compaction {
             encrypted_content: "ENCRYPTED_COMPACTION_SUMMARY".to_string(),
         },
     ];
@@ -2911,16 +2913,16 @@ async fn auto_compact_runs_when_reasoning_header_clears_between_turns() {
     mount_response_sequence(&server, responses).await;
 
     let compacted_history = vec![
-        codex_protocol::models::ResponseItem::Message {
+        orbit_code_protocol::models::ResponseItem::Message {
             id: None,
             role: "assistant".to_string(),
-            content: vec![codex_protocol::models::ContentItem::OutputText {
+            content: vec![orbit_code_protocol::models::ContentItem::OutputText {
                 text: "REMOTE_COMPACT_SUMMARY".to_string(),
             }],
             end_turn: None,
             phase: None,
         },
-        codex_protocol::models::ResponseItem::Compaction {
+        orbit_code_protocol::models::ResponseItem::Compaction {
             encrypted_content: "ENCRYPTED_COMPACTION_SUMMARY".to_string(),
         },
     ];
@@ -3117,7 +3119,7 @@ async fn snapshot_request_shape_pre_turn_compaction_strips_incoming_model_switch
             set_test_compact_prompt(config);
             let _ = config
                 .features
-                .enable(codex_core::features::Feature::RemoteModels);
+                .enable(orbit_code_core::features::Feature::RemoteModels);
             config.model_auto_compact_token_limit = Some(200);
         })
         .build(&server)

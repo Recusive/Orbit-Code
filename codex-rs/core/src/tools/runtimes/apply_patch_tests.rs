@@ -1,5 +1,5 @@
 use super::*;
-use codex_protocol::protocol::GranularApprovalConfig;
+use orbit_code_protocol::protocol::GranularApprovalConfig;
 use pretty_assertions::assert_eq;
 use std::collections::HashMap;
 
@@ -52,7 +52,7 @@ fn guardian_review_request_includes_patch_context() {
         additional_permissions: None,
         permissions_preapproved: false,
         timeout_ms: None,
-        codex_exe: None,
+        orbit_code_exe: None,
     };
 
     let guardian_request = ApplyPatchRuntime::build_guardian_review_request(&request, "call-1");

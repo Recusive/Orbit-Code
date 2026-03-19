@@ -1,14 +1,14 @@
 #![deny(clippy::print_stdout, clippy::print_stderr)]
 
-use codex_arg0::Arg0DispatchPaths;
-use codex_cloud_requirements::cloud_requirements_loader;
-use codex_core::AuthManager;
-use codex_core::config::Config;
-use codex_core::config::ConfigBuilder;
-use codex_core::config_loader::CloudRequirementsLoader;
-use codex_core::config_loader::ConfigLayerStackOrdering;
-use codex_core::config_loader::LoaderOverrides;
-use codex_utils_cli::CliConfigOverrides;
+use orbit_code_arg0::Arg0DispatchPaths;
+use orbit_code_cloud_requirements::cloud_requirements_loader;
+use orbit_code_core::AuthManager;
+use orbit_code_core::config::Config;
+use orbit_code_core::config::ConfigBuilder;
+use orbit_code_core::config_loader::CloudRequirementsLoader;
+use orbit_code_core::config_loader::ConfigLayerStackOrdering;
+use orbit_code_core::config_loader::LoaderOverrides;
+use orbit_code_utils_cli::CliConfigOverrides;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::io::ErrorKind;
@@ -29,18 +29,18 @@ use crate::transport::TransportEvent;
 use crate::transport::route_outgoing_envelope;
 use crate::transport::start_stdio_connection;
 use crate::transport::start_websocket_acceptor;
-use codex_app_server_protocol::ConfigLayerSource;
-use codex_app_server_protocol::ConfigWarningNotification;
-use codex_app_server_protocol::JSONRPCMessage;
-use codex_app_server_protocol::TextPosition as AppTextPosition;
-use codex_app_server_protocol::TextRange as AppTextRange;
-use codex_core::ExecPolicyError;
-use codex_core::check_execpolicy_for_warnings;
-use codex_core::config_loader::ConfigLoadError;
-use codex_core::config_loader::TextRange as CoreTextRange;
-use codex_feedback::CodexFeedback;
-use codex_protocol::protocol::SessionSource;
-use codex_state::log_db;
+use orbit_code_app_server_protocol::ConfigLayerSource;
+use orbit_code_app_server_protocol::ConfigWarningNotification;
+use orbit_code_app_server_protocol::JSONRPCMessage;
+use orbit_code_app_server_protocol::TextPosition as AppTextPosition;
+use orbit_code_app_server_protocol::TextRange as AppTextRange;
+use orbit_code_core::ExecPolicyError;
+use orbit_code_core::check_execpolicy_for_warnings;
+use orbit_code_core::config_loader::ConfigLoadError;
+use orbit_code_core::config_loader::TextRange as CoreTextRange;
+use orbit_code_feedback::CodexFeedback;
+use orbit_code_protocol::protocol::SessionSource;
+use orbit_code_state::log_db;
 use tokio::sync::mpsc;
 use tokio::task::JoinHandle;
 use tokio_util::sync::CancellationToken;
@@ -58,7 +58,6 @@ use tracing_subscriber::util::SubscriberInitExt;
 
 mod app_server_tracing;
 mod bespoke_event_handling;
-mod codex_message_processor;
 mod command_exec;
 mod config_api;
 mod dynamic_tools;
@@ -70,6 +69,7 @@ mod fuzzy_file_search;
 pub mod in_process;
 mod message_processor;
 mod models;
+mod orbit_code_message_processor;
 mod outgoing_message;
 mod server_request_error;
 mod thread_state;
@@ -275,9 +275,12 @@ fn project_config_warning(config: &Config) -> Option<ConfigWarningNotification> 
         {
             continue;
         }
-        if let ConfigLayerSource::Project { dot_codex_folder } = &layer.name {
+        if let ConfigLayerSource::Project {
+            dot_orbit_code_folder,
+        } = &layer.name
+        {
             disabled_folders.push((
-                dot_codex_folder.as_path().display().to_string(),
+                dot_orbit_code_folder.as_path().display().to_string(),
                 layer
                     .disabled_reason
                     .as_ref()
@@ -402,11 +405,12 @@ pub async fn run_main_with_transport(
             let effective_toml = config.config_layer_stack.effective_config();
             match effective_toml.try_into() {
                 Ok(config_toml) => {
-                    if let Err(err) = codex_core::personality_migration::maybe_migrate_personality(
-                        &config.codex_home,
-                        &config_toml,
-                    )
-                    .await
+                    if let Err(err) =
+                        orbit_code_core::personality_migration::maybe_migrate_personality(
+                            &config.orbit_code_home,
+                            &config_toml,
+                        )
+                        .await
                     {
                         warn!(error = %err, "Failed to run personality migration");
                     }
@@ -417,14 +421,14 @@ pub async fn run_main_with_transport(
             }
 
             let auth_manager = AuthManager::shared(
-                config.codex_home.clone(),
-                /*enable_codex_api_key_env*/ false,
+                config.orbit_code_home.clone(),
+                /*enable_orbit_code_api_key_env*/ false,
                 config.cli_auth_credentials_store_mode,
             );
             cloud_requirements_loader(
                 auth_manager,
                 config.chatgpt_base_url,
-                config.codex_home.clone(),
+                config.orbit_code_home.clone(),
             )
         }
         Err(err) => {
@@ -477,7 +481,7 @@ pub async fn run_main_with_transport(
             range: None,
         });
     }
-    if let Some(warning) = codex_core::config::missing_system_bwrap_warning() {
+    if let Some(warning) = orbit_code_core::config::missing_system_bwrap_warning() {
         config_warnings.push(ConfigWarningNotification {
             summary: warning,
             details: None,
@@ -488,7 +492,7 @@ pub async fn run_main_with_transport(
 
     let feedback = CodexFeedback::new();
 
-    let otel = codex_core::otel_init::build_provider(
+    let otel = orbit_code_core::otel_init::build_provider(
         &config,
         env!("CARGO_PKG_VERSION"),
         Some("codex-app-server"),
@@ -520,7 +524,7 @@ pub async fn run_main_with_transport(
 
     let feedback_layer = feedback.logger_layer();
     let feedback_metadata_layer = feedback.metadata_layer();
-    let log_db = codex_state::StateRuntime::init(
+    let log_db = orbit_code_state::StateRuntime::init(
         config.sqlite_home.clone(),
         config.model_provider_id.clone(),
     )
@@ -622,7 +626,7 @@ pub async fn run_main_with_transport(
             log_db,
             config_warnings,
             session_source: SessionSource::VSCode,
-            enable_codex_api_key_env: false,
+            enable_orbit_code_api_key_env: false,
         });
         let mut thread_created_rx = processor.thread_created_receiver();
         let mut running_turn_count_rx = processor.subscribe_running_assistant_turn_count();

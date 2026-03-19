@@ -57,74 +57,74 @@ use async_channel::Receiver;
 use async_channel::Sender;
 use chrono::Local;
 use chrono::Utc;
-use codex_app_server_protocol::McpServerElicitationRequest;
-use codex_app_server_protocol::McpServerElicitationRequestParams;
-use codex_environment::Environment;
-use codex_hooks::HookEvent;
-use codex_hooks::HookEventAfterAgent;
-use codex_hooks::HookPayload;
-use codex_hooks::HookResult;
-use codex_hooks::Hooks;
-use codex_hooks::HooksConfig;
-use codex_network_proxy::NetworkProxy;
-use codex_network_proxy::NetworkProxyAuditMetadata;
-use codex_network_proxy::normalize_host;
-use codex_otel::current_span_trace_id;
-use codex_otel::current_span_w3c_trace_context;
-use codex_otel::set_parent_from_w3c_trace_context;
-use codex_protocol::ThreadId;
-use codex_protocol::approvals::ElicitationRequestEvent;
-use codex_protocol::approvals::ExecApprovalRequestSkillMetadata;
-use codex_protocol::approvals::ExecPolicyAmendment;
-use codex_protocol::approvals::NetworkPolicyAmendment;
-use codex_protocol::approvals::NetworkPolicyRuleAction;
-use codex_protocol::config_types::ApprovalsReviewer;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::config_types::Settings;
-use codex_protocol::config_types::WebSearchMode;
-use codex_protocol::dynamic_tools::DynamicToolResponse;
-use codex_protocol::dynamic_tools::DynamicToolSpec;
-use codex_protocol::items::PlanItem;
-use codex_protocol::items::TurnItem;
-use codex_protocol::items::UserMessageItem;
-use codex_protocol::mcp::CallToolResult;
-use codex_protocol::models::BaseInstructions;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::models::format_allow_prefixes;
-use codex_protocol::openai_models::ModelInfo;
-use codex_protocol::permissions::FileSystemSandboxPolicy;
-use codex_protocol::permissions::NetworkSandboxPolicy;
-use codex_protocol::protocol::FileChange;
-use codex_protocol::protocol::HasLegacyEvent;
-use codex_protocol::protocol::ItemCompletedEvent;
-use codex_protocol::protocol::ItemStartedEvent;
-use codex_protocol::protocol::RawResponseItemEvent;
-use codex_protocol::protocol::ReviewRequest;
-use codex_protocol::protocol::RolloutItem;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::SubAgentSource;
-use codex_protocol::protocol::TurnAbortReason;
-use codex_protocol::protocol::TurnContextItem;
-use codex_protocol::protocol::TurnContextNetworkItem;
-use codex_protocol::protocol::W3cTraceContext;
-use codex_protocol::request_permissions::PermissionGrantScope;
-use codex_protocol::request_permissions::RequestPermissionProfile;
-use codex_protocol::request_permissions::RequestPermissionsArgs;
-use codex_protocol::request_permissions::RequestPermissionsEvent;
-use codex_protocol::request_permissions::RequestPermissionsResponse;
-use codex_protocol::request_user_input::RequestUserInputArgs;
-use codex_protocol::request_user_input::RequestUserInputResponse;
-use codex_rmcp_client::ElicitationResponse;
-use codex_rmcp_client::OAuthCredentialsStoreMode;
-use codex_utils_stream_parser::AssistantTextChunk;
-use codex_utils_stream_parser::AssistantTextStreamParser;
-use codex_utils_stream_parser::ProposedPlanSegment;
-use codex_utils_stream_parser::extract_proposed_plan_text;
-use codex_utils_stream_parser::strip_citations;
 use futures::future::BoxFuture;
 use futures::future::Shared;
 use futures::prelude::*;
 use futures::stream::FuturesOrdered;
+use orbit_code_app_server_protocol::McpServerElicitationRequest;
+use orbit_code_app_server_protocol::McpServerElicitationRequestParams;
+use orbit_code_environment::Environment;
+use orbit_code_hooks::HookEvent;
+use orbit_code_hooks::HookEventAfterAgent;
+use orbit_code_hooks::HookPayload;
+use orbit_code_hooks::HookResult;
+use orbit_code_hooks::Hooks;
+use orbit_code_hooks::HooksConfig;
+use orbit_code_network_proxy::NetworkProxy;
+use orbit_code_network_proxy::NetworkProxyAuditMetadata;
+use orbit_code_network_proxy::normalize_host;
+use orbit_code_otel::current_span_trace_id;
+use orbit_code_otel::current_span_w3c_trace_context;
+use orbit_code_otel::set_parent_from_w3c_trace_context;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::approvals::ElicitationRequestEvent;
+use orbit_code_protocol::approvals::ExecApprovalRequestSkillMetadata;
+use orbit_code_protocol::approvals::ExecPolicyAmendment;
+use orbit_code_protocol::approvals::NetworkPolicyAmendment;
+use orbit_code_protocol::approvals::NetworkPolicyRuleAction;
+use orbit_code_protocol::config_types::ApprovalsReviewer;
+use orbit_code_protocol::config_types::ModeKind;
+use orbit_code_protocol::config_types::Settings;
+use orbit_code_protocol::config_types::WebSearchMode;
+use orbit_code_protocol::dynamic_tools::DynamicToolResponse;
+use orbit_code_protocol::dynamic_tools::DynamicToolSpec;
+use orbit_code_protocol::items::PlanItem;
+use orbit_code_protocol::items::TurnItem;
+use orbit_code_protocol::items::UserMessageItem;
+use orbit_code_protocol::mcp::CallToolResult;
+use orbit_code_protocol::models::BaseInstructions;
+use orbit_code_protocol::models::PermissionProfile;
+use orbit_code_protocol::models::format_allow_prefixes;
+use orbit_code_protocol::openai_models::ModelInfo;
+use orbit_code_protocol::permissions::FileSystemSandboxPolicy;
+use orbit_code_protocol::permissions::NetworkSandboxPolicy;
+use orbit_code_protocol::protocol::FileChange;
+use orbit_code_protocol::protocol::HasLegacyEvent;
+use orbit_code_protocol::protocol::ItemCompletedEvent;
+use orbit_code_protocol::protocol::ItemStartedEvent;
+use orbit_code_protocol::protocol::RawResponseItemEvent;
+use orbit_code_protocol::protocol::ReviewRequest;
+use orbit_code_protocol::protocol::RolloutItem;
+use orbit_code_protocol::protocol::SessionSource;
+use orbit_code_protocol::protocol::SubAgentSource;
+use orbit_code_protocol::protocol::TurnAbortReason;
+use orbit_code_protocol::protocol::TurnContextItem;
+use orbit_code_protocol::protocol::TurnContextNetworkItem;
+use orbit_code_protocol::protocol::W3cTraceContext;
+use orbit_code_protocol::request_permissions::PermissionGrantScope;
+use orbit_code_protocol::request_permissions::RequestPermissionProfile;
+use orbit_code_protocol::request_permissions::RequestPermissionsArgs;
+use orbit_code_protocol::request_permissions::RequestPermissionsEvent;
+use orbit_code_protocol::request_permissions::RequestPermissionsResponse;
+use orbit_code_protocol::request_user_input::RequestUserInputArgs;
+use orbit_code_protocol::request_user_input::RequestUserInputResponse;
+use orbit_code_rmcp_client::ElicitationResponse;
+use orbit_code_rmcp_client::OAuthCredentialsStoreMode;
+use orbit_code_utils_stream_parser::AssistantTextChunk;
+use orbit_code_utils_stream_parser::AssistantTextStreamParser;
+use orbit_code_utils_stream_parser::ProposedPlanSegment;
+use orbit_code_utils_stream_parser::extract_proposed_plan_text;
+use orbit_code_utils_stream_parser::strip_citations;
 use reqwest::header::HeaderMap;
 use reqwest::header::HeaderValue;
 use rmcp::model::ListResourceTemplatesResult;
@@ -159,7 +159,6 @@ use crate::client::ModelClient;
 use crate::client::ModelClientSession;
 use crate::client_common::Prompt;
 use crate::client_common::ResponseEvent;
-use crate::codex_thread::ThreadConfigSnapshot;
 use crate::compact::collect_user_messages;
 use crate::config::Config;
 use crate::config::Constrained;
@@ -176,7 +175,8 @@ use crate::error::CodexErr;
 use crate::error::Result as CodexResult;
 #[cfg(test)]
 use crate::exec::StreamOutput;
-use codex_config::CONFIG_TOML_FILE;
+use crate::orbit_code_thread::ThreadConfigSnapshot;
+use orbit_code_config::CONFIG_TOML_FILE;
 
 mod rollout_reconstruction;
 #[cfg(test)]
@@ -214,14 +214,14 @@ use crate::hook_runtime::record_pending_input;
 use crate::hook_runtime::run_pending_session_start_hooks;
 use crate::hook_runtime::run_user_prompt_submit_hooks;
 use crate::instructions::UserInstructions;
-use crate::mcp::CODEX_APPS_MCP_SERVER_NAME;
 use crate::mcp::McpManager;
+use crate::mcp::ORBIT_APPS_MCP_SERVER_NAME;
 use crate::mcp::auth::compute_auth_statuses;
 use crate::mcp::maybe_prompt_and_install_mcp_dependencies;
-use crate::mcp::with_codex_apps_mcp;
+use crate::mcp::with_orbit_code_apps_mcp;
 use crate::mcp_connection_manager::McpConnectionManager;
-use crate::mcp_connection_manager::codex_apps_tools_cache_key;
-use crate::mcp_connection_manager::filter_non_codex_apps_mcp_tools_only;
+use crate::mcp_connection_manager::filter_non_orbit_code_apps_mcp_tools_only;
+use crate::mcp_connection_manager::orbit_code_apps_tools_cache_key;
 use crate::memories;
 use crate::mentions::build_connector_slug_counts;
 use crate::mentions::build_skill_name_counts;
@@ -317,26 +317,26 @@ use crate::turn_timing::record_turn_ttft_metric;
 use crate::unified_exec::UnifiedExecProcessManager;
 use crate::util::backoff;
 use crate::windows_sandbox::WindowsSandboxLevelExt;
-use codex_async_utils::OrCancelExt;
-use codex_otel::SessionTelemetry;
-use codex_otel::TelemetryAuthMode;
-use codex_otel::metrics::names::THREAD_STARTED_METRIC;
-use codex_protocol::config_types::CollaborationMode;
-use codex_protocol::config_types::Personality;
-use codex_protocol::config_types::ReasoningSummary as ReasoningSummaryConfig;
-use codex_protocol::config_types::ServiceTier;
-use codex_protocol::config_types::WindowsSandboxLevel;
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::DeveloperInstructions;
-use codex_protocol::models::ResponseInputItem;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::openai_models::ReasoningEffort as ReasoningEffortConfig;
-use codex_protocol::protocol::CodexErrorInfo;
-use codex_protocol::protocol::InitialHistory;
-use codex_protocol::user_input::UserInput;
-use codex_utils_absolute_path::AbsolutePathBuf;
-use codex_utils_readiness::Readiness;
-use codex_utils_readiness::ReadinessFlag;
+use orbit_code_async_utils::OrCancelExt;
+use orbit_code_otel::SessionTelemetry;
+use orbit_code_otel::TelemetryAuthMode;
+use orbit_code_otel::metrics::names::THREAD_STARTED_METRIC;
+use orbit_code_protocol::config_types::CollaborationMode;
+use orbit_code_protocol::config_types::Personality;
+use orbit_code_protocol::config_types::ReasoningSummary as ReasoningSummaryConfig;
+use orbit_code_protocol::config_types::ServiceTier;
+use orbit_code_protocol::config_types::WindowsSandboxLevel;
+use orbit_code_protocol::models::ContentItem;
+use orbit_code_protocol::models::DeveloperInstructions;
+use orbit_code_protocol::models::ResponseInputItem;
+use orbit_code_protocol::models::ResponseItem;
+use orbit_code_protocol::openai_models::ReasoningEffort as ReasoningEffortConfig;
+use orbit_code_protocol::protocol::CodexErrorInfo;
+use orbit_code_protocol::protocol::InitialHistory;
+use orbit_code_protocol::user_input::UserInput;
+use orbit_code_utils_absolute_path::AbsolutePathBuf;
+use orbit_code_utils_readiness::Readiness;
+use orbit_code_utils_readiness::ReadinessFlag;
 
 /// The high-level interface to the Codex system.
 /// It operates as a queue pair where you send submissions and receive events.
@@ -394,7 +394,7 @@ impl Codex {
     pub(crate) async fn spawn(args: CodexSpawnArgs) -> CodexResult<CodexSpawnOk> {
         let parent_trace = match args.parent_trace {
             Some(trace) => {
-                if codex_otel::context_from_w3c_trace_context(&trace).is_some() {
+                if orbit_code_otel::context_from_w3c_trace_context(&trace).is_some() {
                     Some(trace)
                 } else {
                     warn!("ignoring invalid thread spawn trace carrier");
@@ -539,8 +539,12 @@ impl Codex {
             match thread_id {
                 Some(thread_id) => {
                     let state_db_ctx = state_db::get_state_db(&config).await;
-                    state_db::get_dynamic_tools(state_db_ctx.as_deref(), thread_id, "codex_spawn")
-                        .await
+                    state_db::get_dynamic_tools(
+                        state_db_ctx.as_deref(),
+                        thread_id,
+                        "orbit_code_spawn",
+                    )
+                    .await
                 }
                 None => None,
             }
@@ -582,7 +586,7 @@ impl Codex {
             network_sandbox_policy: config.permissions.network_sandbox_policy,
             windows_sandbox_level: WindowsSandboxLevel::from_config(&config),
             cwd: config.cwd.clone(),
-            codex_home: config.codex_home.clone(),
+            orbit_code_home: config.orbit_code_home.clone(),
             thread_name: None,
             original_config_do_not_use: Arc::clone(&config),
             metrics_service_name,
@@ -617,7 +621,7 @@ impl Codex {
         .await
         .map_err(|e| {
             error!("Failed to create session: {e:#}");
-            map_session_init_error(&e, &config.codex_home)
+            map_session_init_error(&e, &config.orbit_code_home)
         })?;
         let thread_id = session.conversation_id;
 
@@ -823,7 +827,7 @@ pub(crate) struct TurnContext {
     pub(crate) features: ManagedFeatures,
     pub(crate) ghost_snapshot: GhostSnapshotConfig,
     pub(crate) final_output_json_schema: Option<Value>,
-    pub(crate) codex_linux_sandbox_exe: Option<PathBuf>,
+    pub(crate) orbit_code_linux_sandbox_exe: Option<PathBuf>,
     pub(crate) tool_call_gate: Arc<ReadinessFlag>,
     pub(crate) truncation_policy: TruncationPolicy,
     pub(crate) js_repl: Arc<JsReplHandle>,
@@ -930,7 +934,7 @@ impl TurnContext {
             features,
             ghost_snapshot: self.ghost_snapshot.clone(),
             final_output_json_schema: self.final_output_json_schema.clone(),
-            codex_linux_sandbox_exe: self.codex_linux_sandbox_exe.clone(),
+            orbit_code_linux_sandbox_exe: self.orbit_code_linux_sandbox_exe.clone(),
             tool_call_gate: Arc::new(ReadinessFlag::new()),
             truncation_policy,
             js_repl: Arc::clone(&self.js_repl),
@@ -1042,7 +1046,7 @@ pub(crate) struct SessionConfiguration {
     /// operate deterministically.
     cwd: PathBuf,
     /// Directory containing all Codex state for this session.
-    codex_home: PathBuf,
+    orbit_code_home: PathBuf,
     /// Optional user-facing name for the thread, updated during the session.
     thread_name: Option<String>,
 
@@ -1060,8 +1064,8 @@ pub(crate) struct SessionConfiguration {
 }
 
 impl SessionConfiguration {
-    pub(crate) fn codex_home(&self) -> &PathBuf {
-        &self.codex_home
+    pub(crate) fn orbit_code_home(&self) -> &PathBuf {
+        &self.orbit_code_home
     }
 
     fn thread_config_snapshot(&self) -> ThreadConfigSnapshot {
@@ -1181,10 +1185,10 @@ impl Session {
 
     async fn start_managed_network_proxy(
         spec: &crate::config::NetworkProxySpec,
-        exec_policy: &codex_execpolicy::Policy,
+        exec_policy: &orbit_code_execpolicy::Policy,
         sandbox_policy: &SandboxPolicy,
-        network_policy_decider: Option<Arc<dyn codex_network_proxy::NetworkPolicyDecider>>,
-        blocked_request_observer: Option<Arc<dyn codex_network_proxy::BlockedRequestObserver>>,
+        network_policy_decider: Option<Arc<dyn orbit_code_network_proxy::NetworkPolicyDecider>>,
+        blocked_request_observer: Option<Arc<dyn orbit_code_network_proxy::BlockedRequestObserver>>,
         managed_network_requirements_enabled: bool,
         audit_metadata: NetworkProxyAuditMetadata,
     ) -> anyhow::Result<(StartedNetworkProxy, SessionNetworkProxyRuntime)> {
@@ -1249,9 +1253,9 @@ impl Session {
         per_turn_config
     }
 
-    pub(crate) async fn codex_home(&self) -> PathBuf {
+    pub(crate) async fn orbit_code_home(&self) -> PathBuf {
         let state = self.state.lock().await;
-        state.session_configuration.codex_home().clone()
+        state.session_configuration.orbit_code_home().clone()
     }
 
     pub(crate) fn subscribe_out_of_band_elicitation_pause_state(&self) -> watch::Receiver<bool> {
@@ -1376,7 +1380,7 @@ impl Session {
             features: per_turn_config.features.clone(),
             ghost_snapshot: per_turn_config.ghost_snapshot.clone(),
             final_output_json_schema: None,
-            codex_linux_sandbox_exe: per_turn_config.codex_linux_sandbox_exe.clone(),
+            orbit_code_linux_sandbox_exe: per_turn_config.orbit_code_linux_sandbox_exe.clone(),
             tool_call_gate: Arc::new(ReadinessFlag::new()),
             truncation_policy: model_info.truncation_policy.into(),
             js_repl,
@@ -1586,7 +1590,7 @@ impl Session {
         let session_model = session_configuration.collaboration_mode.model().to_string();
         let auth_env_telemetry = collect_auth_env_telemetry(
             &session_configuration.provider,
-            auth_manager.codex_api_key_env_enabled(),
+            auth_manager.orbit_code_api_key_env_enabled(),
         );
         let mut session_telemetry = SessionTelemetry::new(
             conversation_id,
@@ -1672,7 +1676,7 @@ impl Session {
                 tx
             } else {
                 ShellSnapshot::start_snapshotting(
-                    config.codex_home.clone(),
+                    config.orbit_code_home.clone(),
                     conversation_id,
                     session_configuration.cwd.clone(),
                     &mut default_shell,
@@ -1685,7 +1689,7 @@ impl Session {
             tx
         };
         let thread_name =
-            match session_index::find_thread_name_by_id(&config.codex_home, &conversation_id)
+            match session_index::find_thread_name_by_id(&config.orbit_code_home, &conversation_id)
                 .instrument(info_span!(
                     "session_init.thread_name_lookup",
                     otel.name = "session_init.thread_name_lookup",
@@ -1890,7 +1894,7 @@ impl Session {
         // MCP server immediately after it becomes ready (avoiding blocking).
         let sandbox_state = SandboxState {
             sandbox_policy: session_configuration.sandbox_policy.get().clone(),
-            codex_linux_sandbox_exe: config.codex_linux_sandbox_exe.clone(),
+            orbit_code_linux_sandbox_exe: config.orbit_code_linux_sandbox_exe.clone(),
             sandbox_cwd: session_configuration.cwd.clone(),
             use_legacy_landlock: config.features.use_legacy_landlock(),
         };
@@ -1915,8 +1919,8 @@ impl Session {
             &session_configuration.approval_policy,
             tx_event.clone(),
             sandbox_state,
-            config.codex_home.clone(),
-            codex_apps_tools_cache_key(auth),
+            config.orbit_code_home.clone(),
+            orbit_code_apps_tools_cache_key(auth),
             tool_plugin_provenance,
         )
         .instrument(info_span!(
@@ -1964,9 +1968,9 @@ impl Session {
         sess.schedule_startup_prewarm(session_configuration.base_instructions.clone())
             .await;
         let session_start_source = match &initial_history {
-            InitialHistory::Resumed(_) => codex_hooks::SessionStartSource::Resume,
+            InitialHistory::Resumed(_) => orbit_code_hooks::SessionStartSource::Resume,
             InitialHistory::New | InitialHistory::Forked(_) => {
-                codex_hooks::SessionStartSource::Startup
+                orbit_code_hooks::SessionStartSource::Startup
             }
         };
 
@@ -2226,7 +2230,7 @@ impl Session {
         &self,
         previous_cwd: &Path,
         next_cwd: &Path,
-        codex_home: &Path,
+        orbit_code_home: &Path,
         session_source: &SessionSource,
     ) {
         if previous_cwd == next_cwd {
@@ -2245,7 +2249,7 @@ impl Session {
         }
 
         ShellSnapshot::refresh_snapshot(
-            codex_home.to_path_buf(),
+            orbit_code_home.to_path_buf(),
             self.conversation_id,
             next_cwd.to_path_buf(),
             self.services.user_shell.as_ref().clone(),
@@ -2264,7 +2268,7 @@ impl Session {
             Ok(updated) => {
                 let previous_cwd = state.session_configuration.cwd.clone();
                 let next_cwd = updated.cwd.clone();
-                let codex_home = updated.codex_home.clone();
+                let orbit_code_home = updated.orbit_code_home.clone();
                 let session_source = updated.session_source.clone();
                 state.session_configuration = updated;
                 drop(state);
@@ -2272,7 +2276,7 @@ impl Session {
                 self.maybe_refresh_shell_snapshot_for_cwd(
                     &previous_cwd,
                     &next_cwd,
-                    &codex_home,
+                    &orbit_code_home,
                     &session_source,
                 );
 
@@ -2294,7 +2298,7 @@ impl Session {
             session_configuration,
             sandbox_policy_changed,
             previous_cwd,
-            codex_home,
+            orbit_code_home,
             session_source,
         ) = {
             let mut state = self.state.lock().await;
@@ -2303,14 +2307,14 @@ impl Session {
                     let previous_cwd = state.session_configuration.cwd.clone();
                     let sandbox_policy_changed =
                         state.session_configuration.sandbox_policy != next.sandbox_policy;
-                    let codex_home = next.codex_home.clone();
+                    let orbit_code_home = next.orbit_code_home.clone();
                     let session_source = next.session_source.clone();
                     state.session_configuration = next.clone();
                     (
                         next,
                         sandbox_policy_changed,
                         previous_cwd,
-                        codex_home,
+                        orbit_code_home,
                         session_source,
                     )
                 }
@@ -2320,7 +2324,7 @@ impl Session {
                         id: sub_id.clone(),
                         msg: EventMsg::Error(ErrorEvent {
                             message: err.to_string(),
-                            codex_error_info: Some(CodexErrorInfo::BadRequest),
+                            orbit_code_error_info: Some(CodexErrorInfo::BadRequest),
                         }),
                     })
                     .await;
@@ -2332,7 +2336,7 @@ impl Session {
         self.maybe_refresh_shell_snapshot_for_cwd(
             &previous_cwd,
             &session_configuration.cwd,
-            &codex_home,
+            &orbit_code_home,
             &session_source,
         );
 
@@ -2363,7 +2367,7 @@ impl Session {
         if sandbox_policy_changed {
             let sandbox_state = SandboxState {
                 sandbox_policy: per_turn_config.permissions.sandbox_policy.get().clone(),
-                codex_linux_sandbox_exe: per_turn_config.codex_linux_sandbox_exe.clone(),
+                orbit_code_linux_sandbox_exe: per_turn_config.orbit_code_linux_sandbox_exe.clone(),
                 sandbox_cwd: per_turn_config.cwd.clone(),
                 use_legacy_landlock: per_turn_config.features.use_legacy_landlock(),
             };
@@ -2473,7 +2477,7 @@ impl Session {
             let state = self.state.lock().await;
             state
                 .session_configuration
-                .codex_home
+                .orbit_code_home
                 .join(CONFIG_TOML_FILE)
         };
 
@@ -2650,17 +2654,17 @@ impl Session {
         &self,
         amendment: &ExecPolicyAmendment,
     ) -> Result<(), ExecPolicyUpdateError> {
-        let codex_home = self
+        let orbit_code_home = self
             .state
             .lock()
             .await
             .session_configuration
-            .codex_home()
+            .orbit_code_home()
             .clone();
 
         self.services
             .exec_policy
-            .append_amendment_and_update(&codex_home, amendment)
+            .append_amendment_and_update(&orbit_code_home, amendment)
             .await?;
 
         Ok(())
@@ -2722,12 +2726,12 @@ impl Session {
     ) -> anyhow::Result<()> {
         let host =
             Self::validated_network_policy_amendment_host(amendment, network_approval_context)?;
-        let codex_home = self
+        let orbit_code_home = self
             .state
             .lock()
             .await
             .session_configuration
-            .codex_home()
+            .orbit_code_home()
             .clone();
         let execpolicy_amendment =
             execpolicy_network_rule_amendment(amendment, network_approval_context, &host);
@@ -2749,7 +2753,7 @@ impl Session {
         self.services
             .exec_policy
             .append_network_rule_and_update(
-                &codex_home,
+                &orbit_code_home,
                 &host,
                 execpolicy_amendment.protocol,
                 execpolicy_amendment.decision,
@@ -3041,7 +3045,7 @@ impl Session {
                         return None;
                     }
                 };
-                codex_protocol::approvals::ElicitationRequest::Form {
+                orbit_code_protocol::approvals::ElicitationRequest::Form {
                     meta,
                     message,
                     requested_schema,
@@ -3052,7 +3056,7 @@ impl Session {
                 message,
                 url,
                 elicitation_id,
-            } => codex_protocol::approvals::ElicitationRequest::Url {
+            } => orbit_code_protocol::approvals::ElicitationRequest::Url {
                 meta,
                 message,
                 url,
@@ -3082,10 +3086,10 @@ impl Session {
         }
         let id = match request_id {
             rmcp::model::NumberOrString::String(value) => {
-                codex_protocol::mcp::RequestId::String(value.to_string())
+                orbit_code_protocol::mcp::RequestId::String(value.to_string())
             }
             rmcp::model::NumberOrString::Number(value) => {
-                codex_protocol::mcp::RequestId::Integer(value)
+                orbit_code_protocol::mcp::RequestId::Integer(value)
             }
         };
         let event = EventMsg::ElicitationRequest(ElicitationRequestEvent {
@@ -3446,7 +3450,7 @@ impl Session {
         if turn_context.features.enabled(Feature::MemoryTool)
             && turn_context.config.memories.use_memories
             && let Some(memory_prompt) =
-                build_memory_tool_developer_instructions(&turn_context.config.codex_home).await
+                build_memory_tool_developer_instructions(&turn_context.config.orbit_code_home).await
         {
             developer_sections.push(memory_prompt);
         }
@@ -3769,15 +3773,15 @@ impl Session {
         &self,
         turn_context: &TurnContext,
         message: impl Into<String>,
-        codex_error: CodexErr,
+        orbit_code_error: CodexErr,
     ) {
-        let additional_details = codex_error.to_string();
-        let codex_error_info = CodexErrorInfo::ResponseStreamDisconnected {
-            http_status_code: codex_error.http_status_code_value(),
+        let additional_details = orbit_code_error.to_string();
+        let orbit_code_error_info = CodexErrorInfo::ResponseStreamDisconnected {
+            http_status_code: orbit_code_error.http_status_code_value(),
         };
         let event = EventMsg::StreamError(StreamErrorEvent {
             message: message.into(),
-            codex_error_info: Some(codex_error_info),
+            orbit_code_error_info: Some(orbit_code_error_info),
             additional_details: Some(additional_details),
         });
         self.send_event(turn_context, event).await;
@@ -3962,7 +3966,7 @@ impl Session {
         if let Some(turn_metadata) = turn_context.turn_metadata_state.current_header_value()
             && let Ok(value) = HeaderValue::from_str(&turn_metadata)
         {
-            request_headers.insert(crate::X_CODEX_TURN_METADATA_HEADER, value);
+            request_headers.insert(crate::X_ORBIT_TURN_METADATA_HEADER, value);
         }
 
         let request_headers = if request_headers.is_empty() {
@@ -3975,7 +3979,7 @@ impl Session {
             .read()
             .await
             .set_request_headers_for_server(
-                crate::mcp::CODEX_APPS_MCP_SERVER_NAME,
+                crate::mcp::ORBIT_APPS_MCP_SERVER_NAME,
                 request_headers,
             );
     }
@@ -3986,7 +3990,7 @@ impl Session {
             .read()
             .await
             .set_request_headers_for_server(
-                crate::mcp::CODEX_APPS_MCP_SERVER_NAME,
+                crate::mcp::ORBIT_APPS_MCP_SERVER_NAME,
                 /*request_headers*/ None,
             );
     }
@@ -4046,7 +4050,7 @@ impl Session {
 
     pub(crate) async fn take_pending_session_start_source(
         &self,
-    ) -> Option<codex_hooks::SessionStartSource> {
+    ) -> Option<orbit_code_hooks::SessionStartSource> {
         let mut state = self.state.lock().await;
         state.take_pending_session_start_source()
     }
@@ -4063,7 +4067,7 @@ impl Session {
             .services
             .mcp_manager
             .tool_plugin_provenance(config.as_ref());
-        let mcp_servers = with_codex_apps_mcp(
+        let mcp_servers = with_orbit_code_apps_mcp(
             mcp_servers,
             self.features.apps_enabled_for_auth(auth.as_ref()),
             auth.as_ref(),
@@ -4072,7 +4076,7 @@ impl Session {
         let auth_statuses = compute_auth_statuses(mcp_servers.iter(), store_mode).await;
         let sandbox_state = SandboxState {
             sandbox_policy: turn_context.sandbox_policy.get().clone(),
-            codex_linux_sandbox_exe: turn_context.codex_linux_sandbox_exe.clone(),
+            orbit_code_linux_sandbox_exe: turn_context.orbit_code_linux_sandbox_exe.clone(),
             sandbox_cwd: turn_context.cwd.clone(),
             use_legacy_landlock: turn_context.features.use_legacy_landlock(),
         };
@@ -4088,8 +4092,8 @@ impl Session {
             &turn_context.config.permissions.approval_policy,
             self.get_tx_event(),
             sandbox_state,
-            config.codex_home.clone(),
-            codex_apps_tools_cache_key(auth.as_ref()),
+            config.orbit_code_home.clone(),
+            orbit_code_apps_tools_cache_key(auth.as_ref()),
             tool_plugin_provenance,
         )
         .await;
@@ -4193,7 +4197,7 @@ async fn submission_loop(sess: Arc<Session>, config: Arc<Config>, rx_sub: Receiv
                             id: sub.id.clone(),
                             msg: EventMsg::Error(ErrorEvent {
                                 message: err.to_string(),
-                                codex_error_info: Some(CodexErrorInfo::Other),
+                                orbit_code_error_info: Some(CodexErrorInfo::Other),
                             }),
                         })
                         .await;
@@ -4432,35 +4436,35 @@ mod handlers {
     use crate::tasks::UserShellCommandMode;
     use crate::tasks::UserShellCommandTask;
     use crate::tasks::execute_user_shell_command;
-    use codex_protocol::custom_prompts::CustomPrompt;
-    use codex_protocol::protocol::CodexErrorInfo;
-    use codex_protocol::protocol::ErrorEvent;
-    use codex_protocol::protocol::Event;
-    use codex_protocol::protocol::EventMsg;
-    use codex_protocol::protocol::ListCustomPromptsResponseEvent;
-    use codex_protocol::protocol::ListSkillsResponseEvent;
-    use codex_protocol::protocol::McpServerRefreshConfig;
-    use codex_protocol::protocol::Op;
-    use codex_protocol::protocol::ReviewDecision;
-    use codex_protocol::protocol::ReviewRequest;
-    use codex_protocol::protocol::RolloutItem;
-    use codex_protocol::protocol::SkillsListEntry;
-    use codex_protocol::protocol::ThreadNameUpdatedEvent;
-    use codex_protocol::protocol::ThreadRolledBackEvent;
-    use codex_protocol::protocol::TurnAbortReason;
-    use codex_protocol::protocol::WarningEvent;
-    use codex_protocol::request_permissions::RequestPermissionsResponse;
-    use codex_protocol::request_user_input::RequestUserInputResponse;
+    use orbit_code_protocol::custom_prompts::CustomPrompt;
+    use orbit_code_protocol::protocol::CodexErrorInfo;
+    use orbit_code_protocol::protocol::ErrorEvent;
+    use orbit_code_protocol::protocol::Event;
+    use orbit_code_protocol::protocol::EventMsg;
+    use orbit_code_protocol::protocol::ListCustomPromptsResponseEvent;
+    use orbit_code_protocol::protocol::ListSkillsResponseEvent;
+    use orbit_code_protocol::protocol::McpServerRefreshConfig;
+    use orbit_code_protocol::protocol::Op;
+    use orbit_code_protocol::protocol::ReviewDecision;
+    use orbit_code_protocol::protocol::ReviewRequest;
+    use orbit_code_protocol::protocol::RolloutItem;
+    use orbit_code_protocol::protocol::SkillsListEntry;
+    use orbit_code_protocol::protocol::ThreadNameUpdatedEvent;
+    use orbit_code_protocol::protocol::ThreadRolledBackEvent;
+    use orbit_code_protocol::protocol::TurnAbortReason;
+    use orbit_code_protocol::protocol::WarningEvent;
+    use orbit_code_protocol::request_permissions::RequestPermissionsResponse;
+    use orbit_code_protocol::request_user_input::RequestUserInputResponse;
 
     use crate::context_manager::is_user_turn_boundary;
-    use codex_protocol::config_types::CollaborationMode;
-    use codex_protocol::config_types::ModeKind;
-    use codex_protocol::config_types::Settings;
-    use codex_protocol::dynamic_tools::DynamicToolResponse;
-    use codex_protocol::mcp::RequestId as ProtocolRequestId;
-    use codex_protocol::user_input::UserInput;
-    use codex_rmcp_client::ElicitationAction;
-    use codex_rmcp_client::ElicitationResponse;
+    use orbit_code_protocol::config_types::CollaborationMode;
+    use orbit_code_protocol::config_types::ModeKind;
+    use orbit_code_protocol::config_types::Settings;
+    use orbit_code_protocol::dynamic_tools::DynamicToolResponse;
+    use orbit_code_protocol::mcp::RequestId as ProtocolRequestId;
+    use orbit_code_protocol::user_input::UserInput;
+    use orbit_code_rmcp_client::ElicitationAction;
+    use orbit_code_rmcp_client::ElicitationResponse;
     use serde_json::Value;
     use std::path::PathBuf;
     use std::sync::Arc;
@@ -4485,7 +4489,7 @@ mod handlers {
                 id: sub_id,
                 msg: EventMsg::Error(ErrorEvent {
                     message: err.to_string(),
-                    codex_error_info: Some(CodexErrorInfo::BadRequest),
+                    orbit_code_error_info: Some(CodexErrorInfo::BadRequest),
                 }),
             })
             .await;
@@ -4601,14 +4605,16 @@ mod handlers {
         sess: &Arc<Session>,
         server_name: String,
         request_id: ProtocolRequestId,
-        decision: codex_protocol::approvals::ElicitationAction,
+        decision: orbit_code_protocol::approvals::ElicitationAction,
         content: Option<Value>,
         meta: Option<Value>,
     ) {
         let action = match decision {
-            codex_protocol::approvals::ElicitationAction::Accept => ElicitationAction::Accept,
-            codex_protocol::approvals::ElicitationAction::Decline => ElicitationAction::Decline,
-            codex_protocol::approvals::ElicitationAction::Cancel => ElicitationAction::Cancel,
+            orbit_code_protocol::approvals::ElicitationAction::Accept => ElicitationAction::Accept,
+            orbit_code_protocol::approvals::ElicitationAction::Decline => {
+                ElicitationAction::Decline
+            }
+            orbit_code_protocol::approvals::ElicitationAction::Cancel => ElicitationAction::Cancel,
         };
         let content = match action {
             // Preserve the legacy fallback for clients that only send an action.
@@ -4749,10 +4755,12 @@ mod handlers {
                     crate::protocol::GetHistoryEntryResponseEvent {
                         offset,
                         log_id,
-                        entry: entry_opt.map(|e| codex_protocol::message_history::HistoryEntry {
-                            conversation_id: e.session_id,
-                            ts: e.ts,
-                            text: e.text,
+                        entry: entry_opt.map(|e| {
+                            orbit_code_protocol::message_history::HistoryEntry {
+                                conversation_id: e.session_id,
+                                ts: e.ts,
+                                text: e.text,
+                            }
                         }),
                     },
                 ),
@@ -4876,7 +4884,7 @@ mod handlers {
             errors.push("state db unavailable; memory rows were not cleared".to_string());
         }
 
-        let memory_root = crate::memories::memory_root(&config.codex_home);
+        let memory_root = crate::memories::memory_root(&config.orbit_code_home);
         if let Err(err) = crate::memories::clear_memory_root_contents(&memory_root).await {
             errors.push(format!(
                 "failed clearing memory directory {}: {err}",
@@ -4902,7 +4910,7 @@ mod handlers {
             id: sub_id,
             msg: EventMsg::Error(ErrorEvent {
                 message: format!("Memory drop completed with errors: {}", errors.join("; ")),
-                codex_error_info: Some(CodexErrorInfo::Other),
+                orbit_code_error_info: Some(CodexErrorInfo::Other),
             }),
         })
         .await;
@@ -4931,7 +4939,7 @@ mod handlers {
                 id: sub_id,
                 msg: EventMsg::Error(ErrorEvent {
                     message: "num_turns must be >= 1".to_string(),
-                    codex_error_info: Some(CodexErrorInfo::ThreadRollbackFailed),
+                    orbit_code_error_info: Some(CodexErrorInfo::ThreadRollbackFailed),
                 }),
             })
             .await;
@@ -4944,7 +4952,7 @@ mod handlers {
                 id: sub_id,
                 msg: EventMsg::Error(ErrorEvent {
                     message: "Cannot rollback while a turn is in progress.".to_string(),
-                    codex_error_info: Some(CodexErrorInfo::ThreadRollbackFailed),
+                    orbit_code_error_info: Some(CodexErrorInfo::ThreadRollbackFailed),
                 }),
             })
             .await;
@@ -4962,7 +4970,7 @@ mod handlers {
                     id: turn_context.sub_id.clone(),
                     msg: EventMsg::Error(ErrorEvent {
                         message: "thread rollback requires a persisted rollout path".to_string(),
-                        codex_error_info: Some(CodexErrorInfo::ThreadRollbackFailed),
+                        orbit_code_error_info: Some(CodexErrorInfo::ThreadRollbackFailed),
                     }),
                 })
                 .await;
@@ -4982,7 +4990,7 @@ mod handlers {
                         "failed to flush rollout `{}` for rollback replay: {err}",
                         rollout_path.display()
                     ),
-                    codex_error_info: Some(CodexErrorInfo::ThreadRollbackFailed),
+                    orbit_code_error_info: Some(CodexErrorInfo::ThreadRollbackFailed),
                 }),
             })
             .await;
@@ -5000,7 +5008,7 @@ mod handlers {
                                 "failed to load rollout `{}` for rollback replay: {err}",
                                 rollout_path.display()
                             ),
-                            codex_error_info: Some(CodexErrorInfo::ThreadRollbackFailed),
+                            orbit_code_error_info: Some(CodexErrorInfo::ThreadRollbackFailed),
                         }),
                     })
                     .await;
@@ -5032,7 +5040,7 @@ mod handlers {
     /// Persists the thread name in the session index, updates in-memory state, and emits
     /// a `ThreadNameUpdated` event on success.
     ///
-    /// This appends the name to `CODEX_HOME/sessions_index.jsonl` via `session_index::append_thread_name` for the
+    /// This appends the name to `ORBIT_HOME/sessions_index.jsonl` via `session_index::append_thread_name` for the
     /// current `thread_id`, then updates `SessionConfiguration::thread_name`.
     ///
     /// Returns an error event if the name is empty or session persistence is disabled.
@@ -5042,7 +5050,7 @@ mod handlers {
                 id: sub_id,
                 msg: EventMsg::Error(ErrorEvent {
                     message: "Thread name cannot be empty.".to_string(),
-                    codex_error_info: Some(CodexErrorInfo::BadRequest),
+                    orbit_code_error_info: Some(CodexErrorInfo::BadRequest),
                 }),
             };
             sess.send_event_raw(event).await;
@@ -5058,22 +5066,22 @@ mod handlers {
                 id: sub_id,
                 msg: EventMsg::Error(ErrorEvent {
                     message: "Session persistence is disabled; cannot rename thread.".to_string(),
-                    codex_error_info: Some(CodexErrorInfo::Other),
+                    orbit_code_error_info: Some(CodexErrorInfo::Other),
                 }),
             };
             sess.send_event_raw(event).await;
             return;
         };
 
-        let codex_home = sess.codex_home().await;
+        let orbit_code_home = sess.orbit_code_home().await;
         if let Err(e) =
-            session_index::append_thread_name(&codex_home, sess.conversation_id, &name).await
+            session_index::append_thread_name(&orbit_code_home, sess.conversation_id, &name).await
         {
             let event = Event {
                 id: sub_id,
                 msg: EventMsg::Error(ErrorEvent {
                     message: format!("Failed to set thread name: {e}"),
-                    codex_error_info: Some(CodexErrorInfo::Other),
+                    orbit_code_error_info: Some(CodexErrorInfo::Other),
                 }),
             };
             sess.send_event_raw(event).await;
@@ -5130,7 +5138,7 @@ mod handlers {
                 id: sub_id.clone(),
                 msg: EventMsg::Error(ErrorEvent {
                     message: "Failed to shutdown rollout recorder".to_string(),
-                    codex_error_info: Some(CodexErrorInfo::Other),
+                    orbit_code_error_info: Some(CodexErrorInfo::Other),
                 }),
             };
             sess.send_event_raw(event).await;
@@ -5170,7 +5178,7 @@ mod handlers {
                     id: sub_id,
                     msg: EventMsg::Error(ErrorEvent {
                         message: err.to_string(),
-                        codex_error_info: Some(CodexErrorInfo::Other),
+                        orbit_code_error_info: Some(CodexErrorInfo::Other),
                     }),
                 };
                 sess.send_event(&turn_context, event.msg).await;
@@ -5297,7 +5305,7 @@ async fn spawn_review_thread(
         shell_environment_policy: parent_turn_context.shell_environment_policy.clone(),
         cwd: parent_turn_context.cwd.clone(),
         final_output_json_schema: None,
-        codex_linux_sandbox_exe: parent_turn_context.codex_linux_sandbox_exe.clone(),
+        orbit_code_linux_sandbox_exe: parent_turn_context.orbit_code_linux_sandbox_exe.clone(),
         tool_call_gate: Arc::new(ReadinessFlag::new()),
         js_repl: Arc::clone(&sess.js_repl),
         dynamic_tools: parent_turn_context.dynamic_tools.clone(),
@@ -5749,7 +5757,7 @@ pub(crate) async fn run_turn(
                         | AskForApproval::Granular(_) => "default",
                     }
                     .to_string();
-                    let stop_request = codex_hooks::StopRequest {
+                    let stop_request = orbit_code_hooks::StopRequest {
                         session_id: sess.conversation_id,
                         turn_id: turn_context.sub_id.clone(),
                         cwd: turn_context.cwd.clone(),
@@ -5851,7 +5859,7 @@ pub(crate) async fn run_turn(
                             &turn_context,
                             EventMsg::Error(ErrorEvent {
                                 message,
-                                codex_error_info: None,
+                                orbit_code_error_info: None,
                             }),
                         )
                         .await;
@@ -5876,7 +5884,7 @@ pub(crate) async fn run_turn(
                 let event = EventMsg::Error(ErrorEvent {
                     message: "Invalid image in your last message. Please remove it and try again."
                         .to_string(),
-                    codex_error_info: Some(CodexErrorInfo::BadRequest),
+                    orbit_code_error_info: Some(CodexErrorInfo::BadRequest),
                 });
                 sess.send_event(&turn_context, event).await;
                 break;
@@ -6112,7 +6120,7 @@ fn connector_inserted_in_messages(
     connector_count == 1 && skill_count == 0 && mention_names_lower.contains(&mention_slug)
 }
 
-fn filter_codex_apps_mcp_tools(
+fn filter_orbit_code_apps_mcp_tools(
     mcp_tools: &HashMap<String, crate::mcp_connection_manager::ToolInfo>,
     connectors: &[connectors::AppInfo],
     config: &Config,
@@ -6125,19 +6133,20 @@ fn filter_codex_apps_mcp_tools(
     mcp_tools
         .iter()
         .filter(|(_, tool)| {
-            if tool.server_name != CODEX_APPS_MCP_SERVER_NAME {
+            if tool.server_name != ORBIT_APPS_MCP_SERVER_NAME {
                 return false;
             }
-            let Some(connector_id) = codex_apps_connector_id(tool) else {
+            let Some(connector_id) = orbit_code_apps_connector_id(tool) else {
                 return false;
             };
-            allowed.contains(connector_id) && connectors::codex_app_tool_is_enabled(config, tool)
+            allowed.contains(connector_id)
+                && connectors::orbit_code_app_tool_is_enabled(config, tool)
         })
         .map(|(name, tool)| (name.clone(), tool.clone()))
         .collect()
 }
 
-fn codex_apps_connector_id(tool: &crate::mcp_connection_manager::ToolInfo) -> Option<&str> {
+fn orbit_code_apps_connector_id(tool: &crate::mcp_connection_manager::ToolInfo) -> Option<&str> {
     tool.connector_id.as_deref()
 }
 
@@ -6391,7 +6400,7 @@ pub(crate) async fn built_tools(
     };
 
     let app_tools = connectors.as_ref().map(|connectors| {
-        filter_codex_apps_mcp_tools(&mcp_tools, connectors, &turn_context.config)
+        filter_orbit_code_apps_mcp_tools(&mcp_tools, connectors, &turn_context.config)
     });
 
     if let Some(connectors) = connectors.as_ref() {
@@ -6406,8 +6415,8 @@ pub(crate) async fn built_tools(
             &skill_name_counts_lower,
         );
 
-        let mut selected_mcp_tools = filter_non_codex_apps_mcp_tools_only(&mcp_tools);
-        selected_mcp_tools.extend(filter_codex_apps_mcp_tools(
+        let mut selected_mcp_tools = filter_non_orbit_code_apps_mcp_tools_only(&mcp_tools);
+        selected_mcp_tools.extend(filter_orbit_code_apps_mcp_tools(
             &mcp_tools,
             explicitly_enabled.as_ref(),
             &turn_context.config,
@@ -6615,11 +6624,11 @@ async fn maybe_emit_pending_agent_message_start(
 }
 
 /// Agent messages are text-only today; concatenate all text entries.
-fn agent_message_text(item: &codex_protocol::items::AgentMessageItem) -> String {
+fn agent_message_text(item: &orbit_code_protocol::items::AgentMessageItem) -> String {
     item.content
         .iter()
         .map(|entry| match entry {
-            codex_protocol::items::AgentMessageContent::Text { text } => text.as_str(),
+            orbit_code_protocol::items::AgentMessageContent::Text { text } => text.as_str(),
         })
         .collect()
 }
@@ -6875,7 +6884,7 @@ async fn maybe_complete_plan_item_from_message(
 async fn emit_agent_message_in_plan_mode(
     sess: &Session,
     turn_context: &TurnContext,
-    agent_message: codex_protocol::items::AgentMessageItem,
+    agent_message: orbit_code_protocol::items::AgentMessageItem,
     state: &mut PlanModeStreamState,
 ) {
     let agent_message_id = agent_message.id.clone();
@@ -6896,7 +6905,7 @@ async fn emit_agent_message_in_plan_mode(
             .pending_agent_message_items
             .remove(&agent_message_id)
             .unwrap_or_else(|| {
-                TurnItem::AgentMessage(codex_protocol::items::AgentMessageItem {
+                TurnItem::AgentMessage(orbit_code_protocol::items::AgentMessageItem {
                     id: agent_message_id.clone(),
                     content: Vec::new(),
                     phase: None,
@@ -7056,7 +7065,7 @@ async fn try_run_sampling_request(
             .await
         {
             Ok(event) => event,
-            Err(codex_async_utils::CancelErr::Cancelled) => break Err(CodexErr::TurnAborted),
+            Err(orbit_code_async_utils::CancelErr::Cancelled) => break Err(CodexErr::TurnAborted),
         };
 
         let event = match event {
@@ -7143,7 +7152,7 @@ async fn try_run_sampling_request(
                             assistant_message_stream_parsers.seed_item_text(&item_id, &raw_text);
                         if let TurnItem::AgentMessage(agent_message) = &mut turn_item {
                             agent_message.content =
-                                vec![codex_protocol::items::AgentMessageContent::Text {
+                                vec![orbit_code_protocol::items::AgentMessageContent::Text {
                                     text: if plan_mode {
                                         String::new()
                                     } else {
@@ -7352,5 +7361,5 @@ pub(crate) use tests::make_session_and_context_with_rx;
 pub(crate) use tests::make_session_configuration_for_tests;
 
 #[cfg(test)]
-#[path = "codex_tests.rs"]
+#[path = "orbit_code_tests.rs"]
 mod tests;

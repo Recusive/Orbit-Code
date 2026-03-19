@@ -1,9 +1,9 @@
 use std::future::Future;
 
 use crate::Cli;
-use codex_core::config::Config;
-use codex_core::config::ConfigOverrides;
-use codex_core::features::Feature;
+use orbit_code_core::config::Config;
+use orbit_code_core::config::ConfigOverrides;
+use orbit_code_core::features::Feature;
 
 pub(crate) fn app_server_tui_config_inputs(
     cli: &Cli,
@@ -13,7 +13,7 @@ pub(crate) fn app_server_tui_config_inputs(
         raw_overrides.push("web_search=\"live\"".to_string());
     }
 
-    let cli_kv_overrides = codex_utils_cli::CliConfigOverrides { raw_overrides }
+    let cli_kv_overrides = orbit_code_utils_cli::CliConfigOverrides { raw_overrides }
         .parse_overrides()
         .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?;
 

@@ -1,6 +1,6 @@
 //! Connection manager for Model Context Protocol (MCP) servers.
 //!
-//! The [`McpConnectionManager`] owns one [`codex_rmcp_client::RmcpClient`] per
+//! The [`McpConnectionManager`] owns one [`orbit_code_rmcp_client::RmcpClient`] per
 //! configured server (keyed by the *server name*). It offers convenience
 //! helpers to query the available tools across *all* servers and returns them
 //! in a single aggregated map using the fully-qualified tool name
@@ -19,35 +19,35 @@ use std::sync::atomic::Ordering;
 use std::time::Duration;
 use std::time::Instant;
 
-use crate::mcp::CODEX_APPS_MCP_SERVER_NAME;
+use crate::mcp::ORBIT_APPS_MCP_SERVER_NAME;
 use crate::mcp::ToolPluginProvenance;
 use crate::mcp::auth::McpAuthStatusEntry;
 use anyhow::Context;
 use anyhow::Result;
 use anyhow::anyhow;
 use async_channel::Sender;
-use codex_async_utils::CancelErr;
-use codex_async_utils::OrCancelExt;
-use codex_config::Constrained;
-use codex_protocol::approvals::ElicitationRequest;
-use codex_protocol::approvals::ElicitationRequestEvent;
-use codex_protocol::mcp::CallToolResult;
-use codex_protocol::mcp::RequestId as ProtocolRequestId;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::Event;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::McpStartupCompleteEvent;
-use codex_protocol::protocol::McpStartupFailure;
-use codex_protocol::protocol::McpStartupStatus;
-use codex_protocol::protocol::McpStartupUpdateEvent;
-use codex_protocol::protocol::SandboxPolicy;
-use codex_rmcp_client::ElicitationResponse;
-use codex_rmcp_client::OAuthCredentialsStoreMode;
-use codex_rmcp_client::RmcpClient;
-use codex_rmcp_client::SendElicitation;
 use futures::future::BoxFuture;
 use futures::future::FutureExt;
 use futures::future::Shared;
+use orbit_code_async_utils::CancelErr;
+use orbit_code_async_utils::OrCancelExt;
+use orbit_code_config::Constrained;
+use orbit_code_protocol::approvals::ElicitationRequest;
+use orbit_code_protocol::approvals::ElicitationRequestEvent;
+use orbit_code_protocol::mcp::CallToolResult;
+use orbit_code_protocol::mcp::RequestId as ProtocolRequestId;
+use orbit_code_protocol::protocol::AskForApproval;
+use orbit_code_protocol::protocol::Event;
+use orbit_code_protocol::protocol::EventMsg;
+use orbit_code_protocol::protocol::McpStartupCompleteEvent;
+use orbit_code_protocol::protocol::McpStartupFailure;
+use orbit_code_protocol::protocol::McpStartupStatus;
+use orbit_code_protocol::protocol::McpStartupUpdateEvent;
+use orbit_code_protocol::protocol::SandboxPolicy;
+use orbit_code_rmcp_client::ElicitationResponse;
+use orbit_code_rmcp_client::OAuthCredentialsStoreMode;
+use orbit_code_rmcp_client::RmcpClient;
+use orbit_code_rmcp_client::SendElicitation;
 use rmcp::model::ClientCapabilities;
 use rmcp::model::CreateElicitationRequestParams;
 use rmcp::model::ElicitationAction;
@@ -98,8 +98,8 @@ pub const DEFAULT_STARTUP_TIMEOUT: Duration = Duration::from_secs(10);
 /// Default timeout for individual tool calls.
 const DEFAULT_TOOL_TIMEOUT: Duration = Duration::from_secs(120);
 
-const CODEX_APPS_TOOLS_CACHE_SCHEMA_VERSION: u8 = 1;
-const CODEX_APPS_TOOLS_CACHE_DIR: &str = "cache/codex_apps_tools";
+const ORBIT_APPS_TOOLS_CACHE_SCHEMA_VERSION: u8 = 1;
+const ORBIT_APPS_TOOLS_CACHE_DIR: &str = "cache/orbit_code_apps_tools";
 const MCP_TOOLS_LIST_DURATION_METRIC: &str = "codex.mcp.tools.list.duration_ms";
 const MCP_TOOLS_FETCH_UNCACHED_DURATION_METRIC: &str = "codex.mcp.tools.fetch_uncached.duration_ms";
 const MCP_TOOLS_CACHE_WRITE_DURATION_METRIC: &str = "codex.mcp.tools.cache_write.duration_ms";
@@ -131,7 +131,7 @@ fn sha1_hex(s: &str) -> String {
     format!("{sha1:x}")
 }
 
-pub(crate) fn codex_apps_tools_cache_key(
+pub(crate) fn orbit_code_apps_tools_cache_key(
     auth: Option<&crate::CodexAuth>,
 ) -> CodexAppsToolsCacheKey {
     let token_data = auth.and_then(|auth| auth.get_token_data().ok());
@@ -160,7 +160,7 @@ where
     let mut seen_raw_names = HashSet::new();
     let mut qualified_tools = HashMap::new();
     for tool in tools {
-        let qualified_name_raw = if tool.server_name != CODEX_APPS_MCP_SERVER_NAME {
+        let qualified_name_raw = if tool.server_name != ORBIT_APPS_MCP_SERVER_NAME {
             format!(
                 "mcp{}{}{}{}",
                 MCP_TOOL_NAME_DELIMITER, tool.server_name, MCP_TOOL_NAME_DELIMITER, tool.tool_name
@@ -220,7 +220,7 @@ pub(crate) struct CodexAppsToolsCacheKey {
 
 #[derive(Clone)]
 struct CodexAppsToolsCacheContext {
-    codex_home: PathBuf,
+    orbit_code_home: PathBuf,
     user_key: CodexAppsToolsCacheKey,
 }
 
@@ -228,8 +228,8 @@ impl CodexAppsToolsCacheContext {
     fn cache_path(&self) -> PathBuf {
         let user_key_json = serde_json::to_string(&self.user_key).unwrap_or_default();
         let user_key_hash = sha1_hex(&user_key_json);
-        self.codex_home
-            .join(CODEX_APPS_TOOLS_CACHE_DIR)
+        self.orbit_code_home
+            .join(ORBIT_APPS_TOOLS_CACHE_DIR)
             .join(format!("{user_key_hash}.json"))
     }
 }
@@ -374,15 +374,15 @@ struct ManagedClient {
     tool_filter: ToolFilter,
     tool_timeout: Option<Duration>,
     server_supports_sandbox_state_capability: bool,
-    codex_apps_tools_cache_context: Option<CodexAppsToolsCacheContext>,
+    orbit_code_apps_tools_cache_context: Option<CodexAppsToolsCacheContext>,
 }
 
 impl ManagedClient {
     fn listed_tools(&self) -> Vec<ToolInfo> {
         let total_start = Instant::now();
-        if let Some(cache_context) = self.codex_apps_tools_cache_context.as_ref()
+        if let Some(cache_context) = self.orbit_code_apps_tools_cache_context.as_ref()
             && let CachedCodexAppsToolsLoad::Hit(tools) =
-                load_cached_codex_apps_tools(cache_context)
+                load_cached_orbit_code_apps_tools(cache_context)
         {
             emit_duration(
                 MCP_TOOLS_LIST_DURATION_METRIC,
@@ -392,7 +392,7 @@ impl ManagedClient {
             return filter_tools(tools, &self.tool_filter);
         }
 
-        if self.codex_apps_tools_cache_context.is_some() {
+        if self.orbit_code_apps_tools_cache_context.is_some() {
             emit_duration(
                 MCP_TOOLS_LIST_DURATION_METRIC,
                 total_start.elapsed(),
@@ -440,13 +440,13 @@ impl AsyncManagedClient {
         cancel_token: CancellationToken,
         tx_event: Sender<Event>,
         elicitation_requests: ElicitationRequestManager,
-        codex_apps_tools_cache_context: Option<CodexAppsToolsCacheContext>,
+        orbit_code_apps_tools_cache_context: Option<CodexAppsToolsCacheContext>,
         tool_plugin_provenance: Arc<ToolPluginProvenance>,
     ) -> Self {
         let tool_filter = ToolFilter::from_config(&config);
-        let startup_snapshot = load_startup_cached_codex_apps_tools_snapshot(
+        let startup_snapshot = load_startup_cached_orbit_code_apps_tools_snapshot(
             &server_name,
-            codex_apps_tools_cache_context.as_ref(),
+            orbit_code_apps_tools_cache_context.as_ref(),
         )
         .map(|tools| filter_tools(tools, &tool_filter));
         let request_headers = Arc::new(StdMutex::new(None));
@@ -480,7 +480,7 @@ impl AsyncManagedClient {
                         tool_filter: startup_tool_filter,
                         tx_event,
                         elicitation_requests,
-                        codex_apps_tools_cache_context,
+                        orbit_code_apps_tools_cache_context,
                     },
                 )
                 .or_cancel(&cancel_token)
@@ -607,7 +607,7 @@ pub const MCP_SANDBOX_STATE_METHOD: &str = "codex/sandbox-state/update";
 #[serde(rename_all = "camelCase")]
 pub struct SandboxState {
     pub sandbox_policy: SandboxPolicy,
-    pub codex_linux_sandbox_exe: Option<PathBuf>,
+    pub orbit_code_linux_sandbox_exe: Option<PathBuf>,
     pub sandbox_cwd: PathBuf,
     #[serde(default)]
     pub use_legacy_landlock: bool,
@@ -658,8 +658,8 @@ impl McpConnectionManager {
         approval_policy: &Constrained<AskForApproval>,
         tx_event: Sender<Event>,
         initial_sandbox_state: SandboxState,
-        codex_home: PathBuf,
-        codex_apps_tools_cache_key: CodexAppsToolsCacheKey,
+        orbit_code_home: PathBuf,
+        orbit_code_apps_tools_cache_key: CodexAppsToolsCacheKey,
         tool_plugin_provenance: ToolPluginProvenance,
     ) -> (Self, CancellationToken) {
         let cancel_token = CancellationToken::new();
@@ -682,10 +682,10 @@ impl McpConnectionManager {
                 },
             )
             .await;
-            let codex_apps_tools_cache_context = if server_name == CODEX_APPS_MCP_SERVER_NAME {
+            let orbit_code_apps_tools_cache_context = if server_name == ORBIT_APPS_MCP_SERVER_NAME {
                 Some(CodexAppsToolsCacheContext {
-                    codex_home: codex_home.clone(),
-                    user_key: codex_apps_tools_cache_key.clone(),
+                    orbit_code_home: orbit_code_home.clone(),
+                    user_key: orbit_code_apps_tools_cache_key.clone(),
                 })
             } else {
                 None
@@ -697,7 +697,7 @@ impl McpConnectionManager {
                 cancel_token.clone(),
                 tx_event.clone(),
                 elicitation_requests.clone(),
-                codex_apps_tools_cache_context,
+                orbit_code_apps_tools_cache_context,
                 Arc::clone(&tool_plugin_provenance),
             );
             clients.insert(server_name.clone(), async_managed_client.clone());
@@ -849,11 +849,13 @@ impl McpConnectionManager {
     /// On success, the refreshed tools replace the cache contents and the
     /// latest filtered tool map is returned directly to the caller. On
     /// failure, the existing cache remains unchanged.
-    pub async fn hard_refresh_codex_apps_tools_cache(&self) -> Result<HashMap<String, ToolInfo>> {
+    pub async fn hard_refresh_orbit_code_apps_tools_cache(
+        &self,
+    ) -> Result<HashMap<String, ToolInfo>> {
         let managed_client = self
             .clients
-            .get(CODEX_APPS_MCP_SERVER_NAME)
-            .ok_or_else(|| anyhow!("unknown MCP server '{CODEX_APPS_MCP_SERVER_NAME}'"))?
+            .get(ORBIT_APPS_MCP_SERVER_NAME)
+            .ok_or_else(|| anyhow!("unknown MCP server '{ORBIT_APPS_MCP_SERVER_NAME}'"))?
             .client()
             .await
             .context("failed to get client")?;
@@ -861,13 +863,13 @@ impl McpConnectionManager {
         let list_start = Instant::now();
         let fetch_start = Instant::now();
         let tools = list_tools_for_client_uncached(
-            CODEX_APPS_MCP_SERVER_NAME,
+            ORBIT_APPS_MCP_SERVER_NAME,
             &managed_client.client,
             managed_client.tool_timeout,
         )
         .await
         .with_context(|| {
-            format!("failed to refresh tools for MCP server '{CODEX_APPS_MCP_SERVER_NAME}'")
+            format!("failed to refresh tools for MCP server '{ORBIT_APPS_MCP_SERVER_NAME}'")
         })?;
         emit_duration(
             MCP_TOOLS_FETCH_UNCACHED_DURATION_METRIC,
@@ -875,9 +877,9 @@ impl McpConnectionManager {
             &[],
         );
 
-        write_cached_codex_apps_tools_if_needed(
-            CODEX_APPS_MCP_SERVER_NAME,
-            managed_client.codex_apps_tools_cache_context.as_ref(),
+        write_cached_orbit_code_apps_tools_if_needed(
+            ORBIT_APPS_MCP_SERVER_NAME,
+            managed_client.orbit_code_apps_tools_cache_context.as_ref(),
             &tools,
         );
         emit_duration(
@@ -1214,22 +1216,22 @@ fn filter_tools(tools: Vec<ToolInfo>, filter: &ToolFilter) -> Vec<ToolInfo> {
         .collect()
 }
 
-pub(crate) fn filter_non_codex_apps_mcp_tools_only(
+pub(crate) fn filter_non_orbit_code_apps_mcp_tools_only(
     mcp_tools: &HashMap<String, ToolInfo>,
 ) -> HashMap<String, ToolInfo> {
     mcp_tools
         .iter()
-        .filter(|(_, tool)| tool.server_name != CODEX_APPS_MCP_SERVER_NAME)
+        .filter(|(_, tool)| tool.server_name != ORBIT_APPS_MCP_SERVER_NAME)
         .map(|(name, tool)| (name.clone(), tool.clone()))
         .collect()
 }
 
-fn normalize_codex_apps_tool_title(
+fn normalize_orbit_code_apps_tool_title(
     server_name: &str,
     connector_name: Option<&str>,
     value: &str,
 ) -> String {
-    if server_name != CODEX_APPS_MCP_SERVER_NAME {
+    if server_name != ORBIT_APPS_MCP_SERVER_NAME {
         return value.to_string();
     }
 
@@ -1250,13 +1252,13 @@ fn normalize_codex_apps_tool_title(
     value.to_string()
 }
 
-fn normalize_codex_apps_tool_name(
+fn normalize_orbit_code_apps_tool_name(
     server_name: &str,
     tool_name: &str,
     connector_id: Option<&str>,
     connector_name: Option<&str>,
 ) -> String {
-    if server_name != CODEX_APPS_MCP_SERVER_NAME {
+    if server_name != ORBIT_APPS_MCP_SERVER_NAME {
         return tool_name.to_string();
     }
 
@@ -1285,8 +1287,8 @@ fn normalize_codex_apps_tool_name(
     tool_name
 }
 
-fn normalize_codex_apps_namespace(server_name: &str, connector_name: Option<&str>) -> String {
-    if server_name != CODEX_APPS_MCP_SERVER_NAME {
+fn normalize_orbit_code_apps_namespace(server_name: &str, connector_name: Option<&str>) -> String {
+    if server_name != ORBIT_APPS_MCP_SERVER_NAME {
         server_name.to_string()
     } else if let Some(connector_name) = connector_name {
         format!(
@@ -1347,7 +1349,7 @@ impl From<anyhow::Error> for StartupOutcomeError {
 }
 
 fn elicitation_capability_for_server(server_name: &str) -> Option<ElicitationCapability> {
-    if server_name == CODEX_APPS_MCP_SERVER_NAME {
+    if server_name == ORBIT_APPS_MCP_SERVER_NAME {
         // https://modelcontextprotocol.io/specification/2025-06-18/client/elicitation#capabilities
         // indicates this should be an empty object.
         Some(ElicitationCapability {
@@ -1372,7 +1374,7 @@ async fn start_server_task(
         tool_filter,
         tx_event,
         elicitation_requests,
-        codex_apps_tools_cache_context,
+        orbit_code_apps_tools_cache_context,
     } = params;
     let elicitation = elicitation_capability_for_server(&server_name);
     let params = InitializeRequestParams {
@@ -1413,12 +1415,12 @@ async fn start_server_task(
         fetch_start.elapsed(),
         &[],
     );
-    write_cached_codex_apps_tools_if_needed(
+    write_cached_orbit_code_apps_tools_if_needed(
         &server_name,
-        codex_apps_tools_cache_context.as_ref(),
+        orbit_code_apps_tools_cache_context.as_ref(),
         &tools,
     );
-    if server_name == CODEX_APPS_MCP_SERVER_NAME {
+    if server_name == ORBIT_APPS_MCP_SERVER_NAME {
         emit_duration(
             MCP_TOOLS_LIST_DURATION_METRIC,
             list_start.elapsed(),
@@ -1439,7 +1441,7 @@ async fn start_server_task(
         tool_timeout: Some(tool_timeout),
         tool_filter,
         server_supports_sandbox_state_capability,
-        codex_apps_tools_cache_context,
+        orbit_code_apps_tools_cache_context,
     };
 
     Ok(managed)
@@ -1451,7 +1453,7 @@ struct StartServerTaskParams {
     tool_filter: ToolFilter,
     tx_event: Sender<Event>,
     elicitation_requests: ElicitationRequestManager,
-    codex_apps_tools_cache_context: Option<CodexAppsToolsCacheContext>,
+    orbit_code_apps_tools_cache_context: Option<CodexAppsToolsCacheContext>,
 }
 
 async fn make_rmcp_client(
@@ -1500,18 +1502,18 @@ async fn make_rmcp_client(
     }
 }
 
-fn write_cached_codex_apps_tools_if_needed(
+fn write_cached_orbit_code_apps_tools_if_needed(
     server_name: &str,
     cache_context: Option<&CodexAppsToolsCacheContext>,
     tools: &[ToolInfo],
 ) {
-    if server_name != CODEX_APPS_MCP_SERVER_NAME {
+    if server_name != ORBIT_APPS_MCP_SERVER_NAME {
         return;
     }
 
     if let Some(cache_context) = cache_context {
         let cache_write_start = Instant::now();
-        write_cached_codex_apps_tools(cache_context, tools);
+        write_cached_orbit_code_apps_tools(cache_context, tools);
         emit_duration(
             MCP_TOOLS_CACHE_WRITE_DURATION_METRIC,
             cache_write_start.elapsed(),
@@ -1520,33 +1522,33 @@ fn write_cached_codex_apps_tools_if_needed(
     }
 }
 
-fn load_startup_cached_codex_apps_tools_snapshot(
+fn load_startup_cached_orbit_code_apps_tools_snapshot(
     server_name: &str,
     cache_context: Option<&CodexAppsToolsCacheContext>,
 ) -> Option<Vec<ToolInfo>> {
-    if server_name != CODEX_APPS_MCP_SERVER_NAME {
+    if server_name != ORBIT_APPS_MCP_SERVER_NAME {
         return None;
     }
 
     let cache_context = cache_context?;
 
-    match load_cached_codex_apps_tools(cache_context) {
+    match load_cached_orbit_code_apps_tools(cache_context) {
         CachedCodexAppsToolsLoad::Hit(tools) => Some(tools),
         CachedCodexAppsToolsLoad::Missing | CachedCodexAppsToolsLoad::Invalid => None,
     }
 }
 
 #[cfg(test)]
-fn read_cached_codex_apps_tools(
+fn read_cached_orbit_code_apps_tools(
     cache_context: &CodexAppsToolsCacheContext,
 ) -> Option<Vec<ToolInfo>> {
-    match load_cached_codex_apps_tools(cache_context) {
+    match load_cached_orbit_code_apps_tools(cache_context) {
         CachedCodexAppsToolsLoad::Hit(tools) => Some(tools),
         CachedCodexAppsToolsLoad::Missing | CachedCodexAppsToolsLoad::Invalid => None,
     }
 }
 
-fn load_cached_codex_apps_tools(
+fn load_cached_orbit_code_apps_tools(
     cache_context: &CodexAppsToolsCacheContext,
 ) -> CachedCodexAppsToolsLoad {
     let cache_path = cache_context.cache_path();
@@ -1561,22 +1563,25 @@ fn load_cached_codex_apps_tools(
         Ok(cache) => cache,
         Err(_) => return CachedCodexAppsToolsLoad::Invalid,
     };
-    if cache.schema_version != CODEX_APPS_TOOLS_CACHE_SCHEMA_VERSION {
+    if cache.schema_version != ORBIT_APPS_TOOLS_CACHE_SCHEMA_VERSION {
         return CachedCodexAppsToolsLoad::Invalid;
     }
-    CachedCodexAppsToolsLoad::Hit(filter_disallowed_codex_apps_tools(cache.tools))
+    CachedCodexAppsToolsLoad::Hit(filter_disallowed_orbit_code_apps_tools(cache.tools))
 }
 
-fn write_cached_codex_apps_tools(cache_context: &CodexAppsToolsCacheContext, tools: &[ToolInfo]) {
+fn write_cached_orbit_code_apps_tools(
+    cache_context: &CodexAppsToolsCacheContext,
+    tools: &[ToolInfo],
+) {
     let cache_path = cache_context.cache_path();
     if let Some(parent) = cache_path.parent()
         && std::fs::create_dir_all(parent).is_err()
     {
         return;
     }
-    let tools = filter_disallowed_codex_apps_tools(tools.to_vec());
+    let tools = filter_disallowed_orbit_code_apps_tools(tools.to_vec());
     let Ok(bytes) = serde_json::to_vec_pretty(&CodexAppsToolsDiskCache {
-        schema_version: CODEX_APPS_TOOLS_CACHE_SCHEMA_VERSION,
+        schema_version: ORBIT_APPS_TOOLS_CACHE_SCHEMA_VERSION,
         tools,
     }) else {
         return;
@@ -1584,7 +1589,7 @@ fn write_cached_codex_apps_tools(cache_context: &CodexAppsToolsCacheContext, too
     let _ = std::fs::write(cache_path, bytes);
 }
 
-fn filter_disallowed_codex_apps_tools(tools: Vec<ToolInfo>) -> Vec<ToolInfo> {
+fn filter_disallowed_orbit_code_apps_tools(tools: Vec<ToolInfo>) -> Vec<ToolInfo> {
     tools
         .into_iter()
         .filter(|tool| {
@@ -1596,7 +1601,7 @@ fn filter_disallowed_codex_apps_tools(tools: Vec<ToolInfo>) -> Vec<ToolInfo> {
 }
 
 fn emit_duration(metric: &str, duration: Duration, tags: &[(&str, &str)]) {
-    if let Some(metrics) = codex_otel::metrics::global() {
+    if let Some(metrics) = orbit_code_otel::metrics::global() {
         let _ = metrics.record_duration(metric, duration, tags);
     }
 }
@@ -1623,20 +1628,23 @@ async fn list_tools_for_client_uncached(
         .tools
         .into_iter()
         .map(|tool| {
-            let tool_name = normalize_codex_apps_tool_name(
+            let tool_name = normalize_orbit_code_apps_tool_name(
                 server_name,
                 &tool.tool.name,
                 tool.connector_id.as_deref(),
                 tool.connector_name.as_deref(),
             );
             let tool_namespace =
-                normalize_codex_apps_namespace(server_name, tool.connector_name.as_deref());
+                normalize_orbit_code_apps_namespace(server_name, tool.connector_name.as_deref());
             let connector_name = tool.connector_name;
             let connector_description = tool.connector_description;
             let mut tool_def = tool.tool;
             if let Some(title) = tool_def.title.as_deref() {
-                let normalized_title =
-                    normalize_codex_apps_tool_title(server_name, connector_name.as_deref(), title);
+                let normalized_title = normalize_orbit_code_apps_tool_title(
+                    server_name,
+                    connector_name.as_deref(),
+                    title,
+                );
                 if tool_def.title.as_deref() != Some(normalized_title.as_str()) {
                     tool_def.title = Some(normalized_title);
                 }
@@ -1653,8 +1661,8 @@ async fn list_tools_for_client_uncached(
             }
         })
         .collect();
-    if server_name == CODEX_APPS_MCP_SERVER_NAME {
-        return Ok(filter_disallowed_codex_apps_tools(tools));
+    if server_name == ORBIT_APPS_MCP_SERVER_NAME {
+        return Ok(filter_disallowed_orbit_code_apps_tools(tools));
     }
     Ok(tools)
 }
@@ -1686,11 +1694,11 @@ fn mcp_init_error_display(
         && http_headers.as_ref().map(HashMap::is_empty).unwrap_or(true)
     {
         format!(
-            "GitHub MCP does not support OAuth. Log in by adding a personal access token (https://github.com/settings/personal-access-tokens) to your environment and config.toml:\n[mcp_servers.{server_name}]\nbearer_token_env_var = CODEX_GITHUB_PERSONAL_ACCESS_TOKEN"
+            "GitHub MCP does not support OAuth. Log in by adding a personal access token (https://github.com/settings/personal-access-tokens) to your environment and config.toml:\n[mcp_servers.{server_name}]\nbearer_token_env_var = ORBIT_GITHUB_PERSONAL_ACCESS_TOKEN"
         )
     } else if is_mcp_client_auth_required_error(err) {
         format!(
-            "The {server_name} MCP server is not logged in. Run `codex mcp login {server_name}`."
+            "The {server_name} MCP server is not logged in. Run `orbit-code mcp login {server_name}`."
         )
     } else if is_mcp_client_startup_timeout_error(err) {
         let startup_timeout_secs = match entry {

@@ -3,19 +3,19 @@ use app_test_support::McpProcess;
 use app_test_support::create_final_assistant_message_sse_response;
 use app_test_support::create_mock_responses_server_sequence_unchecked;
 use app_test_support::to_response;
-use codex_app_server_protocol::ClientInfo;
-use codex_app_server_protocol::InitializeCapabilities;
-use codex_app_server_protocol::InitializeResponse;
-use codex_app_server_protocol::JSONRPCMessage;
-use codex_app_server_protocol::JSONRPCResponse;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::ThreadStartParams;
-use codex_app_server_protocol::ThreadStartResponse;
-use codex_app_server_protocol::TurnStartParams;
-use codex_app_server_protocol::TurnStartResponse;
-use codex_app_server_protocol::UserInput as V2UserInput;
-use codex_utils_cargo_bin::cargo_bin;
 use core_test_support::fs_wait;
+use orbit_code_app_server_protocol::ClientInfo;
+use orbit_code_app_server_protocol::InitializeCapabilities;
+use orbit_code_app_server_protocol::InitializeResponse;
+use orbit_code_app_server_protocol::JSONRPCMessage;
+use orbit_code_app_server_protocol::JSONRPCResponse;
+use orbit_code_app_server_protocol::RequestId;
+use orbit_code_app_server_protocol::ThreadStartParams;
+use orbit_code_app_server_protocol::ThreadStartResponse;
+use orbit_code_app_server_protocol::TurnStartParams;
+use orbit_code_app_server_protocol::TurnStartResponse;
+use orbit_code_app_server_protocol::UserInput as V2UserInput;
+use orbit_code_utils_cargo_bin::cargo_bin;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 use std::path::Path;
@@ -29,14 +29,14 @@ const DEFAULT_READ_TIMEOUT: std::time::Duration = std::time::Duration::from_secs
 async fn initialize_uses_client_info_name_as_originator() -> Result<()> {
     let responses = Vec::new();
     let server = create_mock_responses_server_sequence_unchecked(responses).await;
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path(), &server.uri(), "never")?;
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let orbit_code_home = TempDir::new()?;
+    create_config_toml(orbit_code_home.path(), &server.uri(), "never")?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
 
     let message = timeout(
         DEFAULT_READ_TIMEOUT,
         mcp.initialize_with_client_info(ClientInfo {
-            name: "codex_vscode".to_string(),
+            name: "orbit_code_vscode".to_string(),
             title: Some("Codex VS Code Extension".to_string()),
             version: "0.1.0".to_string(),
         }),
@@ -52,7 +52,7 @@ async fn initialize_uses_client_info_name_as_originator() -> Result<()> {
         platform_os,
     } = to_response::<InitializeResponse>(response)?;
 
-    assert!(user_agent.starts_with("codex_vscode/"));
+    assert!(user_agent.starts_with("orbit_code_vscode/"));
     assert_eq!(platform_family, std::env::consts::FAMILY);
     assert_eq!(platform_os, std::env::consts::OS);
     Ok(())
@@ -62,13 +62,13 @@ async fn initialize_uses_client_info_name_as_originator() -> Result<()> {
 async fn initialize_respects_originator_override_env_var() -> Result<()> {
     let responses = Vec::new();
     let server = create_mock_responses_server_sequence_unchecked(responses).await;
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path(), &server.uri(), "never")?;
+    let orbit_code_home = TempDir::new()?;
+    create_config_toml(orbit_code_home.path(), &server.uri(), "never")?;
     let mut mcp = McpProcess::new_with_env(
-        codex_home.path(),
+        orbit_code_home.path(),
         &[(
-            "CODEX_INTERNAL_ORIGINATOR_OVERRIDE",
-            Some("codex_originator_via_env_var"),
+            "ORBIT_INTERNAL_ORIGINATOR_OVERRIDE",
+            Some("orbit_code_originator_via_env_var"),
         )],
     )
     .await?;
@@ -76,7 +76,7 @@ async fn initialize_respects_originator_override_env_var() -> Result<()> {
     let message = timeout(
         DEFAULT_READ_TIMEOUT,
         mcp.initialize_with_client_info(ClientInfo {
-            name: "codex_vscode".to_string(),
+            name: "orbit_code_vscode".to_string(),
             title: Some("Codex VS Code Extension".to_string()),
             version: "0.1.0".to_string(),
         }),
@@ -92,7 +92,7 @@ async fn initialize_respects_originator_override_env_var() -> Result<()> {
         platform_os,
     } = to_response::<InitializeResponse>(response)?;
 
-    assert!(user_agent.starts_with("codex_originator_via_env_var/"));
+    assert!(user_agent.starts_with("orbit_code_originator_via_env_var/"));
     assert_eq!(platform_family, std::env::consts::FAMILY);
     assert_eq!(platform_os, std::env::consts::OS);
     Ok(())
@@ -102,11 +102,11 @@ async fn initialize_respects_originator_override_env_var() -> Result<()> {
 async fn initialize_rejects_invalid_client_name() -> Result<()> {
     let responses = Vec::new();
     let server = create_mock_responses_server_sequence_unchecked(responses).await;
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path(), &server.uri(), "never")?;
+    let orbit_code_home = TempDir::new()?;
+    create_config_toml(orbit_code_home.path(), &server.uri(), "never")?;
     let mut mcp = McpProcess::new_with_env(
-        codex_home.path(),
-        &[("CODEX_INTERNAL_ORIGINATOR_OVERRIDE", None)],
+        orbit_code_home.path(),
+        &[("ORBIT_INTERNAL_ORIGINATOR_OVERRIDE", None)],
     )
     .await?;
 
@@ -137,15 +137,15 @@ async fn initialize_rejects_invalid_client_name() -> Result<()> {
 async fn initialize_opt_out_notification_methods_filters_notifications() -> Result<()> {
     let responses = Vec::new();
     let server = create_mock_responses_server_sequence_unchecked(responses).await;
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path(), &server.uri(), "never")?;
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let orbit_code_home = TempDir::new()?;
+    create_config_toml(orbit_code_home.path(), &server.uri(), "never")?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
 
     let message = timeout(
         DEFAULT_READ_TIMEOUT,
         mcp.initialize_with_capabilities(
             ClientInfo {
-                name: "codex_vscode".to_string(),
+                name: "orbit_code_vscode".to_string(),
                 title: Some("Codex VS Code Extension".to_string()),
                 version: "0.1.0".to_string(),
             },
@@ -200,8 +200,8 @@ async fn initialize_opt_out_notification_methods_filters_notifications() -> Resu
 async fn turn_start_notify_payload_includes_initialize_client_name() -> Result<()> {
     let responses = vec![create_final_assistant_message_sse_response("Done")?];
     let server = create_mock_responses_server_sequence_unchecked(responses).await;
-    let codex_home = TempDir::new()?;
-    let notify_file = codex_home.path().join("notify.json");
+    let orbit_code_home = TempDir::new()?;
+    let notify_file = orbit_code_home.path().join("notify.json");
     let notify_capture = cargo_bin("codex-app-server-test-notify-capture")?;
     let notify_capture = notify_capture
         .to_str()
@@ -210,7 +210,7 @@ async fn turn_start_notify_payload_includes_initialize_client_name() -> Result<(
         .to_str()
         .expect("notify file path should be valid UTF-8");
     create_config_toml_with_extra(
-        codex_home.path(),
+        orbit_code_home.path(),
         &server.uri(),
         "never",
         &format!(
@@ -220,7 +220,7 @@ async fn turn_start_notify_payload_includes_initialize_client_name() -> Result<(
         ),
     )?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(
         DEFAULT_READ_TIMEOUT,
         mcp.initialize_with_client_info(ClientInfo {
@@ -274,20 +274,20 @@ async fn turn_start_notify_payload_includes_initialize_client_name() -> Result<(
 
 // Helper to create a config.toml pointing at the mock model server.
 fn create_config_toml(
-    codex_home: &Path,
+    orbit_code_home: &Path,
     server_uri: &str,
     approval_policy: &str,
 ) -> std::io::Result<()> {
-    create_config_toml_with_extra(codex_home, server_uri, approval_policy, "")
+    create_config_toml_with_extra(orbit_code_home, server_uri, approval_policy, "")
 }
 
 fn create_config_toml_with_extra(
-    codex_home: &Path,
+    orbit_code_home: &Path,
     server_uri: &str,
     approval_policy: &str,
     extra: &str,
 ) -> std::io::Result<()> {
-    let config_toml = codex_home.join("config.toml");
+    let config_toml = orbit_code_home.join("config.toml");
     std::fs::write(
         config_toml,
         format!(

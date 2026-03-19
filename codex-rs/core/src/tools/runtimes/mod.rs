@@ -11,7 +11,7 @@ use crate::sandboxing::SandboxPermissions;
 use crate::shell::Shell;
 use crate::skills::SkillMetadata;
 use crate::tools::sandboxing::ToolError;
-use codex_protocol::models::PermissionProfile;
+use orbit_code_protocol::models::PermissionProfile;
 use std::collections::HashMap;
 use std::path::Path;
 
@@ -142,7 +142,7 @@ fn build_override_exports(explicit_env_overrides: &HashMap<String, String>) -> (
         .enumerate()
         .map(|(idx, key)| {
             format!(
-                "__CODEX_SNAPSHOT_OVERRIDE_SET_{idx}=\"${{{key}+x}}\"\n__CODEX_SNAPSHOT_OVERRIDE_{idx}=\"${{{key}-}}\""
+                "__ORBIT_SNAPSHOT_OVERRIDE_SET_{idx}=\"${{{key}+x}}\"\n__ORBIT_SNAPSHOT_OVERRIDE_{idx}=\"${{{key}-}}\""
             )
         })
         .collect::<Vec<_>>()
@@ -152,7 +152,7 @@ fn build_override_exports(explicit_env_overrides: &HashMap<String, String>) -> (
         .enumerate()
         .map(|(idx, key)| {
             format!(
-                "if [ -n \"${{__CODEX_SNAPSHOT_OVERRIDE_SET_{idx}}}\" ]; then export {key}=\"${{__CODEX_SNAPSHOT_OVERRIDE_{idx}}}\"; else unset {key}; fi"
+                "if [ -n \"${{__ORBIT_SNAPSHOT_OVERRIDE_SET_{idx}}}\" ]; then export {key}=\"${{__ORBIT_SNAPSHOT_OVERRIDE_{idx}}}\"; else unset {key}; fi"
             )
         })
         .collect::<Vec<_>>()

@@ -49,112 +49,112 @@ use crate::status::format_directory_display;
 use crate::status::format_tokens_compact;
 use crate::status::rate_limit_snapshot_display_for_limit;
 use crate::text_formatting::proper_join;
-use crate::version::CODEX_CLI_VERSION;
-use codex_app_server_protocol::ConfigLayerSource;
-use codex_backend_client::Client as BackendClient;
-use codex_chatgpt::connectors;
-use codex_core::config::Config;
-use codex_core::config::Constrained;
-use codex_core::config::ConstraintResult;
-use codex_core::config::types::ApprovalsReviewer;
-use codex_core::config::types::Notifications;
-use codex_core::config::types::WindowsSandboxModeToml;
-use codex_core::config_loader::ConfigLayerStackOrdering;
-use codex_core::features::FEATURES;
-use codex_core::features::Feature;
-use codex_core::find_thread_name_by_id;
-use codex_core::git_info::current_branch_name;
-use codex_core::git_info::get_git_repo_root;
-use codex_core::git_info::local_git_branches;
-use codex_core::mcp::McpManager;
-use codex_core::models_manager::manager::ModelsManager;
-use codex_core::plugins::PluginsManager;
-use codex_core::project_doc::DEFAULT_PROJECT_DOC_FILENAME;
-use codex_core::skills::model::SkillMetadata;
-use codex_core::terminal::TerminalName;
-use codex_core::terminal::terminal_info;
-#[cfg(target_os = "windows")]
-use codex_core::windows_sandbox::WindowsSandboxLevelExt;
-use codex_otel::RuntimeMetricsSummary;
-use codex_otel::SessionTelemetry;
-use codex_protocol::ThreadId;
-use codex_protocol::account::PlanType;
-use codex_protocol::approvals::ElicitationRequestEvent;
-use codex_protocol::config_types::CollaborationMode;
-use codex_protocol::config_types::CollaborationModeMask;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::config_types::Personality;
-use codex_protocol::config_types::ServiceTier;
-use codex_protocol::config_types::Settings;
-#[cfg(target_os = "windows")]
-use codex_protocol::config_types::WindowsSandboxLevel;
-use codex_protocol::items::AgentMessageContent;
-use codex_protocol::items::AgentMessageItem;
-use codex_protocol::models::MessagePhase;
-use codex_protocol::models::local_image_label_text;
-use codex_protocol::parse_command::ParsedCommand;
-use codex_protocol::protocol::AgentMessageDeltaEvent;
-use codex_protocol::protocol::AgentMessageEvent;
-use codex_protocol::protocol::AgentReasoningDeltaEvent;
-use codex_protocol::protocol::AgentReasoningEvent;
-use codex_protocol::protocol::AgentReasoningRawContentDeltaEvent;
-use codex_protocol::protocol::AgentReasoningRawContentEvent;
-use codex_protocol::protocol::ApplyPatchApprovalRequestEvent;
-use codex_protocol::protocol::BackgroundEventEvent;
-use codex_protocol::protocol::CodexErrorInfo;
-use codex_protocol::protocol::CollabAgentSpawnBeginEvent;
-use codex_protocol::protocol::CreditsSnapshot;
-use codex_protocol::protocol::DeprecationNoticeEvent;
-use codex_protocol::protocol::ErrorEvent;
-use codex_protocol::protocol::Event;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::ExecApprovalRequestEvent;
-use codex_protocol::protocol::ExecCommandBeginEvent;
-use codex_protocol::protocol::ExecCommandEndEvent;
-use codex_protocol::protocol::ExecCommandOutputDeltaEvent;
-use codex_protocol::protocol::ExecCommandSource;
-use codex_protocol::protocol::ExitedReviewModeEvent;
-use codex_protocol::protocol::GuardianAssessmentEvent;
-use codex_protocol::protocol::GuardianAssessmentStatus;
-use codex_protocol::protocol::ImageGenerationBeginEvent;
-use codex_protocol::protocol::ImageGenerationEndEvent;
-use codex_protocol::protocol::ListCustomPromptsResponseEvent;
-use codex_protocol::protocol::ListSkillsResponseEvent;
-use codex_protocol::protocol::McpListToolsResponseEvent;
-use codex_protocol::protocol::McpStartupCompleteEvent;
-use codex_protocol::protocol::McpStartupStatus;
-use codex_protocol::protocol::McpStartupUpdateEvent;
-use codex_protocol::protocol::McpToolCallBeginEvent;
-use codex_protocol::protocol::McpToolCallEndEvent;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::PatchApplyBeginEvent;
-use codex_protocol::protocol::RateLimitSnapshot;
-use codex_protocol::protocol::ReviewRequest;
-use codex_protocol::protocol::ReviewTarget;
-use codex_protocol::protocol::SkillMetadata as ProtocolSkillMetadata;
-use codex_protocol::protocol::StreamErrorEvent;
-use codex_protocol::protocol::TerminalInteractionEvent;
-use codex_protocol::protocol::TokenUsage;
-use codex_protocol::protocol::TokenUsageInfo;
-use codex_protocol::protocol::TurnAbortReason;
-use codex_protocol::protocol::TurnCompleteEvent;
-use codex_protocol::protocol::TurnDiffEvent;
-use codex_protocol::protocol::UndoCompletedEvent;
-use codex_protocol::protocol::UndoStartedEvent;
-use codex_protocol::protocol::UserMessageEvent;
-use codex_protocol::protocol::ViewImageToolCallEvent;
-use codex_protocol::protocol::WarningEvent;
-use codex_protocol::protocol::WebSearchBeginEvent;
-use codex_protocol::protocol::WebSearchEndEvent;
-use codex_protocol::request_permissions::RequestPermissionsEvent;
-use codex_protocol::request_user_input::RequestUserInputEvent;
-use codex_protocol::user_input::TextElement;
-use codex_protocol::user_input::UserInput;
-use codex_utils_sleep_inhibitor::SleepInhibitor;
+use crate::version::ORBIT_CLI_VERSION;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyEventKind;
 use crossterm::event::KeyModifiers;
+use orbit_code_app_server_protocol::ConfigLayerSource;
+use orbit_code_backend_client::Client as BackendClient;
+use orbit_code_chatgpt::connectors;
+use orbit_code_core::config::Config;
+use orbit_code_core::config::Constrained;
+use orbit_code_core::config::ConstraintResult;
+use orbit_code_core::config::types::ApprovalsReviewer;
+use orbit_code_core::config::types::Notifications;
+use orbit_code_core::config::types::WindowsSandboxModeToml;
+use orbit_code_core::config_loader::ConfigLayerStackOrdering;
+use orbit_code_core::features::FEATURES;
+use orbit_code_core::features::Feature;
+use orbit_code_core::find_thread_name_by_id;
+use orbit_code_core::git_info::current_branch_name;
+use orbit_code_core::git_info::get_git_repo_root;
+use orbit_code_core::git_info::local_git_branches;
+use orbit_code_core::mcp::McpManager;
+use orbit_code_core::models_manager::manager::ModelsManager;
+use orbit_code_core::plugins::PluginsManager;
+use orbit_code_core::project_doc::DEFAULT_PROJECT_DOC_FILENAME;
+use orbit_code_core::skills::model::SkillMetadata;
+use orbit_code_core::terminal::TerminalName;
+use orbit_code_core::terminal::terminal_info;
+#[cfg(target_os = "windows")]
+use orbit_code_core::windows_sandbox::WindowsSandboxLevelExt;
+use orbit_code_otel::RuntimeMetricsSummary;
+use orbit_code_otel::SessionTelemetry;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::account::PlanType;
+use orbit_code_protocol::approvals::ElicitationRequestEvent;
+use orbit_code_protocol::config_types::CollaborationMode;
+use orbit_code_protocol::config_types::CollaborationModeMask;
+use orbit_code_protocol::config_types::ModeKind;
+use orbit_code_protocol::config_types::Personality;
+use orbit_code_protocol::config_types::ServiceTier;
+use orbit_code_protocol::config_types::Settings;
+#[cfg(target_os = "windows")]
+use orbit_code_protocol::config_types::WindowsSandboxLevel;
+use orbit_code_protocol::items::AgentMessageContent;
+use orbit_code_protocol::items::AgentMessageItem;
+use orbit_code_protocol::models::MessagePhase;
+use orbit_code_protocol::models::local_image_label_text;
+use orbit_code_protocol::parse_command::ParsedCommand;
+use orbit_code_protocol::protocol::AgentMessageDeltaEvent;
+use orbit_code_protocol::protocol::AgentMessageEvent;
+use orbit_code_protocol::protocol::AgentReasoningDeltaEvent;
+use orbit_code_protocol::protocol::AgentReasoningEvent;
+use orbit_code_protocol::protocol::AgentReasoningRawContentDeltaEvent;
+use orbit_code_protocol::protocol::AgentReasoningRawContentEvent;
+use orbit_code_protocol::protocol::ApplyPatchApprovalRequestEvent;
+use orbit_code_protocol::protocol::BackgroundEventEvent;
+use orbit_code_protocol::protocol::CodexErrorInfo;
+use orbit_code_protocol::protocol::CollabAgentSpawnBeginEvent;
+use orbit_code_protocol::protocol::CreditsSnapshot;
+use orbit_code_protocol::protocol::DeprecationNoticeEvent;
+use orbit_code_protocol::protocol::ErrorEvent;
+use orbit_code_protocol::protocol::Event;
+use orbit_code_protocol::protocol::EventMsg;
+use orbit_code_protocol::protocol::ExecApprovalRequestEvent;
+use orbit_code_protocol::protocol::ExecCommandBeginEvent;
+use orbit_code_protocol::protocol::ExecCommandEndEvent;
+use orbit_code_protocol::protocol::ExecCommandOutputDeltaEvent;
+use orbit_code_protocol::protocol::ExecCommandSource;
+use orbit_code_protocol::protocol::ExitedReviewModeEvent;
+use orbit_code_protocol::protocol::GuardianAssessmentEvent;
+use orbit_code_protocol::protocol::GuardianAssessmentStatus;
+use orbit_code_protocol::protocol::ImageGenerationBeginEvent;
+use orbit_code_protocol::protocol::ImageGenerationEndEvent;
+use orbit_code_protocol::protocol::ListCustomPromptsResponseEvent;
+use orbit_code_protocol::protocol::ListSkillsResponseEvent;
+use orbit_code_protocol::protocol::McpListToolsResponseEvent;
+use orbit_code_protocol::protocol::McpStartupCompleteEvent;
+use orbit_code_protocol::protocol::McpStartupStatus;
+use orbit_code_protocol::protocol::McpStartupUpdateEvent;
+use orbit_code_protocol::protocol::McpToolCallBeginEvent;
+use orbit_code_protocol::protocol::McpToolCallEndEvent;
+use orbit_code_protocol::protocol::Op;
+use orbit_code_protocol::protocol::PatchApplyBeginEvent;
+use orbit_code_protocol::protocol::RateLimitSnapshot;
+use orbit_code_protocol::protocol::ReviewRequest;
+use orbit_code_protocol::protocol::ReviewTarget;
+use orbit_code_protocol::protocol::SkillMetadata as ProtocolSkillMetadata;
+use orbit_code_protocol::protocol::StreamErrorEvent;
+use orbit_code_protocol::protocol::TerminalInteractionEvent;
+use orbit_code_protocol::protocol::TokenUsage;
+use orbit_code_protocol::protocol::TokenUsageInfo;
+use orbit_code_protocol::protocol::TurnAbortReason;
+use orbit_code_protocol::protocol::TurnCompleteEvent;
+use orbit_code_protocol::protocol::TurnDiffEvent;
+use orbit_code_protocol::protocol::UndoCompletedEvent;
+use orbit_code_protocol::protocol::UndoStartedEvent;
+use orbit_code_protocol::protocol::UserMessageEvent;
+use orbit_code_protocol::protocol::ViewImageToolCallEvent;
+use orbit_code_protocol::protocol::WarningEvent;
+use orbit_code_protocol::protocol::WebSearchBeginEvent;
+use orbit_code_protocol::protocol::WebSearchEndEvent;
+use orbit_code_protocol::request_permissions::RequestPermissionsEvent;
+use orbit_code_protocol::request_user_input::RequestUserInputEvent;
+use orbit_code_protocol::user_input::TextElement;
+use orbit_code_protocol::user_input::UserInput;
+use orbit_code_utils_sleep_inhibitor::SleepInhibitor;
 use rand::Rng;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
@@ -293,18 +293,18 @@ use crate::streaming::controller::PlanStreamController;
 use crate::streaming::controller::StreamController;
 
 use chrono::Local;
-use codex_core::AuthManager;
-use codex_core::CodexAuth;
-use codex_core::ThreadManager;
-use codex_file_search::FileMatch;
-use codex_protocol::openai_models::InputModality;
-use codex_protocol::openai_models::ModelPreset;
-use codex_protocol::openai_models::ReasoningEffort as ReasoningEffortConfig;
-use codex_protocol::plan_tool::UpdatePlanArgs;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::SandboxPolicy;
-use codex_utils_approval_presets::ApprovalPreset;
-use codex_utils_approval_presets::builtin_approval_presets;
+use orbit_code_core::AuthManager;
+use orbit_code_core::CodexAuth;
+use orbit_code_core::ThreadManager;
+use orbit_code_file_search::FileMatch;
+use orbit_code_protocol::openai_models::InputModality;
+use orbit_code_protocol::openai_models::ModelPreset;
+use orbit_code_protocol::openai_models::ReasoningEffort as ReasoningEffortConfig;
+use orbit_code_protocol::plan_tool::UpdatePlanArgs;
+use orbit_code_protocol::protocol::AskForApproval;
+use orbit_code_protocol::protocol::SandboxPolicy;
+use orbit_code_utils_approval_presets::ApprovalPreset;
+use orbit_code_utils_approval_presets::builtin_approval_presets;
 use strum::IntoEnumIterator;
 
 const USER_SHELL_COMMAND_HELP_TITLE: &str = "Prefix a command with ! to run it locally";
@@ -477,7 +477,7 @@ pub(crate) struct ChatWidgetInit {
     pub(crate) enhanced_keys_supported: bool,
     pub(crate) auth_manager: Arc<AuthManager>,
     pub(crate) models_manager: Arc<ModelsManager>,
-    pub(crate) feedback: codex_feedback::CodexFeedback,
+    pub(crate) feedback: orbit_code_feedback::CodexFeedback,
     pub(crate) is_first_run: bool,
     pub(crate) feedback_audience: FeedbackAudience,
     pub(crate) model: Option<String>,
@@ -633,7 +633,7 @@ impl PendingGuardianReviewStatus {
 /// active work, arming the double-press quit shortcut, and requesting shutdown-first exit.
 pub(crate) struct ChatWidget {
     app_event_tx: AppEventSender,
-    codex_op_tx: UnboundedSender<Op>,
+    orbit_code_op_tx: UnboundedSender<Op>,
     bottom_pane: BottomPane,
     active_cell: Option<Box<dyn HistoryCell>>,
     /// Monotonic-ish counter used to invalidate transcript overlay caching.
@@ -784,14 +784,14 @@ pub(crate) struct ChatWidget {
     turn_runtime_metrics: RuntimeMetricsSummary,
     last_rendered_width: std::cell::Cell<Option<usize>>,
     // Feedback sink for /feedback
-    feedback: codex_feedback::CodexFeedback,
+    feedback: orbit_code_feedback::CodexFeedback,
     feedback_audience: FeedbackAudience,
     // Current session rollout path (if known)
     current_rollout_path: Option<PathBuf>,
     // Current working directory (if known)
     current_cwd: Option<PathBuf>,
     // Runtime network proxy bind addresses from SessionConfigured.
-    session_network_proxy: Option<codex_protocol::protocol::SessionNetworkProxyRuntime>,
+    session_network_proxy: Option<orbit_code_protocol::protocol::SessionNetworkProxyRuntime>,
     // Shared latch so we only warn once about invalid status-line item IDs.
     status_line_invalid_items_warned: Arc<AtomicBool>,
     // Cached git branch name for the status line (None if unknown).
@@ -1353,7 +1353,10 @@ impl ChatWidget {
     }
 
     // --- Small event handlers ---
-    fn on_session_configured(&mut self, event: codex_protocol::protocol::SessionConfiguredEvent) {
+    fn on_session_configured(
+        &mut self,
+        event: orbit_code_protocol::protocol::SessionConfiguredEvent,
+    ) {
         self.bottom_pane
             .set_history_metadata(event.history_log_id, event.history_entry_count);
         self.set_skills(/*skills*/ None);
@@ -1443,7 +1446,7 @@ impl ChatWidget {
 
     fn emit_forked_thread_event(&self, forked_from_id: ThreadId) {
         let app_event_tx = self.app_event_tx.clone();
-        let codex_home = self.config.codex_home.clone();
+        let orbit_code_home = self.config.orbit_code_home.clone();
         tokio::spawn(async move {
             let forked_from_id_text = forked_from_id.to_string();
             let send_name_and_id = |name: String| {
@@ -1472,7 +1475,7 @@ impl ChatWidget {
                 )));
             };
 
-            match find_thread_name_by_id(&codex_home, &forked_from_id).await {
+            match find_thread_name_by_id(&orbit_code_home, &forked_from_id).await {
                 Ok(Some(name)) if !name.trim().is_empty() => {
                     send_name_and_id(name);
                 }
@@ -1485,7 +1488,10 @@ impl ChatWidget {
         });
     }
 
-    fn on_thread_name_updated(&mut self, event: codex_protocol::protocol::ThreadNameUpdatedEvent) {
+    fn on_thread_name_updated(
+        &mut self,
+        event: orbit_code_protocol::protocol::ThreadNameUpdatedEvent,
+    ) {
         if self.thread_id == Some(event.thread_id) {
             self.thread_name = event.thread_name;
             self.request_redraw();
@@ -1516,7 +1522,7 @@ impl ChatWidget {
         &mut self,
         category: crate::app_event::FeedbackCategory,
         include_logs: bool,
-        snapshot: codex_feedback::FeedbackSnapshot,
+        snapshot: orbit_code_feedback::FeedbackSnapshot,
     ) {
         let rollout = if include_logs {
             self.current_rollout_path.clone()
@@ -1971,7 +1977,7 @@ impl ChatWidget {
             let limit_id = snapshot
                 .limit_id
                 .clone()
-                .unwrap_or_else(|| "codex".to_string());
+                .unwrap_or_else(|| "orbit-code".to_string());
             let limit_label = snapshot
                 .limit_name
                 .clone()
@@ -1990,8 +1996,8 @@ impl ChatWidget {
 
             self.plan_type = snapshot.plan_type.or(self.plan_type);
 
-            let is_codex_limit = limit_id.eq_ignore_ascii_case("codex");
-            let warnings = if is_codex_limit {
+            let is_orbit_code_limit = limit_id.eq_ignore_ascii_case("orbit-code");
+            let warnings = if is_orbit_code_limit {
                 self.rate_limit_warnings.take_warnings(
                     snapshot
                         .secondary
@@ -2011,7 +2017,7 @@ impl ChatWidget {
                 vec![]
             };
 
-            let high_usage = is_codex_limit
+            let high_usage = is_orbit_code_limit
                 && (snapshot
                     .secondary
                     .as_ref()
@@ -2507,7 +2513,7 @@ impl ChatWidget {
             let cell = if let Some(command) = guardian_command(&action) {
                 history_cell::new_approval_decision_cell(
                     command,
-                    codex_protocol::protocol::ReviewDecision::Approved,
+                    orbit_code_protocol::protocol::ReviewDecision::Approved,
                     history_cell::ApprovalDecisionActor::Guardian,
                 )
             } else if let Some(summary) = guardian_action_summary(&action) {
@@ -2534,7 +2540,7 @@ impl ChatWidget {
         let cell = if let Some(command) = guardian_command(&action) {
             history_cell::new_approval_decision_cell(
                 command,
-                codex_protocol::protocol::ReviewDecision::Denied,
+                orbit_code_protocol::protocol::ReviewDecision::Denied,
                 history_cell::ApprovalDecisionActor::Guardian,
             )
         } else {
@@ -2742,7 +2748,7 @@ impl ChatWidget {
         self.request_redraw();
     }
 
-    fn on_patch_apply_end(&mut self, event: codex_protocol::protocol::PatchApplyEndEvent) {
+    fn on_patch_apply_end(&mut self, event: orbit_code_protocol::protocol::PatchApplyEndEvent) {
         let ev2 = event.clone();
         self.defer_or_handle(
             |q| q.push_patch_end(event),
@@ -2896,9 +2902,9 @@ impl ChatWidget {
 
     fn on_get_history_entry_response(
         &mut self,
-        event: codex_protocol::protocol::GetHistoryEntryResponseEvent,
+        event: orbit_code_protocol::protocol::GetHistoryEntryResponseEvent,
     ) {
-        let codex_protocol::protocol::GetHistoryEntryResponseEvent {
+        let orbit_code_protocol::protocol::GetHistoryEntryResponseEvent {
             offset,
             log_id,
             entry,
@@ -2930,7 +2936,7 @@ impl ChatWidget {
         self.set_status_header(message);
     }
 
-    fn on_hook_started(&mut self, event: codex_protocol::protocol::HookStartedEvent) {
+    fn on_hook_started(&mut self, event: orbit_code_protocol::protocol::HookStartedEvent) {
         let label = hook_event_label(event.run.event_name);
         let mut message = format!("Running {label} hook");
         if let Some(status_message) = event.run.status_message
@@ -2943,17 +2949,17 @@ impl ChatWidget {
         self.request_redraw();
     }
 
-    fn on_hook_completed(&mut self, event: codex_protocol::protocol::HookCompletedEvent) {
+    fn on_hook_completed(&mut self, event: orbit_code_protocol::protocol::HookCompletedEvent) {
         let status = format!("{:?}", event.run.status).to_lowercase();
         let header = format!("{} hook ({status})", hook_event_label(event.run.event_name));
         let mut lines: Vec<ratatui::text::Line<'static>> = vec![header.into()];
         for entry in event.run.entries {
             let prefix = match entry.kind {
-                codex_protocol::protocol::HookOutputEntryKind::Warning => "warning: ",
-                codex_protocol::protocol::HookOutputEntryKind::Stop => "stop: ",
-                codex_protocol::protocol::HookOutputEntryKind::Feedback => "feedback: ",
-                codex_protocol::protocol::HookOutputEntryKind::Context => "hook context: ",
-                codex_protocol::protocol::HookOutputEntryKind::Error => "error: ",
+                orbit_code_protocol::protocol::HookOutputEntryKind::Warning => "warning: ",
+                orbit_code_protocol::protocol::HookOutputEntryKind::Stop => "stop: ",
+                orbit_code_protocol::protocol::HookOutputEntryKind::Feedback => "feedback: ",
+                orbit_code_protocol::protocol::HookOutputEntryKind::Context => "hook context: ",
+                orbit_code_protocol::protocol::HookOutputEntryKind::Error => "error: ",
             };
             lines.push(format!("  {prefix}{}", entry.text).into());
         }
@@ -3281,7 +3287,7 @@ impl ChatWidget {
 
     pub(crate) fn handle_patch_apply_end_now(
         &mut self,
-        event: codex_protocol::protocol::PatchApplyEndEvent,
+        event: orbit_code_protocol::protocol::PatchApplyEndEvent,
     ) {
         // If the patch was successful, just let the "Edited" block stand.
         // Otherwise, add a failure block.
@@ -3533,7 +3539,7 @@ impl ChatWidget {
         let prevent_idle_sleep = config.features.enabled(Feature::PreventIdleSleep);
         let mut rng = rand::rng();
         let placeholder = PLACEHOLDERS[rng.random_range(0..PLACEHOLDERS.len())].to_string();
-        let codex_op_tx = spawn_agent(config.clone(), app_event_tx.clone(), thread_manager);
+        let orbit_code_op_tx = spawn_agent(config.clone(), app_event_tx.clone(), thread_manager);
 
         let model_override = model.as_deref();
         let model_for_header = model
@@ -3564,7 +3570,7 @@ impl ChatWidget {
         let mut widget = Self {
             app_event_tx: app_event_tx.clone(),
             frame_requester: frame_requester.clone(),
-            codex_op_tx,
+            orbit_code_op_tx,
             bottom_pane: BottomPane::new(BottomPaneParams {
                 frame_requester,
                 app_event_tx,
@@ -3681,7 +3687,7 @@ impl ChatWidget {
             .set_queued_message_edit_binding(widget.queued_message_edit_binding);
         #[cfg(target_os = "windows")]
         widget.bottom_pane.set_windows_degraded_sandbox_active(
-            codex_core::windows_sandbox::ELEVATED_SANDBOX_NUX_ENABLED
+            orbit_code_core::windows_sandbox::ELEVATED_SANDBOX_NUX_ENABLED
                 && matches!(
                     WindowsSandboxLevel::from_config(&widget.config),
                     WindowsSandboxLevel::RestrictedToken
@@ -3698,7 +3704,7 @@ impl ChatWidget {
 
     pub(crate) fn new_with_op_sender(
         common: ChatWidgetInit,
-        codex_op_tx: UnboundedSender<Op>,
+        orbit_code_op_tx: UnboundedSender<Op>,
     ) -> Self {
         let ChatWidgetInit {
             config,
@@ -3752,7 +3758,7 @@ impl ChatWidget {
         let mut widget = Self {
             app_event_tx: app_event_tx.clone(),
             frame_requester: frame_requester.clone(),
-            codex_op_tx,
+            orbit_code_op_tx,
             bottom_pane: BottomPane::new(BottomPaneParams {
                 frame_requester,
                 app_event_tx,
@@ -3877,8 +3883,8 @@ impl ChatWidget {
     /// Create a ChatWidget attached to an existing conversation (e.g., a fork).
     pub(crate) fn new_from_existing(
         common: ChatWidgetInit,
-        conversation: std::sync::Arc<codex_core::CodexThread>,
-        session_configured: codex_protocol::protocol::SessionConfiguredEvent,
+        conversation: std::sync::Arc<orbit_code_core::CodexThread>,
+        session_configured: orbit_code_protocol::protocol::SessionConfiguredEvent,
     ) -> Self {
         let ChatWidgetInit {
             config,
@@ -3913,7 +3919,7 @@ impl ChatWidget {
             .unwrap_or(header_model);
 
         let current_cwd = Some(session_configured.cwd.clone());
-        let codex_op_tx =
+        let orbit_code_op_tx =
             spawn_agent_from_existing(conversation, session_configured, app_event_tx.clone());
 
         let fallback_default = Settings {
@@ -3932,7 +3938,7 @@ impl ChatWidget {
         let mut widget = Self {
             app_event_tx: app_event_tx.clone(),
             frame_requester: frame_requester.clone(),
-            codex_op_tx,
+            orbit_code_op_tx,
             bottom_pane: BottomPane::new(BottomPaneParams {
                 frame_requester,
                 app_event_tx,
@@ -4049,7 +4055,7 @@ impl ChatWidget {
             .set_queued_message_edit_binding(widget.queued_message_edit_binding);
         #[cfg(target_os = "windows")]
         widget.bottom_pane.set_windows_degraded_sandbox_active(
-            codex_core::windows_sandbox::ELEVATED_SANDBOX_NUX_ENABLED
+            orbit_code_core::windows_sandbox::ELEVATED_SANDBOX_NUX_ENABLED
                 && matches!(
                     WindowsSandboxLevel::from_config(&widget.config),
                     WindowsSandboxLevel::RestrictedToken
@@ -4433,7 +4439,7 @@ impl ChatWidget {
                     let windows_degraded_sandbox_enabled =
                         matches!(windows_sandbox_level, WindowsSandboxLevel::RestrictedToken);
                     if !windows_degraded_sandbox_enabled
-                        || !codex_core::windows_sandbox::ELEVATED_SANDBOX_NUX_ENABLED
+                        || !orbit_code_core::windows_sandbox::ELEVATED_SANDBOX_NUX_ENABLED
                     {
                         // This command should not be visible/recognized outside degraded mode,
                         // but guard anyway in case something dispatches it directly.
@@ -4488,8 +4494,8 @@ impl ChatWidget {
                 self.request_quit_without_confirmation();
             }
             SlashCommand::Logout => {
-                if let Err(e) = codex_core::auth::logout(
-                    &self.config.codex_home,
+                if let Err(e) = orbit_code_core::auth::logout(
+                    &self.config.orbit_code_home,
                     self.config.cli_auth_credentials_store_mode,
                 ) {
                     tracing::error!("failed to logout: {e}");
@@ -4594,11 +4600,11 @@ impl ChatWidget {
                 }
             }
             SlashCommand::TestApproval => {
-                use codex_protocol::protocol::EventMsg;
+                use orbit_code_protocol::protocol::EventMsg;
                 use std::collections::HashMap;
 
-                use codex_protocol::protocol::ApplyPatchApprovalRequestEvent;
-                use codex_protocol::protocol::FileChange;
+                use orbit_code_protocol::protocol::ApplyPatchApprovalRequestEvent;
+                use orbit_code_protocol::protocol::FileChange;
 
                 self.app_event_tx.send(AppEvent::CodexEvent(Event {
                     id: "1".to_string(),
@@ -4690,7 +4696,8 @@ impl ChatWidget {
                 else {
                     return;
                 };
-                let Some(name) = codex_core::util::normalize_thread_name(&prepared_args) else {
+                let Some(name) = orbit_code_core::util::normalize_thread_name(&prepared_args)
+                else {
                     self.add_error_message("Thread name cannot be empty.".to_string());
                     return;
                 };
@@ -4783,7 +4790,7 @@ impl ChatWidget {
             "Type a name and press Enter".to_string(),
             /*context_label*/ None,
             Box::new(move |name: String| {
-                let Some(name) = codex_core::util::normalize_thread_name(&name) else {
+                let Some(name) = orbit_code_core::util::normalize_thread_name(&name) else {
                     tx.send(AppEvent::InsertHistoryCell(Box::new(
                         history_cell::new_error_event("Thread name cannot be empty.".to_string()),
                     )));
@@ -5030,7 +5037,7 @@ impl ChatWidget {
 
             let app_mentions = find_app_mentions(&mentions, apps, &skill_names_lower);
             for app in app_mentions {
-                let slug = codex_core::connectors::connector_mention_slug(&app);
+                let slug = orbit_code_core::connectors::connector_mention_slug(&app);
                 if bound_names.contains(&slug) || !selected_app_ids.insert(app.id.clone()) {
                     continue;
                 }
@@ -5094,7 +5101,7 @@ impl ChatWidget {
                 })
                 .collect::<Vec<_>>();
             let history_text = encode_history_mentions(&text, &encoded_mentions);
-            self.codex_op_tx
+            self.orbit_code_op_tx
                 .send(Op::AddToHistory { text: history_text })
                 .unwrap_or_else(|e| {
                     tracing::error!("failed to send AddHistory op: {e}");
@@ -5197,12 +5204,12 @@ impl ChatWidget {
         }
     }
 
-    pub(crate) fn handle_codex_event(&mut self, event: Event) {
+    pub(crate) fn handle_orbit_code_event(&mut self, event: Event) {
         let Event { id, msg } = event;
         self.dispatch_event_msg(Some(id), msg, /*replay_kind*/ None);
     }
 
-    pub(crate) fn handle_codex_event_replay(&mut self, event: Event) {
+    pub(crate) fn handle_orbit_code_event_replay(&mut self, event: Event) {
         let Event { msg, .. } = event;
         if matches!(msg, EventMsg::ShutdownComplete) {
             return;
@@ -5236,7 +5243,7 @@ impl ChatWidget {
             | EventMsg::TerminalInteraction(_)
             | EventMsg::ExecCommandOutputDelta(_) => {}
             _ => {
-                tracing::trace!("handle_codex_event: {:?}", msg);
+                tracing::trace!("handle_orbit_code_event: {:?}", msg);
             }
         }
 
@@ -5287,9 +5294,9 @@ impl ChatWidget {
             EventMsg::ModelReroute(_) => {}
             EventMsg::Error(ErrorEvent {
                 message,
-                codex_error_info,
+                orbit_code_error_info,
             }) => {
-                if let Some(info) = codex_error_info
+                if let Some(info) = orbit_code_error_info
                     && let Some(kind) = rate_limit_error_kind(&info)
                 {
                     match kind {
@@ -5454,7 +5461,9 @@ impl ChatWidget {
             }
             EventMsg::ItemCompleted(event) => {
                 let item = event.item;
-                if !from_replay && let codex_protocol::items::TurnItem::UserMessage(item) = &item {
+                if !from_replay
+                    && let orbit_code_protocol::items::TurnItem::UserMessage(item) = &item
+                {
                     let EventMsg::UserMessage(event) = item.as_legacy_event() else {
                         unreachable!("user message item should convert to a legacy user message");
                     };
@@ -5490,10 +5499,10 @@ impl ChatWidget {
                         self.on_user_message_event(event);
                     }
                 }
-                if let codex_protocol::items::TurnItem::Plan(plan_item) = &item {
+                if let orbit_code_protocol::items::TurnItem::Plan(plan_item) = &item {
                     self.on_plan_item_completed(plan_item.text.clone());
                 }
-                if let codex_protocol::items::TurnItem::AgentMessage(item) = item {
+                if let orbit_code_protocol::items::TurnItem::AgentMessage(item) = item {
                     self.on_agent_message_item_completed(item);
                 }
             }
@@ -5516,7 +5525,7 @@ impl ChatWidget {
         self.is_review_mode = true;
         let hint = review
             .user_facing_hint
-            .unwrap_or_else(|| codex_core::review_prompts::user_facing_hint(&review.target));
+            .unwrap_or_else(|| orbit_code_core::review_prompts::user_facing_hint(&review.target));
         let banner = format!(">> Code review started: {hint} <<");
         self.add_to_history(history_cell::new_review_status_line(banner));
         self.request_redraw();
@@ -5735,14 +5744,14 @@ impl ChatWidget {
     }
 
     fn open_theme_picker(&mut self) {
-        let codex_home = codex_core::config::find_codex_home().ok();
+        let orbit_code_home = orbit_code_core::config::find_orbit_code_home().ok();
         let terminal_width = self
             .last_rendered_width
             .get()
             .and_then(|width| u16::try_from(width).ok());
         let params = crate::theme_picker::build_theme_picker_params(
             self.config.tui_theme.as_deref(),
-            codex_home.as_deref(),
+            orbit_code_home.as_deref(),
             terminal_width,
         );
         self.bottom_pane.show_selection_view(params);
@@ -5795,9 +5804,12 @@ impl ChatWidget {
             )
             .iter()
             .find_map(|layer| match &layer.name {
-                ConfigLayerSource::Project { dot_codex_folder } => {
-                    dot_codex_folder.as_path().parent().map(Path::to_path_buf)
-                }
+                ConfigLayerSource::Project {
+                    dot_orbit_code_folder,
+                } => dot_orbit_code_folder
+                    .as_path()
+                    .parent()
+                    .map(Path::to_path_buf),
                 _ => None,
             })
     }
@@ -5890,7 +5902,7 @@ impl ChatWidget {
             StatusLineItem::FiveHourLimit => {
                 let window = self
                     .rate_limit_snapshots_by_limit_id
-                    .get("codex")
+                    .get("orbit-code")
                     .and_then(|s| s.primary.as_ref());
                 let label = window
                     .and_then(|window| window.window_minutes)
@@ -5901,7 +5913,7 @@ impl ChatWidget {
             StatusLineItem::WeeklyLimit => {
                 let window = self
                     .rate_limit_snapshots_by_limit_id
-                    .get("codex")
+                    .get("orbit-code")
                     .and_then(|s| s.secondary.as_ref());
                 let label = window
                     .and_then(|window| window.window_minutes)
@@ -5909,7 +5921,7 @@ impl ChatWidget {
                     .unwrap_or_else(|| "weekly".to_string());
                 self.status_line_limit_display(window, &label)
             }
-            StatusLineItem::CodexVersion => Some(CODEX_CLI_VERSION.to_string()),
+            StatusLineItem::CodexVersion => Some(ORBIT_CLI_VERSION.to_string()),
             StatusLineItem::ContextWindowSize => self
                 .status_line_context_window_size()
                 .map(|cws| format!("{} window", format_tokens_compact(cws))),
@@ -6059,7 +6071,7 @@ impl ChatWidget {
                     }
                 };
             let should_schedule_force_refetch =
-                !force_refetch && !accessible_result.codex_apps_ready;
+                !force_refetch && !accessible_result.orbit_code_apps_ready;
             let accessible_connectors = accessible_result.connectors;
 
             app_event_tx.send(AppEvent::ConnectorsLoaded {
@@ -7065,9 +7077,10 @@ impl ChatWidget {
         #[cfg(not(target_os = "windows"))]
         let windows_degraded_sandbox_enabled = false;
 
-        let show_elevate_sandbox_hint = codex_core::windows_sandbox::ELEVATED_SANDBOX_NUX_ENABLED
-            && windows_degraded_sandbox_enabled
-            && presets.iter().any(|preset| preset.id == "auto");
+        let show_elevate_sandbox_hint =
+            orbit_code_core::windows_sandbox::ELEVATED_SANDBOX_NUX_ENABLED
+                && windows_degraded_sandbox_enabled
+                && presets.iter().any(|preset| preset.id == "auto");
 
         let guardian_disabled_reason = |enabled: bool| {
             let mut next_features = self.config.features.get().clone();
@@ -7123,9 +7136,9 @@ impl ChatWidget {
                         == WindowsSandboxLevel::Disabled
                     {
                         let preset_clone = preset.clone();
-                        if codex_core::windows_sandbox::ELEVATED_SANDBOX_NUX_ENABLED
-                            && codex_core::windows_sandbox::sandbox_setup_is_complete(
-                                self.config.codex_home.as_path(),
+                        if orbit_code_core::windows_sandbox::ELEVATED_SANDBOX_NUX_ENABLED
+                            && orbit_code_core::windows_sandbox::sandbox_setup_is_complete(
+                                self.config.orbit_code_home.as_path(),
                             )
                         {
                             vec![Box::new(move |tx| {
@@ -7351,12 +7364,12 @@ impl ChatWidget {
         }
         let cwd = self.config.cwd.clone();
         let env_map: std::collections::HashMap<String, String> = std::env::vars().collect();
-        match codex_windows_sandbox::apply_world_writable_scan_and_denies(
-            self.config.codex_home.as_path(),
+        match orbit_code_windows_sandbox::apply_world_writable_scan_and_denies(
+            self.config.orbit_code_home.as_path(),
             cwd.as_path(),
             &env_map,
             self.config.permissions.sandbox_policy.get(),
-            Some(self.config.codex_home.as_path()),
+            Some(self.config.orbit_code_home.as_path()),
         ) {
             Ok(_) => None,
             Err(_) => Some((Vec::new(), 0, true)),
@@ -7577,7 +7590,7 @@ impl ChatWidget {
     pub(crate) fn open_windows_sandbox_enable_prompt(&mut self, preset: ApprovalPreset) {
         use ratatui_macros::line;
 
-        if !codex_core::windows_sandbox::ELEVATED_SANDBOX_NUX_ENABLED {
+        if !orbit_code_core::windows_sandbox::ELEVATED_SANDBOX_NUX_ENABLED {
             // Legacy flow (pre-NUX): explain the experimental sandbox and let the user enable it
             // directly (no elevation prompts).
             let mut header = ColumnRenderable::new();
@@ -7834,7 +7847,7 @@ impl ChatWidget {
         self.config.permissions.windows_sandbox_mode = mode;
         #[cfg(target_os = "windows")]
         self.bottom_pane.set_windows_degraded_sandbox_active(
-            codex_core::windows_sandbox::ELEVATED_SANDBOX_NUX_ENABLED
+            orbit_code_core::windows_sandbox::ELEVATED_SANDBOX_NUX_ENABLED
                 && matches!(
                     WindowsSandboxLevel::from_config(&self.config),
                     WindowsSandboxLevel::RestrictedToken
@@ -7887,7 +7900,7 @@ impl ChatWidget {
             Feature::WindowsSandbox | Feature::WindowsSandboxElevated
         ) {
             self.bottom_pane.set_windows_degraded_sandbox_active(
-                codex_core::windows_sandbox::ELEVATED_SANDBOX_NUX_ENABLED
+                orbit_code_core::windows_sandbox::ELEVATED_SANDBOX_NUX_ENABLED
                     && matches!(
                         WindowsSandboxLevel::from_config(&self.config),
                         WindowsSandboxLevel::RestrictedToken
@@ -8321,7 +8334,7 @@ impl ChatWidget {
         }
     }
 
-    fn plugins_for_mentions(&self) -> Option<&[codex_core::plugins::PluginCapabilitySummary]> {
+    fn plugins_for_mentions(&self) -> Option<&[orbit_code_core::plugins::PluginCapabilitySummary]> {
         if !self.config.features.enabled(Feature::Plugins) {
             return None;
         }
@@ -8338,7 +8351,7 @@ impl ChatWidget {
             /*reasoning_effort*/ None,
             /*show_fast_status*/ false,
             config.cwd.clone(),
-            CODEX_CLI_VERSION,
+            ORBIT_CLI_VERSION,
         ))
     }
 
@@ -8386,8 +8399,8 @@ impl ChatWidget {
     }
 
     fn rename_confirmation_cell(name: &str, thread_id: Option<ThreadId>) -> PlainHistoryCell {
-        let resume_cmd = codex_core::util::resume_command(Some(name), thread_id)
-            .unwrap_or_else(|| format!("codex resume {name}"));
+        let resume_cmd = orbit_code_core::util::resume_command(Some(name), thread_id)
+            .unwrap_or_else(|| format!("orbit-code resume {name}"));
         let name = name.to_string();
         let line = vec![
             "• ".into(),
@@ -8401,7 +8414,7 @@ impl ChatWidget {
 
     pub(crate) fn add_mcp_output(&mut self) {
         let mcp_manager = McpManager::new(Arc::new(PluginsManager::new(
-            self.config.codex_home.clone(),
+            self.config.orbit_code_home.clone(),
         )));
         if mcp_manager
             .effective_servers(&self.config, /*auth*/ None)
@@ -8863,7 +8876,7 @@ impl ChatWidget {
         if matches!(&op, Op::Review { .. }) && !self.bottom_pane.is_task_running() {
             self.bottom_pane.set_task_running(/*running*/ true);
         }
-        if let Err(e) = self.codex_op_tx.send(op) {
+        if let Err(e) = self.orbit_code_op_tx.send(op) {
             tracing::error!("failed to submit op: {e}");
             return false;
         }
@@ -8992,7 +9005,7 @@ impl ChatWidget {
             return;
         }
 
-        let plugins = PluginsManager::new(self.config.codex_home.clone())
+        let plugins = PluginsManager::new(self.config.orbit_code_home.clone())
             .plugins_for_config(&self.config)
             .capability_summaries()
             .to_vec();
@@ -9097,7 +9110,7 @@ impl ChatWidget {
     }
 
     pub(crate) async fn show_review_commit_picker(&mut self, cwd: &Path) {
-        let commits = codex_core::git_info::recent_commits(cwd, /*limit*/ 100).await;
+        let commits = orbit_code_core::git_info::recent_commits(cwd, /*limit*/ 100).await;
 
         let mut items: Vec<SelectionItem> = Vec::with_capacity(commits.len());
         for entry in commits {
@@ -9419,7 +9432,7 @@ impl Notification {
     }
 
     fn user_input_request_summary(
-        questions: &[codex_protocol::request_user_input::RequestUserInputQuestion],
+        questions: &[orbit_code_protocol::request_user_input::RequestUserInputQuestion],
     ) -> Option<String> {
         let first_question = questions.first()?;
         let summary = if first_question.header.trim().is_empty() {
@@ -9478,11 +9491,11 @@ fn extract_first_bold(s: &str) -> Option<String> {
     None
 }
 
-fn hook_event_label(event_name: codex_protocol::protocol::HookEventName) -> &'static str {
+fn hook_event_label(event_name: orbit_code_protocol::protocol::HookEventName) -> &'static str {
     match event_name {
-        codex_protocol::protocol::HookEventName::SessionStart => "SessionStart",
-        codex_protocol::protocol::HookEventName::UserPromptSubmit => "UserPromptSubmit",
-        codex_protocol::protocol::HookEventName::Stop => "Stop",
+        orbit_code_protocol::protocol::HookEventName::SessionStart => "SessionStart",
+        orbit_code_protocol::protocol::HookEventName::UserPromptSubmit => "UserPromptSubmit",
+        orbit_code_protocol::protocol::HookEventName::Stop => "Stop",
     }
 }
 
@@ -9505,7 +9518,7 @@ async fn fetch_rate_limits(base_url: String, auth: CodexAuth) -> Vec<RateLimitSn
 #[cfg(test)]
 pub(crate) fn show_review_commit_picker_with_entries(
     chat: &mut ChatWidget,
-    entries: Vec<codex_core::git_info::CommitLogEntry>,
+    entries: Vec<orbit_code_core::git_info::CommitLogEntry>,
 ) {
     let mut items: Vec<SelectionItem> = Vec::with_capacity(entries.len());
     for entry in entries {

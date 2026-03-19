@@ -1,20 +1,20 @@
 use crate::app_command::AppCommand;
 use crate::app_command::AppCommandView;
-use codex_app_server_protocol::RequestId as AppServerRequestId;
-use codex_app_server_protocol::ServerNotification;
-use codex_app_server_protocol::ServerRequest;
-use codex_app_server_protocol::ThreadItem;
+use orbit_code_app_server_protocol::RequestId as AppServerRequestId;
+use orbit_code_app_server_protocol::ServerNotification;
+use orbit_code_app_server_protocol::ServerRequest;
+use orbit_code_app_server_protocol::ThreadItem;
 use std::collections::HashMap;
 use std::collections::HashSet;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 struct ElicitationRequestKey {
     server_name: String,
-    request_id: codex_protocol::mcp::RequestId,
+    request_id: orbit_code_protocol::mcp::RequestId,
 }
 
 impl ElicitationRequestKey {
-    fn new(server_name: String, request_id: codex_protocol::mcp::RequestId) -> Self {
+    fn new(server_name: String, request_id: orbit_code_protocol::mcp::RequestId) -> Self {
         Self {
             server_name,
             request_id,
@@ -564,10 +564,12 @@ impl PendingInteractiveReplayState {
 
 fn app_server_request_id_to_mcp_request_id(
     request_id: &AppServerRequestId,
-) -> codex_protocol::mcp::RequestId {
+) -> orbit_code_protocol::mcp::RequestId {
     match request_id {
-        AppServerRequestId::String(value) => codex_protocol::mcp::RequestId::String(value.clone()),
-        AppServerRequestId::Integer(value) => codex_protocol::mcp::RequestId::Integer(*value),
+        AppServerRequestId::String(value) => {
+            orbit_code_protocol::mcp::RequestId::String(value.clone())
+        }
+        AppServerRequestId::Integer(value) => orbit_code_protocol::mcp::RequestId::Integer(*value),
     }
 }
 
@@ -575,23 +577,23 @@ fn app_server_request_id_to_mcp_request_id(
 mod tests {
     use super::super::ThreadBufferedEvent;
     use super::super::ThreadEventStore;
-    use codex_app_server_protocol::CommandExecutionRequestApprovalParams;
-    use codex_app_server_protocol::FileChangeRequestApprovalParams;
-    use codex_app_server_protocol::McpElicitationObjectType;
-    use codex_app_server_protocol::McpElicitationSchema;
-    use codex_app_server_protocol::McpServerElicitationRequest;
-    use codex_app_server_protocol::McpServerElicitationRequestParams;
-    use codex_app_server_protocol::RequestId as AppServerRequestId;
-    use codex_app_server_protocol::ServerNotification;
-    use codex_app_server_protocol::ServerRequest;
-    use codex_app_server_protocol::ServerRequestResolvedNotification;
-    use codex_app_server_protocol::ThreadClosedNotification;
-    use codex_app_server_protocol::ToolRequestUserInputParams;
-    use codex_app_server_protocol::Turn;
-    use codex_app_server_protocol::TurnCompletedNotification;
-    use codex_app_server_protocol::TurnStatus;
-    use codex_protocol::protocol::Op;
-    use codex_protocol::protocol::ReviewDecision;
+    use orbit_code_app_server_protocol::CommandExecutionRequestApprovalParams;
+    use orbit_code_app_server_protocol::FileChangeRequestApprovalParams;
+    use orbit_code_app_server_protocol::McpElicitationObjectType;
+    use orbit_code_app_server_protocol::McpElicitationSchema;
+    use orbit_code_app_server_protocol::McpServerElicitationRequest;
+    use orbit_code_app_server_protocol::McpServerElicitationRequestParams;
+    use orbit_code_app_server_protocol::RequestId as AppServerRequestId;
+    use orbit_code_app_server_protocol::ServerNotification;
+    use orbit_code_app_server_protocol::ServerRequest;
+    use orbit_code_app_server_protocol::ServerRequestResolvedNotification;
+    use orbit_code_app_server_protocol::ThreadClosedNotification;
+    use orbit_code_app_server_protocol::ToolRequestUserInputParams;
+    use orbit_code_app_server_protocol::Turn;
+    use orbit_code_app_server_protocol::TurnCompletedNotification;
+    use orbit_code_app_server_protocol::TurnStatus;
+    use orbit_code_protocol::protocol::Op;
+    use orbit_code_protocol::protocol::ReviewDecision;
     use pretty_assertions::assert_eq;
     use std::collections::BTreeMap;
     use std::collections::HashMap;
@@ -717,7 +719,7 @@ mod tests {
 
         store.note_outbound_op(&Op::UserInputAnswer {
             id: "turn-1".to_string(),
-            response: codex_protocol::request_user_input::RequestUserInputResponse {
+            response: orbit_code_protocol::request_user_input::RequestUserInputResponse {
                 answers: HashMap::new(),
             },
         });
@@ -802,7 +804,7 @@ mod tests {
 
         store.note_outbound_op(&Op::UserInputAnswer {
             id: "turn-1".to_string(),
-            response: codex_protocol::request_user_input::RequestUserInputResponse {
+            response: orbit_code_protocol::request_user_input::RequestUserInputResponse {
                 answers: HashMap::new(),
             },
         });
@@ -826,7 +828,7 @@ mod tests {
 
         store.note_outbound_op(&Op::UserInputAnswer {
             id: "turn-1".to_string(),
-            response: codex_protocol::request_user_input::RequestUserInputResponse {
+            response: orbit_code_protocol::request_user_input::RequestUserInputResponse {
                 answers: HashMap::new(),
             },
         });
@@ -881,13 +883,13 @@ mod tests {
     #[test]
     fn thread_event_snapshot_drops_resolved_elicitation_after_outbound_resolution() {
         let mut store = ThreadEventStore::new(8);
-        let request_id = codex_protocol::mcp::RequestId::String("request-1".to_string());
+        let request_id = orbit_code_protocol::mcp::RequestId::String("request-1".to_string());
         store.push_request(elicitation_request("server-1", "request-1", "turn-1"));
 
         store.note_outbound_op(&Op::ResolveElicitation {
             server_name: "server-1".to_string(),
             request_id,
-            decision: codex_protocol::approvals::ElicitationAction::Accept,
+            decision: orbit_code_protocol::approvals::ElicitationAction::Accept,
             content: None,
             meta: None,
         });

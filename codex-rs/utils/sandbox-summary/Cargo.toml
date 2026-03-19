@@ -1,5 +1,5 @@
 [package]
-name = "codex-utils-sandbox-summary"
+name = "orbit-code-utils-sandbox-summary"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -8,9 +8,9 @@ license.workspace = true
 workspace = true
 
 [dependencies]
-codex-core = { workspace = true }
-codex-protocol = { workspace = true }
+orbit-code-core = { workspace = true }
+orbit-code-protocol = { workspace = true }
 
 [dev-dependencies]
-codex-utils-absolute-path = { workspace = true }
+orbit-code-utils-absolute-path = { workspace = true }
 pretty_assertions = { workspace = true }

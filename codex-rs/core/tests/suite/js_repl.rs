@@ -1,8 +1,6 @@
 #![allow(clippy::expect_used, clippy::unwrap_used)]
 
 use anyhow::Result;
-use codex_core::features::Feature;
-use codex_protocol::protocol::EventMsg;
 use core_test_support::responses;
 use core_test_support::responses::ResponseMock;
 use core_test_support::responses::ResponsesRequest;
@@ -14,6 +12,8 @@ use core_test_support::responses::sse;
 use core_test_support::skip_if_no_network;
 use core_test_support::test_codex::test_codex;
 use core_test_support::wait_for_event_match;
+use orbit_code_core::features::Feature;
+use orbit_code_protocol::protocol::EventMsg;
 use std::fs;
 #[cfg(unix)]
 use std::os::unix::fs::PermissionsExt;
@@ -182,7 +182,7 @@ async fn assert_failed_cell_followup(
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn js_repl_is_not_advertised_when_startup_node_is_incompatible() -> Result<()> {
     skip_if_no_network!(Ok(()));
-    if std::env::var_os("CODEX_JS_REPL_NODE_PATH").is_some() {
+    if std::env::var_os("ORBIT_JS_REPL_NODE_PATH").is_some() {
         return Ok(());
     }
 
@@ -660,7 +660,7 @@ async fn js_repl_does_not_expose_process_global() -> Result<()> {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn js_repl_exposes_codex_path_helpers() -> Result<()> {
+async fn js_repl_exposes_orbit_code_path_helpers() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let server = responses::start_mock_server().await;

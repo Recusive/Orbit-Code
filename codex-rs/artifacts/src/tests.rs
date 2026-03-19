@@ -8,10 +8,10 @@ use crate::ArtifactsClient;
 use crate::DEFAULT_CACHE_ROOT_RELATIVE;
 use crate::ReleaseManifest;
 use crate::load_cached_runtime;
-use codex_package_manager::ArchiveFormat;
-use codex_package_manager::PackageReleaseArchive;
 use flate2::Compression;
 use flate2::write::GzEncoder;
+use orbit_code_package_manager::ArchiveFormat;
+use orbit_code_package_manager::PackageReleaseArchive;
 use pretty_assertions::assert_eq;
 use sha2::Digest;
 use sha2::Sha256;
@@ -47,7 +47,7 @@ fn release_locator_builds_manifest_url() {
 }
 
 #[test]
-fn default_release_locator_uses_openai_codex_github_releases() {
+fn default_release_locator_uses_openai_orbit_code_github_releases() {
     let locator = ArtifactRuntimeReleaseLocator::default("0.1.0");
     let url = locator
         .manifest_url()
@@ -61,11 +61,11 @@ fn default_release_locator_uses_openai_codex_github_releases() {
 
 #[test]
 fn load_cached_runtime_reads_installed_runtime() {
-    let codex_home = TempDir::new().unwrap_or_else(|error| panic!("{error}"));
+    let orbit_code_home = TempDir::new().unwrap_or_else(|error| panic!("{error}"));
     let runtime_version = "2.5.6";
     let platform =
         ArtifactRuntimePlatform::detect_current().unwrap_or_else(|error| panic!("{error}"));
-    let install_dir = codex_home
+    let install_dir = orbit_code_home
         .path()
         .join(DEFAULT_CACHE_ROOT_RELATIVE)
         .join(runtime_version)
@@ -73,7 +73,7 @@ fn load_cached_runtime_reads_installed_runtime() {
     write_installed_runtime(&install_dir, runtime_version);
 
     let runtime = load_cached_runtime(
-        &codex_home.path().join(DEFAULT_CACHE_ROOT_RELATIVE),
+        &orbit_code_home.path().join(DEFAULT_CACHE_ROOT_RELATIVE),
         runtime_version,
     )
     .unwrap_or_else(|error| panic!("{error}"));
@@ -89,11 +89,11 @@ fn load_cached_runtime_reads_installed_runtime() {
 
 #[test]
 fn load_cached_runtime_requires_build_entrypoint() {
-    let codex_home = TempDir::new().unwrap_or_else(|error| panic!("{error}"));
+    let orbit_code_home = TempDir::new().unwrap_or_else(|error| panic!("{error}"));
     let runtime_version = "2.5.6";
     let platform =
         ArtifactRuntimePlatform::detect_current().unwrap_or_else(|error| panic!("{error}"));
-    let install_dir = codex_home
+    let install_dir = orbit_code_home
         .path()
         .join(DEFAULT_CACHE_ROOT_RELATIVE)
         .join(runtime_version)
@@ -103,7 +103,7 @@ fn load_cached_runtime_requires_build_entrypoint() {
         .unwrap_or_else(|error| panic!("{error}"));
 
     let error = load_cached_runtime(
-        &codex_home.path().join(DEFAULT_CACHE_ROOT_RELATIVE),
+        &orbit_code_home.path().join(DEFAULT_CACHE_ROOT_RELATIVE),
         runtime_version,
     )
     .unwrap_err();
@@ -159,13 +159,13 @@ async fn ensure_installed_downloads_and_extracts_zip_runtime() {
         .mount(&server)
         .await;
 
-    let codex_home = TempDir::new().unwrap_or_else(|error| panic!("{error}"));
+    let orbit_code_home = TempDir::new().unwrap_or_else(|error| panic!("{error}"));
     let locator = ArtifactRuntimeReleaseLocator::new(
         url::Url::parse(&format!("{}/", server.uri())).unwrap_or_else(|error| panic!("{error}")),
         runtime_version,
     );
     let manager = ArtifactRuntimeManager::new(ArtifactRuntimeManagerConfig::new(
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
         locator,
     ));
 
@@ -185,11 +185,11 @@ async fn ensure_installed_downloads_and_extracts_zip_runtime() {
 
 #[test]
 fn load_cached_runtime_requires_package_export() {
-    let codex_home = TempDir::new().unwrap_or_else(|error| panic!("{error}"));
+    let orbit_code_home = TempDir::new().unwrap_or_else(|error| panic!("{error}"));
     let runtime_version = "2.5.6";
     let platform =
         ArtifactRuntimePlatform::detect_current().unwrap_or_else(|error| panic!("{error}"));
-    let install_dir = codex_home
+    let install_dir = orbit_code_home
         .path()
         .join(DEFAULT_CACHE_ROOT_RELATIVE)
         .join(runtime_version)
@@ -207,7 +207,7 @@ fn load_cached_runtime_requires_package_export() {
     .unwrap_or_else(|error| panic!("{error}"));
 
     let error = load_cached_runtime(
-        &codex_home.path().join(DEFAULT_CACHE_ROOT_RELATIVE),
+        &orbit_code_home.path().join(DEFAULT_CACHE_ROOT_RELATIVE),
         runtime_version,
     )
     .unwrap_err();
@@ -263,13 +263,13 @@ async fn ensure_installed_downloads_and_extracts_tar_gz_runtime() {
         .mount(&server)
         .await;
 
-    let codex_home = TempDir::new().unwrap_or_else(|error| panic!("{error}"));
+    let orbit_code_home = TempDir::new().unwrap_or_else(|error| panic!("{error}"));
     let locator = ArtifactRuntimeReleaseLocator::new(
         url::Url::parse(&format!("{}/", server.uri())).unwrap_or_else(|error| panic!("{error}")),
         runtime_version,
     );
     let manager = ArtifactRuntimeManager::new(ArtifactRuntimeManagerConfig::new(
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
         locator,
     ));
 
@@ -289,9 +289,9 @@ async fn ensure_installed_downloads_and_extracts_tar_gz_runtime() {
 
 #[test]
 fn load_cached_runtime_uses_custom_cache_root() {
-    let codex_home = TempDir::new().unwrap_or_else(|error| panic!("{error}"));
+    let orbit_code_home = TempDir::new().unwrap_or_else(|error| panic!("{error}"));
     let runtime_version = "2.5.6";
-    let custom_cache_root = codex_home.path().join("runtime-cache");
+    let custom_cache_root = orbit_code_home.path().join("runtime-cache");
     let platform =
         ArtifactRuntimePlatform::detect_current().unwrap_or_else(|error| panic!("{error}"));
     let install_dir = custom_cache_root
@@ -300,7 +300,7 @@ fn load_cached_runtime_uses_custom_cache_root() {
     write_installed_runtime(&install_dir, runtime_version);
 
     let config = ArtifactRuntimeManagerConfig::with_default_release(
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
         runtime_version,
     )
     .with_cache_root(custom_cache_root);

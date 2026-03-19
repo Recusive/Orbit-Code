@@ -1,27 +1,30 @@
 use std::path::Path;
 
 use anyhow::Result;
-use codex_state::StateRuntime;
-use codex_state::state_db_path;
+use orbit_code_state::StateRuntime;
+use orbit_code_state::state_db_path;
 use predicates::str::contains;
 use sqlx::SqlitePool;
 use tempfile::TempDir;
 
-fn codex_command(codex_home: &Path) -> Result<assert_cmd::Command> {
-    let mut cmd = assert_cmd::Command::new(codex_utils_cargo_bin::cargo_bin("codex")?);
-    cmd.env("CODEX_HOME", codex_home);
+fn orbit_code_command(orbit_code_home: &Path) -> Result<assert_cmd::Command> {
+    let mut cmd = assert_cmd::Command::new(orbit_code_utils_cargo_bin::cargo_bin("orbit-code")?);
+    cmd.env("ORBIT_HOME", orbit_code_home);
     Ok(cmd)
 }
 
 #[tokio::test]
 async fn debug_clear_memories_resets_state_and_removes_memory_dir() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    let runtime =
-        StateRuntime::init(codex_home.path().to_path_buf(), "test-provider".to_string()).await?;
+    let orbit_code_home = TempDir::new()?;
+    let runtime = StateRuntime::init(
+        orbit_code_home.path().to_path_buf(),
+        "test-provider".to_string(),
+    )
+    .await?;
     drop(runtime);
 
     let thread_id = "00000000-0000-0000-0000-000000000123";
-    let db_path = state_db_path(codex_home.path());
+    let db_path = state_db_path(orbit_code_home.path());
     let pool = SqlitePool::connect(&format!("sqlite://{}", db_path.display())).await?;
 
     sqlx::query(
@@ -52,8 +55,8 @@ INSERT INTO threads (
         "#,
     )
     .bind(thread_id)
-    .bind(codex_home.path().join("session.jsonl").display().to_string())
-    .bind(codex_home.path().display().to_string())
+    .bind(orbit_code_home.path().join("session.jsonl").display().to_string())
+    .bind(orbit_code_home.path().display().to_string())
     .execute(&pool)
     .await?;
 
@@ -102,12 +105,12 @@ INSERT INTO jobs (
     .execute(&pool)
     .await?;
 
-    let memory_root = codex_home.path().join("memories");
+    let memory_root = orbit_code_home.path().join("memories");
     std::fs::create_dir_all(&memory_root)?;
     std::fs::write(memory_root.join("memory_summary.md"), "stale memory")?;
     drop(pool);
 
-    let mut cmd = codex_command(codex_home.path())?;
+    let mut cmd = orbit_code_command(orbit_code_home.path())?;
     cmd.args(["debug", "clear-memories"])
         .assert()
         .success()

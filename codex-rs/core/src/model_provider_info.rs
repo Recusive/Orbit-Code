@@ -7,11 +7,11 @@
 
 use crate::auth::AuthMode;
 use crate::error::EnvVarError;
-use codex_api::Provider as ApiProvider;
-use codex_api::provider::RetryConfig as ApiRetryConfig;
 use http::HeaderMap;
 use http::header::HeaderName;
 use http::header::HeaderValue;
+use orbit_code_api::Provider as ApiProvider;
+use orbit_code_api::provider::RetryConfig as ApiRetryConfig;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;
@@ -313,22 +313,22 @@ pub fn built_in_model_providers(
 }
 
 pub fn create_oss_provider(default_provider_port: u16, wire_api: WireApi) -> ModelProviderInfo {
-    // These CODEX_OSS_ environment variables are experimental: we may
+    // These ORBIT_OSS_ environment variables are experimental: we may
     // switch to reading values from config.toml instead.
-    let default_codex_oss_base_url = format!(
-        "http://localhost:{codex_oss_port}/v1",
-        codex_oss_port = std::env::var("CODEX_OSS_PORT")
+    let default_orbit_code_oss_base_url = format!(
+        "http://localhost:{orbit_code_oss_port}/v1",
+        orbit_code_oss_port = std::env::var("ORBIT_OSS_PORT")
             .ok()
             .filter(|value| !value.trim().is_empty())
             .and_then(|value| value.parse::<u16>().ok())
             .unwrap_or(default_provider_port)
     );
 
-    let codex_oss_base_url = std::env::var("CODEX_OSS_BASE_URL")
+    let orbit_code_oss_base_url = std::env::var("ORBIT_OSS_BASE_URL")
         .ok()
         .filter(|v| !v.trim().is_empty())
-        .unwrap_or(default_codex_oss_base_url);
-    create_oss_provider_with_base_url(&codex_oss_base_url, wire_api)
+        .unwrap_or(default_orbit_code_oss_base_url);
+    create_oss_provider_with_base_url(&orbit_code_oss_base_url, wire_api)
 }
 
 pub fn create_oss_provider_with_base_url(base_url: &str, wire_api: WireApi) -> ModelProviderInfo {

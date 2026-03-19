@@ -32,7 +32,7 @@ pub const APPLY_PATCH_TOOL_INSTRUCTIONS: &str = include_str!("../apply_patch_too
 /// `codex-arg0` to depend on `codex-core`), it is part of the "codex core"
 /// process-invocation contract between the apply-patch runtime and the arg0
 /// dispatcher.
-pub const CODEX_CORE_APPLY_PATCH_ARG1: &str = "--codex-run-as-apply-patch";
+pub const ORBIT_CORE_APPLY_PATCH_ARG1: &str = "--codex-run-as-apply-patch";
 
 #[derive(Debug, Error, PartialEq)]
 pub enum ApplyPatchError {

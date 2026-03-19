@@ -3,11 +3,11 @@ use crate::outgoing_message::OutgoingEnvelope;
 #[cfg(test)]
 use crate::outgoing_message::OutgoingMessage;
 use crate::outgoing_message::OutgoingMessageSender;
-use codex_app_server_protocol::ServerNotification;
-use codex_app_server_protocol::Thread;
-use codex_app_server_protocol::ThreadActiveFlag;
-use codex_app_server_protocol::ThreadStatus;
-use codex_app_server_protocol::ThreadStatusChangedNotification;
+use orbit_code_app_server_protocol::ServerNotification;
+use orbit_code_app_server_protocol::Thread;
+use orbit_code_app_server_protocol::ThreadActiveFlag;
+use orbit_code_app_server_protocol::ThreadStatus;
+use orbit_code_app_server_protocol::ThreadStatusChangedNotification;
 use std::collections::HashMap;
 #[cfg(test)]
 use std::path::PathBuf;
@@ -434,7 +434,7 @@ mod tests {
         manager
             .upsert_thread(test_thread(
                 NON_INTERACTIVE_THREAD_ID,
-                codex_app_server_protocol::SessionSource::AppServer,
+                orbit_code_app_server_protocol::SessionSource::AppServer,
             ))
             .await;
 
@@ -456,7 +456,7 @@ mod tests {
         manager
             .upsert_thread(test_thread(
                 INTERACTIVE_THREAD_ID,
-                codex_app_server_protocol::SessionSource::Cli,
+                orbit_code_app_server_protocol::SessionSource::Cli,
             ))
             .await;
 
@@ -565,7 +565,7 @@ mod tests {
         manager
             .upsert_thread(test_thread(
                 INTERACTIVE_THREAD_ID,
-                codex_app_server_protocol::SessionSource::Cli,
+                orbit_code_app_server_protocol::SessionSource::Cli,
             ))
             .await;
 
@@ -596,7 +596,7 @@ mod tests {
         manager
             .upsert_thread(test_thread(
                 INTERACTIVE_THREAD_ID,
-                codex_app_server_protocol::SessionSource::Cli,
+                orbit_code_app_server_protocol::SessionSource::Cli,
             ))
             .await;
 
@@ -617,7 +617,7 @@ mod tests {
         manager
             .upsert_thread(test_thread(
                 INTERACTIVE_THREAD_ID,
-                codex_app_server_protocol::SessionSource::Cli,
+                orbit_code_app_server_protocol::SessionSource::Cli,
             ))
             .await;
         manager.note_turn_started(INTERACTIVE_THREAD_ID).await;
@@ -647,7 +647,7 @@ mod tests {
         manager
             .upsert_thread(test_thread(
                 INTERACTIVE_THREAD_ID,
-                codex_app_server_protocol::SessionSource::Cli,
+                orbit_code_app_server_protocol::SessionSource::Cli,
             ))
             .await;
 
@@ -677,7 +677,7 @@ mod tests {
         manager
             .upsert_thread(test_thread(
                 INTERACTIVE_THREAD_ID,
-                codex_app_server_protocol::SessionSource::Cli,
+                orbit_code_app_server_protocol::SessionSource::Cli,
             ))
             .await;
         assert_eq!(
@@ -719,7 +719,7 @@ mod tests {
         manager
             .upsert_thread_silently(test_thread(
                 INTERACTIVE_THREAD_ID,
-                codex_app_server_protocol::SessionSource::Cli,
+                orbit_code_app_server_protocol::SessionSource::Cli,
             ))
             .await;
 
@@ -785,7 +785,10 @@ mod tests {
         notification
     }
 
-    fn test_thread(thread_id: &str, source: codex_app_server_protocol::SessionSource) -> Thread {
+    fn test_thread(
+        thread_id: &str,
+        source: orbit_code_app_server_protocol::SessionSource,
+    ) -> Thread {
         Thread {
             id: thread_id.to_string(),
             preview: String::new(),

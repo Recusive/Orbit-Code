@@ -1,9 +1,9 @@
-use codex_api::ResponsesApiRequest;
-use codex_api::common::OpenAiVerbosity;
-use codex_api::common::TextControls;
-use codex_api::create_text_param_for_request;
-use codex_protocol::config_types::ServiceTier;
-use codex_protocol::models::FunctionCallOutputPayload;
+use orbit_code_api::ResponsesApiRequest;
+use orbit_code_api::common::OpenAiVerbosity;
+use orbit_code_api::common::TextControls;
+use orbit_code_api::create_text_param_for_request;
+use orbit_code_protocol::config_types::ServiceTier;
+use orbit_code_protocol::models::FunctionCallOutputPayload;
 use pretty_assertions::assert_eq;
 
 use super::*;
@@ -77,7 +77,9 @@ fn serializes_text_schema_with_strict_format() {
 
     assert_eq!(
         format.get("name"),
-        Some(&serde_json::Value::String("codex_output_schema".into()))
+        Some(&serde_json::Value::String(
+            "orbit_code_output_schema".into()
+        ))
     );
     assert_eq!(
         format.get("type"),
@@ -201,7 +203,7 @@ fn reserializes_shell_outputs_for_function_and_custom_tool_calls() {
 #[test]
 fn tool_search_output_namespace_serializes_with_deferred_child_tools() {
     let namespace = tools::ToolSearchOutputTool::Namespace(tools::ResponsesApiNamespace {
-        name: "mcp__codex_apps__calendar".to_string(),
+        name: "mcp__orbit_code_apps__calendar".to_string(),
         description: "Plan events".to_string(),
         tools: vec![tools::ResponsesApiNamespaceTool::Function(
             tools::ResponsesApiTool {
@@ -225,7 +227,7 @@ fn tool_search_output_namespace_serializes_with_deferred_child_tools() {
         value,
         serde_json::json!({
             "type": "namespace",
-            "name": "mcp__codex_apps__calendar",
+            "name": "mcp__orbit_code_apps__calendar",
             "description": "Plan events",
             "tools": [
                 {

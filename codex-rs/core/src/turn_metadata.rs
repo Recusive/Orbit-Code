@@ -13,8 +13,8 @@ use crate::git_info::get_git_repo_root;
 use crate::git_info::get_has_changes;
 use crate::git_info::get_head_commit_hash;
 use crate::sandbox_tags::sandbox_tag;
-use codex_protocol::config_types::WindowsSandboxLevel;
-use codex_protocol::protocol::SandboxPolicy;
+use orbit_code_protocol::config_types::WindowsSandboxLevel;
+use orbit_code_protocol::protocol::SandboxPolicy;
 
 #[derive(Clone, Debug, Default)]
 struct WorkspaceGitMetadata {

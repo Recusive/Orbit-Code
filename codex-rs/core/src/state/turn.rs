@@ -8,11 +8,11 @@ use tokio::sync::Notify;
 use tokio_util::sync::CancellationToken;
 use tokio_util::task::AbortOnDropHandle;
 
-use codex_protocol::dynamic_tools::DynamicToolResponse;
-use codex_protocol::models::ResponseInputItem;
-use codex_protocol::request_permissions::RequestPermissionsResponse;
-use codex_protocol::request_user_input::RequestUserInputResponse;
-use codex_rmcp_client::ElicitationResponse;
+use orbit_code_protocol::dynamic_tools::DynamicToolResponse;
+use orbit_code_protocol::models::ResponseInputItem;
+use orbit_code_protocol::request_permissions::RequestPermissionsResponse;
+use orbit_code_protocol::request_user_input::RequestUserInputResponse;
+use orbit_code_rmcp_client::ElicitationResponse;
 use rmcp::model::RequestId;
 use tokio::sync::oneshot;
 
@@ -21,7 +21,7 @@ use crate::protocol::ReviewDecision;
 use crate::protocol::TokenUsage;
 use crate::sandboxing::merge_permission_profiles;
 use crate::tasks::SessionTask;
-use codex_protocol::models::PermissionProfile;
+use orbit_code_protocol::models::PermissionProfile;
 
 /// Metadata about the currently running turn.
 pub(crate) struct ActiveTurn {
@@ -53,7 +53,7 @@ pub(crate) struct RunningTask {
     pub(crate) handle: Arc<AbortOnDropHandle<()>>,
     pub(crate) turn_context: Arc<TurnContext>,
     // Timer recorded when the task drops to capture the full turn duration.
-    pub(crate) _timer: Option<codex_otel::Timer>,
+    pub(crate) _timer: Option<orbit_code_otel::Timer>,
 }
 
 impl ActiveTurn {

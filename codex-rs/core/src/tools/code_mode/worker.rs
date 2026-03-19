@@ -3,8 +3,8 @@ use tokio_util::sync::CancellationToken;
 use tracing::error;
 use tracing::warn;
 
-use codex_protocol::models::FunctionCallOutputPayload;
-use codex_protocol::models::ResponseInputItem;
+use orbit_code_protocol::models::FunctionCallOutputPayload;
+use orbit_code_protocol::models::ResponseInputItem;
 
 use super::ExecContext;
 use super::PUBLIC_TOOL_NAME;

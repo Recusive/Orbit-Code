@@ -1,11 +1,11 @@
 use crate::config::OtelTlsConfig;
-use codex_utils_absolute_path::AbsolutePathBuf;
 use http::Uri;
 use opentelemetry_otlp::OTEL_EXPORTER_OTLP_TIMEOUT;
 use opentelemetry_otlp::OTEL_EXPORTER_OTLP_TIMEOUT_DEFAULT;
 use opentelemetry_otlp::tonic_types::transport::Certificate as TonicCertificate;
 use opentelemetry_otlp::tonic_types::transport::ClientTlsConfig;
 use opentelemetry_otlp::tonic_types::transport::Identity as TonicIdentity;
+use orbit_code_utils_absolute_path::AbsolutePathBuf;
 use reqwest::Certificate as ReqwestCertificate;
 use reqwest::Identity as ReqwestIdentity;
 use reqwest::header::HeaderMap;

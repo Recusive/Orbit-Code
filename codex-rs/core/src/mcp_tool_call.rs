@@ -2,10 +2,10 @@ use std::collections::BTreeMap;
 use std::time::Duration;
 use std::time::Instant;
 
-use codex_app_server_protocol::McpElicitationObjectType;
-use codex_app_server_protocol::McpElicitationSchema;
-use codex_app_server_protocol::McpServerElicitationRequest;
-use codex_app_server_protocol::McpServerElicitationRequestParams;
+use orbit_code_app_server_protocol::McpElicitationObjectType;
+use orbit_code_app_server_protocol::McpElicitationSchema;
+use orbit_code_app_server_protocol::McpServerElicitationRequest;
+use orbit_code_app_server_protocol::McpServerElicitationRequestParams;
 use tracing::error;
 
 use crate::analytics_client::AppInvocation;
@@ -25,7 +25,7 @@ use crate::guardian::GuardianMcpAnnotations;
 use crate::guardian::guardian_approval_request_to_json;
 use crate::guardian::review_approval_request;
 use crate::guardian::routes_approval_to_guardian;
-use crate::mcp::CODEX_APPS_MCP_SERVER_NAME;
+use crate::mcp::ORBIT_APPS_MCP_SERVER_NAME;
 use crate::mcp_tool_approval_templates::RenderedMcpToolApprovalParam;
 use crate::mcp_tool_approval_templates::render_mcp_tool_approval_template;
 use crate::protocol::EventMsg;
@@ -33,18 +33,18 @@ use crate::protocol::McpInvocation;
 use crate::protocol::McpToolCallBeginEvent;
 use crate::protocol::McpToolCallEndEvent;
 use crate::state_db;
-use codex_protocol::mcp::CallToolResult;
-use codex_protocol::openai_models::InputModality;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::ReviewDecision;
-use codex_protocol::protocol::SandboxPolicy;
-use codex_protocol::request_user_input::RequestUserInputAnswer;
-use codex_protocol::request_user_input::RequestUserInputArgs;
-use codex_protocol::request_user_input::RequestUserInputQuestion;
-use codex_protocol::request_user_input::RequestUserInputQuestionOption;
-use codex_protocol::request_user_input::RequestUserInputResponse;
-use codex_rmcp_client::ElicitationAction;
-use codex_rmcp_client::ElicitationResponse;
+use orbit_code_protocol::mcp::CallToolResult;
+use orbit_code_protocol::openai_models::InputModality;
+use orbit_code_protocol::protocol::AskForApproval;
+use orbit_code_protocol::protocol::ReviewDecision;
+use orbit_code_protocol::protocol::SandboxPolicy;
+use orbit_code_protocol::request_user_input::RequestUserInputAnswer;
+use orbit_code_protocol::request_user_input::RequestUserInputArgs;
+use orbit_code_protocol::request_user_input::RequestUserInputQuestion;
+use orbit_code_protocol::request_user_input::RequestUserInputQuestionOption;
+use orbit_code_protocol::request_user_input::RequestUserInputResponse;
+use orbit_code_rmcp_client::ElicitationAction;
+use orbit_code_rmcp_client::ElicitationResponse;
 use rmcp::model::ToolAnnotations;
 use serde::Serialize;
 use std::path::Path;
@@ -83,7 +83,7 @@ pub(crate) async fn handle_mcp_tool_call(
 
     let metadata =
         lookup_mcp_tool_metadata(sess.as_ref(), turn_context.as_ref(), &server, &tool_name).await;
-    let app_tool_policy = if server == CODEX_APPS_MCP_SERVER_NAME {
+    let app_tool_policy = if server == ORBIT_APPS_MCP_SERVER_NAME {
         connectors::app_tool_policy(
             &turn_context.config,
             metadata
@@ -101,7 +101,7 @@ pub(crate) async fn handle_mcp_tool_call(
         connectors::AppToolPolicy::default()
     };
 
-    if server == CODEX_APPS_MCP_SERVER_NAME && !app_tool_policy.enabled {
+    if server == ORBIT_APPS_MCP_SERVER_NAME && !app_tool_policy.enabled {
         let result = notify_mcp_tool_call_skip(
             sess.as_ref(),
             turn_context.as_ref(),
@@ -175,7 +175,7 @@ pub(crate) async fn handle_mcp_tool_call(
                     tool_call_end_event.clone(),
                 )
                 .await;
-                maybe_track_codex_app_used(
+                maybe_track_orbit_code_app_used(
                     sess.as_ref(),
                     turn_context.as_ref(),
                     &server,
@@ -262,7 +262,8 @@ pub(crate) async fn handle_mcp_tool_call(
         tool_call_end_event.clone(),
     )
     .await;
-    maybe_track_codex_app_used(sess.as_ref(), turn_context.as_ref(), &server, &tool_name).await;
+    maybe_track_orbit_code_app_used(sess.as_ref(), turn_context.as_ref(), &server, &tool_name)
+        .await;
 
     let status = if result.is_ok() { "ok" } else { "error" };
     turn_context
@@ -328,13 +329,13 @@ struct McpAppUsageMetadata {
     app_name: Option<String>,
 }
 
-async fn maybe_track_codex_app_used(
+async fn maybe_track_orbit_code_app_used(
     sess: &Session,
     turn_context: &TurnContext,
     server: &str,
     tool_name: &str,
 ) {
-    if server != CODEX_APPS_MCP_SERVER_NAME {
+    if server != ORBIT_APPS_MCP_SERVER_NAME {
         return;
     }
     let metadata = lookup_mcp_app_usage_metadata(sess, server, tool_name).await;
@@ -384,23 +385,24 @@ pub(crate) struct McpToolApprovalMetadata {
     connector_description: Option<String>,
     tool_title: Option<String>,
     tool_description: Option<String>,
-    codex_apps_meta: Option<serde_json::Map<String, serde_json::Value>>,
+    orbit_code_apps_meta: Option<serde_json::Map<String, serde_json::Value>>,
 }
 
-const MCP_TOOL_CODEX_APPS_META_KEY: &str = "_codex_apps";
+const MCP_TOOL_ORBIT_APPS_META_KEY: &str = "_orbit_code_apps";
 
 fn build_mcp_tool_call_request_meta(
     server: &str,
     metadata: Option<&McpToolApprovalMetadata>,
 ) -> Option<serde_json::Value> {
-    if server != CODEX_APPS_MCP_SERVER_NAME {
+    if server != ORBIT_APPS_MCP_SERVER_NAME {
         return None;
     }
 
-    let codex_apps_meta = metadata.and_then(|metadata| metadata.codex_apps_meta.as_ref())?;
+    let orbit_code_apps_meta =
+        metadata.and_then(|metadata| metadata.orbit_code_apps_meta.as_ref())?;
 
     Some(serde_json::json!({
-        MCP_TOOL_CODEX_APPS_META_KEY: codex_apps_meta,
+        MCP_TOOL_ORBIT_APPS_META_KEY: orbit_code_apps_meta,
     }))
 }
 
@@ -427,10 +429,10 @@ pub(crate) const MCP_TOOL_APPROVAL_ACCEPT_FOR_SESSION: &str = "Allow for this se
 // RequestUserInput compatibility path. That legacy MCP prompt has allow/cancel labels but no
 // real "Decline" answer, so this lets guardian denials round-trip distinctly from user cancel.
 // This is not a user-facing option.
-pub(crate) const MCP_TOOL_APPROVAL_DECLINE_SYNTHETIC: &str = "__codex_mcp_decline__";
+pub(crate) const MCP_TOOL_APPROVAL_DECLINE_SYNTHETIC: &str = "__orbit_code_mcp_decline__";
 const MCP_TOOL_APPROVAL_ACCEPT_AND_REMEMBER: &str = "Allow and don't ask me again";
 const MCP_TOOL_APPROVAL_CANCEL: &str = "Cancel";
-const MCP_TOOL_APPROVAL_KIND_KEY: &str = "codex_approval_kind";
+const MCP_TOOL_APPROVAL_KIND_KEY: &str = "orbit_code_approval_kind";
 const MCP_TOOL_APPROVAL_KIND_MCP_TOOL_CALL: &str = "mcp_tool_call";
 const MCP_TOOL_APPROVAL_PERSIST_KEY: &str = "persist";
 const MCP_TOOL_APPROVAL_PERSIST_SESSION: &str = "session";
@@ -669,7 +671,7 @@ fn session_mcp_tool_approval_key(
     }
 
     let connector_id = metadata.and_then(|metadata| metadata.connector_id.clone());
-    if invocation.server == CODEX_APPS_MCP_SERVER_NAME && connector_id.is_none() {
+    if invocation.server == ORBIT_APPS_MCP_SERVER_NAME && connector_id.is_none() {
         return None;
     }
 
@@ -685,7 +687,7 @@ fn persistent_mcp_tool_approval_key(
     metadata: Option<&McpToolApprovalMetadata>,
     approval_mode: AppToolApproval,
 ) -> Option<McpToolApprovalKey> {
-    if invocation.server != CODEX_APPS_MCP_SERVER_NAME {
+    if invocation.server != ORBIT_APPS_MCP_SERVER_NAME {
         return None;
     }
 
@@ -753,7 +755,7 @@ pub(crate) async fn lookup_mcp_tool_metadata(
     let tool_info = tools
         .into_values()
         .find(|tool_info| tool_info.server_name == server && tool_info.tool.name == tool_name)?;
-    let connector_description = if server == CODEX_APPS_MCP_SERVER_NAME {
+    let connector_description = if server == ORBIT_APPS_MCP_SERVER_NAME {
         let connectors = match connectors::list_cached_accessible_connectors_from_mcp_tools(
             turn_context.config.as_ref(),
         )
@@ -784,11 +786,11 @@ pub(crate) async fn lookup_mcp_tool_metadata(
         connector_description,
         tool_title: tool_info.tool.title,
         tool_description: tool_info.tool.description.map(std::borrow::Cow::into_owned),
-        codex_apps_meta: tool_info
+        orbit_code_apps_meta: tool_info
             .tool
             .meta
             .as_ref()
-            .and_then(|meta| meta.get(MCP_TOOL_CODEX_APPS_META_KEY))
+            .and_then(|meta| meta.get(MCP_TOOL_ORBIT_APPS_META_KEY))
             .and_then(serde_json::Value::as_object)
             .cloned(),
     })
@@ -875,7 +877,7 @@ fn build_mcp_tool_approval_fallback_message(
         .filter(|name| !name.is_empty())
         .map(ToString::to_string)
         .unwrap_or_else(|| {
-            if server == CODEX_APPS_MCP_SERVER_NAME {
+            if server == ORBIT_APPS_MCP_SERVER_NAME {
                 "this app".to_string()
             } else {
                 format!("the {server} MCP server")
@@ -987,7 +989,7 @@ fn build_mcp_tool_approval_elicitation_meta(
                 serde_json::Value::String(tool_description.clone()),
             );
         }
-        if server == CODEX_APPS_MCP_SERVER_NAME
+        if server == ORBIT_APPS_MCP_SERVER_NAME
             && (metadata.connector_id.is_some()
                 || metadata.connector_name.is_some()
                 || metadata.connector_description.is_some())
@@ -1219,9 +1221,12 @@ async fn maybe_persist_mcp_tool_approval(
     };
     let tool_name = key.tool_name.clone();
 
-    if let Err(err) =
-        persist_codex_app_tool_approval(&turn_context.config.codex_home, &connector_id, &tool_name)
-            .await
+    if let Err(err) = persist_orbit_code_app_tool_approval(
+        &turn_context.config.orbit_code_home,
+        &connector_id,
+        &tool_name,
+    )
+    .await
     {
         error!(
             error = %err,
@@ -1237,12 +1242,12 @@ async fn maybe_persist_mcp_tool_approval(
     remember_mcp_tool_approval(sess, key).await;
 }
 
-async fn persist_codex_app_tool_approval(
-    codex_home: &Path,
+async fn persist_orbit_code_app_tool_approval(
+    orbit_code_home: &Path,
     connector_id: &str,
     tool_name: &str,
 ) -> anyhow::Result<()> {
-    ConfigEditsBuilder::new(codex_home)
+    ConfigEditsBuilder::new(orbit_code_home)
         .with_edits([ConfigEdit::SetPath {
             segments: vec![
                 "apps".to_string(),

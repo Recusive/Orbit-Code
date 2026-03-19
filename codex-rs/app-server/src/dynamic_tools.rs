@@ -1,9 +1,9 @@
-use codex_app_server_protocol::DynamicToolCallOutputContentItem;
-use codex_app_server_protocol::DynamicToolCallResponse;
-use codex_core::CodexThread;
-use codex_protocol::dynamic_tools::DynamicToolCallOutputContentItem as CoreDynamicToolCallOutputContentItem;
-use codex_protocol::dynamic_tools::DynamicToolResponse as CoreDynamicToolResponse;
-use codex_protocol::protocol::Op;
+use orbit_code_app_server_protocol::DynamicToolCallOutputContentItem;
+use orbit_code_app_server_protocol::DynamicToolCallResponse;
+use orbit_code_core::CodexThread;
+use orbit_code_protocol::dynamic_tools::DynamicToolCallOutputContentItem as CoreDynamicToolCallOutputContentItem;
+use orbit_code_protocol::dynamic_tools::DynamicToolResponse as CoreDynamicToolResponse;
+use orbit_code_protocol::protocol::Op;
 use std::sync::Arc;
 use tokio::sync::oneshot;
 use tracing::error;

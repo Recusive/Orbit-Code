@@ -9,11 +9,11 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use async_channel::unbounded;
-use codex_protocol::mcp::Resource;
-use codex_protocol::mcp::ResourceTemplate;
-use codex_protocol::mcp::Tool;
-use codex_protocol::protocol::McpListToolsResponseEvent;
-use codex_protocol::protocol::SandboxPolicy;
+use orbit_code_protocol::mcp::Resource;
+use orbit_code_protocol::mcp::ResourceTemplate;
+use orbit_code_protocol::mcp::Tool;
+use orbit_code_protocol::protocol::McpListToolsResponseEvent;
+use orbit_code_protocol::protocol::SandboxPolicy;
 use serde_json::Value;
 
 use crate::AuthManager;
@@ -24,14 +24,14 @@ use crate::config::types::McpServerTransportConfig;
 use crate::mcp::auth::compute_auth_statuses;
 use crate::mcp_connection_manager::McpConnectionManager;
 use crate::mcp_connection_manager::SandboxState;
-use crate::mcp_connection_manager::codex_apps_tools_cache_key;
+use crate::mcp_connection_manager::orbit_code_apps_tools_cache_key;
 use crate::plugins::PluginCapabilitySummary;
 use crate::plugins::PluginsManager;
 
 const MCP_TOOL_NAME_PREFIX: &str = "mcp";
 const MCP_TOOL_NAME_DELIMITER: &str = "__";
-pub(crate) const CODEX_APPS_MCP_SERVER_NAME: &str = "codex_apps";
-const CODEX_CONNECTORS_TOKEN_ENV_VAR: &str = "CODEX_CONNECTORS_TOKEN";
+pub(crate) const ORBIT_APPS_MCP_SERVER_NAME: &str = "orbit_code_apps";
+const ORBIT_CONNECTORS_TOKEN_ENV_VAR: &str = "ORBIT_CONNECTORS_TOKEN";
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct ToolPluginProvenance {
@@ -91,16 +91,16 @@ impl ToolPluginProvenance {
     }
 }
 
-fn codex_apps_mcp_bearer_token_env_var() -> Option<String> {
-    match env::var(CODEX_CONNECTORS_TOKEN_ENV_VAR) {
-        Ok(value) if !value.trim().is_empty() => Some(CODEX_CONNECTORS_TOKEN_ENV_VAR.to_string()),
+fn orbit_code_apps_mcp_bearer_token_env_var() -> Option<String> {
+    match env::var(ORBIT_CONNECTORS_TOKEN_ENV_VAR) {
+        Ok(value) if !value.trim().is_empty() => Some(ORBIT_CONNECTORS_TOKEN_ENV_VAR.to_string()),
         Ok(_) => None,
         Err(env::VarError::NotPresent) => None,
-        Err(env::VarError::NotUnicode(_)) => Some(CODEX_CONNECTORS_TOKEN_ENV_VAR.to_string()),
+        Err(env::VarError::NotUnicode(_)) => Some(ORBIT_CONNECTORS_TOKEN_ENV_VAR.to_string()),
     }
 }
 
-fn codex_apps_mcp_bearer_token(auth: Option<&CodexAuth>) -> Option<String> {
+fn orbit_code_apps_mcp_bearer_token(auth: Option<&CodexAuth>) -> Option<String> {
     let token = auth.and_then(|auth| auth.get_token().ok())?;
     let token = token.trim();
     if token.is_empty() {
@@ -110,9 +110,9 @@ fn codex_apps_mcp_bearer_token(auth: Option<&CodexAuth>) -> Option<String> {
     }
 }
 
-fn codex_apps_mcp_http_headers(auth: Option<&CodexAuth>) -> Option<HashMap<String, String>> {
+fn orbit_code_apps_mcp_http_headers(auth: Option<&CodexAuth>) -> Option<HashMap<String, String>> {
     let mut headers = HashMap::new();
-    if let Some(token) = codex_apps_mcp_bearer_token(auth) {
+    if let Some(token) = orbit_code_apps_mcp_bearer_token(auth) {
         headers.insert("Authorization".to_string(), format!("Bearer {token}"));
     }
     if let Some(account_id) = auth.and_then(CodexAuth::get_account_id) {
@@ -125,7 +125,7 @@ fn codex_apps_mcp_http_headers(auth: Option<&CodexAuth>) -> Option<HashMap<Strin
     }
 }
 
-fn normalize_codex_apps_base_url(base_url: &str) -> String {
+fn normalize_orbit_code_apps_base_url(base_url: &str) -> String {
     let mut base_url = base_url.trim_end_matches('/').to_string();
     if (base_url.starts_with("https://chatgpt.com")
         || base_url.starts_with("https://chat.openai.com"))
@@ -136,8 +136,8 @@ fn normalize_codex_apps_base_url(base_url: &str) -> String {
     base_url
 }
 
-fn codex_apps_mcp_url_for_base_url(base_url: &str) -> String {
-    let base_url = normalize_codex_apps_base_url(base_url);
+fn orbit_code_apps_mcp_url_for_base_url(base_url: &str) -> String {
+    let base_url = normalize_orbit_code_apps_base_url(base_url);
     if base_url.contains("/backend-api") {
         format!("{base_url}/wham/apps")
     } else if base_url.contains("/api/codex") {
@@ -147,18 +147,18 @@ fn codex_apps_mcp_url_for_base_url(base_url: &str) -> String {
     }
 }
 
-pub(crate) fn codex_apps_mcp_url(config: &Config) -> String {
-    codex_apps_mcp_url_for_base_url(&config.chatgpt_base_url)
+pub(crate) fn orbit_code_apps_mcp_url(config: &Config) -> String {
+    orbit_code_apps_mcp_url_for_base_url(&config.chatgpt_base_url)
 }
 
-fn codex_apps_mcp_server_config(config: &Config, auth: Option<&CodexAuth>) -> McpServerConfig {
-    let bearer_token_env_var = codex_apps_mcp_bearer_token_env_var();
+fn orbit_code_apps_mcp_server_config(config: &Config, auth: Option<&CodexAuth>) -> McpServerConfig {
+    let bearer_token_env_var = orbit_code_apps_mcp_bearer_token_env_var();
     let http_headers = if bearer_token_env_var.is_some() {
         None
     } else {
-        codex_apps_mcp_http_headers(auth)
+        orbit_code_apps_mcp_http_headers(auth)
     };
-    let url = codex_apps_mcp_url(config);
+    let url = orbit_code_apps_mcp_url(config);
 
     McpServerConfig {
         transport: McpServerTransportConfig::StreamableHttp {
@@ -179,7 +179,7 @@ fn codex_apps_mcp_server_config(config: &Config, auth: Option<&CodexAuth>) -> Mc
     }
 }
 
-pub(crate) fn with_codex_apps_mcp(
+pub(crate) fn with_orbit_code_apps_mcp(
     mut servers: HashMap<String, McpServerConfig>,
     connectors_enabled: bool,
     auth: Option<&CodexAuth>,
@@ -187,11 +187,11 @@ pub(crate) fn with_codex_apps_mcp(
 ) -> HashMap<String, McpServerConfig> {
     if connectors_enabled {
         servers.insert(
-            CODEX_APPS_MCP_SERVER_NAME.to_string(),
-            codex_apps_mcp_server_config(config, auth),
+            ORBIT_APPS_MCP_SERVER_NAME.to_string(),
+            orbit_code_apps_mcp_server_config(config, auth),
         );
     } else {
-        servers.remove(CODEX_APPS_MCP_SERVER_NAME);
+        servers.remove(ORBIT_APPS_MCP_SERVER_NAME);
     }
     servers
 }
@@ -241,7 +241,7 @@ fn effective_mcp_servers(
     plugins_manager: &PluginsManager,
 ) -> HashMap<String, McpServerConfig> {
     let servers = configured_mcp_servers(config, plugins_manager);
-    with_codex_apps_mcp(
+    with_orbit_code_apps_mcp(
         servers,
         config.features.apps_enabled_for_auth(auth),
         auth,
@@ -251,12 +251,14 @@ fn effective_mcp_servers(
 
 pub async fn collect_mcp_snapshot(config: &Config) -> McpListToolsResponseEvent {
     let auth_manager = AuthManager::shared(
-        config.codex_home.clone(),
-        /*enable_codex_api_key_env*/ false,
+        config.orbit_code_home.clone(),
+        /*enable_orbit_code_api_key_env*/ false,
         config.cli_auth_credentials_store_mode,
     );
     let auth = auth_manager.auth().await;
-    let mcp_manager = McpManager::new(Arc::new(PluginsManager::new(config.codex_home.clone())));
+    let mcp_manager = McpManager::new(Arc::new(PluginsManager::new(
+        config.orbit_code_home.clone(),
+    )));
     let mcp_servers = mcp_manager.effective_servers(config, auth.as_ref());
     let tool_plugin_provenance = mcp_manager.tool_plugin_provenance(config);
     if mcp_servers.is_empty() {
@@ -277,7 +279,7 @@ pub async fn collect_mcp_snapshot(config: &Config) -> McpListToolsResponseEvent 
     // Use ReadOnly sandbox policy for MCP snapshot collection (safest default)
     let sandbox_state = SandboxState {
         sandbox_policy: SandboxPolicy::new_read_only_policy(),
-        codex_linux_sandbox_exe: config.codex_linux_sandbox_exe.clone(),
+        orbit_code_linux_sandbox_exe: config.orbit_code_linux_sandbox_exe.clone(),
         sandbox_cwd: env::current_dir().unwrap_or_else(|_| PathBuf::from("/")),
         use_legacy_landlock: config.features.use_legacy_landlock(),
     };
@@ -289,8 +291,8 @@ pub async fn collect_mcp_snapshot(config: &Config) -> McpListToolsResponseEvent 
         &config.permissions.approval_policy,
         tx_event,
         sandbox_state,
-        config.codex_home.clone(),
-        codex_apps_tools_cache_key(auth.as_ref()),
+        config.orbit_code_home.clone(),
+        orbit_code_apps_tools_cache_key(auth.as_ref()),
         tool_plugin_provenance,
     )
     .await;

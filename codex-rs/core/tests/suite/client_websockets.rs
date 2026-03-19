@@ -1,34 +1,4 @@
 #![allow(clippy::expect_used, clippy::unwrap_used)]
-use codex_api::WS_REQUEST_HEADER_TRACEPARENT_CLIENT_METADATA_KEY;
-use codex_api::WS_REQUEST_HEADER_TRACESTATE_CLIENT_METADATA_KEY;
-use codex_core::CodexAuth;
-use codex_core::ModelClient;
-use codex_core::ModelClientSession;
-use codex_core::ModelProviderInfo;
-use codex_core::Prompt;
-use codex_core::ResponseEvent;
-use codex_core::WireApi;
-use codex_core::X_RESPONSESAPI_INCLUDE_TIMING_METRICS_HEADER;
-use codex_core::features::Feature;
-use codex_otel::SessionTelemetry;
-use codex_otel::TelemetryAuthMode;
-use codex_otel::current_span_w3c_trace_context;
-use codex_otel::metrics::MetricsClient;
-use codex_otel::metrics::MetricsConfig;
-use codex_protocol::ThreadId;
-use codex_protocol::account::PlanType;
-use codex_protocol::config_types::ReasoningSummary;
-use codex_protocol::config_types::ServiceTier;
-use codex_protocol::models::BaseInstructions;
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::openai_models::ModelInfo;
-use codex_protocol::openai_models::ReasoningEffort as ReasoningEffortConfig;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::W3cTraceContext;
-use codex_protocol::user_input::UserInput;
 use core_test_support::load_default_config_for_test;
 use core_test_support::responses::WebSocketConnectionConfig;
 use core_test_support::responses::WebSocketTestServer;
@@ -43,6 +13,36 @@ use core_test_support::tracing::install_test_tracing;
 use core_test_support::wait_for_event;
 use futures::StreamExt;
 use opentelemetry_sdk::metrics::InMemoryMetricExporter;
+use orbit_code_api::WS_REQUEST_HEADER_TRACEPARENT_CLIENT_METADATA_KEY;
+use orbit_code_api::WS_REQUEST_HEADER_TRACESTATE_CLIENT_METADATA_KEY;
+use orbit_code_core::CodexAuth;
+use orbit_code_core::ModelClient;
+use orbit_code_core::ModelClientSession;
+use orbit_code_core::ModelProviderInfo;
+use orbit_code_core::Prompt;
+use orbit_code_core::ResponseEvent;
+use orbit_code_core::WireApi;
+use orbit_code_core::X_RESPONSESAPI_INCLUDE_TIMING_METRICS_HEADER;
+use orbit_code_core::features::Feature;
+use orbit_code_otel::SessionTelemetry;
+use orbit_code_otel::TelemetryAuthMode;
+use orbit_code_otel::current_span_w3c_trace_context;
+use orbit_code_otel::metrics::MetricsClient;
+use orbit_code_otel::metrics::MetricsConfig;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::account::PlanType;
+use orbit_code_protocol::config_types::ReasoningSummary;
+use orbit_code_protocol::config_types::ServiceTier;
+use orbit_code_protocol::models::BaseInstructions;
+use orbit_code_protocol::models::ContentItem;
+use orbit_code_protocol::models::ResponseItem;
+use orbit_code_protocol::openai_models::ModelInfo;
+use orbit_code_protocol::openai_models::ReasoningEffort as ReasoningEffortConfig;
+use orbit_code_protocol::protocol::EventMsg;
+use orbit_code_protocol::protocol::Op;
+use orbit_code_protocol::protocol::SessionSource;
+use orbit_code_protocol::protocol::W3cTraceContext;
+use orbit_code_protocol::user_input::UserInput;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use std::sync::Arc;
@@ -83,7 +83,7 @@ fn assert_request_trace_matches(body: &serde_json::Value, expected_trace: &W3cTr
 }
 
 struct WebsocketTestHarness {
-    _codex_home: TempDir,
+    _orbit_code_home: TempDir,
     client: ModelClient,
     conversation_id: ThreadId,
     model_info: ModelInfo,
@@ -1715,8 +1715,8 @@ async fn websocket_harness_with_provider_options(
     provider: ModelProviderInfo,
     runtime_metrics_enabled: bool,
 ) -> WebsocketTestHarness {
-    let codex_home = TempDir::new().unwrap();
-    let mut config = load_default_config_for_test(&codex_home).await;
+    let orbit_code_home = TempDir::new().unwrap();
+    let mut config = load_default_config_for_test(&orbit_code_home).await;
     config.model = Some(MODEL.to_string());
     if runtime_metrics_enabled {
         config
@@ -1725,10 +1725,11 @@ async fn websocket_harness_with_provider_options(
             .expect("test config should allow feature update");
     }
     let config = Arc::new(config);
-    let model_info = codex_core::test_support::construct_model_info_offline(MODEL, &config);
+    let model_info = orbit_code_core::test_support::construct_model_info_offline(MODEL, &config);
     let conversation_id = ThreadId::new();
-    let auth_manager =
-        codex_core::test_support::auth_manager_from_auth(CodexAuth::from_api_key("Test API Key"));
+    let auth_manager = orbit_code_core::test_support::auth_manager_from_auth(
+        CodexAuth::from_api_key("Test API Key"),
+    );
     let exporter = InMemoryMetricExporter::default();
     let metrics = MetricsClient::new(
         MetricsConfig::in_memory("test", "codex-core", env!("CARGO_PKG_VERSION"), exporter)
@@ -1762,7 +1763,7 @@ async fn websocket_harness_with_provider_options(
     );
 
     WebsocketTestHarness {
-        _codex_home: codex_home,
+        _orbit_code_home: orbit_code_home,
         client,
         conversation_id,
         model_info,

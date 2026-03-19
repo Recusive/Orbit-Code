@@ -3,9 +3,9 @@ use crate::parse_command::parse_command;
 use crate::tools::context::ToolInvocation;
 use crate::tools::context::ToolPayload;
 use crate::tools::handlers::unified_exec::ExecCommandArgs;
-use codex_protocol::models::ShellCommandToolCallParams;
-use codex_protocol::models::ShellToolCallParams;
-use codex_protocol::parse_command::ParsedCommand;
+use orbit_code_protocol::models::ShellCommandToolCallParams;
+use orbit_code_protocol::models::ShellToolCallParams;
+use orbit_code_protocol::parse_command::ParsedCommand;
 use std::path::PathBuf;
 
 const MEMORIES_USAGE_METRIC: &str = "codex.memories.usage";

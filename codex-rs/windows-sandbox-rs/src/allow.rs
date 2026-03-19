@@ -95,8 +95,8 @@ pub fn compute_allow_paths(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use codex_protocol::protocol::SandboxPolicy;
-    use codex_utils_absolute_path::AbsolutePathBuf;
+    use orbit_code_protocol::protocol::SandboxPolicy;
+    use orbit_code_utils_absolute_path::AbsolutePathBuf;
     use std::fs;
     use tempfile::TempDir;
 
@@ -212,12 +212,12 @@ mod tests {
     }
 
     #[test]
-    fn denies_codex_and_agents_inside_writable_root() {
+    fn denies_orbit_code_and_agents_inside_writable_root() {
         let tmp = TempDir::new().expect("tempdir");
         let command_cwd = tmp.path().join("workspace");
-        let codex_dir = command_cwd.join(".codex");
+        let orbit_code_dir = command_cwd.join(".codex");
         let agents_dir = command_cwd.join(".agents");
-        let _ = fs::create_dir_all(&codex_dir);
+        let _ = fs::create_dir_all(&orbit_code_dir);
         let _ = fs::create_dir_all(&agents_dir);
 
         let policy = SandboxPolicy::WorkspaceWrite {
@@ -233,7 +233,7 @@ mod tests {
             .into_iter()
             .collect();
         let expected_deny: HashSet<PathBuf> = [
-            dunce::canonicalize(&codex_dir).unwrap(),
+            dunce::canonicalize(&orbit_code_dir).unwrap(),
             dunce::canonicalize(&agents_dir).unwrap(),
         ]
         .into_iter()

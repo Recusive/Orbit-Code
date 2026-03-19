@@ -2,26 +2,26 @@ use super::*;
 use crate::mcp_tool_call::MCP_TOOL_APPROVAL_DECLINE_SYNTHETIC;
 use crate::mcp_tool_call::MCP_TOOL_APPROVAL_QUESTION_ID_PREFIX;
 use async_channel::bounded;
-use codex_protocol::config_types::ApprovalsReviewer;
-use codex_protocol::models::NetworkPermissions;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::protocol::AgentStatus;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::ExecApprovalRequestEvent;
-use codex_protocol::protocol::GuardianAssessmentEvent;
-use codex_protocol::protocol::GuardianAssessmentStatus;
-use codex_protocol::protocol::McpInvocation;
-use codex_protocol::protocol::RawResponseItemEvent;
-use codex_protocol::protocol::ReviewDecision;
-use codex_protocol::protocol::TurnAbortReason;
-use codex_protocol::protocol::TurnAbortedEvent;
-use codex_protocol::request_permissions::RequestPermissionProfile;
-use codex_protocol::request_permissions::RequestPermissionsEvent;
-use codex_protocol::request_permissions::RequestPermissionsResponse;
-use codex_protocol::request_user_input::RequestUserInputAnswer;
-use codex_protocol::request_user_input::RequestUserInputEvent;
-use codex_protocol::request_user_input::RequestUserInputQuestion;
+use orbit_code_protocol::config_types::ApprovalsReviewer;
+use orbit_code_protocol::models::NetworkPermissions;
+use orbit_code_protocol::models::ResponseItem;
+use orbit_code_protocol::protocol::AgentStatus;
+use orbit_code_protocol::protocol::AskForApproval;
+use orbit_code_protocol::protocol::EventMsg;
+use orbit_code_protocol::protocol::ExecApprovalRequestEvent;
+use orbit_code_protocol::protocol::GuardianAssessmentEvent;
+use orbit_code_protocol::protocol::GuardianAssessmentStatus;
+use orbit_code_protocol::protocol::McpInvocation;
+use orbit_code_protocol::protocol::RawResponseItemEvent;
+use orbit_code_protocol::protocol::ReviewDecision;
+use orbit_code_protocol::protocol::TurnAbortReason;
+use orbit_code_protocol::protocol::TurnAbortedEvent;
+use orbit_code_protocol::request_permissions::RequestPermissionProfile;
+use orbit_code_protocol::request_permissions::RequestPermissionsEvent;
+use orbit_code_protocol::request_permissions::RequestPermissionsResponse;
+use orbit_code_protocol::request_user_input::RequestUserInputAnswer;
+use orbit_code_protocol::request_user_input::RequestUserInputEvent;
+use orbit_code_protocol::request_user_input::RequestUserInputQuestion;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use std::collections::HashMap;
@@ -126,7 +126,7 @@ async fn forward_ops_preserves_submission_trace_context() {
     let submission = Submission {
         id: "sub-1".to_string(),
         op: Op::Interrupt,
-        trace: Some(codex_protocol::protocol::W3cTraceContext {
+        trace: Some(orbit_code_protocol::protocol::W3cTraceContext {
             traceparent: Some(
                 "00-1234567890abcdef1234567890abcdef-1234567890abcdef-01".to_string(),
             ),

@@ -18,24 +18,24 @@ use axum::http::StatusCode;
 use axum::http::Uri;
 use axum::http::header::AUTHORIZATION;
 use axum::routing::get;
-use codex_app_server_protocol::AppBranding;
-use codex_app_server_protocol::AppInfo;
-use codex_app_server_protocol::AppListUpdatedNotification;
-use codex_app_server_protocol::AppMetadata;
-use codex_app_server_protocol::AppReview;
-use codex_app_server_protocol::AppScreenshot;
-use codex_app_server_protocol::AppsListParams;
-use codex_app_server_protocol::AppsListResponse;
-use codex_app_server_protocol::AuthMode;
-use codex_app_server_protocol::JSONRPCError;
-use codex_app_server_protocol::JSONRPCResponse;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::ServerNotification;
-use codex_app_server_protocol::ThreadStartParams;
-use codex_app_server_protocol::ThreadStartResponse;
-use codex_core::auth::AuthCredentialsStoreMode;
-use codex_core::auth::AuthDotJson;
-use codex_core::auth::save_auth;
+use orbit_code_app_server_protocol::AppBranding;
+use orbit_code_app_server_protocol::AppInfo;
+use orbit_code_app_server_protocol::AppListUpdatedNotification;
+use orbit_code_app_server_protocol::AppMetadata;
+use orbit_code_app_server_protocol::AppReview;
+use orbit_code_app_server_protocol::AppScreenshot;
+use orbit_code_app_server_protocol::AppsListParams;
+use orbit_code_app_server_protocol::AppsListResponse;
+use orbit_code_app_server_protocol::AuthMode;
+use orbit_code_app_server_protocol::JSONRPCError;
+use orbit_code_app_server_protocol::JSONRPCResponse;
+use orbit_code_app_server_protocol::RequestId;
+use orbit_code_app_server_protocol::ServerNotification;
+use orbit_code_app_server_protocol::ThreadStartParams;
+use orbit_code_app_server_protocol::ThreadStartResponse;
+use orbit_code_core::auth::AuthCredentialsStoreMode;
+use orbit_code_core::auth::AuthDotJson;
+use orbit_code_core::auth::save_auth;
 use pretty_assertions::assert_eq;
 use rmcp::handler::server::ServerHandler;
 use rmcp::model::JsonObject;
@@ -58,8 +58,8 @@ const DEFAULT_TIMEOUT: Duration = Duration::from_secs(10);
 
 #[tokio::test]
 async fn list_apps_returns_empty_when_connectors_disabled() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let orbit_code_home = TempDir::new()?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
 
     timeout(DEFAULT_TIMEOUT, mcp.initialize()).await??;
 
@@ -106,10 +106,10 @@ async fn list_apps_returns_empty_with_api_key_auth() -> Result<()> {
     let (server_url, server_handle) =
         start_apps_server_with_delays(connectors, tools, Duration::ZERO, Duration::ZERO).await?;
 
-    let codex_home = TempDir::new()?;
-    write_connectors_config(codex_home.path(), &server_url)?;
+    let orbit_code_home = TempDir::new()?;
+    write_connectors_config(orbit_code_home.path(), &server_url)?;
     save_auth(
-        codex_home.path(),
+        orbit_code_home.path(),
         &AuthDotJson {
             auth_mode: Some(AuthMode::ApiKey),
             openai_api_key: Some("test-api-key".to_string()),
@@ -119,7 +119,7 @@ async fn list_apps_returns_empty_with_api_key_auth() -> Result<()> {
         AuthCredentialsStoreMode::File,
     )?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_TIMEOUT, mcp.initialize()).await??;
 
     let request_id = mcp
@@ -167,10 +167,10 @@ async fn list_apps_uses_thread_feature_flag_when_thread_id_is_provided() -> Resu
     let (server_url, server_handle) =
         start_apps_server_with_delays(connectors, tools, Duration::ZERO, Duration::ZERO).await?;
 
-    let codex_home = TempDir::new()?;
-    write_connectors_config(codex_home.path(), &server_url)?;
+    let orbit_code_home = TempDir::new()?;
+    write_connectors_config(orbit_code_home.path(), &server_url)?;
     write_chatgpt_auth(
-        codex_home.path(),
+        orbit_code_home.path(),
         ChatGptAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
@@ -178,7 +178,7 @@ async fn list_apps_uses_thread_feature_flag_when_thread_id_is_provided() -> Resu
         AuthCredentialsStoreMode::File,
     )?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_TIMEOUT, mcp.initialize()).await??;
 
     let start_request = mcp
@@ -192,7 +192,7 @@ async fn list_apps_uses_thread_feature_flag_when_thread_id_is_provided() -> Resu
     let ThreadStartResponse { thread, .. } = to_response(start_response)?;
 
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        orbit_code_home.path().join("config.toml"),
         format!(
             r#"
 chatgpt_base_url = "{server_url}"
@@ -270,9 +270,9 @@ async fn list_apps_reports_is_enabled_from_config() -> Result<()> {
     let (server_url, server_handle) =
         start_apps_server_with_delays(connectors, tools, Duration::ZERO, Duration::ZERO).await?;
 
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        orbit_code_home.path().join("config.toml"),
         format!(
             r#"
 chatgpt_base_url = "{server_url}"
@@ -286,7 +286,7 @@ enabled = false
         ),
     )?;
     write_chatgpt_auth(
-        codex_home.path(),
+        orbit_code_home.path(),
         ChatGptAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
@@ -294,7 +294,7 @@ enabled = false
         AuthCredentialsStoreMode::File,
     )?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_TIMEOUT, mcp.initialize()).await??;
 
     let request_id = mcp
@@ -402,10 +402,10 @@ async fn list_apps_emits_updates_and_returns_after_both_lists_load() -> Result<(
     )
     .await?;
 
-    let codex_home = TempDir::new()?;
-    write_connectors_config(codex_home.path(), &server_url)?;
+    let orbit_code_home = TempDir::new()?;
+    write_connectors_config(orbit_code_home.path(), &server_url)?;
     write_chatgpt_auth(
-        codex_home.path(),
+        orbit_code_home.path(),
         ChatGptAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
@@ -413,7 +413,7 @@ async fn list_apps_emits_updates_and_returns_after_both_lists_load() -> Result<(
         AuthCredentialsStoreMode::File,
     )?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_TIMEOUT, mcp.initialize()).await??;
 
     let request_id = mcp
@@ -542,10 +542,10 @@ async fn list_apps_waits_for_accessible_data_before_emitting_directory_updates()
     )
     .await?;
 
-    let codex_home = TempDir::new()?;
-    write_connectors_config(codex_home.path(), &server_url)?;
+    let orbit_code_home = TempDir::new()?;
+    write_connectors_config(orbit_code_home.path(), &server_url)?;
     write_chatgpt_auth(
-        codex_home.path(),
+        orbit_code_home.path(),
         ChatGptAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-directory-first")
@@ -553,7 +553,7 @@ async fn list_apps_waits_for_accessible_data_before_emitting_directory_updates()
         AuthCredentialsStoreMode::File,
     )?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_TIMEOUT, mcp.initialize()).await??;
 
     let request_id = mcp
@@ -648,10 +648,10 @@ async fn list_apps_does_not_emit_empty_interim_updates() -> Result<()> {
     )
     .await?;
 
-    let codex_home = TempDir::new()?;
-    write_connectors_config(codex_home.path(), &server_url)?;
+    let orbit_code_home = TempDir::new()?;
+    write_connectors_config(orbit_code_home.path(), &server_url)?;
     write_chatgpt_auth(
-        codex_home.path(),
+        orbit_code_home.path(),
         ChatGptAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-empty-interim")
@@ -659,7 +659,7 @@ async fn list_apps_does_not_emit_empty_interim_updates() -> Result<()> {
         AuthCredentialsStoreMode::File,
     )?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_TIMEOUT, mcp.initialize()).await??;
 
     let request_id = mcp
@@ -757,10 +757,10 @@ async fn list_apps_paginates_results() -> Result<()> {
     )
     .await?;
 
-    let codex_home = TempDir::new()?;
-    write_connectors_config(codex_home.path(), &server_url)?;
+    let orbit_code_home = TempDir::new()?;
+    write_connectors_config(orbit_code_home.path(), &server_url)?;
     write_chatgpt_auth(
-        codex_home.path(),
+        orbit_code_home.path(),
         ChatGptAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
@@ -768,7 +768,7 @@ async fn list_apps_paginates_results() -> Result<()> {
         AuthCredentialsStoreMode::File,
     )?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_TIMEOUT, mcp.initialize()).await??;
 
     let first_request = mcp
@@ -877,10 +877,10 @@ async fn list_apps_force_refetch_preserves_previous_cache_on_failure() -> Result
     let (server_url, server_handle) =
         start_apps_server_with_delays(connectors, tools, Duration::ZERO, Duration::ZERO).await?;
 
-    let codex_home = TempDir::new()?;
-    write_connectors_config(codex_home.path(), &server_url)?;
+    let orbit_code_home = TempDir::new()?;
+    write_connectors_config(orbit_code_home.path(), &server_url)?;
     write_chatgpt_auth(
-        codex_home.path(),
+        orbit_code_home.path(),
         ChatGptAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
@@ -888,7 +888,7 @@ async fn list_apps_force_refetch_preserves_previous_cache_on_failure() -> Result
         AuthCredentialsStoreMode::File,
     )?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_TIMEOUT, mcp.initialize()).await??;
 
     let initial_request = mcp
@@ -913,7 +913,7 @@ async fn list_apps_force_refetch_preserves_previous_cache_on_failure() -> Result
     assert!(initial_data.iter().all(|app| app.is_accessible));
 
     write_chatgpt_auth(
-        codex_home.path(),
+        orbit_code_home.path(),
         ChatGptAuthFixture::new("chatgpt-token-invalid")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
@@ -1003,10 +1003,10 @@ async fn list_apps_force_refetch_patches_updates_from_cached_snapshots() -> Resu
     )
     .await?;
 
-    let codex_home = TempDir::new()?;
-    write_connectors_config(codex_home.path(), &server_url)?;
+    let orbit_code_home = TempDir::new()?;
+    write_connectors_config(orbit_code_home.path(), &server_url)?;
     write_chatgpt_auth(
-        codex_home.path(),
+        orbit_code_home.path(),
         ChatGptAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
@@ -1014,7 +1014,7 @@ async fn list_apps_force_refetch_patches_updates_from_cached_snapshots() -> Resu
         AuthCredentialsStoreMode::File,
     )?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_TIMEOUT, mcp.initialize()).await??;
 
     let warm_request = mcp
@@ -1411,8 +1411,11 @@ fn connector_tool(connector_id: &str, connector_name: &str) -> Result<Tool> {
     Ok(tool)
 }
 
-fn write_connectors_config(codex_home: &std::path::Path, base_url: &str) -> std::io::Result<()> {
-    let config_toml = codex_home.join("config.toml");
+fn write_connectors_config(
+    orbit_code_home: &std::path::Path,
+    base_url: &str,
+) -> std::io::Result<()> {
+    let config_toml = orbit_code_home.join("config.toml");
     std::fs::write(
         config_toml,
         format!(

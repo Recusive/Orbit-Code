@@ -4,11 +4,11 @@ use crate::config::test_config;
 use crate::models_manager::collaboration_mode_presets::CollaborationModesConfig;
 use crate::models_manager::manager::RefreshStrategy;
 use assert_matches::assert_matches;
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::ReasoningItemReasoningSummary;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::openai_models::ModelsResponse;
 use core_test_support::responses::mount_models_once;
+use orbit_code_protocol::models::ContentItem;
+use orbit_code_protocol::models::ReasoningItemReasoningSummary;
+use orbit_code_protocol::models::ResponseItem;
+use orbit_code_protocol::openai_models::ModelsResponse;
 use pretty_assertions::assert_eq;
 use std::time::Duration;
 use tempfile::tempdir;
@@ -124,14 +124,14 @@ async fn ignores_session_prefix_messages_when_truncating() {
 async fn shutdown_all_threads_bounded_submits_shutdown_to_every_thread() {
     let temp_dir = tempdir().expect("tempdir");
     let mut config = test_config();
-    config.codex_home = temp_dir.path().join("codex-home");
-    config.cwd = config.codex_home.clone();
-    std::fs::create_dir_all(&config.codex_home).expect("create codex home");
+    config.orbit_code_home = temp_dir.path().join("codex-home");
+    config.cwd = config.orbit_code_home.clone();
+    std::fs::create_dir_all(&config.orbit_code_home).expect("create codex home");
 
     let manager = ThreadManager::with_models_provider_and_home_for_tests(
         CodexAuth::from_api_key("dummy"),
         config.model_provider.clone(),
-        config.codex_home.clone(),
+        config.orbit_code_home.clone(),
     );
     let thread_1 = manager
         .start_thread(config.clone())
@@ -163,9 +163,9 @@ async fn new_uses_configured_openai_provider_for_model_refresh() {
 
     let temp_dir = tempdir().expect("tempdir");
     let mut config = test_config();
-    config.codex_home = temp_dir.path().join("codex-home");
-    config.cwd = config.codex_home.clone();
-    std::fs::create_dir_all(&config.codex_home).expect("create codex home");
+    config.orbit_code_home = temp_dir.path().join("codex-home");
+    config.cwd = config.orbit_code_home.clone();
+    std::fs::create_dir_all(&config.orbit_code_home).expect("create codex home");
     config.model_catalog = None;
     config
         .model_providers

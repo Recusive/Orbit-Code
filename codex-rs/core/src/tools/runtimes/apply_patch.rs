@@ -21,14 +21,14 @@ use crate::tools::sandboxing::ToolCtx;
 use crate::tools::sandboxing::ToolError;
 use crate::tools::sandboxing::ToolRuntime;
 use crate::tools::sandboxing::with_cached_approval;
-use codex_apply_patch::ApplyPatchAction;
-use codex_apply_patch::CODEX_CORE_APPLY_PATCH_ARG1;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::FileChange;
-use codex_protocol::protocol::ReviewDecision;
-use codex_utils_absolute_path::AbsolutePathBuf;
 use futures::future::BoxFuture;
+use orbit_code_apply_patch::ApplyPatchAction;
+use orbit_code_apply_patch::ORBIT_CORE_APPLY_PATCH_ARG1;
+use orbit_code_protocol::models::PermissionProfile;
+use orbit_code_protocol::protocol::AskForApproval;
+use orbit_code_protocol::protocol::FileChange;
+use orbit_code_protocol::protocol::ReviewDecision;
+use orbit_code_utils_absolute_path::AbsolutePathBuf;
 use std::collections::HashMap;
 use std::path::PathBuf;
 
@@ -42,7 +42,7 @@ pub struct ApplyPatchRequest {
     pub additional_permissions: Option<PermissionProfile>,
     pub permissions_preapproved: bool,
     pub timeout_ms: Option<u64>,
-    pub codex_exe: Option<PathBuf>,
+    pub orbit_code_exe: Option<PathBuf>,
 }
 
 #[derive(Default)]
@@ -68,14 +68,17 @@ impl ApplyPatchRuntime {
 
     fn build_command_spec(
         req: &ApplyPatchRequest,
-        _codex_home: &std::path::Path,
+        _orbit_code_home: &std::path::Path,
     ) -> Result<CommandSpec, ToolError> {
-        let exe = if let Some(path) = &req.codex_exe {
+        let exe = if let Some(path) = &req.orbit_code_exe {
             path.clone()
         } else {
             #[cfg(target_os = "windows")]
             {
-                codex_windows_sandbox::resolve_current_exe_for_launch(_codex_home, "codex.exe")
+                orbit_code_windows_sandbox::resolve_current_exe_for_launch(
+                    _orbit_code_home,
+                    "codex.exe",
+                )
             }
             #[cfg(not(target_os = "windows"))]
             {
@@ -88,7 +91,7 @@ impl ApplyPatchRuntime {
         Ok(CommandSpec {
             program,
             args: vec![
-                CODEX_CORE_APPLY_PATCH_ARG1.to_string(),
+                ORBIT_CORE_APPLY_PATCH_ARG1.to_string(),
                 req.action.patch.clone(),
             ],
             cwd: req.action.cwd.clone(),
@@ -204,7 +207,7 @@ impl ToolRuntime<ApplyPatchRequest, ExecToolCallOutput> for ApplyPatchRuntime {
         attempt: &SandboxAttempt<'_>,
         ctx: &ToolCtx,
     ) -> Result<ExecToolCallOutput, ToolError> {
-        let spec = Self::build_command_spec(req, &ctx.turn.config.codex_home)?;
+        let spec = Self::build_command_spec(req, &ctx.turn.config.orbit_code_home)?;
         let env = attempt
             .env_for(spec, /*network*/ None)
             .map_err(|err| ToolError::Codex(err.into()))?;

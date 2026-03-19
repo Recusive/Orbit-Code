@@ -1,10 +1,10 @@
 #![cfg(target_os = "macos")]
 
-use codex_network_proxy::NetworkProxy;
-use codex_network_proxy::PROXY_URL_ENV_KEYS;
-use codex_network_proxy::has_proxy_url_env_vars;
-use codex_network_proxy::proxy_url_env_value;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use orbit_code_network_proxy::NetworkProxy;
+use orbit_code_network_proxy::PROXY_URL_ENV_KEYS;
+use orbit_code_network_proxy::has_proxy_url_env_vars;
+use orbit_code_network_proxy::proxy_url_env_value;
+use orbit_code_utils_absolute_path::AbsolutePathBuf;
 use std::collections::BTreeMap;
 use std::collections::BTreeSet;
 use std::collections::HashMap;
@@ -22,8 +22,8 @@ use crate::spawn::CODEX_SANDBOX_ENV_VAR;
 use crate::spawn::SpawnChildRequest;
 use crate::spawn::StdioPolicy;
 use crate::spawn::spawn_child_async;
-use codex_protocol::permissions::FileSystemSandboxPolicy;
-use codex_protocol::permissions::NetworkSandboxPolicy;
+use orbit_code_protocol::permissions::FileSystemSandboxPolicy;
+use orbit_code_protocol::permissions::NetworkSandboxPolicy;
 
 const MACOS_SEATBELT_BASE_POLICY: &str = include_str!("seatbelt_base_policy.sbpl");
 const MACOS_SEATBELT_NETWORK_POLICY: &str = include_str!("seatbelt_network_policy.sbpl");

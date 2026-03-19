@@ -4,9 +4,9 @@ use crate::config::ConfigBuilder;
 use crate::config_loader::ConfigLayerStackOrdering;
 use crate::plugins::PluginsManager;
 use crate::skills::SkillsManager;
-use codex_protocol::config_types::ReasoningSummary;
-use codex_protocol::config_types::Verbosity;
-use codex_protocol::openai_models::ReasoningEffort;
+use orbit_code_protocol::config_types::ReasoningSummary;
+use orbit_code_protocol::config_types::Verbosity;
+use orbit_code_protocol::openai_models::ReasoningEffort;
 use pretty_assertions::assert_eq;
 use std::fs;
 use std::path::PathBuf;
@@ -19,7 +19,7 @@ async fn test_config_with_cli_overrides(
     let home = TempDir::new().expect("create temp dir");
     let home_path = home.path().to_path_buf();
     let config = ConfigBuilder::default()
-        .codex_home(home_path.clone())
+        .orbit_code_home(home_path.clone())
         .cli_overrides(cli_overrides)
         .fallback_cwd(Some(home_path))
         .build()
@@ -160,7 +160,7 @@ async fn apply_role_preserves_unspecified_keys() {
         TomlValue::String("base-model".to_string()),
     )])
     .await;
-    config.codex_linux_sandbox_exe = Some(PathBuf::from("/tmp/codex-linux-sandbox"));
+    config.orbit_code_linux_sandbox_exe = Some(PathBuf::from("/tmp/codex-linux-sandbox"));
     config.main_execve_wrapper_exe = Some(PathBuf::from("/tmp/codex-execve-wrapper"));
     let role_path = write_role_config(
         &home,
@@ -184,7 +184,7 @@ async fn apply_role_preserves_unspecified_keys() {
     assert_eq!(config.model.as_deref(), Some("base-model"));
     assert_eq!(config.model_reasoning_effort, Some(ReasoningEffort::High));
     assert_eq!(
-        config.codex_linux_sandbox_exe,
+        config.orbit_code_linux_sandbox_exe,
         Some(PathBuf::from("/tmp/codex-linux-sandbox"))
     );
     assert_eq!(
@@ -212,7 +212,7 @@ model_provider = "test-provider"
     .await
     .expect("write config.toml");
     let mut config = ConfigBuilder::default()
-        .codex_home(home.path().to_path_buf())
+        .orbit_code_home(home.path().to_path_buf())
         .harness_overrides(ConfigOverrides {
             config_profile: Some("test-profile".to_string()),
             ..Default::default()
@@ -261,7 +261,7 @@ model_verbosity = "low"
     .await
     .expect("write config.toml");
     let mut config = ConfigBuilder::default()
-        .codex_home(home.path().to_path_buf())
+        .orbit_code_home(home.path().to_path_buf())
         .harness_overrides(ConfigOverrides {
             config_profile: Some("base-profile".to_string()),
             ..Default::default()
@@ -332,7 +332,7 @@ model_provider = "role-provider"
     .await
     .expect("write config.toml");
     let mut config = ConfigBuilder::default()
-        .codex_home(home.path().to_path_buf())
+        .orbit_code_home(home.path().to_path_buf())
         .harness_overrides(ConfigOverrides {
             config_profile: Some("base-profile".to_string()),
             ..Default::default()
@@ -390,7 +390,7 @@ model_provider = "base-provider"
     .await
     .expect("write config.toml");
     let mut config = ConfigBuilder::default()
-        .codex_home(home.path().to_path_buf())
+        .orbit_code_home(home.path().to_path_buf())
         .harness_overrides(ConfigOverrides {
             config_profile: Some("base-profile".to_string()),
             ..Default::default()
@@ -449,7 +449,7 @@ model_reasoning_effort = "low"
     .await
     .expect("write config.toml");
     let mut config = ConfigBuilder::default()
-        .codex_home(home.path().to_path_buf())
+        .orbit_code_home(home.path().to_path_buf())
         .harness_overrides(ConfigOverrides {
             config_profile: Some("base-profile".to_string()),
             ..Default::default()
@@ -491,7 +491,7 @@ model_reasoning_effort = "high"
 #[tokio::test]
 #[cfg(not(windows))]
 async fn apply_role_does_not_materialize_default_sandbox_workspace_write_fields() {
-    use codex_protocol::protocol::SandboxPolicy;
+    use orbit_code_protocol::protocol::SandboxPolicy;
     let (home, mut config) = test_config_with_cli_overrides(vec![
         (
             "sandbox_mode".to_string(),

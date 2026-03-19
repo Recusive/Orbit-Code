@@ -1169,9 +1169,9 @@ mod tests {
         let (tx_raw, _rx) = unbounded_channel::<AppEvent>();
         let tx = AppEventSender::new(tx_raw);
         let home = dirs::home_dir().expect("home directory should be available");
-        let codex_home = home.join(".codex");
+        let orbit_code_home = home.join(".codex");
         let params =
-            crate::theme_picker::build_theme_picker_params(None, Some(&codex_home), Some(94));
+            crate::theme_picker::build_theme_picker_params(None, Some(&orbit_code_home), Some(94));
         let view = ListSelectionView::new(params, tx);
 
         let rendered = render_lines_in_area(&view, 94, 35);

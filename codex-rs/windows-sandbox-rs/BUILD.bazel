@@ -1,11 +1,11 @@
-load("//:defs.bzl", "codex_rust_crate")
+load("//:defs.bzl", "orbit_code_rust_crate")
 
-codex_rust_crate(
+orbit_code_rust_crate(
     name = "windows-sandbox-rs",
-    crate_name = "codex_windows_sandbox",
+    crate_name = "orbit_code_windows_sandbox",
     build_script_data = [
         "Cargo.toml",
-        "codex-windows-sandbox-setup.manifest",
+        "orbit-code-windows-sandbox-setup.manifest",
     ],
     crate_edition = "2021",
 )

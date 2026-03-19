@@ -4,10 +4,10 @@ use crate::memories::storage::rollout_summary_file_stem_from_parts;
 use crate::truncate::TruncationPolicy;
 use crate::truncate::truncate_text;
 use askama::Template;
-use codex_protocol::openai_models::ModelInfo;
-use codex_state::Phase2InputSelection;
-use codex_state::Stage1Output;
-use codex_state::Stage1OutputRef;
+use orbit_code_protocol::openai_models::ModelInfo;
+use orbit_code_state::Phase2InputSelection;
+use orbit_code_state::Stage1Output;
+use orbit_code_state::Stage1OutputRef;
 use std::path::Path;
 use tokio::fs;
 use tracing::warn;
@@ -155,8 +155,10 @@ pub(super) fn build_stage_one_input_message(
 /// Build prompt used for read path. This prompt must be added to the developer instructions. In
 /// case of large memory files, the `memory_summary.md` is truncated at
 /// [phase_one::MEMORY_TOOL_DEVELOPER_INSTRUCTIONS_SUMMARY_TOKEN_LIMIT].
-pub(crate) async fn build_memory_tool_developer_instructions(codex_home: &Path) -> Option<String> {
-    let base_path = memory_root(codex_home);
+pub(crate) async fn build_memory_tool_developer_instructions(
+    orbit_code_home: &Path,
+) -> Option<String> {
+    let base_path = memory_root(orbit_code_home);
     let memory_summary_path = base_path.join("memory_summary.md");
     let memory_summary = fs::read_to_string(&memory_summary_path)
         .await

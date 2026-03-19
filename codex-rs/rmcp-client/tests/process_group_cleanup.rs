@@ -8,7 +8,7 @@ use std::time::Duration;
 
 use anyhow::Context;
 use anyhow::Result;
-use codex_rmcp_client::RmcpClient;
+use orbit_code_rmcp_client::RmcpClient;
 
 fn process_exists(pid: u32) -> bool {
     std::process::Command::new("kill")

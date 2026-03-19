@@ -1,10 +1,10 @@
 use super::*;
 use anyhow::Result;
-use codex_app_server_protocol::AppConfig;
-use codex_app_server_protocol::AppToolApproval;
-use codex_app_server_protocol::AppsConfig;
-use codex_app_server_protocol::AskForApproval;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use orbit_code_app_server_protocol::AppConfig;
+use orbit_code_app_server_protocol::AppToolApproval;
+use orbit_code_app_server_protocol::AppsConfig;
+use orbit_code_app_server_protocol::AskForApproval;
+use orbit_code_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use std::collections::BTreeMap;
 use tempfile::tempdir;

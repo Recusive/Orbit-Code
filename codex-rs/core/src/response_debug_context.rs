@@ -1,6 +1,6 @@
 use base64::Engine;
-use codex_api::TransportError;
-use codex_api::error::ApiError;
+use orbit_code_api::TransportError;
+use orbit_code_api::error::ApiError;
 
 const REQUEST_ID_HEADER: &str = "x-request-id";
 const OAI_REQUEST_ID_HEADER: &str = "x-oai-request-id";
@@ -93,11 +93,11 @@ mod tests {
     use super::extract_response_debug_context;
     use super::telemetry_api_error_message;
     use super::telemetry_transport_error_message;
-    use codex_api::TransportError;
-    use codex_api::error::ApiError;
     use http::HeaderMap;
     use http::HeaderValue;
     use http::StatusCode;
+    use orbit_code_api::TransportError;
+    use orbit_code_api::error::ApiError;
     use pretty_assertions::assert_eq;
 
     #[test]

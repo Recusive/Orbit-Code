@@ -1,6 +1,6 @@
-use codex_protocol::ThreadId;
-use codex_protocol::memory_citation::MemoryCitation;
-use codex_protocol::memory_citation::MemoryCitationEntry;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::memory_citation::MemoryCitation;
+use orbit_code_protocol::memory_citation::MemoryCitationEntry;
 use std::collections::HashSet;
 
 pub fn parse_memory_citation(citations: Vec<String>) -> Option<MemoryCitation> {

@@ -1,5 +1,5 @@
-use codex_core::WireApi;
-use codex_core::config::Config;
+use orbit_code_core::WireApi;
+use orbit_code_core::config::Config;
 
 use crate::sandbox_summary::summarize_sandbox_policy;
 

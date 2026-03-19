@@ -5,29 +5,29 @@ use app_test_support::create_mock_responses_server_sequence;
 use app_test_support::create_shell_command_sse_response;
 use app_test_support::format_with_current_shell_display;
 use app_test_support::to_response;
-use codex_app_server_protocol::CommandExecutionApprovalDecision;
-use codex_app_server_protocol::CommandExecutionOutputDeltaNotification;
-use codex_app_server_protocol::CommandExecutionRequestApprovalResponse;
-use codex_app_server_protocol::CommandExecutionSource;
-use codex_app_server_protocol::CommandExecutionStatus;
-use codex_app_server_protocol::ItemCompletedNotification;
-use codex_app_server_protocol::ItemStartedNotification;
-use codex_app_server_protocol::JSONRPCResponse;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::ServerRequest;
-use codex_app_server_protocol::ThreadItem;
-use codex_app_server_protocol::ThreadReadParams;
-use codex_app_server_protocol::ThreadReadResponse;
-use codex_app_server_protocol::ThreadShellCommandParams;
-use codex_app_server_protocol::ThreadShellCommandResponse;
-use codex_app_server_protocol::ThreadStartParams;
-use codex_app_server_protocol::ThreadStartResponse;
-use codex_app_server_protocol::TurnCompletedNotification;
-use codex_app_server_protocol::TurnStartParams;
-use codex_app_server_protocol::TurnStartResponse;
-use codex_app_server_protocol::UserInput as V2UserInput;
-use codex_core::features::FEATURES;
-use codex_core::features::Feature;
+use orbit_code_app_server_protocol::CommandExecutionApprovalDecision;
+use orbit_code_app_server_protocol::CommandExecutionOutputDeltaNotification;
+use orbit_code_app_server_protocol::CommandExecutionRequestApprovalResponse;
+use orbit_code_app_server_protocol::CommandExecutionSource;
+use orbit_code_app_server_protocol::CommandExecutionStatus;
+use orbit_code_app_server_protocol::ItemCompletedNotification;
+use orbit_code_app_server_protocol::ItemStartedNotification;
+use orbit_code_app_server_protocol::JSONRPCResponse;
+use orbit_code_app_server_protocol::RequestId;
+use orbit_code_app_server_protocol::ServerRequest;
+use orbit_code_app_server_protocol::ThreadItem;
+use orbit_code_app_server_protocol::ThreadReadParams;
+use orbit_code_app_server_protocol::ThreadReadResponse;
+use orbit_code_app_server_protocol::ThreadShellCommandParams;
+use orbit_code_app_server_protocol::ThreadShellCommandResponse;
+use orbit_code_app_server_protocol::ThreadStartParams;
+use orbit_code_app_server_protocol::ThreadStartResponse;
+use orbit_code_app_server_protocol::TurnCompletedNotification;
+use orbit_code_app_server_protocol::TurnStartParams;
+use orbit_code_app_server_protocol::TurnStartResponse;
+use orbit_code_app_server_protocol::UserInput as V2UserInput;
+use orbit_code_core::features::FEATURES;
+use orbit_code_core::features::Feature;
 use pretty_assertions::assert_eq;
 use std::collections::BTreeMap;
 use std::path::Path;
@@ -39,20 +39,20 @@ const DEFAULT_READ_TIMEOUT: std::time::Duration = std::time::Duration::from_secs
 #[tokio::test]
 async fn thread_shell_command_runs_as_standalone_turn_and_persists_history() -> Result<()> {
     let tmp = TempDir::new()?;
-    let codex_home = tmp.path().join("codex_home");
-    std::fs::create_dir(&codex_home)?;
+    let orbit_code_home = tmp.path().join("orbit_code_home");
+    std::fs::create_dir(&orbit_code_home)?;
     let workspace = tmp.path().join("workspace");
     std::fs::create_dir(&workspace)?;
 
     let server = create_mock_responses_server_sequence(vec![]).await;
     create_config_toml(
-        codex_home.as_path(),
+        orbit_code_home.as_path(),
         &server.uri(),
         "never",
         &BTreeMap::default(),
     )?;
 
-    let mut mcp = McpProcess::new(codex_home.as_path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.as_path()).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     let start_id = mcp
@@ -155,8 +155,8 @@ async fn thread_shell_command_runs_as_standalone_turn_and_persists_history() -> 
 #[tokio::test]
 async fn thread_shell_command_uses_existing_active_turn() -> Result<()> {
     let tmp = TempDir::new()?;
-    let codex_home = tmp.path().join("codex_home");
-    std::fs::create_dir(&codex_home)?;
+    let orbit_code_home = tmp.path().join("orbit_code_home");
+    std::fs::create_dir(&orbit_code_home)?;
     let workspace = tmp.path().join("workspace");
     std::fs::create_dir(&workspace)?;
 
@@ -175,13 +175,13 @@ async fn thread_shell_command_uses_existing_active_turn() -> Result<()> {
     ];
     let server = create_mock_responses_server_sequence(responses).await;
     create_config_toml(
-        codex_home.as_path(),
+        orbit_code_home.as_path(),
         &server.uri(),
         "untrusted",
         &BTreeMap::default(),
     )?;
 
-    let mut mcp = McpProcess::new(codex_home.as_path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.as_path()).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     let start_id = mcp
@@ -397,7 +397,7 @@ async fn wait_for_command_execution_output_delta(
 }
 
 fn create_config_toml(
-    codex_home: &Path,
+    orbit_code_home: &Path,
     server_uri: &str,
     approval_policy: &str,
     feature_flags: &BTreeMap<Feature, bool>,
@@ -415,7 +415,7 @@ fn create_config_toml(
         .collect::<Vec<_>>()
         .join("\n");
     std::fs::write(
-        codex_home.join("config.toml"),
+        orbit_code_home.join("config.toml"),
         format!(
             r#"
 model = "mock-model"

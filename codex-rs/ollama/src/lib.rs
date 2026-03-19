@@ -4,8 +4,8 @@ mod pull;
 mod url;
 
 pub use client::OllamaClient;
-use codex_core::ModelProviderInfo;
-use codex_core::config::Config;
+use orbit_code_core::ModelProviderInfo;
+use orbit_code_core::config::Config;
 pub use pull::CliProgressReporter;
 pub use pull::PullEvent;
 pub use pull::PullProgressReporter;

@@ -1,4 +1,4 @@
-load("//:defs.bzl", "codex_rust_crate")
+load("//:defs.bzl", "orbit_code_rust_crate")
 
 exports_files(
     [
@@ -17,9 +17,9 @@ filegroup(
     visibility = ["//visibility:public"],
 )
 
-codex_rust_crate(
+orbit_code_rust_crate(
     name = "core",
-    crate_name = "codex_core",
+    crate_name = "orbit_code_core",
     compile_data = glob(
         include = ["**"],
         exclude = [
@@ -29,16 +29,16 @@ codex_rust_crate(
         ],
         allow_empty = True,
     ) + [
-        "//codex-rs:node-version.txt",
+        "//orbit-code-rs:node-version.txt",
     ],
     rustc_env = {
         # Askama resolves template paths relative to CARGO_MANIFEST_DIR. In
         # Bazel, the Cargo-provided absolute source path points outside the
         # sandbox, so keep the manifest root anchored inside the execroot.
-        "CARGO_MANIFEST_DIR": "codex-rs/core",
+        "CARGO_MANIFEST_DIR": "orbit-code-rs/core",
     },
     integration_compile_data_extra = [
-        "//codex-rs/apply-patch:apply_patch_tool_instructions.md",
+        "//orbit-code-rs/apply-patch:apply_patch_tool_instructions.md",
         "models.json",
         "prompt.md",
     ],
@@ -59,9 +59,9 @@ codex_rust_crate(
     ],
     test_tags = ["no-sandbox"],
     extra_binaries = [
-        "//codex-rs/linux-sandbox:codex-linux-sandbox",
-        "//codex-rs/rmcp-client:test_stdio_server",
-        "//codex-rs/rmcp-client:test_streamable_http_server",
-        "//codex-rs/cli:codex",
+        "//orbit-code-rs/linux-sandbox:orbit-code-linux-sandbox",
+        "//orbit-code-rs/rmcp-client:test_stdio_server",
+        "//orbit-code-rs/rmcp-client:test_streamable_http_server",
+        "//orbit-code-rs/cli:codex",
     ],
 )

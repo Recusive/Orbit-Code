@@ -1,4 +1,4 @@
-use codex_network_proxy::NetworkProxy;
+use orbit_code_network_proxy::NetworkProxy;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::process::Stdio;
@@ -6,7 +6,7 @@ use tokio::process::Child;
 use tokio::process::Command;
 use tracing::trace;
 
-use codex_protocol::permissions::NetworkSandboxPolicy;
+use orbit_code_protocol::permissions::NetworkSandboxPolicy;
 
 /// Experimental environment variable that will be set to some non-empty value
 /// if both of the following are true:
@@ -89,7 +89,7 @@ pub(crate) async fn spawn_child_async(request: SpawnChildRequest<'_>) -> std::io
         let parent_pid = libc::getpid();
         cmd.pre_exec(move || {
             if detach_from_tty {
-                codex_utils_pty::process_group::detach_from_tty()?;
+                orbit_code_utils_pty::process_group::detach_from_tty()?;
             }
 
             // This relies on prctl(2), so it only works on Linux.
@@ -97,7 +97,7 @@ pub(crate) async fn spawn_child_async(request: SpawnChildRequest<'_>) -> std::io
             {
                 // This prctl call effectively requests, "deliver SIGTERM when my
                 // current parent dies."
-                codex_utils_pty::process_group::set_parent_death_signal(parent_pid)?;
+                orbit_code_utils_pty::process_group::set_parent_death_signal(parent_pid)?;
             }
             Ok(())
         });

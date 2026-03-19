@@ -20,27 +20,27 @@ use std::sync::Mutex;
 use tracing::warn;
 
 use crate::token_data::TokenData;
-use codex_app_server_protocol::AuthMode;
-use codex_keyring_store::DefaultKeyringStore;
-use codex_keyring_store::KeyringStore;
 use once_cell::sync::Lazy;
+use orbit_code_app_server_protocol::AuthMode;
+use orbit_code_keyring_store::DefaultKeyringStore;
+use orbit_code_keyring_store::KeyringStore;
 
-/// Determine where Codex should store CLI auth credentials.
+/// Determine where Orbit Code should store CLI auth credentials.
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum AuthCredentialsStoreMode {
     #[default]
-    /// Persist credentials in CODEX_HOME/auth.json.
+    /// Persist credentials in ORBIT_HOME/auth.json.
     File,
     /// Persist credentials in the keyring. Fail if unavailable.
     Keyring,
-    /// Use keyring when available; otherwise, fall back to a file in CODEX_HOME.
+    /// Use keyring when available; otherwise, fall back to a file in ORBIT_HOME.
     Auto,
     /// Store credentials in memory only for the current process.
     Ephemeral,
 }
 
-/// Expected structure for $CODEX_HOME/auth.json.
+/// Expected structure for $ORBIT_HOME/auth.json.
 #[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct AuthDotJson {
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -56,12 +56,12 @@ pub struct AuthDotJson {
     pub last_refresh: Option<DateTime<Utc>>,
 }
 
-pub(super) fn get_auth_file(codex_home: &Path) -> PathBuf {
-    codex_home.join("auth.json")
+pub(super) fn get_auth_file(orbit_code_home: &Path) -> PathBuf {
+    orbit_code_home.join("auth.json")
 }
 
-pub(super) fn delete_file_if_exists(codex_home: &Path) -> std::io::Result<bool> {
-    let auth_file = get_auth_file(codex_home);
+pub(super) fn delete_file_if_exists(orbit_code_home: &Path) -> std::io::Result<bool> {
+    let auth_file = get_auth_file(orbit_code_home);
     match std::fs::remove_file(&auth_file) {
         Ok(()) => Ok(true),
         Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(false),
@@ -77,15 +77,15 @@ pub(super) trait AuthStorageBackend: Debug + Send + Sync {
 
 #[derive(Clone, Debug)]
 pub(super) struct FileAuthStorage {
-    codex_home: PathBuf,
+    orbit_code_home: PathBuf,
 }
 
 impl FileAuthStorage {
-    pub(super) fn new(codex_home: PathBuf) -> Self {
-        Self { codex_home }
+    pub(super) fn new(orbit_code_home: PathBuf) -> Self {
+        Self { orbit_code_home }
     }
 
-    /// Attempt to read and parse the `auth.json` file in the given `CODEX_HOME` directory.
+    /// Attempt to read and parse the `auth.json` file in the given `ORBIT_HOME` directory.
     /// Returns the full AuthDotJson structure.
     pub(super) fn try_read_auth_json(&self, auth_file: &Path) -> std::io::Result<AuthDotJson> {
         let mut file = File::open(auth_file)?;
@@ -99,7 +99,7 @@ impl FileAuthStorage {
 
 impl AuthStorageBackend for FileAuthStorage {
     fn load(&self) -> std::io::Result<Option<AuthDotJson>> {
-        let auth_file = get_auth_file(&self.codex_home);
+        let auth_file = get_auth_file(&self.orbit_code_home);
         let auth_dot_json = match self.try_read_auth_json(&auth_file) {
             Ok(auth) => auth,
             Err(err) if err.kind() == std::io::ErrorKind::NotFound => return Ok(None),
@@ -109,7 +109,7 @@ impl AuthStorageBackend for FileAuthStorage {
     }
 
     fn save(&self, auth_dot_json: &AuthDotJson) -> std::io::Result<()> {
-        let auth_file = get_auth_file(&self.codex_home);
+        let auth_file = get_auth_file(&self.orbit_code_home);
 
         if let Some(parent) = auth_file.parent() {
             std::fs::create_dir_all(parent)?;
@@ -128,17 +128,18 @@ impl AuthStorageBackend for FileAuthStorage {
     }
 
     fn delete(&self) -> std::io::Result<bool> {
-        delete_file_if_exists(&self.codex_home)
+        delete_file_if_exists(&self.orbit_code_home)
     }
 }
 
-const KEYRING_SERVICE: &str = "Codex Auth";
+const KEYRING_SERVICE: &str = "Orbit Code Auth";
+const LEGACY_KEYRING_SERVICE: &str = "Codex Auth";
 
-// turns codex_home path into a stable, short key string
-fn compute_store_key(codex_home: &Path) -> std::io::Result<String> {
-    let canonical = codex_home
+// Turns the Orbit Code home path into a stable, short key string.
+fn compute_store_key(orbit_code_home: &Path) -> std::io::Result<String> {
+    let canonical = orbit_code_home
         .canonicalize()
-        .unwrap_or_else(|_| codex_home.to_path_buf());
+        .unwrap_or_else(|_| orbit_code_home.to_path_buf());
     let path_str = canonical.to_string_lossy();
     let mut hasher = Sha256::new();
     hasher.update(path_str.as_bytes());
@@ -148,22 +149,39 @@ fn compute_store_key(codex_home: &Path) -> std::io::Result<String> {
     Ok(format!("cli|{truncated}"))
 }
 
+fn candidate_store_keys(orbit_code_home: &Path) -> std::io::Result<Vec<String>> {
+    let current_key = compute_store_key(orbit_code_home)?;
+    let mut keys = vec![current_key.clone()];
+
+    if let Some(file_name) = orbit_code_home.file_name()
+        && file_name == ".orbit"
+        && let Some(parent) = orbit_code_home.parent()
+    {
+        let legacy_key = compute_store_key(&parent.join(".codex"))?;
+        if legacy_key != current_key {
+            keys.push(legacy_key);
+        }
+    }
+
+    Ok(keys)
+}
+
 #[derive(Clone, Debug)]
 struct KeyringAuthStorage {
-    codex_home: PathBuf,
+    orbit_code_home: PathBuf,
     keyring_store: Arc<dyn KeyringStore>,
 }
 
 impl KeyringAuthStorage {
-    fn new(codex_home: PathBuf, keyring_store: Arc<dyn KeyringStore>) -> Self {
+    fn new(orbit_code_home: PathBuf, keyring_store: Arc<dyn KeyringStore>) -> Self {
         Self {
-            codex_home,
+            orbit_code_home,
             keyring_store,
         }
     }
 
-    fn load_from_keyring(&self, key: &str) -> std::io::Result<Option<AuthDotJson>> {
-        match self.keyring_store.load(KEYRING_SERVICE, key) {
+    fn load_from_keyring(&self, service: &str, key: &str) -> std::io::Result<Option<AuthDotJson>> {
+        match self.keyring_store.load(service, key) {
             Ok(Some(serialized)) => serde_json::from_str(&serialized).map(Some).map_err(|err| {
                 std::io::Error::other(format!(
                     "failed to deserialize CLI auth from keyring: {err}"
@@ -177,8 +195,8 @@ impl KeyringAuthStorage {
         }
     }
 
-    fn save_to_keyring(&self, key: &str, value: &str) -> std::io::Result<()> {
-        match self.keyring_store.save(KEYRING_SERVICE, key, value) {
+    fn save_to_keyring(&self, service: &str, key: &str, value: &str) -> std::io::Result<()> {
+        match self.keyring_store.save(service, key, value) {
             Ok(()) => Ok(()),
             Err(error) => {
                 let message = format!(
@@ -194,30 +212,44 @@ impl KeyringAuthStorage {
 
 impl AuthStorageBackend for KeyringAuthStorage {
     fn load(&self) -> std::io::Result<Option<AuthDotJson>> {
-        let key = compute_store_key(&self.codex_home)?;
-        self.load_from_keyring(&key)
+        for key in candidate_store_keys(&self.orbit_code_home)? {
+            if let Some(auth) = self.load_from_keyring(KEYRING_SERVICE, &key)? {
+                return Ok(Some(auth));
+            }
+            if let Some(auth) = self.load_from_keyring(LEGACY_KEYRING_SERVICE, &key)? {
+                return Ok(Some(auth));
+            }
+        }
+
+        Ok(None)
     }
 
     fn save(&self, auth: &AuthDotJson) -> std::io::Result<()> {
-        let key = compute_store_key(&self.codex_home)?;
+        let key = compute_store_key(&self.orbit_code_home)?;
         // Simpler error mapping per style: prefer method reference over closure
         let serialized = serde_json::to_string(auth).map_err(std::io::Error::other)?;
-        self.save_to_keyring(&key, &serialized)?;
-        if let Err(err) = delete_file_if_exists(&self.codex_home) {
+        self.save_to_keyring(KEYRING_SERVICE, &key, &serialized)?;
+        if let Err(err) = delete_file_if_exists(&self.orbit_code_home) {
             warn!("failed to remove CLI auth fallback file: {err}");
         }
         Ok(())
     }
 
     fn delete(&self) -> std::io::Result<bool> {
-        let key = compute_store_key(&self.codex_home)?;
-        let keyring_removed = self
-            .keyring_store
-            .delete(KEYRING_SERVICE, &key)
-            .map_err(|err| {
-                std::io::Error::other(format!("failed to delete auth from keyring: {err}"))
-            })?;
-        let file_removed = delete_file_if_exists(&self.codex_home)?;
+        let mut keyring_removed = false;
+        for key in candidate_store_keys(&self.orbit_code_home)? {
+            for service in [KEYRING_SERVICE, LEGACY_KEYRING_SERVICE] {
+                match self.keyring_store.delete(service, &key) {
+                    Ok(removed) => {
+                        keyring_removed |= removed;
+                    }
+                    Err(err) => {
+                        warn!("failed to delete auth from keyring service {service}: {err}");
+                    }
+                }
+            }
+        }
+        let file_removed = delete_file_if_exists(&self.orbit_code_home)?;
         Ok(keyring_removed || file_removed)
     }
 }
@@ -229,10 +261,13 @@ struct AutoAuthStorage {
 }
 
 impl AutoAuthStorage {
-    fn new(codex_home: PathBuf, keyring_store: Arc<dyn KeyringStore>) -> Self {
+    fn new(orbit_code_home: PathBuf, keyring_store: Arc<dyn KeyringStore>) -> Self {
         Self {
-            keyring_storage: Arc::new(KeyringAuthStorage::new(codex_home.clone(), keyring_store)),
-            file_storage: Arc::new(FileAuthStorage::new(codex_home)),
+            keyring_storage: Arc::new(KeyringAuthStorage::new(
+                orbit_code_home.clone(),
+                keyring_store,
+            )),
+            file_storage: Arc::new(FileAuthStorage::new(orbit_code_home)),
         }
     }
 }
@@ -265,25 +300,25 @@ impl AuthStorageBackend for AutoAuthStorage {
     }
 }
 
-// A global in-memory store for mapping codex_home -> AuthDotJson.
+// A global in-memory store for mapping orbit_code_home -> AuthDotJson.
 static EPHEMERAL_AUTH_STORE: Lazy<Mutex<HashMap<String, AuthDotJson>>> =
     Lazy::new(|| Mutex::new(HashMap::new()));
 
 #[derive(Clone, Debug)]
 struct EphemeralAuthStorage {
-    codex_home: PathBuf,
+    orbit_code_home: PathBuf,
 }
 
 impl EphemeralAuthStorage {
-    fn new(codex_home: PathBuf) -> Self {
-        Self { codex_home }
+    fn new(orbit_code_home: PathBuf) -> Self {
+        Self { orbit_code_home }
     }
 
     fn with_store<F, T>(&self, action: F) -> std::io::Result<T>
     where
         F: FnOnce(&mut HashMap<String, AuthDotJson>, String) -> std::io::Result<T>,
     {
-        let key = compute_store_key(&self.codex_home)?;
+        let key = compute_store_key(&self.orbit_code_home)?;
         let mut store = EPHEMERAL_AUTH_STORE
             .lock()
             .map_err(|_| std::io::Error::other("failed to lock ephemeral auth storage"))?;
@@ -309,25 +344,27 @@ impl AuthStorageBackend for EphemeralAuthStorage {
 }
 
 pub(super) fn create_auth_storage(
-    codex_home: PathBuf,
+    orbit_code_home: PathBuf,
     mode: AuthCredentialsStoreMode,
 ) -> Arc<dyn AuthStorageBackend> {
     let keyring_store: Arc<dyn KeyringStore> = Arc::new(DefaultKeyringStore);
-    create_auth_storage_with_keyring_store(codex_home, mode, keyring_store)
+    create_auth_storage_with_keyring_store(orbit_code_home, mode, keyring_store)
 }
 
 fn create_auth_storage_with_keyring_store(
-    codex_home: PathBuf,
+    orbit_code_home: PathBuf,
     mode: AuthCredentialsStoreMode,
     keyring_store: Arc<dyn KeyringStore>,
 ) -> Arc<dyn AuthStorageBackend> {
     match mode {
-        AuthCredentialsStoreMode::File => Arc::new(FileAuthStorage::new(codex_home)),
+        AuthCredentialsStoreMode::File => Arc::new(FileAuthStorage::new(orbit_code_home)),
         AuthCredentialsStoreMode::Keyring => {
-            Arc::new(KeyringAuthStorage::new(codex_home, keyring_store))
+            Arc::new(KeyringAuthStorage::new(orbit_code_home, keyring_store))
         }
-        AuthCredentialsStoreMode::Auto => Arc::new(AutoAuthStorage::new(codex_home, keyring_store)),
-        AuthCredentialsStoreMode::Ephemeral => Arc::new(EphemeralAuthStorage::new(codex_home)),
+        AuthCredentialsStoreMode::Auto => {
+            Arc::new(AutoAuthStorage::new(orbit_code_home, keyring_store))
+        }
+        AuthCredentialsStoreMode::Ephemeral => Arc::new(EphemeralAuthStorage::new(orbit_code_home)),
     }
 }
 

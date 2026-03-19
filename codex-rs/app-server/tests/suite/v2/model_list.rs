@@ -4,15 +4,15 @@ use anyhow::Result;
 use app_test_support::McpProcess;
 use app_test_support::to_response;
 use app_test_support::write_models_cache;
-use codex_app_server_protocol::JSONRPCError;
-use codex_app_server_protocol::JSONRPCResponse;
-use codex_app_server_protocol::Model;
-use codex_app_server_protocol::ModelListParams;
-use codex_app_server_protocol::ModelListResponse;
-use codex_app_server_protocol::ModelUpgradeInfo;
-use codex_app_server_protocol::ReasoningEffortOption;
-use codex_app_server_protocol::RequestId;
-use codex_protocol::openai_models::ModelPreset;
+use orbit_code_app_server_protocol::JSONRPCError;
+use orbit_code_app_server_protocol::JSONRPCResponse;
+use orbit_code_app_server_protocol::Model;
+use orbit_code_app_server_protocol::ModelListParams;
+use orbit_code_app_server_protocol::ModelListResponse;
+use orbit_code_app_server_protocol::ModelUpgradeInfo;
+use orbit_code_app_server_protocol::ReasoningEffortOption;
+use orbit_code_app_server_protocol::RequestId;
+use orbit_code_protocol::openai_models::ModelPreset;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 use tokio::time::timeout;
@@ -56,8 +56,10 @@ fn model_from_preset(preset: &ModelPreset) -> Model {
 
 fn expected_visible_models() -> Vec<Model> {
     // Filter by supported_in_api to support testing with both ChatGPT and non-ChatGPT auth modes.
-    let mut presets =
-        ModelPreset::filter_by_auth(codex_core::test_support::all_model_presets().clone(), false);
+    let mut presets = ModelPreset::filter_by_auth(
+        orbit_code_core::test_support::all_model_presets().clone(),
+        false,
+    );
 
     // Mirror `ModelsManager::build_available_models()` default selection after auth filtering.
     ModelPreset::mark_default_by_picker_visibility(&mut presets);
@@ -71,9 +73,9 @@ fn expected_visible_models() -> Vec<Model> {
 
 #[tokio::test]
 async fn list_models_returns_all_models_with_large_limit() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    write_models_cache(codex_home.path())?;
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let orbit_code_home = TempDir::new()?;
+    write_models_cache(orbit_code_home.path())?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
 
     timeout(DEFAULT_TIMEOUT, mcp.initialize()).await??;
 
@@ -105,9 +107,9 @@ async fn list_models_returns_all_models_with_large_limit() -> Result<()> {
 
 #[tokio::test]
 async fn list_models_includes_hidden_models() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    write_models_cache(codex_home.path())?;
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let orbit_code_home = TempDir::new()?;
+    write_models_cache(orbit_code_home.path())?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
 
     timeout(DEFAULT_TIMEOUT, mcp.initialize()).await??;
 
@@ -137,9 +139,9 @@ async fn list_models_includes_hidden_models() -> Result<()> {
 
 #[tokio::test]
 async fn list_models_pagination_works() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    write_models_cache(codex_home.path())?;
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let orbit_code_home = TempDir::new()?;
+    write_models_cache(orbit_code_home.path())?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
 
     timeout(DEFAULT_TIMEOUT, mcp.initialize()).await??;
 
@@ -186,9 +188,9 @@ async fn list_models_pagination_works() -> Result<()> {
 
 #[tokio::test]
 async fn list_models_rejects_invalid_cursor() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    write_models_cache(codex_home.path())?;
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let orbit_code_home = TempDir::new()?;
+    write_models_cache(orbit_code_home.path())?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
 
     timeout(DEFAULT_TIMEOUT, mcp.initialize()).await??;
 

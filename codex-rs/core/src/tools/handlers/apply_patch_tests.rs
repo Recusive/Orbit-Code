@@ -1,5 +1,5 @@
 use super::*;
-use codex_apply_patch::MaybeApplyPatchVerified;
+use orbit_code_apply_patch::MaybeApplyPatchVerified;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 
@@ -18,7 +18,7 @@ fn approval_keys_include_move_destination() {
 +new content
 *** End Patch"#;
     let argv = vec!["apply_patch".to_string(), patch.to_string()];
-    let action = match codex_apply_patch::maybe_parse_apply_patch_verified(&argv, cwd) {
+    let action = match orbit_code_apply_patch::maybe_parse_apply_patch_verified(&argv, cwd) {
         MaybeApplyPatchVerified::Body(action) => action,
         other => panic!("expected patch body, got: {other:?}"),
     };

@@ -1,15 +1,15 @@
 use crate::error_code::INTERNAL_ERROR_CODE;
-use codex_app_server_protocol::ExternalAgentConfigDetectParams;
-use codex_app_server_protocol::ExternalAgentConfigDetectResponse;
-use codex_app_server_protocol::ExternalAgentConfigImportParams;
-use codex_app_server_protocol::ExternalAgentConfigImportResponse;
-use codex_app_server_protocol::ExternalAgentConfigMigrationItem;
-use codex_app_server_protocol::ExternalAgentConfigMigrationItemType;
-use codex_app_server_protocol::JSONRPCErrorError;
-use codex_core::external_agent_config::ExternalAgentConfigDetectOptions;
-use codex_core::external_agent_config::ExternalAgentConfigMigrationItem as CoreMigrationItem;
-use codex_core::external_agent_config::ExternalAgentConfigMigrationItemType as CoreMigrationItemType;
-use codex_core::external_agent_config::ExternalAgentConfigService;
+use orbit_code_app_server_protocol::ExternalAgentConfigDetectParams;
+use orbit_code_app_server_protocol::ExternalAgentConfigDetectResponse;
+use orbit_code_app_server_protocol::ExternalAgentConfigImportParams;
+use orbit_code_app_server_protocol::ExternalAgentConfigImportResponse;
+use orbit_code_app_server_protocol::ExternalAgentConfigMigrationItem;
+use orbit_code_app_server_protocol::ExternalAgentConfigMigrationItemType;
+use orbit_code_app_server_protocol::JSONRPCErrorError;
+use orbit_code_core::external_agent_config::ExternalAgentConfigDetectOptions;
+use orbit_code_core::external_agent_config::ExternalAgentConfigMigrationItem as CoreMigrationItem;
+use orbit_code_core::external_agent_config::ExternalAgentConfigMigrationItemType as CoreMigrationItemType;
+use orbit_code_core::external_agent_config::ExternalAgentConfigService;
 use std::io;
 use std::path::PathBuf;
 
@@ -19,9 +19,9 @@ pub(crate) struct ExternalAgentConfigApi {
 }
 
 impl ExternalAgentConfigApi {
-    pub(crate) fn new(codex_home: PathBuf) -> Self {
+    pub(crate) fn new(orbit_code_home: PathBuf) -> Self {
         Self {
-            migration_service: ExternalAgentConfigService::new(codex_home),
+            migration_service: ExternalAgentConfigService::new(orbit_code_home),
         }
     }
 

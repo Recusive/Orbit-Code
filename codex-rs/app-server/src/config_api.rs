@@ -1,31 +1,31 @@
 use crate::error_code::INTERNAL_ERROR_CODE;
 use crate::error_code::INVALID_REQUEST_ERROR_CODE;
 use async_trait::async_trait;
-use codex_app_server_protocol::ConfigBatchWriteParams;
-use codex_app_server_protocol::ConfigReadParams;
-use codex_app_server_protocol::ConfigReadResponse;
-use codex_app_server_protocol::ConfigRequirements;
-use codex_app_server_protocol::ConfigRequirementsReadResponse;
-use codex_app_server_protocol::ConfigValueWriteParams;
-use codex_app_server_protocol::ConfigWriteErrorCode;
-use codex_app_server_protocol::ConfigWriteResponse;
-use codex_app_server_protocol::JSONRPCErrorError;
-use codex_app_server_protocol::NetworkRequirements;
-use codex_app_server_protocol::SandboxMode;
-use codex_core::AnalyticsEventsClient;
-use codex_core::ThreadManager;
-use codex_core::config::ConfigService;
-use codex_core::config::ConfigServiceError;
-use codex_core::config_loader::CloudRequirementsLoader;
-use codex_core::config_loader::ConfigRequirementsToml;
-use codex_core::config_loader::LoaderOverrides;
-use codex_core::config_loader::ResidencyRequirement as CoreResidencyRequirement;
-use codex_core::config_loader::SandboxModeRequirement as CoreSandboxModeRequirement;
-use codex_core::plugins::PluginId;
-use codex_core::plugins::collect_plugin_enabled_candidates;
-use codex_core::plugins::installed_plugin_telemetry_metadata;
-use codex_protocol::config_types::WebSearchMode;
-use codex_protocol::protocol::Op;
+use orbit_code_app_server_protocol::ConfigBatchWriteParams;
+use orbit_code_app_server_protocol::ConfigReadParams;
+use orbit_code_app_server_protocol::ConfigReadResponse;
+use orbit_code_app_server_protocol::ConfigRequirements;
+use orbit_code_app_server_protocol::ConfigRequirementsReadResponse;
+use orbit_code_app_server_protocol::ConfigValueWriteParams;
+use orbit_code_app_server_protocol::ConfigWriteErrorCode;
+use orbit_code_app_server_protocol::ConfigWriteResponse;
+use orbit_code_app_server_protocol::JSONRPCErrorError;
+use orbit_code_app_server_protocol::NetworkRequirements;
+use orbit_code_app_server_protocol::SandboxMode;
+use orbit_code_core::AnalyticsEventsClient;
+use orbit_code_core::ThreadManager;
+use orbit_code_core::config::ConfigService;
+use orbit_code_core::config::ConfigServiceError;
+use orbit_code_core::config_loader::CloudRequirementsLoader;
+use orbit_code_core::config_loader::ConfigRequirementsToml;
+use orbit_code_core::config_loader::LoaderOverrides;
+use orbit_code_core::config_loader::ResidencyRequirement as CoreResidencyRequirement;
+use orbit_code_core::config_loader::SandboxModeRequirement as CoreSandboxModeRequirement;
+use orbit_code_core::plugins::PluginId;
+use orbit_code_core::plugins::collect_plugin_enabled_candidates;
+use orbit_code_core::plugins::installed_plugin_telemetry_metadata;
+use orbit_code_protocol::config_types::WebSearchMode;
+use orbit_code_protocol::protocol::Op;
 use serde_json::json;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -55,7 +55,7 @@ impl UserConfigReloader for ThreadManager {
 
 #[derive(Clone)]
 pub(crate) struct ConfigApi {
-    codex_home: PathBuf,
+    orbit_code_home: PathBuf,
     cli_overrides: Vec<(String, TomlValue)>,
     loader_overrides: LoaderOverrides,
     cloud_requirements: Arc<RwLock<CloudRequirementsLoader>>,
@@ -65,7 +65,7 @@ pub(crate) struct ConfigApi {
 
 impl ConfigApi {
     pub(crate) fn new(
-        codex_home: PathBuf,
+        orbit_code_home: PathBuf,
         cli_overrides: Vec<(String, TomlValue)>,
         loader_overrides: LoaderOverrides,
         cloud_requirements: Arc<RwLock<CloudRequirementsLoader>>,
@@ -73,7 +73,7 @@ impl ConfigApi {
         analytics_events_client: AnalyticsEventsClient,
     ) -> Self {
         Self {
-            codex_home,
+            orbit_code_home,
             cli_overrides,
             loader_overrides,
             cloud_requirements,
@@ -89,7 +89,7 @@ impl ConfigApi {
             .map(|guard| guard.clone())
             .unwrap_or_default();
         ConfigService::new(
-            self.codex_home.clone(),
+            self.orbit_code_home.clone(),
             self.cli_overrides.clone(),
             self.loader_overrides.clone(),
             cloud_requirements,
@@ -160,7 +160,7 @@ impl ConfigApi {
                 continue;
             };
             let metadata =
-                installed_plugin_telemetry_metadata(self.codex_home.as_path(), &plugin_id);
+                installed_plugin_telemetry_metadata(self.orbit_code_home.as_path(), &plugin_id);
             if enabled {
                 self.analytics_events_client.track_plugin_enabled(metadata);
             } else {
@@ -175,7 +175,7 @@ fn map_requirements_toml_to_api(requirements: ConfigRequirementsToml) -> ConfigR
         allowed_approval_policies: requirements.allowed_approval_policies.map(|policies| {
             policies
                 .into_iter()
-                .map(codex_app_server_protocol::AskForApproval::from)
+                .map(orbit_code_app_server_protocol::AskForApproval::from)
                 .collect()
         }),
         allowed_sandbox_modes: requirements.allowed_sandbox_modes.map(|modes| {
@@ -215,14 +215,14 @@ fn map_sandbox_mode_requirement_to_api(mode: CoreSandboxModeRequirement) -> Opti
 
 fn map_residency_requirement_to_api(
     residency: CoreResidencyRequirement,
-) -> codex_app_server_protocol::ResidencyRequirement {
+) -> orbit_code_app_server_protocol::ResidencyRequirement {
     match residency {
-        CoreResidencyRequirement::Us => codex_app_server_protocol::ResidencyRequirement::Us,
+        CoreResidencyRequirement::Us => orbit_code_app_server_protocol::ResidencyRequirement::Us,
     }
 }
 
 fn map_network_requirements_to_api(
-    network: codex_core::config_loader::NetworkRequirementsToml,
+    network: orbit_code_core::config_loader::NetworkRequirementsToml,
 ) -> NetworkRequirements {
     NetworkRequirements {
         enabled: network.enabled,
@@ -263,9 +263,9 @@ fn config_write_error(code: ConfigWriteErrorCode, message: impl Into<String>) ->
 #[cfg(test)]
 mod tests {
     use super::*;
-    use codex_core::AnalyticsEventsClient;
-    use codex_core::config_loader::NetworkRequirementsToml as CoreNetworkRequirementsToml;
-    use codex_protocol::protocol::AskForApproval as CoreAskForApproval;
+    use orbit_code_core::AnalyticsEventsClient;
+    use orbit_code_core::config_loader::NetworkRequirementsToml as CoreNetworkRequirementsToml;
+    use orbit_code_protocol::protocol::AskForApproval as CoreAskForApproval;
     use pretty_assertions::assert_eq;
     use serde_json::json;
     use std::sync::atomic::AtomicUsize;
@@ -296,10 +296,10 @@ mod tests {
                 CoreSandboxModeRequirement::ExternalSandbox,
             ]),
             allowed_web_search_modes: Some(vec![
-                codex_core::config_loader::WebSearchModeRequirement::Cached,
+                orbit_code_core::config_loader::WebSearchModeRequirement::Cached,
             ]),
             guardian_developer_instructions: None,
-            feature_requirements: Some(codex_core::config_loader::FeatureRequirementsToml {
+            feature_requirements: Some(orbit_code_core::config_loader::FeatureRequirementsToml {
                 entries: std::collections::BTreeMap::from([
                     ("apps".to_string(), false),
                     ("personality".to_string(), true),
@@ -329,8 +329,8 @@ mod tests {
         assert_eq!(
             mapped.allowed_approval_policies,
             Some(vec![
-                codex_app_server_protocol::AskForApproval::Never,
-                codex_app_server_protocol::AskForApproval::OnRequest,
+                orbit_code_app_server_protocol::AskForApproval::Never,
+                orbit_code_app_server_protocol::AskForApproval::OnRequest,
             ])
         );
         assert_eq!(
@@ -350,7 +350,7 @@ mod tests {
         );
         assert_eq!(
             mapped.enforce_residency,
-            Some(codex_app_server_protocol::ResidencyRequirement::Us),
+            Some(orbit_code_app_server_protocol::ResidencyRequirement::Us),
         );
         assert_eq!(
             mapped.network,
@@ -394,36 +394,36 @@ mod tests {
 
     #[tokio::test]
     async fn batch_write_reloads_user_config_when_requested() {
-        let codex_home = TempDir::new().expect("create temp dir");
-        let user_config_path = codex_home.path().join("config.toml");
+        let orbit_code_home = TempDir::new().expect("create temp dir");
+        let user_config_path = orbit_code_home.path().join("config.toml");
         std::fs::write(&user_config_path, "").expect("write config");
         let reloader = Arc::new(RecordingUserConfigReloader::default());
         let analytics_config = Arc::new(
-            codex_core::config::ConfigBuilder::default()
+            orbit_code_core::config::ConfigBuilder::default()
                 .build()
                 .await
                 .expect("load analytics config"),
         );
         let config_api = ConfigApi::new(
-            codex_home.path().to_path_buf(),
+            orbit_code_home.path().to_path_buf(),
             Vec::new(),
             LoaderOverrides::default(),
             Arc::new(RwLock::new(CloudRequirementsLoader::default())),
             reloader.clone(),
             AnalyticsEventsClient::new(
                 analytics_config,
-                codex_core::test_support::auth_manager_from_auth(
-                    codex_core::CodexAuth::from_api_key("test"),
+                orbit_code_core::test_support::auth_manager_from_auth(
+                    orbit_code_core::CodexAuth::from_api_key("test"),
                 ),
             ),
         );
 
         let response = config_api
             .batch_write(ConfigBatchWriteParams {
-                edits: vec![codex_app_server_protocol::ConfigEdit {
+                edits: vec![orbit_code_app_server_protocol::ConfigEdit {
                     key_path: "model".to_string(),
                     value: json!("gpt-5"),
-                    merge_strategy: codex_app_server_protocol::MergeStrategy::Replace,
+                    merge_strategy: orbit_code_app_server_protocol::MergeStrategy::Replace,
                 }],
                 file_path: Some(user_config_path.display().to_string()),
                 expected_version: None,
@@ -435,9 +435,9 @@ mod tests {
         assert_eq!(
             response,
             ConfigWriteResponse {
-                status: codex_app_server_protocol::WriteStatus::Ok,
+                status: orbit_code_app_server_protocol::WriteStatus::Ok,
                 version: response.version.clone(),
-                file_path: codex_utils_absolute_path::AbsolutePathBuf::try_from(
+                file_path: orbit_code_utils_absolute_path::AbsolutePathBuf::try_from(
                     user_config_path.clone()
                 )
                 .expect("absolute config path"),

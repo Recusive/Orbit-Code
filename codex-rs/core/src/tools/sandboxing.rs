@@ -15,16 +15,16 @@ use crate::sandboxing::SandboxPermissions;
 use crate::sandboxing::SandboxTransformError;
 use crate::state::SessionServices;
 use crate::tools::network_approval::NetworkApprovalSpec;
-use codex_network_proxy::NetworkProxy;
-use codex_protocol::approvals::ExecPolicyAmendment;
-use codex_protocol::approvals::NetworkApprovalContext;
-use codex_protocol::permissions::FileSystemSandboxKind;
-use codex_protocol::permissions::FileSystemSandboxPolicy;
-use codex_protocol::permissions::NetworkSandboxPolicy;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::ReviewDecision;
 use futures::Future;
 use futures::future::BoxFuture;
+use orbit_code_network_proxy::NetworkProxy;
+use orbit_code_protocol::approvals::ExecPolicyAmendment;
+use orbit_code_protocol::approvals::NetworkApprovalContext;
+use orbit_code_protocol::permissions::FileSystemSandboxKind;
+use orbit_code_protocol::permissions::FileSystemSandboxPolicy;
+use orbit_code_protocol::permissions::NetworkSandboxPolicy;
+use orbit_code_protocol::protocol::AskForApproval;
+use orbit_code_protocol::protocol::ReviewDecision;
 use serde::Serialize;
 use std::collections::HashMap;
 use std::fmt::Debug;
@@ -330,9 +330,9 @@ pub(crate) struct SandboxAttempt<'a> {
     pub enforce_managed_network: bool,
     pub(crate) manager: &'a SandboxManager,
     pub(crate) sandbox_cwd: &'a Path,
-    pub codex_linux_sandbox_exe: Option<&'a std::path::PathBuf>,
+    pub orbit_code_linux_sandbox_exe: Option<&'a std::path::PathBuf>,
     pub use_legacy_landlock: bool,
-    pub windows_sandbox_level: codex_protocol::config_types::WindowsSandboxLevel,
+    pub windows_sandbox_level: orbit_code_protocol::config_types::WindowsSandboxLevel,
     pub windows_sandbox_private_desktop: bool,
 }
 
@@ -354,7 +354,7 @@ impl<'a> SandboxAttempt<'a> {
                 sandbox_policy_cwd: self.sandbox_cwd,
                 #[cfg(target_os = "macos")]
                 macos_seatbelt_profile_extensions: None,
-                codex_linux_sandbox_exe: self.codex_linux_sandbox_exe,
+                orbit_code_linux_sandbox_exe: self.orbit_code_linux_sandbox_exe,
                 use_legacy_landlock: self.use_legacy_landlock,
                 windows_sandbox_level: self.windows_sandbox_level,
                 windows_sandbox_private_desktop: self.windows_sandbox_private_desktop,

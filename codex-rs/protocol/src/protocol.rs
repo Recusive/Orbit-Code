@@ -47,7 +47,7 @@ use crate::request_permissions::RequestPermissionsEvent;
 use crate::request_permissions::RequestPermissionsResponse;
 use crate::request_user_input::RequestUserInputResponse;
 use crate::user_input::UserInput;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use orbit_code_utils_absolute_path::AbsolutePathBuf;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;
@@ -241,7 +241,7 @@ pub enum Op {
     },
 
     /// Similar to [`Op::UserInput`], but contains additional context required
-    /// for a turn of a [`crate::codex_thread::CodexThread`].
+    /// for a turn of a [`crate::orbit_code_thread::CodexThread`].
     UserTurn {
         /// User input items, see `InputItem`
         items: Vec<UserInput>,
@@ -1728,13 +1728,13 @@ pub struct ExitedReviewModeEvent {
 pub struct ErrorEvent {
     pub message: String,
     #[serde(default)]
-    pub codex_error_info: Option<CodexErrorInfo>,
+    pub orbit_code_error_info: Option<CodexErrorInfo>,
 }
 
 impl ErrorEvent {
     /// Whether this error should mark the current turn as failed when replaying history.
     pub fn affects_turn_status(&self) -> bool {
-        self.codex_error_info
+        self.orbit_code_error_info
             .as_ref()
             .is_none_or(CodexErrorInfo::affects_turn_status)
     }
@@ -2765,7 +2765,7 @@ pub struct ThreadRolledBackEvent {
 pub struct StreamErrorEvent {
     pub message: String,
     #[serde(default)]
-    pub codex_error_info: Option<CodexErrorInfo>,
+    pub orbit_code_error_info: Option<CodexErrorInfo>,
     /// Optional details about the underlying stream failure (often the same
     /// human-readable message that is surfaced as the terminal error if retries
     /// are exhausted).
@@ -3373,7 +3373,7 @@ mod tests {
     use crate::permissions::FileSystemSpecialPath;
     use crate::permissions::NetworkSandboxPolicy;
     use anyhow::Result;
-    use codex_utils_absolute_path::AbsolutePathBuf;
+    use orbit_code_utils_absolute_path::AbsolutePathBuf;
     use pretty_assertions::assert_eq;
     use serde_json::json;
     use std::path::PathBuf;
@@ -4035,7 +4035,7 @@ mod tests {
     fn rollback_failed_error_does_not_affect_turn_status() {
         let event = ErrorEvent {
             message: "rollback failed".into(),
-            codex_error_info: Some(CodexErrorInfo::ThreadRollbackFailed),
+            orbit_code_error_info: Some(CodexErrorInfo::ThreadRollbackFailed),
         };
         assert!(!event.affects_turn_status());
     }
@@ -4044,7 +4044,7 @@ mod tests {
     fn generic_error_affects_turn_status() {
         let event = ErrorEvent {
             message: "generic".into(),
-            codex_error_info: Some(CodexErrorInfo::Other),
+            orbit_code_error_info: Some(CodexErrorInfo::Other),
         };
         assert!(event.affects_turn_status());
     }

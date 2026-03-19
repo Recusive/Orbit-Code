@@ -3,22 +3,22 @@ use crate::app_event_sender::AppEventSender;
 use crate::audio_device::preferred_input_config;
 use crate::audio_device::select_configured_input_device_and_config;
 use base64::Engine;
-use codex_client::build_reqwest_client_with_custom_ca;
-use codex_core::auth::AuthCredentialsStoreMode;
-use codex_core::config::Config;
-use codex_core::config::find_codex_home;
-use codex_core::default_client::get_codex_user_agent;
-use codex_login::AuthMode;
-use codex_login::CodexAuth;
-use codex_protocol::protocol::ConversationAudioParams;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::RealtimeAudioFrame;
 use cpal::traits::DeviceTrait;
 use cpal::traits::HostTrait;
 use cpal::traits::StreamTrait;
 use hound::SampleFormat;
 use hound::WavSpec;
 use hound::WavWriter;
+use orbit_code_client::build_reqwest_client_with_custom_ca;
+use orbit_code_core::auth::AuthCredentialsStoreMode;
+use orbit_code_core::config::Config;
+use orbit_code_core::config::find_orbit_code_home;
+use orbit_code_core::default_client::get_orbit_code_user_agent;
+use orbit_code_login::AuthMode;
+use orbit_code_login::CodexAuth;
+use orbit_code_protocol::protocol::ConversationAudioParams;
+use orbit_code_protocol::protocol::Op;
+use orbit_code_protocol::protocol::RealtimeAudioFrame;
 use std::collections::VecDeque;
 use std::io::Cursor;
 use std::sync::Arc;
@@ -925,8 +925,9 @@ fn normalize_chatgpt_base_url(input: &str) -> String {
 }
 
 async fn resolve_auth() -> Result<TranscriptionAuthContext, String> {
-    let codex_home = find_codex_home().map_err(|e| format!("failed to find codex home: {e}"))?;
-    let auth = CodexAuth::from_auth_storage(&codex_home, AuthCredentialsStoreMode::Auto)
+    let orbit_code_home =
+        find_orbit_code_home().map_err(|e| format!("failed to find codex home: {e}"))?;
+    let auth = CodexAuth::from_auth_storage(&orbit_code_home, AuthCredentialsStoreMode::Auto)
         .map_err(|e| format!("failed to read auth.json: {e}"))?
         .ok_or_else(|| "No Codex auth is configured; please run `codex login`".to_string())?;
 
@@ -968,7 +969,7 @@ async fn transcribe_bytes(
                 .post(&endpoint)
                 .bearer_auth(&auth.bearer_token)
                 .multipart(form)
-                .header("User-Agent", get_codex_user_agent());
+                .header("User-Agent", get_orbit_code_user_agent());
             if let Some(acc) = auth.chatgpt_account_id {
                 req = req.header("ChatGPT-Account-Id", acc);
             }
@@ -991,7 +992,7 @@ async fn transcribe_bytes(
                     .post("https://api.openai.com/v1/audio/transcriptions")
                     .bearer_auth(&auth.bearer_token)
                     .multipart(form)
-                    .header("User-Agent", get_codex_user_agent()),
+                    .header("User-Agent", get_orbit_code_user_agent()),
             )
         };
 

@@ -8,28 +8,28 @@ use app_test_support::rollout_path;
 use app_test_support::to_response;
 use chrono::DateTime;
 use chrono::Utc;
-use codex_app_server_protocol::GitInfo as ApiGitInfo;
-use codex_app_server_protocol::JSONRPCError;
-use codex_app_server_protocol::JSONRPCResponse;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::SessionSource;
-use codex_app_server_protocol::ThreadListResponse;
-use codex_app_server_protocol::ThreadSortKey;
-use codex_app_server_protocol::ThreadSourceKind;
-use codex_app_server_protocol::ThreadStartParams;
-use codex_app_server_protocol::ThreadStartResponse;
-use codex_app_server_protocol::ThreadStatus;
-use codex_app_server_protocol::TurnStartParams;
-use codex_app_server_protocol::TurnStartResponse;
-use codex_app_server_protocol::UserInput;
-use codex_core::ARCHIVED_SESSIONS_SUBDIR;
-use codex_protocol::ThreadId;
-use codex_protocol::protocol::GitInfo as CoreGitInfo;
-use codex_protocol::protocol::RolloutItem;
-use codex_protocol::protocol::RolloutLine;
-use codex_protocol::protocol::SessionSource as CoreSessionSource;
-use codex_protocol::protocol::SubAgentSource;
 use core_test_support::responses;
+use orbit_code_app_server_protocol::GitInfo as ApiGitInfo;
+use orbit_code_app_server_protocol::JSONRPCError;
+use orbit_code_app_server_protocol::JSONRPCResponse;
+use orbit_code_app_server_protocol::RequestId;
+use orbit_code_app_server_protocol::SessionSource;
+use orbit_code_app_server_protocol::ThreadListResponse;
+use orbit_code_app_server_protocol::ThreadSortKey;
+use orbit_code_app_server_protocol::ThreadSourceKind;
+use orbit_code_app_server_protocol::ThreadStartParams;
+use orbit_code_app_server_protocol::ThreadStartResponse;
+use orbit_code_app_server_protocol::ThreadStatus;
+use orbit_code_app_server_protocol::TurnStartParams;
+use orbit_code_app_server_protocol::TurnStartResponse;
+use orbit_code_app_server_protocol::UserInput;
+use orbit_code_core::ARCHIVED_SESSIONS_SUBDIR;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::protocol::GitInfo as CoreGitInfo;
+use orbit_code_protocol::protocol::RolloutItem;
+use orbit_code_protocol::protocol::RolloutLine;
+use orbit_code_protocol::protocol::SessionSource as CoreSessionSource;
+use orbit_code_protocol::protocol::SubAgentSource;
 use pretty_assertions::assert_eq;
 use std::cmp::Reverse;
 use std::fs;
@@ -43,8 +43,8 @@ use uuid::Uuid;
 
 const DEFAULT_READ_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(10);
 
-async fn init_mcp(codex_home: &Path) -> Result<McpProcess> {
-    let mut mcp = McpProcess::new(codex_home).await?;
+async fn init_mcp(orbit_code_home: &Path) -> Result<McpProcess> {
+    let mut mcp = McpProcess::new(orbit_code_home).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
     Ok(mcp)
 }
@@ -70,7 +70,7 @@ async fn list_threads_with_sort(
     archived: Option<bool>,
 ) -> Result<ThreadListResponse> {
     let request_id = mcp
-        .send_thread_list_request(codex_app_server_protocol::ThreadListParams {
+        .send_thread_list_request(orbit_code_app_server_protocol::ThreadListParams {
             cursor,
             limit,
             sort_key,
@@ -90,7 +90,7 @@ async fn list_threads_with_sort(
 }
 
 fn create_fake_rollouts<F, G>(
-    codex_home: &Path,
+    orbit_code_home: &Path,
     count: usize,
     provider_for_index: F,
     timestamp_for_index: G,
@@ -104,7 +104,7 @@ where
     for i in 0..count {
         let (ts_file, ts_rfc) = timestamp_for_index(i);
         ids.push(create_fake_rollout(
-            codex_home,
+            orbit_code_home,
             &ts_file,
             &ts_rfc,
             preview,
@@ -162,10 +162,10 @@ fn set_rollout_cwd(path: &Path, cwd: &Path) -> Result<()> {
 
 #[tokio::test]
 async fn thread_list_basic_empty() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    create_minimal_config(codex_home.path())?;
+    let orbit_code_home = TempDir::new()?;
+    create_minimal_config(orbit_code_home.path())?;
 
-    let mut mcp = init_mcp(codex_home.path()).await?;
+    let mut mcp = init_mcp(orbit_code_home.path()).await?;
 
     let ThreadListResponse {
         data, next_cursor, ..
@@ -192,9 +192,9 @@ async fn thread_list_reports_system_error_idle_flag_after_failed_turn() -> Resul
     ];
     let server = create_mock_responses_server_sequence(responses).await;
 
-    let codex_home = TempDir::new()?;
-    create_runtime_config(codex_home.path(), &server.uri())?;
-    let mut mcp = init_mcp(codex_home.path()).await?;
+    let orbit_code_home = TempDir::new()?;
+    create_runtime_config(orbit_code_home.path(), &server.uri())?;
+    let mut mcp = init_mcp(orbit_code_home.path()).await?;
 
     let start_id = mcp
         .send_thread_start_request(ThreadStartParams {
@@ -276,8 +276,8 @@ async fn thread_list_reports_system_error_idle_flag_after_failed_turn() -> Resul
 }
 
 // Minimal config.toml for listing.
-fn create_minimal_config(codex_home: &std::path::Path) -> std::io::Result<()> {
-    let config_toml = codex_home.join("config.toml");
+fn create_minimal_config(orbit_code_home: &std::path::Path) -> std::io::Result<()> {
+    let config_toml = orbit_code_home.join("config.toml");
     std::fs::write(
         config_toml,
         r#"
@@ -287,8 +287,11 @@ approval_policy = "never"
     )
 }
 
-fn create_runtime_config(codex_home: &std::path::Path, server_uri: &str) -> std::io::Result<()> {
-    let config_toml = codex_home.join("config.toml");
+fn create_runtime_config(
+    orbit_code_home: &std::path::Path,
+    server_uri: &str,
+) -> std::io::Result<()> {
+    let config_toml = orbit_code_home.join("config.toml");
     std::fs::write(
         config_toml,
         format!(
@@ -312,12 +315,12 @@ stream_max_retries = 0
 
 #[tokio::test]
 async fn thread_list_pagination_next_cursor_none_on_last_page() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    create_minimal_config(codex_home.path())?;
+    let orbit_code_home = TempDir::new()?;
+    create_minimal_config(orbit_code_home.path())?;
 
     // Create three rollouts so we can paginate with limit=2.
     let _a = create_fake_rollout(
-        codex_home.path(),
+        orbit_code_home.path(),
         "2025-01-02T12-00-00",
         "2025-01-02T12:00:00Z",
         "Hello",
@@ -325,7 +328,7 @@ async fn thread_list_pagination_next_cursor_none_on_last_page() -> Result<()> {
         None,
     )?;
     let _b = create_fake_rollout(
-        codex_home.path(),
+        orbit_code_home.path(),
         "2025-01-01T13-00-00",
         "2025-01-01T13:00:00Z",
         "Hello",
@@ -333,7 +336,7 @@ async fn thread_list_pagination_next_cursor_none_on_last_page() -> Result<()> {
         None,
     )?;
     let _c = create_fake_rollout(
-        codex_home.path(),
+        orbit_code_home.path(),
         "2025-01-01T12-00-00",
         "2025-01-01T12:00:00Z",
         "Hello",
@@ -341,7 +344,7 @@ async fn thread_list_pagination_next_cursor_none_on_last_page() -> Result<()> {
         None,
     )?;
 
-    let mut mcp = init_mcp(codex_home.path()).await?;
+    let mut mcp = init_mcp(orbit_code_home.path()).await?;
 
     // Page 1: limit 2 → expect next_cursor Some.
     let ThreadListResponse {
@@ -402,12 +405,12 @@ async fn thread_list_pagination_next_cursor_none_on_last_page() -> Result<()> {
 
 #[tokio::test]
 async fn thread_list_respects_provider_filter() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    create_minimal_config(codex_home.path())?;
+    let orbit_code_home = TempDir::new()?;
+    create_minimal_config(orbit_code_home.path())?;
 
     // Create rollouts under two providers.
     let _a = create_fake_rollout(
-        codex_home.path(),
+        orbit_code_home.path(),
         "2025-01-02T10-00-00",
         "2025-01-02T10:00:00Z",
         "X",
@@ -415,7 +418,7 @@ async fn thread_list_respects_provider_filter() -> Result<()> {
         None,
     )?; // mock_provider
     let _b = create_fake_rollout(
-        codex_home.path(),
+        orbit_code_home.path(),
         "2025-01-02T11-00-00",
         "2025-01-02T11:00:00Z",
         "X",
@@ -423,7 +426,7 @@ async fn thread_list_respects_provider_filter() -> Result<()> {
         None,
     )?;
 
-    let mut mcp = init_mcp(codex_home.path()).await?;
+    let mut mcp = init_mcp(orbit_code_home.path()).await?;
 
     // Filter to only other_provider; expect 1 item, nextCursor None.
     let ThreadListResponse {
@@ -455,11 +458,11 @@ async fn thread_list_respects_provider_filter() -> Result<()> {
 
 #[tokio::test]
 async fn thread_list_respects_cwd_filter() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    create_minimal_config(codex_home.path())?;
+    let orbit_code_home = TempDir::new()?;
+    create_minimal_config(orbit_code_home.path())?;
 
     let filtered_id = create_fake_rollout(
-        codex_home.path(),
+        orbit_code_home.path(),
         "2025-01-02T10-00-00",
         "2025-01-02T10:00:00Z",
         "filtered",
@@ -467,7 +470,7 @@ async fn thread_list_respects_cwd_filter() -> Result<()> {
         None,
     )?;
     let unfiltered_id = create_fake_rollout(
-        codex_home.path(),
+        orbit_code_home.path(),
         "2025-01-02T11-00-00",
         "2025-01-02T11:00:00Z",
         "unfiltered",
@@ -475,16 +478,16 @@ async fn thread_list_respects_cwd_filter() -> Result<()> {
         None,
     )?;
 
-    let target_cwd = codex_home.path().join("target-cwd");
+    let target_cwd = orbit_code_home.path().join("target-cwd");
     fs::create_dir_all(&target_cwd)?;
     set_rollout_cwd(
-        rollout_path(codex_home.path(), "2025-01-02T10-00-00", &filtered_id).as_path(),
+        rollout_path(orbit_code_home.path(), "2025-01-02T10-00-00", &filtered_id).as_path(),
         &target_cwd,
     )?;
 
-    let mut mcp = init_mcp(codex_home.path()).await?;
+    let mut mcp = init_mcp(orbit_code_home.path()).await?;
     let request_id = mcp
-        .send_thread_list_request(codex_app_server_protocol::ThreadListParams {
+        .send_thread_list_request(orbit_code_app_server_protocol::ThreadListParams {
             cursor: None,
             limit: Some(10),
             sort_key: None,
@@ -515,9 +518,9 @@ async fn thread_list_respects_cwd_filter() -> Result<()> {
 
 #[tokio::test]
 async fn thread_list_respects_search_term_filter() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        orbit_code_home.path().join("config.toml"),
         r#"
 model = "mock-model"
 approval_policy = "never"
@@ -529,7 +532,7 @@ sqlite = true
     )?;
 
     let older_match = create_fake_rollout(
-        codex_home.path(),
+        orbit_code_home.path(),
         "2025-01-02T10-00-00",
         "2025-01-02T10:00:00Z",
         "match: needle",
@@ -537,7 +540,7 @@ sqlite = true
         None,
     )?;
     let _non_match = create_fake_rollout(
-        codex_home.path(),
+        orbit_code_home.path(),
         "2025-01-02T11-00-00",
         "2025-01-02T11:00:00Z",
         "no hit here",
@@ -545,7 +548,7 @@ sqlite = true
         None,
     )?;
     let newer_match = create_fake_rollout(
-        codex_home.path(),
+        orbit_code_home.path(),
         "2025-01-02T12-00-00",
         "2025-01-02T12:00:00Z",
         "needle suffix",
@@ -556,14 +559,16 @@ sqlite = true
     // `thread/list` only applies `search_term` on the sqlite path. In this test we
     // create rollouts manually, so we must also create the sqlite DB and mark backfill
     // complete; otherwise app-server will permanently use filesystem fallback.
-    let state_db =
-        codex_state::StateRuntime::init(codex_home.path().to_path_buf(), "mock_provider".into())
-            .await?;
+    let state_db = orbit_code_state::StateRuntime::init(
+        orbit_code_home.path().to_path_buf(),
+        "mock_provider".into(),
+    )
+    .await?;
     state_db.mark_backfill_complete(None).await?;
 
-    let mut mcp = init_mcp(codex_home.path()).await?;
+    let mut mcp = init_mcp(orbit_code_home.path()).await?;
     let request_id = mcp
-        .send_thread_list_request(codex_app_server_protocol::ThreadListParams {
+        .send_thread_list_request(orbit_code_app_server_protocol::ThreadListParams {
             cursor: None,
             limit: Some(10),
             sort_key: None,
@@ -592,11 +597,11 @@ sqlite = true
 
 #[tokio::test]
 async fn thread_list_empty_source_kinds_defaults_to_interactive_only() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    create_minimal_config(codex_home.path())?;
+    let orbit_code_home = TempDir::new()?;
+    create_minimal_config(orbit_code_home.path())?;
 
     let cli_id = create_fake_rollout(
-        codex_home.path(),
+        orbit_code_home.path(),
         "2025-02-01T10-00-00",
         "2025-02-01T10:00:00Z",
         "CLI",
@@ -604,7 +609,7 @@ async fn thread_list_empty_source_kinds_defaults_to_interactive_only() -> Result
         None,
     )?;
     let exec_id = create_fake_rollout_with_source(
-        codex_home.path(),
+        orbit_code_home.path(),
         "2025-02-01T11-00-00",
         "2025-02-01T11:00:00Z",
         "Exec",
@@ -613,7 +618,7 @@ async fn thread_list_empty_source_kinds_defaults_to_interactive_only() -> Result
         CoreSessionSource::Exec,
     )?;
 
-    let mut mcp = init_mcp(codex_home.path()).await?;
+    let mut mcp = init_mcp(orbit_code_home.path()).await?;
 
     let ThreadListResponse {
         data, next_cursor, ..
@@ -638,11 +643,11 @@ async fn thread_list_empty_source_kinds_defaults_to_interactive_only() -> Result
 
 #[tokio::test]
 async fn thread_list_filters_by_source_kind_subagent_thread_spawn() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    create_minimal_config(codex_home.path())?;
+    let orbit_code_home = TempDir::new()?;
+    create_minimal_config(orbit_code_home.path())?;
 
     let cli_id = create_fake_rollout(
-        codex_home.path(),
+        orbit_code_home.path(),
         "2025-02-01T10-00-00",
         "2025-02-01T10:00:00Z",
         "CLI",
@@ -652,7 +657,7 @@ async fn thread_list_filters_by_source_kind_subagent_thread_spawn() -> Result<()
 
     let parent_thread_id = ThreadId::from_string(&Uuid::new_v4().to_string())?;
     let subagent_id = create_fake_rollout_with_source(
-        codex_home.path(),
+        orbit_code_home.path(),
         "2025-02-01T11-00-00",
         "2025-02-01T11:00:00Z",
         "SubAgent",
@@ -666,7 +671,7 @@ async fn thread_list_filters_by_source_kind_subagent_thread_spawn() -> Result<()
         }),
     )?;
 
-    let mut mcp = init_mcp(codex_home.path()).await?;
+    let mut mcp = init_mcp(orbit_code_home.path()).await?;
 
     let ThreadListResponse {
         data, next_cursor, ..
@@ -691,13 +696,13 @@ async fn thread_list_filters_by_source_kind_subagent_thread_spawn() -> Result<()
 
 #[tokio::test]
 async fn thread_list_filters_by_subagent_variant() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    create_minimal_config(codex_home.path())?;
+    let orbit_code_home = TempDir::new()?;
+    create_minimal_config(orbit_code_home.path())?;
 
     let parent_thread_id = ThreadId::from_string(&Uuid::new_v4().to_string())?;
 
     let review_id = create_fake_rollout_with_source(
-        codex_home.path(),
+        orbit_code_home.path(),
         "2025-02-02T09-00-00",
         "2025-02-02T09:00:00Z",
         "Review",
@@ -706,7 +711,7 @@ async fn thread_list_filters_by_subagent_variant() -> Result<()> {
         CoreSessionSource::SubAgent(SubAgentSource::Review),
     )?;
     let compact_id = create_fake_rollout_with_source(
-        codex_home.path(),
+        orbit_code_home.path(),
         "2025-02-02T10-00-00",
         "2025-02-02T10:00:00Z",
         "Compact",
@@ -715,7 +720,7 @@ async fn thread_list_filters_by_subagent_variant() -> Result<()> {
         CoreSessionSource::SubAgent(SubAgentSource::Compact),
     )?;
     let spawn_id = create_fake_rollout_with_source(
-        codex_home.path(),
+        orbit_code_home.path(),
         "2025-02-02T11-00-00",
         "2025-02-02T11:00:00Z",
         "Spawn",
@@ -729,7 +734,7 @@ async fn thread_list_filters_by_subagent_variant() -> Result<()> {
         }),
     )?;
     let other_id = create_fake_rollout_with_source(
-        codex_home.path(),
+        orbit_code_home.path(),
         "2025-02-02T12-00-00",
         "2025-02-02T12:00:00Z",
         "Other",
@@ -738,7 +743,7 @@ async fn thread_list_filters_by_subagent_variant() -> Result<()> {
         CoreSessionSource::SubAgent(SubAgentSource::Other("custom".to_string())),
     )?;
 
-    let mut mcp = init_mcp(codex_home.path()).await?;
+    let mut mcp = init_mcp(orbit_code_home.path()).await?;
 
     let review = list_threads(
         &mut mcp,
@@ -801,14 +806,14 @@ async fn thread_list_filters_by_subagent_variant() -> Result<()> {
 
 #[tokio::test]
 async fn thread_list_fetches_until_limit_or_exhausted() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    create_minimal_config(codex_home.path())?;
+    let orbit_code_home = TempDir::new()?;
+    create_minimal_config(orbit_code_home.path())?;
 
     // Newest 16 conversations belong to a different provider; the older 8 are the
     // only ones that match the filter. We request 8 so the server must keep
     // paging past the first two pages to reach the desired count.
     create_fake_rollouts(
-        codex_home.path(),
+        orbit_code_home.path(),
         24,
         |i| {
             if i < 16 {
@@ -821,7 +826,7 @@ async fn thread_list_fetches_until_limit_or_exhausted() -> Result<()> {
         "Hello",
     )?;
 
-    let mut mcp = init_mcp(codex_home.path()).await?;
+    let mut mcp = init_mcp(orbit_code_home.path()).await?;
 
     // Request 8 threads for the target provider; the matches only start on the
     // third page so we rely on pagination to reach the limit.
@@ -856,11 +861,11 @@ async fn thread_list_fetches_until_limit_or_exhausted() -> Result<()> {
 
 #[tokio::test]
 async fn thread_list_enforces_max_limit() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    create_minimal_config(codex_home.path())?;
+    let orbit_code_home = TempDir::new()?;
+    create_minimal_config(orbit_code_home.path())?;
 
     create_fake_rollouts(
-        codex_home.path(),
+        orbit_code_home.path(),
         105,
         |_| "mock_provider",
         |i| {
@@ -871,7 +876,7 @@ async fn thread_list_enforces_max_limit() -> Result<()> {
         "Hello",
     )?;
 
-    let mut mcp = init_mcp(codex_home.path()).await?;
+    let mut mcp = init_mcp(orbit_code_home.path()).await?;
 
     let ThreadListResponse {
         data, next_cursor, ..
@@ -899,13 +904,13 @@ async fn thread_list_enforces_max_limit() -> Result<()> {
 
 #[tokio::test]
 async fn thread_list_stops_when_not_enough_filtered_results_exist() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    create_minimal_config(codex_home.path())?;
+    let orbit_code_home = TempDir::new()?;
+    create_minimal_config(orbit_code_home.path())?;
 
     // Only the last 7 conversations match the provider filter; we ask for 10 to
     // ensure the server exhausts pagination without looping forever.
     create_fake_rollouts(
-        codex_home.path(),
+        orbit_code_home.path(),
         22,
         |i| {
             if i < 15 {
@@ -918,7 +923,7 @@ async fn thread_list_stops_when_not_enough_filtered_results_exist() -> Result<()
         "Hello",
     )?;
 
-    let mut mcp = init_mcp(codex_home.path()).await?;
+    let mut mcp = init_mcp(orbit_code_home.path()).await?;
 
     // Request more threads than exist after filtering; expect all matches to be
     // returned with nextCursor None.
@@ -953,8 +958,8 @@ async fn thread_list_stops_when_not_enough_filtered_results_exist() -> Result<()
 
 #[tokio::test]
 async fn thread_list_includes_git_info() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    create_minimal_config(codex_home.path())?;
+    let orbit_code_home = TempDir::new()?;
+    create_minimal_config(orbit_code_home.path())?;
 
     let git_info = CoreGitInfo {
         commit_hash: Some("abc123".to_string()),
@@ -962,7 +967,7 @@ async fn thread_list_includes_git_info() -> Result<()> {
         repository_url: Some("https://example.com/repo.git".to_string()),
     };
     let conversation_id = create_fake_rollout(
-        codex_home.path(),
+        orbit_code_home.path(),
         "2025-02-01T09-00-00",
         "2025-02-01T09:00:00Z",
         "Git info preview",
@@ -970,7 +975,7 @@ async fn thread_list_includes_git_info() -> Result<()> {
         Some(git_info),
     )?;
 
-    let mut mcp = init_mcp(codex_home.path()).await?;
+    let mut mcp = init_mcp(orbit_code_home.path()).await?;
 
     let ThreadListResponse { data, .. } = list_threads(
         &mut mcp,
@@ -1001,11 +1006,11 @@ async fn thread_list_includes_git_info() -> Result<()> {
 
 #[tokio::test]
 async fn thread_list_default_sorts_by_created_at() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    create_minimal_config(codex_home.path())?;
+    let orbit_code_home = TempDir::new()?;
+    create_minimal_config(orbit_code_home.path())?;
 
     let id_a = create_fake_rollout(
-        codex_home.path(),
+        orbit_code_home.path(),
         "2025-01-02T12-00-00",
         "2025-01-02T12:00:00Z",
         "Hello",
@@ -1013,7 +1018,7 @@ async fn thread_list_default_sorts_by_created_at() -> Result<()> {
         None,
     )?;
     let id_b = create_fake_rollout(
-        codex_home.path(),
+        orbit_code_home.path(),
         "2025-01-01T13-00-00",
         "2025-01-01T13:00:00Z",
         "Hello",
@@ -1021,7 +1026,7 @@ async fn thread_list_default_sorts_by_created_at() -> Result<()> {
         None,
     )?;
     let id_c = create_fake_rollout(
-        codex_home.path(),
+        orbit_code_home.path(),
         "2025-01-01T12-00-00",
         "2025-01-01T12:00:00Z",
         "Hello",
@@ -1029,7 +1034,7 @@ async fn thread_list_default_sorts_by_created_at() -> Result<()> {
         None,
     )?;
 
-    let mut mcp = init_mcp(codex_home.path()).await?;
+    let mut mcp = init_mcp(orbit_code_home.path()).await?;
 
     let ThreadListResponse { data, .. } = list_threads_with_sort(
         &mut mcp,
@@ -1050,11 +1055,11 @@ async fn thread_list_default_sorts_by_created_at() -> Result<()> {
 
 #[tokio::test]
 async fn thread_list_sort_updated_at_orders_by_mtime() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    create_minimal_config(codex_home.path())?;
+    let orbit_code_home = TempDir::new()?;
+    create_minimal_config(orbit_code_home.path())?;
 
     let id_old = create_fake_rollout(
-        codex_home.path(),
+        orbit_code_home.path(),
         "2025-01-01T10-00-00",
         "2025-01-01T10:00:00Z",
         "Hello",
@@ -1062,7 +1067,7 @@ async fn thread_list_sort_updated_at_orders_by_mtime() -> Result<()> {
         None,
     )?;
     let id_mid = create_fake_rollout(
-        codex_home.path(),
+        orbit_code_home.path(),
         "2025-01-01T11-00-00",
         "2025-01-01T11:00:00Z",
         "Hello",
@@ -1070,7 +1075,7 @@ async fn thread_list_sort_updated_at_orders_by_mtime() -> Result<()> {
         None,
     )?;
     let id_new = create_fake_rollout(
-        codex_home.path(),
+        orbit_code_home.path(),
         "2025-01-01T12-00-00",
         "2025-01-01T12:00:00Z",
         "Hello",
@@ -1079,19 +1084,19 @@ async fn thread_list_sort_updated_at_orders_by_mtime() -> Result<()> {
     )?;
 
     set_rollout_mtime(
-        rollout_path(codex_home.path(), "2025-01-01T10-00-00", &id_old).as_path(),
+        rollout_path(orbit_code_home.path(), "2025-01-01T10-00-00", &id_old).as_path(),
         "2025-01-03T00:00:00Z",
     )?;
     set_rollout_mtime(
-        rollout_path(codex_home.path(), "2025-01-01T11-00-00", &id_mid).as_path(),
+        rollout_path(orbit_code_home.path(), "2025-01-01T11-00-00", &id_mid).as_path(),
         "2025-01-02T00:00:00Z",
     )?;
     set_rollout_mtime(
-        rollout_path(codex_home.path(), "2025-01-01T12-00-00", &id_new).as_path(),
+        rollout_path(orbit_code_home.path(), "2025-01-01T12-00-00", &id_new).as_path(),
         "2025-01-01T00:00:00Z",
     )?;
 
-    let mut mcp = init_mcp(codex_home.path()).await?;
+    let mut mcp = init_mcp(orbit_code_home.path()).await?;
 
     let ThreadListResponse { data, .. } = list_threads_with_sort(
         &mut mcp,
@@ -1112,11 +1117,11 @@ async fn thread_list_sort_updated_at_orders_by_mtime() -> Result<()> {
 
 #[tokio::test]
 async fn thread_list_updated_at_paginates_with_cursor() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    create_minimal_config(codex_home.path())?;
+    let orbit_code_home = TempDir::new()?;
+    create_minimal_config(orbit_code_home.path())?;
 
     let id_a = create_fake_rollout(
-        codex_home.path(),
+        orbit_code_home.path(),
         "2025-02-01T10-00-00",
         "2025-02-01T10:00:00Z",
         "Hello",
@@ -1124,7 +1129,7 @@ async fn thread_list_updated_at_paginates_with_cursor() -> Result<()> {
         None,
     )?;
     let id_b = create_fake_rollout(
-        codex_home.path(),
+        orbit_code_home.path(),
         "2025-02-01T11-00-00",
         "2025-02-01T11:00:00Z",
         "Hello",
@@ -1132,7 +1137,7 @@ async fn thread_list_updated_at_paginates_with_cursor() -> Result<()> {
         None,
     )?;
     let id_c = create_fake_rollout(
-        codex_home.path(),
+        orbit_code_home.path(),
         "2025-02-01T12-00-00",
         "2025-02-01T12:00:00Z",
         "Hello",
@@ -1141,19 +1146,19 @@ async fn thread_list_updated_at_paginates_with_cursor() -> Result<()> {
     )?;
 
     set_rollout_mtime(
-        rollout_path(codex_home.path(), "2025-02-01T10-00-00", &id_a).as_path(),
+        rollout_path(orbit_code_home.path(), "2025-02-01T10-00-00", &id_a).as_path(),
         "2025-02-03T00:00:00Z",
     )?;
     set_rollout_mtime(
-        rollout_path(codex_home.path(), "2025-02-01T11-00-00", &id_b).as_path(),
+        rollout_path(orbit_code_home.path(), "2025-02-01T11-00-00", &id_b).as_path(),
         "2025-02-02T00:00:00Z",
     )?;
     set_rollout_mtime(
-        rollout_path(codex_home.path(), "2025-02-01T12-00-00", &id_c).as_path(),
+        rollout_path(orbit_code_home.path(), "2025-02-01T12-00-00", &id_c).as_path(),
         "2025-02-01T00:00:00Z",
     )?;
 
-    let mut mcp = init_mcp(codex_home.path()).await?;
+    let mut mcp = init_mcp(orbit_code_home.path()).await?;
 
     let ThreadListResponse {
         data: page1,
@@ -1196,11 +1201,11 @@ async fn thread_list_updated_at_paginates_with_cursor() -> Result<()> {
 
 #[tokio::test]
 async fn thread_list_created_at_tie_breaks_by_uuid() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    create_minimal_config(codex_home.path())?;
+    let orbit_code_home = TempDir::new()?;
+    create_minimal_config(orbit_code_home.path())?;
 
     let id_a = create_fake_rollout(
-        codex_home.path(),
+        orbit_code_home.path(),
         "2025-02-01T10-00-00",
         "2025-02-01T10:00:00Z",
         "Hello",
@@ -1208,7 +1213,7 @@ async fn thread_list_created_at_tie_breaks_by_uuid() -> Result<()> {
         None,
     )?;
     let id_b = create_fake_rollout(
-        codex_home.path(),
+        orbit_code_home.path(),
         "2025-02-01T10-00-00",
         "2025-02-01T10:00:00Z",
         "Hello",
@@ -1216,7 +1221,7 @@ async fn thread_list_created_at_tie_breaks_by_uuid() -> Result<()> {
         None,
     )?;
 
-    let mut mcp = init_mcp(codex_home.path()).await?;
+    let mut mcp = init_mcp(orbit_code_home.path()).await?;
 
     let ThreadListResponse { data, .. } = list_threads(
         &mut mcp,
@@ -1239,11 +1244,11 @@ async fn thread_list_created_at_tie_breaks_by_uuid() -> Result<()> {
 
 #[tokio::test]
 async fn thread_list_updated_at_tie_breaks_by_uuid() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    create_minimal_config(codex_home.path())?;
+    let orbit_code_home = TempDir::new()?;
+    create_minimal_config(orbit_code_home.path())?;
 
     let id_a = create_fake_rollout(
-        codex_home.path(),
+        orbit_code_home.path(),
         "2025-02-01T10-00-00",
         "2025-02-01T10:00:00Z",
         "Hello",
@@ -1251,7 +1256,7 @@ async fn thread_list_updated_at_tie_breaks_by_uuid() -> Result<()> {
         None,
     )?;
     let id_b = create_fake_rollout(
-        codex_home.path(),
+        orbit_code_home.path(),
         "2025-02-01T11-00-00",
         "2025-02-01T11:00:00Z",
         "Hello",
@@ -1261,15 +1266,15 @@ async fn thread_list_updated_at_tie_breaks_by_uuid() -> Result<()> {
 
     let updated_at = "2025-02-03T00:00:00Z";
     set_rollout_mtime(
-        rollout_path(codex_home.path(), "2025-02-01T10-00-00", &id_a).as_path(),
+        rollout_path(orbit_code_home.path(), "2025-02-01T10-00-00", &id_a).as_path(),
         updated_at,
     )?;
     set_rollout_mtime(
-        rollout_path(codex_home.path(), "2025-02-01T11-00-00", &id_b).as_path(),
+        rollout_path(orbit_code_home.path(), "2025-02-01T11-00-00", &id_b).as_path(),
         updated_at,
     )?;
 
-    let mut mcp = init_mcp(codex_home.path()).await?;
+    let mut mcp = init_mcp(orbit_code_home.path()).await?;
 
     let ThreadListResponse { data, .. } = list_threads_with_sort(
         &mut mcp,
@@ -1293,11 +1298,11 @@ async fn thread_list_updated_at_tie_breaks_by_uuid() -> Result<()> {
 
 #[tokio::test]
 async fn thread_list_updated_at_uses_mtime() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    create_minimal_config(codex_home.path())?;
+    let orbit_code_home = TempDir::new()?;
+    create_minimal_config(orbit_code_home.path())?;
 
     let thread_id = create_fake_rollout(
-        codex_home.path(),
+        orbit_code_home.path(),
         "2025-02-01T10-00-00",
         "2025-02-01T10:00:00Z",
         "Hello",
@@ -1306,11 +1311,11 @@ async fn thread_list_updated_at_uses_mtime() -> Result<()> {
     )?;
 
     set_rollout_mtime(
-        rollout_path(codex_home.path(), "2025-02-01T10-00-00", &thread_id).as_path(),
+        rollout_path(orbit_code_home.path(), "2025-02-01T10-00-00", &thread_id).as_path(),
         "2025-02-05T00:00:00Z",
     )?;
 
-    let mut mcp = init_mcp(codex_home.path()).await?;
+    let mut mcp = init_mcp(orbit_code_home.path()).await?;
 
     let ThreadListResponse { data, .. } = list_threads_with_sort(
         &mut mcp,
@@ -1339,11 +1344,11 @@ async fn thread_list_updated_at_uses_mtime() -> Result<()> {
 
 #[tokio::test]
 async fn thread_list_archived_filter() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    create_minimal_config(codex_home.path())?;
+    let orbit_code_home = TempDir::new()?;
+    create_minimal_config(orbit_code_home.path())?;
 
     let active_id = create_fake_rollout(
-        codex_home.path(),
+        orbit_code_home.path(),
         "2025-03-01T10-00-00",
         "2025-03-01T10:00:00Z",
         "Active",
@@ -1351,7 +1356,7 @@ async fn thread_list_archived_filter() -> Result<()> {
         None,
     )?;
     let archived_id = create_fake_rollout(
-        codex_home.path(),
+        orbit_code_home.path(),
         "2025-03-01T09-00-00",
         "2025-03-01T09:00:00Z",
         "Archived",
@@ -1359,9 +1364,9 @@ async fn thread_list_archived_filter() -> Result<()> {
         None,
     )?;
 
-    let archived_dir = codex_home.path().join(ARCHIVED_SESSIONS_SUBDIR);
+    let archived_dir = orbit_code_home.path().join(ARCHIVED_SESSIONS_SUBDIR);
     fs::create_dir_all(&archived_dir)?;
-    let archived_source = rollout_path(codex_home.path(), "2025-03-01T09-00-00", &archived_id);
+    let archived_source = rollout_path(orbit_code_home.path(), "2025-03-01T09-00-00", &archived_id);
     let archived_dest = archived_dir.join(
         archived_source
             .file_name()
@@ -1369,7 +1374,7 @@ async fn thread_list_archived_filter() -> Result<()> {
     );
     fs::rename(&archived_source, &archived_dest)?;
 
-    let mut mcp = init_mcp(codex_home.path()).await?;
+    let mut mcp = init_mcp(orbit_code_home.path()).await?;
 
     let ThreadListResponse { data, .. } = list_threads(
         &mut mcp,
@@ -1400,13 +1405,13 @@ async fn thread_list_archived_filter() -> Result<()> {
 
 #[tokio::test]
 async fn thread_list_invalid_cursor_returns_error() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    create_minimal_config(codex_home.path())?;
+    let orbit_code_home = TempDir::new()?;
+    create_minimal_config(orbit_code_home.path())?;
 
-    let mut mcp = init_mcp(codex_home.path()).await?;
+    let mut mcp = init_mcp(orbit_code_home.path()).await?;
 
     let request_id = mcp
-        .send_thread_list_request(codex_app_server_protocol::ThreadListParams {
+        .send_thread_list_request(orbit_code_app_server_protocol::ThreadListParams {
             cursor: Some("not-a-cursor".to_string()),
             limit: Some(2),
             sort_key: None,

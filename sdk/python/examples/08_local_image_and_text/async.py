@@ -17,7 +17,7 @@ ensure_local_sdk_src()
 
 import asyncio
 
-from codex_app_server import AsyncCodex, LocalImageInput, TextInput
+from orbit_code_app_server import AsyncCodex, LocalImageInput, TextInput
 
 
 async def main() -> None:

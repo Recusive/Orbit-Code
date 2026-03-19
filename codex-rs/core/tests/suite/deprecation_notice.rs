@@ -1,20 +1,20 @@
 #![cfg(not(target_os = "windows"))]
 
 use anyhow::Ok;
-use codex_app_server_protocol::ConfigLayerSource;
-use codex_core::config_loader::ConfigLayerEntry;
-use codex_core::config_loader::ConfigLayerStack;
-use codex_core::config_loader::ConfigRequirements;
-use codex_core::config_loader::ConfigRequirementsToml;
-use codex_core::features::Feature;
-use codex_protocol::protocol::DeprecationNoticeEvent;
-use codex_protocol::protocol::EventMsg;
 use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
 use core_test_support::test_absolute_path;
 use core_test_support::test_codex::TestCodex;
 use core_test_support::test_codex::test_codex;
 use core_test_support::wait_for_event_match;
+use orbit_code_app_server_protocol::ConfigLayerSource;
+use orbit_code_core::config_loader::ConfigLayerEntry;
+use orbit_code_core::config_loader::ConfigLayerStack;
+use orbit_code_core::config_loader::ConfigRequirements;
+use orbit_code_core::config_loader::ConfigRequirementsToml;
+use orbit_code_core::features::Feature;
+use orbit_code_protocol::protocol::DeprecationNoticeEvent;
+use orbit_code_protocol::protocol::EventMsg;
 use pretty_assertions::assert_eq;
 use std::collections::BTreeMap;
 use toml::Value as TomlValue;

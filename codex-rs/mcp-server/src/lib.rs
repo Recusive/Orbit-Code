@@ -4,9 +4,9 @@
 use std::io::ErrorKind;
 use std::io::Result as IoResult;
 
-use codex_arg0::Arg0DispatchPaths;
-use codex_core::config::Config;
-use codex_utils_cli::CliConfigOverrides;
+use orbit_code_arg0::Arg0DispatchPaths;
+use orbit_code_core::config::Config;
+use orbit_code_utils_cli::CliConfigOverrides;
 
 use rmcp::model::ClientNotification;
 use rmcp::model::ClientRequest;
@@ -23,10 +23,10 @@ use tracing::info;
 use tracing_subscriber::EnvFilter;
 use tracing_subscriber::prelude::*;
 
-mod codex_tool_config;
-mod codex_tool_runner;
 mod exec_approval;
 pub(crate) mod message_processor;
+mod orbit_code_tool_config;
+mod orbit_code_tool_runner;
 mod outgoing_message;
 mod patch_approval;
 
@@ -35,10 +35,10 @@ use crate::outgoing_message::OutgoingJsonRpcMessage;
 use crate::outgoing_message::OutgoingMessage;
 use crate::outgoing_message::OutgoingMessageSender;
 
-pub use crate::codex_tool_config::CodexToolCallParam;
-pub use crate::codex_tool_config::CodexToolCallReplyParam;
 pub use crate::exec_approval::ExecApprovalElicitRequestParams;
 pub use crate::exec_approval::ExecApprovalResponse;
+pub use crate::orbit_code_tool_config::CodexToolCallParam;
+pub use crate::orbit_code_tool_config::CodexToolCallReplyParam;
 pub use crate::patch_approval::PatchApprovalElicitRequestParams;
 pub use crate::patch_approval::PatchApprovalResponse;
 
@@ -47,7 +47,7 @@ pub use crate::patch_approval::PatchApprovalResponse;
 /// plenty for an interactive CLI.
 const CHANNEL_CAPACITY: usize = 128;
 const DEFAULT_ANALYTICS_ENABLED: bool = true;
-const OTEL_SERVICE_NAME: &str = "codex_mcp_server";
+const OTEL_SERVICE_NAME: &str = "orbit_code_mcp_server";
 
 type IncomingMessage = JsonRpcMessage<ClientRequest, Value, ClientNotification>;
 
@@ -69,7 +69,7 @@ pub async fn run_main(
             std::io::Error::new(ErrorKind::InvalidData, format!("error loading config: {e}"))
         })?;
 
-    let otel = codex_core::otel_init::build_provider(
+    let otel = orbit_code_core::otel_init::build_provider(
         &config,
         env!("CARGO_PKG_VERSION"),
         Some(OTEL_SERVICE_NAME),
@@ -177,8 +177,8 @@ pub async fn run_main(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use codex_core::config::ConfigBuilder;
-    use codex_core::config::types::OtelExporterKind;
+    use orbit_code_core::config::ConfigBuilder;
+    use orbit_code_core::config::types::OtelExporterKind;
     use pretty_assertions::assert_eq;
     use std::collections::HashMap;
     use tempfile::TempDir;
@@ -190,9 +190,9 @@ mod tests {
 
     #[tokio::test]
     async fn mcp_server_builds_otel_provider_with_logs_traces_and_metrics() -> anyhow::Result<()> {
-        let codex_home = TempDir::new()?;
+        let orbit_code_home = TempDir::new()?;
         let mut config = ConfigBuilder::default()
-            .codex_home(codex_home.path().to_path_buf())
+            .orbit_code_home(orbit_code_home.path().to_path_buf())
             .build()
             .await?;
         let exporter = OtelExporterKind::OtlpGrpc {
@@ -205,7 +205,7 @@ mod tests {
         config.otel.metrics_exporter = exporter;
         config.analytics_enabled = None;
 
-        let provider = codex_core::otel_init::build_provider(
+        let provider = orbit_code_core::otel_init::build_provider(
             &config,
             "0.0.0-test",
             Some(OTEL_SERVICE_NAME),

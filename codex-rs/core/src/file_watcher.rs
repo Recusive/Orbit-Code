@@ -105,7 +105,7 @@ impl Drop for WatchRegistration {
 }
 
 impl FileWatcher {
-    pub(crate) fn new(_codex_home: PathBuf) -> notify::Result<Self> {
+    pub(crate) fn new(_orbit_code_home: PathBuf) -> notify::Result<Self> {
         let (raw_tx, raw_rx) = mpsc::unbounded_channel();
         let raw_tx_clone = raw_tx;
         let watcher = notify::recommended_watcher(move |res| {

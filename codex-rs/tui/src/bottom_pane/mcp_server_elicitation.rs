@@ -2,20 +2,20 @@ use std::collections::HashSet;
 use std::collections::VecDeque;
 use std::path::PathBuf;
 
-use codex_app_server_protocol::McpElicitationEnumSchema;
-use codex_app_server_protocol::McpElicitationPrimitiveSchema;
-use codex_app_server_protocol::McpElicitationSingleSelectEnumSchema;
-use codex_protocol::ThreadId;
-use codex_protocol::approvals::ElicitationAction;
-use codex_protocol::approvals::ElicitationRequest;
-use codex_protocol::approvals::ElicitationRequestEvent;
-use codex_protocol::mcp::RequestId as McpRequestId;
-use codex_protocol::protocol::Op;
-use codex_protocol::user_input::TextElement;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyEventKind;
 use crossterm::event::KeyModifiers;
+use orbit_code_app_server_protocol::McpElicitationEnumSchema;
+use orbit_code_app_server_protocol::McpElicitationPrimitiveSchema;
+use orbit_code_app_server_protocol::McpElicitationSingleSelectEnumSchema;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::approvals::ElicitationAction;
+use orbit_code_protocol::approvals::ElicitationRequest;
+use orbit_code_protocol::approvals::ElicitationRequestEvent;
+use orbit_code_protocol::mcp::RequestId as McpRequestId;
+use orbit_code_protocol::protocol::Op;
+use orbit_code_protocol::user_input::TextElement;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::style::Stylize;
@@ -54,7 +54,7 @@ const APPROVAL_ACCEPT_SESSION_VALUE: &str = "accept_session";
 const APPROVAL_ACCEPT_ALWAYS_VALUE: &str = "accept_always";
 const APPROVAL_DECLINE_VALUE: &str = "decline";
 const APPROVAL_CANCEL_VALUE: &str = "cancel";
-const APPROVAL_META_KIND_KEY: &str = "codex_approval_kind";
+const APPROVAL_META_KIND_KEY: &str = "orbit_code_approval_kind";
 const APPROVAL_META_KIND_MCP_TOOL_CALL: &str = "mcp_tool_call";
 const APPROVAL_META_KIND_TOOL_SUGGESTION: &str = "tool_suggestion";
 const APPROVAL_PERSIST_KEY: &str = "persist";
@@ -1925,7 +1925,7 @@ mod tests {
                 "Suggest Google Calendar",
                 empty_object_schema(),
                 Some(serde_json::json!({
-                    "codex_approval_kind": "tool_suggestion",
+                    "orbit_code_approval_kind": "tool_suggestion",
                     "tool_type": "connector",
                     "suggest_type": "install",
                     "suggest_reason": "Plan and reference events from your calendar",
@@ -1958,7 +1958,7 @@ mod tests {
                 "Suggest Slack",
                 empty_object_schema(),
                 Some(serde_json::json!({
-                    "codex_approval_kind": "tool_suggestion",
+                    "orbit_code_approval_kind": "tool_suggestion",
                     "tool_type": "plugin",
                     "suggest_type": "install",
                     "suggest_reason": "Install the Slack plugin to search messages",

@@ -1,6 +1,6 @@
-use codex_core::models_manager::manager::ModelsManager;
-use codex_protocol::config_types::CollaborationModeMask;
-use codex_protocol::config_types::ModeKind;
+use orbit_code_core::models_manager::manager::ModelsManager;
+use orbit_code_protocol::config_types::CollaborationModeMask;
+use orbit_code_protocol::config_types::ModeKind;
 
 fn filtered_presets(models_manager: &ModelsManager) -> Vec<CollaborationModeMask> {
     models_manager

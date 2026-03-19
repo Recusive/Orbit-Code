@@ -17,7 +17,7 @@ ensure_local_sdk_src()
 
 import asyncio
 
-from codex_app_server import (
+from orbit_code_app_server import (
     AskForApproval,
     AsyncCodex,
     Personality,

@@ -1,15 +1,15 @@
 #[cfg(test)]
 use super::*;
 #[cfg(test)]
-use codex_protocol::protocol::FileSystemSandboxPolicy;
+use orbit_code_protocol::protocol::FileSystemSandboxPolicy;
 #[cfg(test)]
-use codex_protocol::protocol::NetworkSandboxPolicy;
+use orbit_code_protocol::protocol::NetworkSandboxPolicy;
 #[cfg(test)]
-use codex_protocol::protocol::ReadOnlyAccess;
+use orbit_code_protocol::protocol::ReadOnlyAccess;
 #[cfg(test)]
-use codex_protocol::protocol::SandboxPolicy;
+use orbit_code_protocol::protocol::SandboxPolicy;
 #[cfg(test)]
-use codex_utils_absolute_path::AbsolutePathBuf;
+use orbit_code_utils_absolute_path::AbsolutePathBuf;
 #[cfg(test)]
 use pretty_assertions::assert_eq;
 
@@ -121,15 +121,16 @@ fn split_only_filesystem_policy_requires_direct_runtime_enforcement() {
     std::fs::create_dir_all(&docs).expect("create docs");
     let docs = AbsolutePathBuf::from_absolute_path(&docs).expect("absolute docs");
     let policy = FileSystemSandboxPolicy::restricted(vec![
-        codex_protocol::permissions::FileSystemSandboxEntry {
-            path: codex_protocol::permissions::FileSystemPath::Special {
-                value: codex_protocol::permissions::FileSystemSpecialPath::CurrentWorkingDirectory,
+        orbit_code_protocol::permissions::FileSystemSandboxEntry {
+            path: orbit_code_protocol::permissions::FileSystemPath::Special {
+                value:
+                    orbit_code_protocol::permissions::FileSystemSpecialPath::CurrentWorkingDirectory,
             },
-            access: codex_protocol::permissions::FileSystemAccessMode::Write,
+            access: orbit_code_protocol::permissions::FileSystemAccessMode::Write,
         },
-        codex_protocol::permissions::FileSystemSandboxEntry {
-            path: codex_protocol::permissions::FileSystemPath::Path { path: docs },
-            access: codex_protocol::permissions::FileSystemAccessMode::Read,
+        orbit_code_protocol::permissions::FileSystemSandboxEntry {
+            path: orbit_code_protocol::permissions::FileSystemPath::Path { path: docs },
+            access: orbit_code_protocol::permissions::FileSystemAccessMode::Read,
         },
     ]);
 
@@ -145,15 +146,15 @@ fn root_write_read_only_carveout_requires_direct_runtime_enforcement() {
     std::fs::create_dir_all(&docs).expect("create docs");
     let docs = AbsolutePathBuf::from_absolute_path(&docs).expect("absolute docs");
     let policy = FileSystemSandboxPolicy::restricted(vec![
-        codex_protocol::permissions::FileSystemSandboxEntry {
-            path: codex_protocol::permissions::FileSystemPath::Special {
-                value: codex_protocol::permissions::FileSystemSpecialPath::Root,
+        orbit_code_protocol::permissions::FileSystemSandboxEntry {
+            path: orbit_code_protocol::permissions::FileSystemPath::Special {
+                value: orbit_code_protocol::permissions::FileSystemSpecialPath::Root,
             },
-            access: codex_protocol::permissions::FileSystemAccessMode::Write,
+            access: orbit_code_protocol::permissions::FileSystemAccessMode::Write,
         },
-        codex_protocol::permissions::FileSystemSandboxEntry {
-            path: codex_protocol::permissions::FileSystemPath::Path { path: docs },
-            access: codex_protocol::permissions::FileSystemAccessMode::Read,
+        orbit_code_protocol::permissions::FileSystemSandboxEntry {
+            path: orbit_code_protocol::permissions::FileSystemPath::Path { path: docs },
+            access: orbit_code_protocol::permissions::FileSystemAccessMode::Read,
         },
     ]);
 
@@ -330,15 +331,15 @@ fn resolve_sandbox_policies_accepts_split_policies_requiring_direct_runtime_enfo
     let docs = AbsolutePathBuf::from_absolute_path(&docs).expect("absolute docs");
     let sandbox_policy = SandboxPolicy::new_read_only_policy();
     let file_system_sandbox_policy = FileSystemSandboxPolicy::restricted(vec![
-        codex_protocol::permissions::FileSystemSandboxEntry {
-            path: codex_protocol::permissions::FileSystemPath::Special {
-                value: codex_protocol::permissions::FileSystemSpecialPath::Root,
+        orbit_code_protocol::permissions::FileSystemSandboxEntry {
+            path: orbit_code_protocol::permissions::FileSystemPath::Special {
+                value: orbit_code_protocol::permissions::FileSystemSpecialPath::Root,
             },
-            access: codex_protocol::permissions::FileSystemAccessMode::Read,
+            access: orbit_code_protocol::permissions::FileSystemAccessMode::Read,
         },
-        codex_protocol::permissions::FileSystemSandboxEntry {
-            path: codex_protocol::permissions::FileSystemPath::Path { path: docs },
-            access: codex_protocol::permissions::FileSystemAccessMode::Write,
+        orbit_code_protocol::permissions::FileSystemSandboxEntry {
+            path: orbit_code_protocol::permissions::FileSystemPath::Path { path: docs },
+            access: orbit_code_protocol::permissions::FileSystemAccessMode::Write,
         },
     ]);
 
@@ -409,15 +410,15 @@ fn legacy_landlock_rejects_split_only_filesystem_policies() {
     std::fs::create_dir_all(&docs).expect("create docs");
     let docs = AbsolutePathBuf::from_absolute_path(&docs).expect("absolute docs");
     let policy = FileSystemSandboxPolicy::restricted(vec![
-        codex_protocol::permissions::FileSystemSandboxEntry {
-            path: codex_protocol::permissions::FileSystemPath::Special {
-                value: codex_protocol::permissions::FileSystemSpecialPath::Root,
+        orbit_code_protocol::permissions::FileSystemSandboxEntry {
+            path: orbit_code_protocol::permissions::FileSystemPath::Special {
+                value: orbit_code_protocol::permissions::FileSystemSpecialPath::Root,
             },
-            access: codex_protocol::permissions::FileSystemAccessMode::Read,
+            access: orbit_code_protocol::permissions::FileSystemAccessMode::Read,
         },
-        codex_protocol::permissions::FileSystemSandboxEntry {
-            path: codex_protocol::permissions::FileSystemPath::Path { path: docs },
-            access: codex_protocol::permissions::FileSystemAccessMode::Write,
+        orbit_code_protocol::permissions::FileSystemSandboxEntry {
+            path: orbit_code_protocol::permissions::FileSystemPath::Path { path: docs },
+            access: orbit_code_protocol::permissions::FileSystemAccessMode::Write,
         },
     ]);
 

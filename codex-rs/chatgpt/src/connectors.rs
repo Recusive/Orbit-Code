@@ -1,6 +1,6 @@
-use codex_core::AuthManager;
-use codex_core::config::Config;
-use codex_core::token_data::TokenData;
+use orbit_code_core::AuthManager;
+use orbit_code_core::config::Config;
+use orbit_code_core::token_data::TokenData;
 use std::collections::HashSet;
 use std::time::Duration;
 
@@ -8,28 +8,28 @@ use crate::chatgpt_client::chatgpt_get_request_with_timeout;
 use crate::chatgpt_token::get_chatgpt_token_data;
 use crate::chatgpt_token::init_chatgpt_token_from_auth;
 
-use codex_connectors::AllConnectorsCacheKey;
-use codex_connectors::DirectoryListResponse;
+use orbit_code_connectors::AllConnectorsCacheKey;
+use orbit_code_connectors::DirectoryListResponse;
 
-pub use codex_core::connectors::AppInfo;
-pub use codex_core::connectors::connector_display_label;
-use codex_core::connectors::filter_disallowed_connectors;
-pub use codex_core::connectors::list_accessible_connectors_from_mcp_tools;
-pub use codex_core::connectors::list_accessible_connectors_from_mcp_tools_with_options;
-pub use codex_core::connectors::list_accessible_connectors_from_mcp_tools_with_options_and_status;
-pub use codex_core::connectors::list_cached_accessible_connectors_from_mcp_tools;
-use codex_core::connectors::merge_connectors;
-use codex_core::connectors::merge_plugin_apps;
-pub use codex_core::connectors::with_app_enabled_state;
-use codex_core::plugins::AppConnectorId;
-use codex_core::plugins::PluginsManager;
+pub use orbit_code_core::connectors::AppInfo;
+pub use orbit_code_core::connectors::connector_display_label;
+use orbit_code_core::connectors::filter_disallowed_connectors;
+pub use orbit_code_core::connectors::list_accessible_connectors_from_mcp_tools;
+pub use orbit_code_core::connectors::list_accessible_connectors_from_mcp_tools_with_options;
+pub use orbit_code_core::connectors::list_accessible_connectors_from_mcp_tools_with_options_and_status;
+pub use orbit_code_core::connectors::list_cached_accessible_connectors_from_mcp_tools;
+use orbit_code_core::connectors::merge_connectors;
+use orbit_code_core::connectors::merge_plugin_apps;
+pub use orbit_code_core::connectors::with_app_enabled_state;
+use orbit_code_core::plugins::AppConnectorId;
+use orbit_code_core::plugins::PluginsManager;
 
 const DIRECTORY_CONNECTORS_TIMEOUT: Duration = Duration::from_secs(60);
 
 async fn apps_enabled(config: &Config) -> bool {
     let auth_manager = AuthManager::shared(
-        config.codex_home.clone(),
-        /*enable_codex_api_key_env*/ false,
+        config.orbit_code_home.clone(),
+        /*enable_orbit_code_api_key_env*/ false,
         config.cli_auth_credentials_store_mode,
     );
     config.features.apps_enabled(Some(&auth_manager)).await
@@ -61,15 +61,18 @@ pub async fn list_cached_all_connectors(config: &Config) -> Option<Vec<AppInfo>>
         return Some(Vec::new());
     }
 
-    if init_chatgpt_token_from_auth(&config.codex_home, config.cli_auth_credentials_store_mode)
-        .await
-        .is_err()
+    if init_chatgpt_token_from_auth(
+        &config.orbit_code_home,
+        config.cli_auth_credentials_store_mode,
+    )
+    .await
+    .is_err()
     {
         return None;
     }
     let token_data = get_chatgpt_token_data()?;
     let cache_key = all_connectors_cache_key(config, &token_data);
-    codex_connectors::cached_all_connectors(&cache_key).map(|connectors| {
+    orbit_code_connectors::cached_all_connectors(&cache_key).map(|connectors| {
         let connectors = merge_plugin_apps(connectors, plugin_apps_for_config(config));
         filter_disallowed_connectors(connectors)
     })
@@ -82,13 +85,16 @@ pub async fn list_all_connectors_with_options(
     if !apps_enabled(config).await {
         return Ok(Vec::new());
     }
-    init_chatgpt_token_from_auth(&config.codex_home, config.cli_auth_credentials_store_mode)
-        .await?;
+    init_chatgpt_token_from_auth(
+        &config.orbit_code_home,
+        config.cli_auth_credentials_store_mode,
+    )
+    .await?;
 
     let token_data =
         get_chatgpt_token_data().ok_or_else(|| anyhow::anyhow!("ChatGPT token not available"))?;
     let cache_key = all_connectors_cache_key(config, &token_data);
-    let connectors = codex_connectors::list_all_connectors_with_options(
+    let connectors = orbit_code_connectors::list_all_connectors_with_options(
         cache_key,
         token_data.id_token.is_workspace_account(),
         force_refetch,
@@ -115,8 +121,8 @@ fn all_connectors_cache_key(config: &Config, token_data: &TokenData) -> AllConne
     )
 }
 
-fn plugin_apps_for_config(config: &Config) -> Vec<codex_core::plugins::AppConnectorId> {
-    PluginsManager::new(config.codex_home.clone())
+fn plugin_apps_for_config(config: &Config) -> Vec<orbit_code_core::plugins::AppConnectorId> {
+    PluginsManager::new(config.orbit_code_home.clone())
         .plugins_for_config(config)
         .effective_apps()
 }
@@ -160,8 +166,8 @@ pub fn merge_connectors_with_accessible(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use codex_core::connectors::connector_install_url;
-    use codex_core::plugins::AppConnectorId;
+    use orbit_code_core::connectors::connector_install_url;
+    use orbit_code_core::plugins::AppConnectorId;
     use pretty_assertions::assert_eq;
 
     fn app(id: &str) -> AppInfo {

@@ -27,9 +27,9 @@ fn parse_freeform_args_rejects_json_wrapped_code() {
 }
 
 #[test]
-fn default_runtime_manager_uses_openai_codex_release_base() {
-    let codex_home = TempDir::new().expect("create temp codex home");
-    let manager = default_runtime_manager(codex_home.path().to_path_buf());
+fn default_runtime_manager_uses_openai_orbit_code_release_base() {
+    let orbit_code_home = TempDir::new().expect("create temp codex home");
+    let manager = default_runtime_manager(orbit_code_home.path().to_path_buf());
 
     assert_eq!(
         manager.config().release().base_url().as_str(),
@@ -43,10 +43,10 @@ fn default_runtime_manager_uses_openai_codex_release_base() {
 
 #[test]
 fn load_cached_runtime_reads_pinned_cache_path() {
-    let codex_home = TempDir::new().expect("create temp codex home");
+    let orbit_code_home = TempDir::new().expect("create temp codex home");
     let platform =
-        codex_artifacts::ArtifactRuntimePlatform::detect_current().expect("detect platform");
-    let install_dir = codex_home
+        orbit_code_artifacts::ArtifactRuntimePlatform::detect_current().expect("detect platform");
+    let install_dir = orbit_code_home
         .path()
         .join("packages")
         .join("artifacts")
@@ -73,10 +73,10 @@ fn load_cached_runtime_reads_pinned_cache_path() {
     )
     .expect("write build entrypoint");
 
-    let runtime = codex_artifacts::load_cached_runtime(
-        &codex_home
+    let runtime = orbit_code_artifacts::load_cached_runtime(
+        &orbit_code_home
             .path()
-            .join(codex_artifacts::DEFAULT_CACHE_ROOT_RELATIVE),
+            .join(orbit_code_artifacts::DEFAULT_CACHE_ROOT_RELATIVE),
         versions::ARTIFACT_RUNTIME,
     )
     .expect("resolve runtime");

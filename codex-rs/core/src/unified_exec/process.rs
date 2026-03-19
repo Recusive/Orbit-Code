@@ -18,8 +18,8 @@ use crate::exec::StreamOutput;
 use crate::exec::is_likely_sandbox_denied;
 use crate::truncate::TruncationPolicy;
 use crate::truncate::formatted_truncate_text;
-use codex_utils_pty::ExecCommandSession;
-use codex_utils_pty::SpawnedPty;
+use orbit_code_utils_pty::ExecCommandSession;
+use orbit_code_utils_pty::SpawnedPty;
 
 use super::UNIFIED_EXEC_OUTPUT_MAX_TOKENS;
 use super::UnifiedExecError;
@@ -231,7 +231,7 @@ impl UnifiedExecProcess {
             stderr_rx,
             mut exit_rx,
         } = spawned;
-        let output_rx = codex_utils_pty::combine_output_receivers(stdout_rx, stderr_rx);
+        let output_rx = orbit_code_utils_pty::combine_output_receivers(stdout_rx, stderr_rx);
         let managed = Self::new(process_handle, output_rx, sandbox_type, spawn_lifecycle);
 
         let exit_ready = matches!(exit_rx.try_recv(), Ok(_) | Err(TryRecvError::Closed));

@@ -1,23 +1,23 @@
 [package]
-name = "codex-app-server-client"
+name = "orbit-code-app-server-client"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [lib]
-name = "codex_app_server_client"
+name = "orbit_code_app_server_client"
 path = "src/lib.rs"
 
 [lints]
 workspace = true
 
 [dependencies]
-codex-app-server = { workspace = true }
-codex-app-server-protocol = { workspace = true }
-codex-arg0 = { workspace = true }
-codex-core = { workspace = true }
-codex-feedback = { workspace = true }
-codex-protocol = { workspace = true }
+orbit-code-app-server = { workspace = true }
+orbit-code-app-server-protocol = { workspace = true }
+orbit-code-arg0 = { workspace = true }
+orbit-code-core = { workspace = true }
+orbit-code-feedback = { workspace = true }
+orbit-code-protocol = { workspace = true }
 futures = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

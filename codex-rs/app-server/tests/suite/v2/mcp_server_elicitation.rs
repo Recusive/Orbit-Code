@@ -14,25 +14,25 @@ use axum::http::StatusCode;
 use axum::http::Uri;
 use axum::http::header::AUTHORIZATION;
 use axum::routing::get;
-use codex_app_server_protocol::JSONRPCMessage;
-use codex_app_server_protocol::JSONRPCResponse;
-use codex_app_server_protocol::McpElicitationSchema;
-use codex_app_server_protocol::McpServerElicitationAction;
-use codex_app_server_protocol::McpServerElicitationRequest;
-use codex_app_server_protocol::McpServerElicitationRequestParams;
-use codex_app_server_protocol::McpServerElicitationRequestResponse;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::ServerRequest;
-use codex_app_server_protocol::ServerRequestResolvedNotification;
-use codex_app_server_protocol::ThreadStartParams;
-use codex_app_server_protocol::ThreadStartResponse;
-use codex_app_server_protocol::TurnCompletedNotification;
-use codex_app_server_protocol::TurnStartParams;
-use codex_app_server_protocol::TurnStartResponse;
-use codex_app_server_protocol::TurnStatus;
-use codex_app_server_protocol::UserInput as V2UserInput;
-use codex_core::auth::AuthCredentialsStoreMode;
 use core_test_support::responses;
+use orbit_code_app_server_protocol::JSONRPCMessage;
+use orbit_code_app_server_protocol::JSONRPCResponse;
+use orbit_code_app_server_protocol::McpElicitationSchema;
+use orbit_code_app_server_protocol::McpServerElicitationAction;
+use orbit_code_app_server_protocol::McpServerElicitationRequest;
+use orbit_code_app_server_protocol::McpServerElicitationRequestParams;
+use orbit_code_app_server_protocol::McpServerElicitationRequestResponse;
+use orbit_code_app_server_protocol::RequestId;
+use orbit_code_app_server_protocol::ServerRequest;
+use orbit_code_app_server_protocol::ServerRequestResolvedNotification;
+use orbit_code_app_server_protocol::ThreadStartParams;
+use orbit_code_app_server_protocol::ThreadStartResponse;
+use orbit_code_app_server_protocol::TurnCompletedNotification;
+use orbit_code_app_server_protocol::TurnStartParams;
+use orbit_code_app_server_protocol::TurnStartResponse;
+use orbit_code_app_server_protocol::TurnStatus;
+use orbit_code_app_server_protocol::UserInput as V2UserInput;
+use orbit_code_core::auth::AuthCredentialsStoreMode;
 use pretty_assertions::assert_eq;
 use rmcp::handler::server::ServerHandler;
 use rmcp::model::BooleanSchema;
@@ -66,7 +66,7 @@ const DEFAULT_READ_TIMEOUT: std::time::Duration = std::time::Duration::from_secs
 const CONNECTOR_ID: &str = "calendar";
 const CONNECTOR_NAME: &str = "Calendar";
 const TOOL_NAME: &str = "calendar_confirm_action";
-const QUALIFIED_TOOL_NAME: &str = "mcp__codex_apps__calendar_confirm_action";
+const QUALIFIED_TOOL_NAME: &str = "mcp__orbit_code_apps__calendar_confirm_action";
 const TOOL_CALL_ID: &str = "call-calendar-confirm";
 const ELICITATION_MESSAGE: &str = "Allow this request?";
 
@@ -102,10 +102,14 @@ async fn mcp_server_elicitation_round_trip() -> Result<()> {
 
     let (apps_server_url, apps_server_handle) = start_apps_server().await?;
 
-    let codex_home = TempDir::new()?;
-    write_config_toml(codex_home.path(), &responses_server.uri(), &apps_server_url)?;
+    let orbit_code_home = TempDir::new()?;
+    write_config_toml(
+        orbit_code_home.path(),
+        &responses_server.uri(),
+        &apps_server_url,
+    )?;
     write_chatgpt_auth(
-        codex_home.path(),
+        orbit_code_home.path(),
         ChatGptAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
@@ -113,7 +117,7 @@ async fn mcp_server_elicitation_round_trip() -> Result<()> {
         AuthCredentialsStoreMode::File,
     )?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     let thread_start_id = mcp
@@ -199,7 +203,7 @@ async fn mcp_server_elicitation_round_trip() -> Result<()> {
         McpServerElicitationRequestParams {
             thread_id: thread.id.clone(),
             turn_id: Some(turn.id.clone()),
-            server_name: "codex_apps".to_string(),
+            server_name: "orbit_code_apps".to_string(),
             request: McpServerElicitationRequest::Form {
                 meta: None,
                 message: ELICITATION_MESSAGE.to_string(),
@@ -449,12 +453,12 @@ async fn list_directory_connectors(
 }
 
 fn write_config_toml(
-    codex_home: &std::path::Path,
+    orbit_code_home: &std::path::Path,
     responses_server_uri: &str,
     apps_server_url: &str,
 ) -> std::io::Result<()> {
     std::fs::write(
-        codex_home.join("config.toml"),
+        orbit_code_home.join("config.toml"),
         format!(
             r#"
 model = "mock-model"

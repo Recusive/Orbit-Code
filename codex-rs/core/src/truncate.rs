@@ -2,10 +2,10 @@
 //! and suffix on UTF-8 boundaries, and helpers for line/token‑based truncation
 //! used across the core crate.
 
-use codex_protocol::models::FunctionCallOutputContentItem;
-use codex_protocol::openai_models::TruncationMode;
-use codex_protocol::openai_models::TruncationPolicyConfig;
-use codex_protocol::protocol::TruncationPolicy as ProtocolTruncationPolicy;
+use orbit_code_protocol::models::FunctionCallOutputContentItem;
+use orbit_code_protocol::openai_models::TruncationMode;
+use orbit_code_protocol::openai_models::TruncationPolicyConfig;
+use orbit_code_protocol::protocol::TruncationPolicy as ProtocolTruncationPolicy;
 
 const APPROX_BYTES_PER_TOKEN: usize = 4;
 

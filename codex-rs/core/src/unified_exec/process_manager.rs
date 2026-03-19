@@ -61,7 +61,7 @@ const UNIFIED_EXEC_ENV: [(&str, &str); 10] = [
     ("PAGER", "cat"),
     ("GIT_PAGER", "cat"),
     ("GH_PAGER", "cat"),
-    ("CODEX_CI", "1"),
+    ("ORBIT_CI", "1"),
 ];
 
 /// Test-only override for deterministic unified exec process IDs.
@@ -550,18 +550,18 @@ impl UnifiedExecProcessManager {
         let inherited_fds = spawn_lifecycle.inherited_fds();
 
         let spawn_result = if tty {
-            codex_utils_pty::pty::spawn_process_with_inherited_fds(
+            orbit_code_utils_pty::pty::spawn_process_with_inherited_fds(
                 program,
                 args,
                 env.cwd.as_path(),
                 &env.env,
                 &env.arg0,
-                codex_utils_pty::TerminalSize::default(),
+                orbit_code_utils_pty::TerminalSize::default(),
                 &inherited_fds,
             )
             .await
         } else {
-            codex_utils_pty::pipe::spawn_process_no_stdin_with_inherited_fds(
+            orbit_code_utils_pty::pipe::spawn_process_no_stdin_with_inherited_fds(
                 program,
                 args,
                 env.cwd.as_path(),

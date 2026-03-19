@@ -6,30 +6,30 @@ use anyhow::Context;
 use anyhow::Result;
 use base64::engine::general_purpose::STANDARD as BASE64;
 use base64::Engine;
-use codex_windows_sandbox::canonicalize_path;
-use codex_windows_sandbox::convert_string_sid_to_sid;
-use codex_windows_sandbox::ensure_allow_mask_aces_with_inheritance;
-use codex_windows_sandbox::ensure_allow_write_aces;
-use codex_windows_sandbox::extract_setup_failure;
-use codex_windows_sandbox::hide_newly_created_users;
-use codex_windows_sandbox::is_command_cwd_root;
-use codex_windows_sandbox::load_or_create_cap_sids;
-use codex_windows_sandbox::log_note;
-use codex_windows_sandbox::path_mask_allows;
-use codex_windows_sandbox::protect_workspace_agents_dir;
-use codex_windows_sandbox::protect_workspace_codex_dir;
-use codex_windows_sandbox::sandbox_bin_dir;
-use codex_windows_sandbox::sandbox_dir;
-use codex_windows_sandbox::sandbox_secrets_dir;
-use codex_windows_sandbox::string_from_sid_bytes;
-use codex_windows_sandbox::to_wide;
-use codex_windows_sandbox::workspace_cap_sid_for_cwd;
-use codex_windows_sandbox::write_setup_error_report;
-use codex_windows_sandbox::SetupErrorCode;
-use codex_windows_sandbox::SetupErrorReport;
-use codex_windows_sandbox::SetupFailure;
-use codex_windows_sandbox::LOG_FILE_NAME;
-use codex_windows_sandbox::SETUP_VERSION;
+use orbit_code_windows_sandbox::canonicalize_path;
+use orbit_code_windows_sandbox::convert_string_sid_to_sid;
+use orbit_code_windows_sandbox::ensure_allow_mask_aces_with_inheritance;
+use orbit_code_windows_sandbox::ensure_allow_write_aces;
+use orbit_code_windows_sandbox::extract_setup_failure;
+use orbit_code_windows_sandbox::hide_newly_created_users;
+use orbit_code_windows_sandbox::is_command_cwd_root;
+use orbit_code_windows_sandbox::load_or_create_cap_sids;
+use orbit_code_windows_sandbox::log_note;
+use orbit_code_windows_sandbox::path_mask_allows;
+use orbit_code_windows_sandbox::protect_workspace_agents_dir;
+use orbit_code_windows_sandbox::protect_workspace_orbit_code_dir;
+use orbit_code_windows_sandbox::sandbox_bin_dir;
+use orbit_code_windows_sandbox::sandbox_dir;
+use orbit_code_windows_sandbox::sandbox_secrets_dir;
+use orbit_code_windows_sandbox::string_from_sid_bytes;
+use orbit_code_windows_sandbox::to_wide;
+use orbit_code_windows_sandbox::workspace_cap_sid_for_cwd;
+use orbit_code_windows_sandbox::write_setup_error_report;
+use orbit_code_windows_sandbox::SetupErrorCode;
+use orbit_code_windows_sandbox::SetupErrorReport;
+use orbit_code_windows_sandbox::SetupFailure;
+use orbit_code_windows_sandbox::LOG_FILE_NAME;
+use orbit_code_windows_sandbox::SETUP_VERSION;
 use serde::Deserialize;
 use serde::Serialize;
 use std::collections::HashSet;
@@ -80,7 +80,7 @@ struct Payload {
     version: u32,
     offline_username: String,
     online_username: String,
-    codex_home: PathBuf,
+    orbit_code_home: PathBuf,
     command_cwd: PathBuf,
     read_roots: Vec<PathBuf>,
     write_roots: Vec<PathBuf>,
@@ -344,8 +344,8 @@ pub fn main() -> Result<()> {
     let ret = real_main();
     if let Err(e) = &ret {
         // Best-effort: log unexpected top-level errors.
-        if let Ok(codex_home) = std::env::var("CODEX_HOME") {
-            let sbx_dir = sandbox_dir(Path::new(&codex_home));
+        if let Ok(orbit_code_home) = std::env::var("ORBIT_HOME") {
+            let sbx_dir = sandbox_dir(Path::new(&orbit_code_home));
             let _ = std::fs::create_dir_all(&sbx_dir);
             let log_path = sbx_dir.join(LOG_FILE_NAME);
             if let Ok(mut f) = File::options().create(true).append(true).open(&log_path) {
@@ -391,7 +391,7 @@ fn real_main() -> Result<()> {
             ),
         )));
     }
-    let sbx_dir = sandbox_dir(&payload.codex_home);
+    let sbx_dir = sandbox_dir(&payload.orbit_code_home);
     std::fs::create_dir_all(&sbx_dir).map_err(|err| {
         anyhow::Error::new(SetupFailure::new(
             SetupErrorCode::HelperSandboxDirCreateFailed,
@@ -422,7 +422,7 @@ fn real_main() -> Result<()> {
             code: failure.code,
             message: failure.message.clone(),
         };
-        if let Err(write_err) = write_setup_error_report(&payload.codex_home, &report) {
+        if let Err(write_err) = write_setup_error_report(&payload.orbit_code_home, &report) {
             let _ = log_line(
                 &mut log,
                 &format!("setup error report write failed: {write_err}"),
@@ -507,7 +507,7 @@ fn run_setup_full(payload: &Payload, log: &mut File, sbx_dir: &Path) -> Result<(
     if refresh_only {
     } else {
         let provision_result = provision_sandbox_users(
-            &payload.codex_home,
+            &payload.orbit_code_home,
             &payload.offline_username,
             &payload.online_username,
             log,
@@ -551,7 +551,7 @@ fn run_setup_full(payload: &Payload, log: &mut File, sbx_dir: &Path) -> Result<(
         ))
     })?;
 
-    let caps = load_or_create_cap_sids(&payload.codex_home).map_err(|err| {
+    let caps = load_or_create_cap_sids(&payload.orbit_code_home).map_err(|err| {
         anyhow::Error::new(SetupFailure::new(
             SetupErrorCode::HelperCapabilitySidFailed,
             format!("load or create capability SIDs failed: {err}"),
@@ -565,7 +565,8 @@ fn run_setup_full(payload: &Payload, log: &mut File, sbx_dir: &Path) -> Result<(
             ))
         })?
     };
-    let workspace_sid_str = workspace_cap_sid_for_cwd(&payload.codex_home, &payload.command_cwd)?;
+    let workspace_sid_str =
+        workspace_cap_sid_for_cwd(&payload.orbit_code_home, &payload.command_cwd)?;
     let workspace_psid = unsafe {
         convert_string_sid_to_sid(&workspace_sid_str)
             .ok_or_else(|| anyhow::anyhow!("convert workspace capability SID failed"))?
@@ -740,7 +741,7 @@ fn run_setup_full(payload: &Payload, log: &mut File, sbx_dir: &Path) -> Result<(
     });
 
     lock_sandbox_dir(
-        &sandbox_bin_dir(&payload.codex_home),
+        &sandbox_bin_dir(&payload.orbit_code_home),
         &payload.real_user,
         &sandbox_group_sid,
         GRANT_ACCESS,
@@ -753,7 +754,7 @@ fn run_setup_full(payload: &Payload, log: &mut File, sbx_dir: &Path) -> Result<(
             SetupErrorCode::HelperSandboxLockFailed,
             format!(
                 "lock sandbox bin dir {} failed: {err}",
-                sandbox_bin_dir(&payload.codex_home).display()
+                sandbox_bin_dir(&payload.orbit_code_home).display()
             ),
         ))
     })?;
@@ -770,7 +771,7 @@ fn run_setup_full(payload: &Payload, log: &mut File, sbx_dir: &Path) -> Result<(
     }
     if !refresh_only {
         lock_sandbox_dir(
-            &sandbox_dir(&payload.codex_home),
+            &sandbox_dir(&payload.orbit_code_home),
             &payload.real_user,
             &sandbox_group_sid,
             GRANT_ACCESS,
@@ -783,12 +784,12 @@ fn run_setup_full(payload: &Payload, log: &mut File, sbx_dir: &Path) -> Result<(
                 SetupErrorCode::HelperSandboxLockFailed,
                 format!(
                     "lock sandbox dir {} failed: {err}",
-                    sandbox_dir(&payload.codex_home).display()
+                    sandbox_dir(&payload.orbit_code_home).display()
                 ),
             ))
         })?;
         lock_sandbox_dir(
-            &sandbox_secrets_dir(&payload.codex_home),
+            &sandbox_secrets_dir(&payload.orbit_code_home),
             &payload.real_user,
             &sandbox_group_sid,
             DENY_ACCESS,
@@ -801,11 +802,11 @@ fn run_setup_full(payload: &Payload, log: &mut File, sbx_dir: &Path) -> Result<(
                 SetupErrorCode::HelperSandboxLockFailed,
                 format!(
                     "lock sandbox secrets dir {} failed: {err}",
-                    sandbox_secrets_dir(&payload.codex_home).display()
+                    sandbox_secrets_dir(&payload.orbit_code_home).display()
                 ),
             ))
         })?;
-        let legacy_users = sandbox_dir(&payload.codex_home).join("sandbox_users.json");
+        let legacy_users = sandbox_dir(&payload.orbit_code_home).join("sandbox_users.json");
         if legacy_users.exists() {
             let _ = std::fs::remove_file(&legacy_users);
         }
@@ -814,7 +815,7 @@ fn run_setup_full(payload: &Payload, log: &mut File, sbx_dir: &Path) -> Result<(
     // Protect the current workspace's `.codex` and `.agents` directories from tampering
     // (write/delete) by using a workspace-specific capability SID. If a directory doesn't exist
     // yet, skip it (it will be picked up on the next refresh).
-    match unsafe { protect_workspace_codex_dir(&payload.command_cwd, workspace_psid) } {
+    match unsafe { protect_workspace_orbit_code_dir(&payload.command_cwd, workspace_psid) } {
         Ok(true) => {
             let cwd_codex = payload.command_cwd.join(".codex");
             log_line(

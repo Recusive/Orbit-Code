@@ -124,52 +124,52 @@ fn tool_plugin_provenance_collects_app_and_mcp_sources() {
 }
 
 #[test]
-fn codex_apps_mcp_url_for_base_url_keeps_existing_paths() {
+fn orbit_code_apps_mcp_url_for_base_url_keeps_existing_paths() {
     assert_eq!(
-        codex_apps_mcp_url_for_base_url("https://chatgpt.com/backend-api"),
+        orbit_code_apps_mcp_url_for_base_url("https://chatgpt.com/backend-api"),
         "https://chatgpt.com/backend-api/wham/apps"
     );
     assert_eq!(
-        codex_apps_mcp_url_for_base_url("https://chat.openai.com"),
+        orbit_code_apps_mcp_url_for_base_url("https://chat.openai.com"),
         "https://chat.openai.com/backend-api/wham/apps"
     );
     assert_eq!(
-        codex_apps_mcp_url_for_base_url("http://localhost:8080/api/codex"),
+        orbit_code_apps_mcp_url_for_base_url("http://localhost:8080/api/codex"),
         "http://localhost:8080/api/codex/apps"
     );
     assert_eq!(
-        codex_apps_mcp_url_for_base_url("http://localhost:8080"),
+        orbit_code_apps_mcp_url_for_base_url("http://localhost:8080"),
         "http://localhost:8080/api/codex/apps"
     );
 }
 
 #[test]
-fn codex_apps_mcp_url_uses_legacy_codex_apps_path() {
+fn orbit_code_apps_mcp_url_uses_legacy_orbit_code_apps_path() {
     let mut config = crate::config::test_config();
     config.chatgpt_base_url = "https://chatgpt.com".to_string();
 
     assert_eq!(
-        codex_apps_mcp_url(&config),
+        orbit_code_apps_mcp_url(&config),
         "https://chatgpt.com/backend-api/wham/apps"
     );
 }
 
 #[test]
-fn codex_apps_server_config_uses_legacy_codex_apps_path() {
+fn orbit_code_apps_server_config_uses_legacy_orbit_code_apps_path() {
     let mut config = crate::config::test_config();
     config.chatgpt_base_url = "https://chatgpt.com".to_string();
 
-    let mut servers = with_codex_apps_mcp(HashMap::new(), false, None, &config);
-    assert!(!servers.contains_key(CODEX_APPS_MCP_SERVER_NAME));
+    let mut servers = with_orbit_code_apps_mcp(HashMap::new(), false, None, &config);
+    assert!(!servers.contains_key(ORBIT_APPS_MCP_SERVER_NAME));
 
     config
         .features
         .enable(Feature::Apps)
         .expect("test config should allow apps");
 
-    servers = with_codex_apps_mcp(servers, true, None, &config);
+    servers = with_orbit_code_apps_mcp(servers, true, None, &config);
     let server = servers
-        .get(CODEX_APPS_MCP_SERVER_NAME)
+        .get(ORBIT_APPS_MCP_SERVER_NAME)
         .expect("codex apps should be present when apps is enabled");
     let url = match &server.transport {
         McpServerTransportConfig::StreamableHttp { url, .. } => url,
@@ -181,8 +181,8 @@ fn codex_apps_server_config_uses_legacy_codex_apps_path() {
 
 #[tokio::test]
 async fn effective_mcp_servers_include_plugins_without_overriding_user_config() {
-    let codex_home = tempfile::tempdir().expect("tempdir");
-    let plugin_root = codex_home
+    let orbit_code_home = tempfile::tempdir().expect("tempdir");
+    let plugin_root = orbit_code_home
         .path()
         .join("plugins/cache")
         .join("test/sample/local");
@@ -206,12 +206,12 @@ async fn effective_mcp_servers_include_plugins_without_overriding_user_config() 
 }"#,
     );
     write_file(
-        &codex_home.path().join(CONFIG_TOML_FILE),
+        &orbit_code_home.path().join(CONFIG_TOML_FILE),
         &plugin_config_toml(),
     );
 
     let mut config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
+        .orbit_code_home(orbit_code_home.path().to_path_buf())
         .build()
         .await
         .expect("config should load");
@@ -242,7 +242,9 @@ async fn effective_mcp_servers_include_plugins_without_overriding_user_config() 
         .set(configured_servers)
         .expect("test config should accept MCP servers");
 
-    let mcp_manager = McpManager::new(Arc::new(PluginsManager::new(config.codex_home.clone())));
+    let mcp_manager = McpManager::new(Arc::new(PluginsManager::new(
+        config.orbit_code_home.clone(),
+    )));
     let effective = mcp_manager.effective_servers(&config, None);
 
     let sample = effective.get("sample").expect("user server should exist");

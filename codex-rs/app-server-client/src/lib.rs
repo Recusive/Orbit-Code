@@ -1,6 +1,6 @@
 //! Shared in-process app-server client facade for CLI surfaces.
 //!
-//! This crate wraps [`codex_app_server::in_process`] behind a single async API
+//! This crate wraps [`orbit_code_app_server::in_process`] behind a single async API
 //! used by surfaces like TUI and exec. It centralizes:
 //!
 //! - Runtime startup and initialize-capabilities handshake.
@@ -11,7 +11,7 @@
 //! - Bounded graceful shutdown with abort fallback.
 //!
 //! The facade interposes a worker task between the caller and the underlying
-//! [`InProcessClientHandle`](codex_app_server::in_process::InProcessClientHandle),
+//! [`InProcessClientHandle`](orbit_code_app_server::in_process::InProcessClientHandle),
 //! bridging async `mpsc` channels on both sides. Queues are bounded so overload
 //! surfaces as channel-full errors rather than unbounded memory growth.
 
@@ -25,30 +25,30 @@ use std::io::Result as IoResult;
 use std::sync::Arc;
 use std::time::Duration;
 
-pub use codex_app_server::in_process::DEFAULT_IN_PROCESS_CHANNEL_CAPACITY;
-pub use codex_app_server::in_process::InProcessServerEvent;
-use codex_app_server::in_process::InProcessStartArgs;
-use codex_app_server_protocol::ClientInfo;
-use codex_app_server_protocol::ClientNotification;
-use codex_app_server_protocol::ClientRequest;
-use codex_app_server_protocol::ConfigWarningNotification;
-use codex_app_server_protocol::InitializeCapabilities;
-use codex_app_server_protocol::InitializeParams;
-use codex_app_server_protocol::JSONRPCErrorError;
-use codex_app_server_protocol::JSONRPCNotification;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::Result as JsonRpcResult;
-use codex_app_server_protocol::ServerNotification;
-use codex_app_server_protocol::ServerRequest;
-use codex_arg0::Arg0DispatchPaths;
-use codex_core::AuthManager;
-use codex_core::ThreadManager;
-use codex_core::config::Config;
-use codex_core::config_loader::CloudRequirementsLoader;
-use codex_core::config_loader::LoaderOverrides;
-use codex_core::models_manager::collaboration_mode_presets::CollaborationModesConfig;
-use codex_feedback::CodexFeedback;
-use codex_protocol::protocol::SessionSource;
+pub use orbit_code_app_server::in_process::DEFAULT_IN_PROCESS_CHANNEL_CAPACITY;
+pub use orbit_code_app_server::in_process::InProcessServerEvent;
+use orbit_code_app_server::in_process::InProcessStartArgs;
+use orbit_code_app_server_protocol::ClientInfo;
+use orbit_code_app_server_protocol::ClientNotification;
+use orbit_code_app_server_protocol::ClientRequest;
+use orbit_code_app_server_protocol::ConfigWarningNotification;
+use orbit_code_app_server_protocol::InitializeCapabilities;
+use orbit_code_app_server_protocol::InitializeParams;
+use orbit_code_app_server_protocol::JSONRPCErrorError;
+use orbit_code_app_server_protocol::JSONRPCNotification;
+use orbit_code_app_server_protocol::RequestId;
+use orbit_code_app_server_protocol::Result as JsonRpcResult;
+use orbit_code_app_server_protocol::ServerNotification;
+use orbit_code_app_server_protocol::ServerRequest;
+use orbit_code_arg0::Arg0DispatchPaths;
+use orbit_code_core::AuthManager;
+use orbit_code_core::ThreadManager;
+use orbit_code_core::config::Config;
+use orbit_code_core::config_loader::CloudRequirementsLoader;
+use orbit_code_core::config_loader::LoaderOverrides;
+use orbit_code_core::models_manager::collaboration_mode_presets::CollaborationModesConfig;
+use orbit_code_feedback::CodexFeedback;
+use orbit_code_protocol::protocol::SessionSource;
 use serde::de::DeserializeOwned;
 use tokio::sync::mpsc;
 use tokio::sync::oneshot;
@@ -98,7 +98,7 @@ fn event_requires_delivery(event: &InProcessServerEvent) -> bool {
     // the underlying turn has already ended.
     match event {
         InProcessServerEvent::ServerNotification(
-            codex_app_server_protocol::ServerNotification::TurnCompleted(_),
+            orbit_code_app_server_protocol::ServerNotification::TurnCompleted(_),
         ) => true,
         InProcessServerEvent::LegacyNotification(notification) => matches!(
             notification
@@ -186,8 +186,8 @@ pub struct InProcessClientStartArgs {
     pub config_warnings: Vec<ConfigWarningNotification>,
     /// Session source recorded in app-server thread metadata.
     pub session_source: SessionSource,
-    /// Whether auth loading should honor the `CODEX_API_KEY` environment variable.
-    pub enable_codex_api_key_env: bool,
+    /// Whether auth loading should honor the `ORBIT_API_KEY` environment variable.
+    pub enable_orbit_code_api_key_env: bool,
     /// Client name reported during initialize.
     pub client_name: String,
     /// Client version reported during initialize.
@@ -203,8 +203,8 @@ pub struct InProcessClientStartArgs {
 impl InProcessClientStartArgs {
     fn shared_core_managers(&self) -> SharedCoreManagers {
         let auth_manager = AuthManager::shared(
-            self.config.codex_home.clone(),
-            self.enable_codex_api_key_env,
+            self.config.orbit_code_home.clone(),
+            self.enable_orbit_code_api_key_env,
             self.config.cli_auth_credentials_store_mode,
         );
         let thread_manager = Arc::new(ThreadManager::new(
@@ -215,7 +215,7 @@ impl InProcessClientStartArgs {
                 default_mode_request_user_input: self
                     .config
                     .features
-                    .enabled(codex_core::features::Feature::DefaultModeRequestUserInput),
+                    .enabled(orbit_code_core::features::Feature::DefaultModeRequestUserInput),
             },
         ));
 
@@ -259,7 +259,7 @@ impl InProcessClientStartArgs {
             feedback: self.feedback,
             config_warnings: self.config_warnings,
             session_source: self.session_source,
-            enable_codex_api_key_env: self.enable_codex_api_key_env,
+            enable_orbit_code_api_key_env: self.enable_orbit_code_api_key_env,
             initialize,
             channel_capacity: self.channel_capacity,
         }
@@ -298,7 +298,7 @@ enum ClientCommand {
 ///
 /// This type owns a worker task that bridges between:
 /// - caller-facing async `mpsc` channels used by TUI/exec
-/// - [`codex_app_server::in_process::InProcessClientHandle`], which speaks to
+/// - [`orbit_code_app_server::in_process::InProcessClientHandle`], which speaks to
 ///   the embedded `MessageProcessor`
 ///
 /// The facade intentionally preserves the server's request/notification/event
@@ -339,7 +339,8 @@ impl InProcessAppServerClient {
         let channel_capacity = args.channel_capacity.max(1);
         let shared_core = args.shared_core_managers();
         let mut handle =
-            codex_app_server::in_process::start(args.into_runtime_start_args(&shared_core)).await?;
+            orbit_code_app_server::in_process::start(args.into_runtime_start_args(&shared_core))
+                .await?;
         let request_sender = handle.sender();
         let (command_tx, mut command_rx) = mpsc::channel::<ClientCommand>(channel_capacity);
         let (event_tx, event_rx) = mpsc::channel::<InProcessServerEvent>(channel_capacity);
@@ -844,23 +845,23 @@ pub(crate) fn request_method_name(request: &ClientRequest) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use codex_app_server_protocol::AccountUpdatedNotification;
-    use codex_app_server_protocol::ConfigRequirementsReadResponse;
-    use codex_app_server_protocol::GetAccountResponse;
-    use codex_app_server_protocol::JSONRPCMessage;
-    use codex_app_server_protocol::JSONRPCRequest;
-    use codex_app_server_protocol::JSONRPCResponse;
-    use codex_app_server_protocol::ServerNotification;
-    use codex_app_server_protocol::SessionSource as ApiSessionSource;
-    use codex_app_server_protocol::ThreadStartParams;
-    use codex_app_server_protocol::ThreadStartResponse;
-    use codex_app_server_protocol::ToolRequestUserInputParams;
-    use codex_app_server_protocol::ToolRequestUserInputQuestion;
-    use codex_core::AuthManager;
-    use codex_core::ThreadManager;
-    use codex_core::config::ConfigBuilder;
     use futures::SinkExt;
     use futures::StreamExt;
+    use orbit_code_app_server_protocol::AccountUpdatedNotification;
+    use orbit_code_app_server_protocol::ConfigRequirementsReadResponse;
+    use orbit_code_app_server_protocol::GetAccountResponse;
+    use orbit_code_app_server_protocol::JSONRPCMessage;
+    use orbit_code_app_server_protocol::JSONRPCRequest;
+    use orbit_code_app_server_protocol::JSONRPCResponse;
+    use orbit_code_app_server_protocol::ServerNotification;
+    use orbit_code_app_server_protocol::SessionSource as ApiSessionSource;
+    use orbit_code_app_server_protocol::ThreadStartParams;
+    use orbit_code_app_server_protocol::ThreadStartResponse;
+    use orbit_code_app_server_protocol::ToolRequestUserInputParams;
+    use orbit_code_app_server_protocol::ToolRequestUserInputQuestion;
+    use orbit_code_core::AuthManager;
+    use orbit_code_core::ThreadManager;
+    use orbit_code_core::config::ConfigBuilder;
     use pretty_assertions::assert_eq;
     use tokio::net::TcpListener;
     use tokio::time::Duration;
@@ -889,7 +890,7 @@ mod tests {
             feedback: CodexFeedback::new(),
             config_warnings: Vec::new(),
             session_source,
-            enable_codex_api_key_env: false,
+            enable_orbit_code_api_key_env: false,
             client_name: "codex-app-server-client-test".to_string(),
             client_version: "0.0.0-test".to_string(),
             experimental_api: true,
@@ -1014,7 +1015,7 @@ mod tests {
         let err = client
             .request_typed::<ConfigRequirementsReadResponse>(ClientRequest::ThreadRead {
                 request_id: RequestId::Integer(99),
-                params: codex_app_server_protocol::ThreadReadParams {
+                params: orbit_code_app_server_protocol::ThreadReadParams {
                     thread_id: "missing-thread".to_string(),
                     include_turns: false,
                 },
@@ -1064,7 +1065,7 @@ mod tests {
             })
             .await
             .expect("thread/start should succeed");
-        let created_thread_id = codex_protocol::ThreadId::from_string(&response.thread.id)
+        let created_thread_id = orbit_code_protocol::ThreadId::from_string(&response.thread.id)
             .expect("thread id should parse");
         timeout(
             Duration::from_secs(2),
@@ -1122,7 +1123,7 @@ mod tests {
         let response: GetAccountResponse = client
             .request_typed(ClientRequest::GetAccount {
                 request_id: RequestId::Integer(1),
-                params: codex_app_server_protocol::GetAccountParams {
+                params: orbit_code_app_server_protocol::GetAccountParams {
                     refresh_token: false,
                 },
             })
@@ -1180,7 +1181,7 @@ mod tests {
             first_request_handle
                 .request_typed::<GetAccountResponse>(ClientRequest::GetAccount {
                     request_id: RequestId::Integer(1),
-                    params: codex_app_server_protocol::GetAccountParams {
+                    params: orbit_code_app_server_protocol::GetAccountParams {
                         refresh_token: false,
                     },
                 })
@@ -1195,7 +1196,7 @@ mod tests {
         let second_err = second_request_handle
             .request_typed::<GetAccountResponse>(ClientRequest::GetAccount {
                 request_id: RequestId::Integer(1),
-                params: codex_app_server_protocol::GetAccountParams {
+                params: orbit_code_app_server_protocol::GetAccountParams {
                     refresh_token: false,
                 },
             })
@@ -1473,7 +1474,7 @@ mod tests {
         let worker_handle = tokio::spawn(async {});
         let config = build_test_config().await;
         let auth_manager = AuthManager::shared(
-            config.codex_home.clone(),
+            config.orbit_code_home.clone(),
             false,
             config.cli_auth_credentials_store_mode,
         );
@@ -1484,7 +1485,7 @@ mod tests {
             CollaborationModesConfig {
                 default_mode_request_user_input: config
                     .features
-                    .enabled(codex_core::features::Feature::DefaultModeRequestUserInput),
+                    .enabled(orbit_code_core::features::Feature::DefaultModeRequestUserInput),
             },
         ));
         event_tx
@@ -1516,13 +1517,13 @@ mod tests {
     fn event_requires_delivery_marks_terminal_events() {
         assert!(event_requires_delivery(
             &InProcessServerEvent::ServerNotification(
-                codex_app_server_protocol::ServerNotification::TurnCompleted(
-                    codex_app_server_protocol::TurnCompletedNotification {
+                orbit_code_app_server_protocol::ServerNotification::TurnCompleted(
+                    orbit_code_app_server_protocol::TurnCompletedNotification {
                         thread_id: "thread".to_string(),
-                        turn: codex_app_server_protocol::Turn {
+                        turn: orbit_code_app_server_protocol::Turn {
                             id: "turn".to_string(),
                             items: Vec::new(),
-                            status: codex_app_server_protocol::TurnStatus::Completed,
+                            status: orbit_code_app_server_protocol::TurnStatus::Completed,
                             error: None,
                         },
                     }
@@ -1531,7 +1532,7 @@ mod tests {
         ));
         assert!(event_requires_delivery(
             &InProcessServerEvent::LegacyNotification(
-                codex_app_server_protocol::JSONRPCNotification {
+                orbit_code_app_server_protocol::JSONRPCNotification {
                     method: "codex/event/turn_aborted".to_string(),
                     params: None,
                 }

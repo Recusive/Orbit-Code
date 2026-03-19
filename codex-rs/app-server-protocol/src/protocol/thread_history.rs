@@ -18,44 +18,44 @@ use crate::protocol::v2::TurnError;
 use crate::protocol::v2::TurnStatus;
 use crate::protocol::v2::UserInput;
 use crate::protocol::v2::WebSearchAction;
-use codex_protocol::models::MessagePhase;
-use codex_protocol::protocol::AgentReasoningEvent;
-use codex_protocol::protocol::AgentReasoningRawContentEvent;
-use codex_protocol::protocol::AgentStatus;
-use codex_protocol::protocol::ApplyPatchApprovalRequestEvent;
-use codex_protocol::protocol::CompactedItem;
-use codex_protocol::protocol::ContextCompactedEvent;
-use codex_protocol::protocol::DynamicToolCallResponseEvent;
-use codex_protocol::protocol::ErrorEvent;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::ExecCommandBeginEvent;
-use codex_protocol::protocol::ExecCommandEndEvent;
-use codex_protocol::protocol::ImageGenerationBeginEvent;
-use codex_protocol::protocol::ImageGenerationEndEvent;
-use codex_protocol::protocol::ItemCompletedEvent;
-use codex_protocol::protocol::ItemStartedEvent;
-use codex_protocol::protocol::McpToolCallBeginEvent;
-use codex_protocol::protocol::McpToolCallEndEvent;
-use codex_protocol::protocol::PatchApplyBeginEvent;
-use codex_protocol::protocol::PatchApplyEndEvent;
-use codex_protocol::protocol::ReviewOutputEvent;
-use codex_protocol::protocol::RolloutItem;
-use codex_protocol::protocol::ThreadRolledBackEvent;
-use codex_protocol::protocol::TurnAbortedEvent;
-use codex_protocol::protocol::TurnCompleteEvent;
-use codex_protocol::protocol::TurnStartedEvent;
-use codex_protocol::protocol::UserMessageEvent;
-use codex_protocol::protocol::ViewImageToolCallEvent;
-use codex_protocol::protocol::WebSearchBeginEvent;
-use codex_protocol::protocol::WebSearchEndEvent;
+use orbit_code_protocol::models::MessagePhase;
+use orbit_code_protocol::protocol::AgentReasoningEvent;
+use orbit_code_protocol::protocol::AgentReasoningRawContentEvent;
+use orbit_code_protocol::protocol::AgentStatus;
+use orbit_code_protocol::protocol::ApplyPatchApprovalRequestEvent;
+use orbit_code_protocol::protocol::CompactedItem;
+use orbit_code_protocol::protocol::ContextCompactedEvent;
+use orbit_code_protocol::protocol::DynamicToolCallResponseEvent;
+use orbit_code_protocol::protocol::ErrorEvent;
+use orbit_code_protocol::protocol::EventMsg;
+use orbit_code_protocol::protocol::ExecCommandBeginEvent;
+use orbit_code_protocol::protocol::ExecCommandEndEvent;
+use orbit_code_protocol::protocol::ImageGenerationBeginEvent;
+use orbit_code_protocol::protocol::ImageGenerationEndEvent;
+use orbit_code_protocol::protocol::ItemCompletedEvent;
+use orbit_code_protocol::protocol::ItemStartedEvent;
+use orbit_code_protocol::protocol::McpToolCallBeginEvent;
+use orbit_code_protocol::protocol::McpToolCallEndEvent;
+use orbit_code_protocol::protocol::PatchApplyBeginEvent;
+use orbit_code_protocol::protocol::PatchApplyEndEvent;
+use orbit_code_protocol::protocol::ReviewOutputEvent;
+use orbit_code_protocol::protocol::RolloutItem;
+use orbit_code_protocol::protocol::ThreadRolledBackEvent;
+use orbit_code_protocol::protocol::TurnAbortedEvent;
+use orbit_code_protocol::protocol::TurnCompleteEvent;
+use orbit_code_protocol::protocol::TurnStartedEvent;
+use orbit_code_protocol::protocol::UserMessageEvent;
+use orbit_code_protocol::protocol::ViewImageToolCallEvent;
+use orbit_code_protocol::protocol::WebSearchBeginEvent;
+use orbit_code_protocol::protocol::WebSearchEndEvent;
 use std::collections::HashMap;
 use tracing::warn;
 use uuid::Uuid;
 
 #[cfg(test)]
-use codex_protocol::protocol::ExecCommandStatus as CoreExecCommandStatus;
+use orbit_code_protocol::protocol::ExecCommandStatus as CoreExecCommandStatus;
 #[cfg(test)]
-use codex_protocol::protocol::PatchApplyStatus as CorePatchApplyStatus;
+use orbit_code_protocol::protocol::PatchApplyStatus as CorePatchApplyStatus;
 
 /// Convert persisted [`RolloutItem`] entries into a sequence of [`Turn`] values.
 ///
@@ -271,7 +271,7 @@ impl ThreadHistoryBuilder {
 
     fn handle_item_started(&mut self, payload: &ItemStartedEvent) {
         match &payload.item {
-            codex_protocol::items::TurnItem::Plan(plan) => {
+            orbit_code_protocol::items::TurnItem::Plan(plan) => {
                 if plan.text.is_empty() {
                     return;
                 }
@@ -280,18 +280,18 @@ impl ThreadHistoryBuilder {
                     ThreadItem::from(payload.item.clone()),
                 );
             }
-            codex_protocol::items::TurnItem::UserMessage(_)
-            | codex_protocol::items::TurnItem::AgentMessage(_)
-            | codex_protocol::items::TurnItem::Reasoning(_)
-            | codex_protocol::items::TurnItem::WebSearch(_)
-            | codex_protocol::items::TurnItem::ImageGeneration(_)
-            | codex_protocol::items::TurnItem::ContextCompaction(_) => {}
+            orbit_code_protocol::items::TurnItem::UserMessage(_)
+            | orbit_code_protocol::items::TurnItem::AgentMessage(_)
+            | orbit_code_protocol::items::TurnItem::Reasoning(_)
+            | orbit_code_protocol::items::TurnItem::WebSearch(_)
+            | orbit_code_protocol::items::TurnItem::ImageGeneration(_)
+            | orbit_code_protocol::items::TurnItem::ContextCompaction(_) => {}
         }
     }
 
     fn handle_item_completed(&mut self, payload: &ItemCompletedEvent) {
         match &payload.item {
-            codex_protocol::items::TurnItem::Plan(plan) => {
+            orbit_code_protocol::items::TurnItem::Plan(plan) => {
                 if plan.text.is_empty() {
                     return;
                 }
@@ -300,12 +300,12 @@ impl ThreadHistoryBuilder {
                     ThreadItem::from(payload.item.clone()),
                 );
             }
-            codex_protocol::items::TurnItem::UserMessage(_)
-            | codex_protocol::items::TurnItem::AgentMessage(_)
-            | codex_protocol::items::TurnItem::Reasoning(_)
-            | codex_protocol::items::TurnItem::WebSearch(_)
-            | codex_protocol::items::TurnItem::ImageGeneration(_)
-            | codex_protocol::items::TurnItem::ContextCompaction(_) => {}
+            orbit_code_protocol::items::TurnItem::UserMessage(_)
+            | orbit_code_protocol::items::TurnItem::AgentMessage(_)
+            | orbit_code_protocol::items::TurnItem::Reasoning(_)
+            | orbit_code_protocol::items::TurnItem::WebSearch(_)
+            | orbit_code_protocol::items::TurnItem::ImageGeneration(_)
+            | orbit_code_protocol::items::TurnItem::ContextCompaction(_) => {}
         }
     }
 
@@ -429,7 +429,7 @@ impl ThreadHistoryBuilder {
 
     fn handle_dynamic_tool_call_request(
         &mut self,
-        payload: &codex_protocol::dynamic_tools::DynamicToolCallRequest,
+        payload: &orbit_code_protocol::dynamic_tools::DynamicToolCallRequest,
     ) {
         let item = ThreadItem::DynamicToolCall {
             id: payload.call_id.clone(),
@@ -557,7 +557,7 @@ impl ThreadHistoryBuilder {
 
     fn handle_collab_agent_spawn_begin(
         &mut self,
-        payload: &codex_protocol::protocol::CollabAgentSpawnBeginEvent,
+        payload: &orbit_code_protocol::protocol::CollabAgentSpawnBeginEvent,
     ) {
         let item = ThreadItem::CollabAgentToolCall {
             id: payload.call_id.clone(),
@@ -575,7 +575,7 @@ impl ThreadHistoryBuilder {
 
     fn handle_collab_agent_spawn_end(
         &mut self,
-        payload: &codex_protocol::protocol::CollabAgentSpawnEndEvent,
+        payload: &orbit_code_protocol::protocol::CollabAgentSpawnEndEvent,
     ) {
         let has_receiver = payload.new_thread_id.is_some();
         let status = match &payload.status {
@@ -609,7 +609,7 @@ impl ThreadHistoryBuilder {
 
     fn handle_collab_agent_interaction_begin(
         &mut self,
-        payload: &codex_protocol::protocol::CollabAgentInteractionBeginEvent,
+        payload: &orbit_code_protocol::protocol::CollabAgentInteractionBeginEvent,
     ) {
         let item = ThreadItem::CollabAgentToolCall {
             id: payload.call_id.clone(),
@@ -627,7 +627,7 @@ impl ThreadHistoryBuilder {
 
     fn handle_collab_agent_interaction_end(
         &mut self,
-        payload: &codex_protocol::protocol::CollabAgentInteractionEndEvent,
+        payload: &orbit_code_protocol::protocol::CollabAgentInteractionEndEvent,
     ) {
         let status = match &payload.status {
             AgentStatus::Errored(_) | AgentStatus::NotFound => CollabAgentToolCallStatus::Failed,
@@ -650,7 +650,7 @@ impl ThreadHistoryBuilder {
 
     fn handle_collab_waiting_begin(
         &mut self,
-        payload: &codex_protocol::protocol::CollabWaitingBeginEvent,
+        payload: &orbit_code_protocol::protocol::CollabWaitingBeginEvent,
     ) {
         let item = ThreadItem::CollabAgentToolCall {
             id: payload.call_id.clone(),
@@ -672,7 +672,7 @@ impl ThreadHistoryBuilder {
 
     fn handle_collab_waiting_end(
         &mut self,
-        payload: &codex_protocol::protocol::CollabWaitingEndEvent,
+        payload: &orbit_code_protocol::protocol::CollabWaitingEndEvent,
     ) {
         let status = if payload
             .statuses
@@ -706,7 +706,7 @@ impl ThreadHistoryBuilder {
 
     fn handle_collab_close_begin(
         &mut self,
-        payload: &codex_protocol::protocol::CollabCloseBeginEvent,
+        payload: &orbit_code_protocol::protocol::CollabCloseBeginEvent,
     ) {
         let item = ThreadItem::CollabAgentToolCall {
             id: payload.call_id.clone(),
@@ -722,7 +722,10 @@ impl ThreadHistoryBuilder {
         self.upsert_item_in_current_turn(item);
     }
 
-    fn handle_collab_close_end(&mut self, payload: &codex_protocol::protocol::CollabCloseEndEvent) {
+    fn handle_collab_close_end(
+        &mut self,
+        payload: &orbit_code_protocol::protocol::CollabCloseEndEvent,
+    ) {
         let status = match &payload.status {
             AgentStatus::Errored(_) | AgentStatus::NotFound => CollabAgentToolCallStatus::Failed,
             _ => CollabAgentToolCallStatus::Completed,
@@ -749,7 +752,7 @@ impl ThreadHistoryBuilder {
 
     fn handle_collab_resume_begin(
         &mut self,
-        payload: &codex_protocol::protocol::CollabResumeBeginEvent,
+        payload: &orbit_code_protocol::protocol::CollabResumeBeginEvent,
     ) {
         let item = ThreadItem::CollabAgentToolCall {
             id: payload.call_id.clone(),
@@ -767,7 +770,7 @@ impl ThreadHistoryBuilder {
 
     fn handle_collab_resume_end(
         &mut self,
-        payload: &codex_protocol::protocol::CollabResumeEndEvent,
+        payload: &orbit_code_protocol::protocol::CollabResumeEndEvent,
     ) {
         let status = match &payload.status {
             AgentStatus::Errored(_) | AgentStatus::NotFound => CollabAgentToolCallStatus::Failed,
@@ -800,7 +803,10 @@ impl ThreadHistoryBuilder {
             .push(ThreadItem::ContextCompaction { id });
     }
 
-    fn handle_entered_review_mode(&mut self, payload: &codex_protocol::protocol::ReviewRequest) {
+    fn handle_entered_review_mode(
+        &mut self,
+        payload: &orbit_code_protocol::protocol::ReviewRequest,
+    ) {
         let review = payload
             .user_facing_hint
             .clone()
@@ -813,7 +819,7 @@ impl ThreadHistoryBuilder {
 
     fn handle_exited_review_mode(
         &mut self,
-        payload: &codex_protocol::protocol::ExitedReviewModeEvent,
+        payload: &orbit_code_protocol::protocol::ExitedReviewModeEvent,
     ) {
         let review = payload
             .review_output
@@ -836,7 +842,7 @@ impl ThreadHistoryBuilder {
         turn.status = TurnStatus::Failed;
         turn.error = Some(V2TurnError {
             message: payload.message.clone(),
-            codex_error_info: payload.codex_error_info.clone().map(Into::into),
+            orbit_code_error_info: payload.orbit_code_error_info.clone().map(Into::into),
             additional_details: None,
         });
     }
@@ -1027,7 +1033,7 @@ fn render_review_output_text(output: &ReviewOutputEvent) -> String {
 }
 
 pub fn convert_patch_changes(
-    changes: &HashMap<std::path::PathBuf, codex_protocol::protocol::FileChange>,
+    changes: &HashMap<std::path::PathBuf, orbit_code_protocol::protocol::FileChange>,
 ) -> Vec<FileUpdateChange> {
     let mut converted: Vec<FileUpdateChange> = changes
         .iter()
@@ -1042,37 +1048,39 @@ pub fn convert_patch_changes(
 }
 
 fn convert_dynamic_tool_content_items(
-    items: &[codex_protocol::dynamic_tools::DynamicToolCallOutputContentItem],
+    items: &[orbit_code_protocol::dynamic_tools::DynamicToolCallOutputContentItem],
 ) -> Vec<DynamicToolCallOutputContentItem> {
     items
         .iter()
         .cloned()
         .map(|item| match item {
-            codex_protocol::dynamic_tools::DynamicToolCallOutputContentItem::InputText { text } => {
-                DynamicToolCallOutputContentItem::InputText { text }
-            }
-            codex_protocol::dynamic_tools::DynamicToolCallOutputContentItem::InputImage {
+            orbit_code_protocol::dynamic_tools::DynamicToolCallOutputContentItem::InputText {
+                text,
+            } => DynamicToolCallOutputContentItem::InputText { text },
+            orbit_code_protocol::dynamic_tools::DynamicToolCallOutputContentItem::InputImage {
                 image_url,
             } => DynamicToolCallOutputContentItem::InputImage { image_url },
         })
         .collect()
 }
 
-fn map_patch_change_kind(change: &codex_protocol::protocol::FileChange) -> PatchChangeKind {
+fn map_patch_change_kind(change: &orbit_code_protocol::protocol::FileChange) -> PatchChangeKind {
     match change {
-        codex_protocol::protocol::FileChange::Add { .. } => PatchChangeKind::Add,
-        codex_protocol::protocol::FileChange::Delete { .. } => PatchChangeKind::Delete,
-        codex_protocol::protocol::FileChange::Update { move_path, .. } => PatchChangeKind::Update {
-            move_path: move_path.clone(),
-        },
+        orbit_code_protocol::protocol::FileChange::Add { .. } => PatchChangeKind::Add,
+        orbit_code_protocol::protocol::FileChange::Delete { .. } => PatchChangeKind::Delete,
+        orbit_code_protocol::protocol::FileChange::Update { move_path, .. } => {
+            PatchChangeKind::Update {
+                move_path: move_path.clone(),
+            }
+        }
     }
 }
 
-fn format_file_change_diff(change: &codex_protocol::protocol::FileChange) -> String {
+fn format_file_change_diff(change: &orbit_code_protocol::protocol::FileChange) -> String {
     match change {
-        codex_protocol::protocol::FileChange::Add { content } => content.clone(),
-        codex_protocol::protocol::FileChange::Delete { content } => content.clone(),
-        codex_protocol::protocol::FileChange::Update {
+        orbit_code_protocol::protocol::FileChange::Add { content } => content.clone(),
+        orbit_code_protocol::protocol::FileChange::Delete { content } => content.clone(),
+        orbit_code_protocol::protocol::FileChange::Update {
             unified_diff,
             move_path,
         } => {
@@ -1147,33 +1155,33 @@ impl From<&PendingTurn> for Turn {
 mod tests {
     use super::*;
     use crate::protocol::v2::CommandExecutionSource;
-    use codex_protocol::ThreadId;
-    use codex_protocol::dynamic_tools::DynamicToolCallOutputContentItem as CoreDynamicToolCallOutputContentItem;
-    use codex_protocol::items::TurnItem as CoreTurnItem;
-    use codex_protocol::items::UserMessageItem as CoreUserMessageItem;
-    use codex_protocol::models::MessagePhase as CoreMessagePhase;
-    use codex_protocol::models::WebSearchAction as CoreWebSearchAction;
-    use codex_protocol::parse_command::ParsedCommand;
-    use codex_protocol::protocol::AgentMessageEvent;
-    use codex_protocol::protocol::AgentReasoningEvent;
-    use codex_protocol::protocol::AgentReasoningRawContentEvent;
-    use codex_protocol::protocol::ApplyPatchApprovalRequestEvent;
-    use codex_protocol::protocol::CodexErrorInfo;
-    use codex_protocol::protocol::CompactedItem;
-    use codex_protocol::protocol::DynamicToolCallResponseEvent;
-    use codex_protocol::protocol::ExecCommandEndEvent;
-    use codex_protocol::protocol::ExecCommandSource;
-    use codex_protocol::protocol::ItemStartedEvent;
-    use codex_protocol::protocol::McpInvocation;
-    use codex_protocol::protocol::McpToolCallEndEvent;
-    use codex_protocol::protocol::PatchApplyBeginEvent;
-    use codex_protocol::protocol::ThreadRolledBackEvent;
-    use codex_protocol::protocol::TurnAbortReason;
-    use codex_protocol::protocol::TurnAbortedEvent;
-    use codex_protocol::protocol::TurnCompleteEvent;
-    use codex_protocol::protocol::TurnStartedEvent;
-    use codex_protocol::protocol::UserMessageEvent;
-    use codex_protocol::protocol::WebSearchEndEvent;
+    use orbit_code_protocol::ThreadId;
+    use orbit_code_protocol::dynamic_tools::DynamicToolCallOutputContentItem as CoreDynamicToolCallOutputContentItem;
+    use orbit_code_protocol::items::TurnItem as CoreTurnItem;
+    use orbit_code_protocol::items::UserMessageItem as CoreUserMessageItem;
+    use orbit_code_protocol::models::MessagePhase as CoreMessagePhase;
+    use orbit_code_protocol::models::WebSearchAction as CoreWebSearchAction;
+    use orbit_code_protocol::parse_command::ParsedCommand;
+    use orbit_code_protocol::protocol::AgentMessageEvent;
+    use orbit_code_protocol::protocol::AgentReasoningEvent;
+    use orbit_code_protocol::protocol::AgentReasoningRawContentEvent;
+    use orbit_code_protocol::protocol::ApplyPatchApprovalRequestEvent;
+    use orbit_code_protocol::protocol::CodexErrorInfo;
+    use orbit_code_protocol::protocol::CompactedItem;
+    use orbit_code_protocol::protocol::DynamicToolCallResponseEvent;
+    use orbit_code_protocol::protocol::ExecCommandEndEvent;
+    use orbit_code_protocol::protocol::ExecCommandSource;
+    use orbit_code_protocol::protocol::ItemStartedEvent;
+    use orbit_code_protocol::protocol::McpInvocation;
+    use orbit_code_protocol::protocol::McpToolCallEndEvent;
+    use orbit_code_protocol::protocol::PatchApplyBeginEvent;
+    use orbit_code_protocol::protocol::ThreadRolledBackEvent;
+    use orbit_code_protocol::protocol::TurnAbortReason;
+    use orbit_code_protocol::protocol::TurnAbortedEvent;
+    use orbit_code_protocol::protocol::TurnCompleteEvent;
+    use orbit_code_protocol::protocol::TurnStartedEvent;
+    use orbit_code_protocol::protocol::UserMessageEvent;
+    use orbit_code_protocol::protocol::WebSearchEndEvent;
     use pretty_assertions::assert_eq;
     use std::path::PathBuf;
     use std::time::Duration;
@@ -1790,7 +1798,7 @@ mod tests {
                 local_images: Vec::new(),
             }),
             EventMsg::DynamicToolCallRequest(
-                codex_protocol::dynamic_tools::DynamicToolCallRequest {
+                orbit_code_protocol::dynamic_tools::DynamicToolCallRequest {
                     call_id: "dyn-1".into(),
                     turn_id: "turn-1".into(),
                     tool: "lookup_ticket".into(),
@@ -1873,7 +1881,7 @@ mod tests {
                 success: false,
                 changes: [(
                     PathBuf::from("README.md"),
-                    codex_protocol::protocol::FileChange::Add {
+                    orbit_code_protocol::protocol::FileChange::Add {
                         content: "hello\n".into(),
                     },
                 )]
@@ -2102,7 +2110,7 @@ mod tests {
                 auto_approved: false,
                 changes: [(
                     PathBuf::from("README.md"),
-                    codex_protocol::protocol::FileChange::Add {
+                    orbit_code_protocol::protocol::FileChange::Add {
                         content: "hello\n".into(),
                     },
                 )]
@@ -2164,7 +2172,7 @@ mod tests {
                 turn_id: turn_id.to_string(),
                 changes: [(
                     PathBuf::from("README.md"),
-                    codex_protocol::protocol::FileChange::Add {
+                    orbit_code_protocol::protocol::FileChange::Add {
                         content: "hello\n".into(),
                     },
                 )]
@@ -2353,7 +2361,7 @@ mod tests {
                 text_elements: Vec::new(),
                 local_images: Vec::new(),
             }),
-            EventMsg::CollabResumeEnd(codex_protocol::protocol::CollabResumeEndEvent {
+            EventMsg::CollabResumeEnd(orbit_code_protocol::protocol::CollabResumeEndEvent {
                 call_id: "resume-1".into(),
                 sender_thread_id: ThreadId::try_from("00000000-0000-0000-0000-000000000001")
                     .expect("valid sender thread id"),
@@ -2409,17 +2417,19 @@ mod tests {
                 text_elements: Vec::new(),
                 local_images: Vec::new(),
             }),
-            EventMsg::CollabAgentSpawnEnd(codex_protocol::protocol::CollabAgentSpawnEndEvent {
-                call_id: "spawn-1".into(),
-                sender_thread_id,
-                new_thread_id: Some(spawned_thread_id),
-                new_agent_nickname: Some("Scout".into()),
-                new_agent_role: Some("explorer".into()),
-                prompt: "inspect the repo".into(),
-                model: "gpt-5.4-mini".into(),
-                reasoning_effort: codex_protocol::openai_models::ReasoningEffort::Medium,
-                status: AgentStatus::Running,
-            }),
+            EventMsg::CollabAgentSpawnEnd(
+                orbit_code_protocol::protocol::CollabAgentSpawnEndEvent {
+                    call_id: "spawn-1".into(),
+                    sender_thread_id,
+                    new_thread_id: Some(spawned_thread_id),
+                    new_agent_nickname: Some("Scout".into()),
+                    new_agent_role: Some("explorer".into()),
+                    prompt: "inspect the repo".into(),
+                    model: "gpt-5.4-mini".into(),
+                    reasoning_effort: orbit_code_protocol::openai_models::ReasoningEffort::Medium,
+                    status: AgentStatus::Running,
+                },
+            ),
         ];
 
         let items = events
@@ -2439,7 +2449,7 @@ mod tests {
                 receiver_thread_ids: vec!["00000000-0000-0000-0000-000000000002".into()],
                 prompt: Some("inspect the repo".into()),
                 model: Some("gpt-5.4-mini".into()),
-                reasoning_effort: Some(codex_protocol::openai_models::ReasoningEffort::Medium),
+                reasoning_effort: Some(orbit_code_protocol::openai_models::ReasoningEffort::Medium),
                 agents_states: [(
                     "00000000-0000-0000-0000-000000000002".into(),
                     CollabAgentState {
@@ -2470,7 +2480,7 @@ mod tests {
                 local_images: Vec::new(),
             }),
             EventMsg::CollabAgentInteractionBegin(
-                codex_protocol::protocol::CollabAgentInteractionBeginEvent {
+                orbit_code_protocol::protocol::CollabAgentInteractionBeginEvent {
                     call_id: "send-1".into(),
                     sender_thread_id: sender,
                     receiver_thread_id: receiver,
@@ -2478,7 +2488,7 @@ mod tests {
                 },
             ),
             EventMsg::CollabAgentInteractionEnd(
-                codex_protocol::protocol::CollabAgentInteractionEndEvent {
+                orbit_code_protocol::protocol::CollabAgentInteractionEndEvent {
                     call_id: "send-1".into(),
                     sender_thread_id: sender,
                     receiver_thread_id: receiver,
@@ -2537,7 +2547,7 @@ mod tests {
             }),
             EventMsg::Error(ErrorEvent {
                 message: "rollback failed".into(),
-                codex_error_info: Some(CodexErrorInfo::ThreadRollbackFailed),
+                orbit_code_error_info: Some(CodexErrorInfo::ThreadRollbackFailed),
             }),
         ];
 
@@ -2571,7 +2581,7 @@ mod tests {
             }),
             EventMsg::Error(ErrorEvent {
                 message: "request-level failure".into(),
-                codex_error_info: Some(CodexErrorInfo::BadRequest),
+                orbit_code_error_info: Some(CodexErrorInfo::BadRequest),
             }),
         ];
 
@@ -2614,7 +2624,7 @@ mod tests {
             }),
             EventMsg::Error(ErrorEvent {
                 message: "stream failure".into(),
-                codex_error_info: Some(CodexErrorInfo::ResponseStreamDisconnected {
+                orbit_code_error_info: Some(CodexErrorInfo::ResponseStreamDisconnected {
                     http_status_code: Some(502),
                 }),
             }),
@@ -2636,7 +2646,7 @@ mod tests {
             turns[0].error,
             Some(TurnError {
                 message: "stream failure".into(),
-                codex_error_info: Some(
+                orbit_code_error_info: Some(
                     crate::protocol::v2::CodexErrorInfo::ResponseStreamDisconnected {
                         http_status_code: Some(502),
                     }

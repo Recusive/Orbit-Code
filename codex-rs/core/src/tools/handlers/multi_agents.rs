@@ -22,26 +22,26 @@ use crate::tools::handlers::parse_arguments;
 use crate::tools::registry::ToolHandler;
 use crate::tools::registry::ToolKind;
 use async_trait::async_trait;
-use codex_protocol::ThreadId;
-use codex_protocol::models::BaseInstructions;
-use codex_protocol::models::ResponseInputItem;
-use codex_protocol::openai_models::ReasoningEffort;
-use codex_protocol::openai_models::ReasoningEffortPreset;
-use codex_protocol::protocol::CollabAgentInteractionBeginEvent;
-use codex_protocol::protocol::CollabAgentInteractionEndEvent;
-use codex_protocol::protocol::CollabAgentRef;
-use codex_protocol::protocol::CollabAgentSpawnBeginEvent;
-use codex_protocol::protocol::CollabAgentSpawnEndEvent;
-use codex_protocol::protocol::CollabAgentStatusEntry;
-use codex_protocol::protocol::CollabCloseBeginEvent;
-use codex_protocol::protocol::CollabCloseEndEvent;
-use codex_protocol::protocol::CollabResumeBeginEvent;
-use codex_protocol::protocol::CollabResumeEndEvent;
-use codex_protocol::protocol::CollabWaitingBeginEvent;
-use codex_protocol::protocol::CollabWaitingEndEvent;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::SubAgentSource;
-use codex_protocol::user_input::UserInput;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::models::BaseInstructions;
+use orbit_code_protocol::models::ResponseInputItem;
+use orbit_code_protocol::openai_models::ReasoningEffort;
+use orbit_code_protocol::openai_models::ReasoningEffortPreset;
+use orbit_code_protocol::protocol::CollabAgentInteractionBeginEvent;
+use orbit_code_protocol::protocol::CollabAgentInteractionEndEvent;
+use orbit_code_protocol::protocol::CollabAgentRef;
+use orbit_code_protocol::protocol::CollabAgentSpawnBeginEvent;
+use orbit_code_protocol::protocol::CollabAgentSpawnEndEvent;
+use orbit_code_protocol::protocol::CollabAgentStatusEntry;
+use orbit_code_protocol::protocol::CollabCloseBeginEvent;
+use orbit_code_protocol::protocol::CollabCloseEndEvent;
+use orbit_code_protocol::protocol::CollabResumeBeginEvent;
+use orbit_code_protocol::protocol::CollabResumeEndEvent;
+use orbit_code_protocol::protocol::CollabWaitingBeginEvent;
+use orbit_code_protocol::protocol::CollabWaitingEndEvent;
+use orbit_code_protocol::protocol::SessionSource;
+use orbit_code_protocol::protocol::SubAgentSource;
+use orbit_code_protocol::user_input::UserInput;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::Value as JsonValue;
@@ -298,7 +298,7 @@ fn apply_spawn_agent_runtime_overrides(
             FunctionCallError::RespondToModel(format!("approval_policy is invalid: {err}"))
         })?;
     config.permissions.shell_environment_policy = turn.shell_environment_policy.clone();
-    config.codex_linux_sandbox_exe = turn.codex_linux_sandbox_exe.clone();
+    config.orbit_code_linux_sandbox_exe = turn.orbit_code_linux_sandbox_exe.clone();
     config.cwd = turn.cwd.clone();
     config
         .permissions
@@ -371,7 +371,7 @@ async fn apply_requested_spawn_agent_model_overrides(
 }
 
 fn find_spawn_agent_model_name(
-    available_models: &[codex_protocol::openai_models::ModelPreset],
+    available_models: &[orbit_code_protocol::openai_models::ModelPreset],
     requested_model: &str,
 ) -> Result<String, FunctionCallError> {
     available_models

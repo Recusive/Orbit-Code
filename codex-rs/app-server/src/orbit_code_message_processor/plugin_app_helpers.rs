@@ -1,10 +1,10 @@
 use std::collections::HashSet;
 
-use codex_app_server_protocol::AppInfo;
-use codex_app_server_protocol::AppSummary;
-use codex_chatgpt::connectors;
-use codex_core::config::Config;
-use codex_core::plugins::AppConnectorId;
+use orbit_code_app_server_protocol::AppInfo;
+use orbit_code_app_server_protocol::AppSummary;
+use orbit_code_chatgpt::connectors;
+use orbit_code_core::config::Config;
+use orbit_code_core::plugins::AppConnectorId;
 use tracing::warn;
 
 pub(super) async fn load_plugin_app_summaries(
@@ -36,9 +36,9 @@ pub(super) fn plugin_apps_needing_auth(
     all_connectors: &[AppInfo],
     accessible_connectors: &[AppInfo],
     plugin_apps: &[AppConnectorId],
-    codex_apps_ready: bool,
+    orbit_code_apps_ready: bool,
 ) -> Vec<AppSummary> {
-    if !codex_apps_ready {
+    if !orbit_code_apps_ready {
         return Vec::new();
     }
 
@@ -64,14 +64,14 @@ pub(super) fn plugin_apps_needing_auth(
 
 #[cfg(test)]
 mod tests {
-    use codex_app_server_protocol::AppInfo;
-    use codex_core::plugins::AppConnectorId;
+    use orbit_code_app_server_protocol::AppInfo;
+    use orbit_code_core::plugins::AppConnectorId;
     use pretty_assertions::assert_eq;
 
     use super::plugin_apps_needing_auth;
 
     #[test]
-    fn plugin_apps_needing_auth_returns_empty_when_codex_apps_is_not_ready() {
+    fn plugin_apps_needing_auth_returns_empty_when_orbit_code_apps_is_not_ready() {
         let all_connectors = vec![AppInfo {
             id: "alpha".to_string(),
             name: "Alpha".to_string(),

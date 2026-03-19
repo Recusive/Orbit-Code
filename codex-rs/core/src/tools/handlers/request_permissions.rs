@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use codex_protocol::request_permissions::RequestPermissionsArgs;
+use orbit_code_protocol::request_permissions::RequestPermissionsArgs;
 
 use crate::function_tool::FunctionCallError;
 use crate::sandboxing::normalize_additional_permissions;
@@ -46,7 +46,7 @@ impl ToolHandler for RequestPermissionsHandler {
         let mut args: RequestPermissionsArgs =
             parse_arguments_with_base_path(&arguments, turn.cwd.as_path())?;
         args.permissions = normalize_additional_permissions(args.permissions.into())
-            .map(codex_protocol::request_permissions::RequestPermissionProfile::from)
+            .map(orbit_code_protocol::request_permissions::RequestPermissionProfile::from)
             .map_err(FunctionCallError::RespondToModel)?;
         if args.permissions.is_empty() {
             return Err(FunctionCallError::RespondToModel(

@@ -1,11 +1,6 @@
 use anyhow::Result;
 use chrono::Duration as ChronoDuration;
 use chrono::Utc;
-use codex_core::features::Feature;
-use codex_protocol::ThreadId;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::SessionSource;
 use core_test_support::responses::ResponseMock;
 use core_test_support::responses::ResponsesRequest;
 use core_test_support::responses::ev_assistant_message;
@@ -19,6 +14,11 @@ use core_test_support::responses::start_mock_server;
 use core_test_support::test_codex::TestCodex;
 use core_test_support::test_codex::test_codex;
 use core_test_support::wait_for_event;
+use orbit_code_core::features::Feature;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::protocol::EventMsg;
+use orbit_code_protocol::protocol::Op;
+use orbit_code_protocol::protocol::SessionSource;
 use pretty_assertions::assert_eq;
 use std::path::Path;
 use std::sync::Arc;
@@ -337,29 +337,30 @@ async fn build_test_codex(server: &wiremock::MockServer, home: Arc<TempDir>) -> 
     builder.build(server).await
 }
 
-async fn init_state_db(home: &Arc<TempDir>) -> Result<Arc<codex_state::StateRuntime>> {
+async fn init_state_db(home: &Arc<TempDir>) -> Result<Arc<orbit_code_state::StateRuntime>> {
     let db =
-        codex_state::StateRuntime::init(home.path().to_path_buf(), "test-provider".into()).await?;
+        orbit_code_state::StateRuntime::init(home.path().to_path_buf(), "test-provider".into())
+            .await?;
     db.mark_backfill_complete(None).await?;
     Ok(db)
 }
 
 async fn seed_stage1_output(
-    db: &codex_state::StateRuntime,
-    codex_home: &Path,
+    db: &orbit_code_state::StateRuntime,
+    orbit_code_home: &Path,
     updated_at: chrono::DateTime<Utc>,
     raw_memory: &str,
     rollout_summary: &str,
     rollout_slug: &str,
 ) -> Result<ThreadId> {
     let thread_id = ThreadId::new();
-    let mut metadata_builder = codex_state::ThreadMetadataBuilder::new(
+    let mut metadata_builder = orbit_code_state::ThreadMetadataBuilder::new(
         thread_id,
-        codex_home.join(format!("rollout-{thread_id}.jsonl")),
+        orbit_code_home.join(format!("rollout-{thread_id}.jsonl")),
         updated_at,
         SessionSource::Cli,
     );
-    metadata_builder.cwd = codex_home.join(format!("workspace-{rollout_slug}"));
+    metadata_builder.cwd = orbit_code_home.join(format!("workspace-{rollout_slug}"));
     metadata_builder.model_provider = Some("test-provider".to_string());
     metadata_builder.git_branch = Some(format!("branch-{rollout_slug}"));
     let metadata = metadata_builder.build("test-provider");
@@ -407,7 +408,7 @@ fn phase2_prompt_text(request: &ResponsesRequest) -> String {
 }
 
 async fn wait_for_phase2_success(
-    db: &codex_state::StateRuntime,
+    db: &orbit_code_state::StateRuntime,
     expected_thread_id: ThreadId,
 ) -> Result<()> {
     let deadline = Instant::now() + Duration::from_secs(10);
@@ -430,7 +431,7 @@ async fn wait_for_phase2_success(
 }
 
 async fn seed_stage1_output_for_existing_thread(
-    db: &codex_state::StateRuntime,
+    db: &orbit_code_state::StateRuntime,
     thread_id: ThreadId,
     updated_at: i64,
     raw_memory: &str,
@@ -442,7 +443,7 @@ async fn seed_stage1_output_for_existing_thread(
         .try_claim_stage1_job(thread_id, owner, updated_at, 3_600, 64)
         .await?;
     let ownership_token = match claim {
-        codex_state::Stage1JobClaimOutcome::Claimed { ownership_token } => ownership_token,
+        orbit_code_state::Stage1JobClaimOutcome::Claimed { ownership_token } => ownership_token,
         other => panic!("unexpected stage-1 claim outcome: {other:?}"),
     };
 

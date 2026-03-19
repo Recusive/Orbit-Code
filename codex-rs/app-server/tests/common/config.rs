@@ -1,10 +1,10 @@
-use codex_core::features::FEATURES;
-use codex_core::features::Feature;
+use orbit_code_core::features::FEATURES;
+use orbit_code_core::features::Feature;
 use std::collections::BTreeMap;
 use std::path::Path;
 
 pub fn write_mock_responses_config_toml(
-    codex_home: &Path,
+    orbit_code_home: &Path,
     server_uri: &str,
     feature_flags: &BTreeMap<Feature, bool>,
     auto_compact_limit: i64,
@@ -57,7 +57,7 @@ supports_websockets = false
         String::new()
     };
     // Phase 3: write the final config file.
-    let config_toml = codex_home.join("config.toml");
+    let config_toml = orbit_code_home.join("config.toml");
     std::fs::write(
         config_toml,
         format!(

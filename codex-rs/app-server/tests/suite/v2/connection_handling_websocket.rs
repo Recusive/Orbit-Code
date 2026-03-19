@@ -2,16 +2,16 @@ use anyhow::Context;
 use anyhow::Result;
 use anyhow::bail;
 use app_test_support::create_mock_responses_server_sequence_unchecked;
-use codex_app_server_protocol::ClientInfo;
-use codex_app_server_protocol::InitializeParams;
-use codex_app_server_protocol::JSONRPCError;
-use codex_app_server_protocol::JSONRPCMessage;
-use codex_app_server_protocol::JSONRPCNotification;
-use codex_app_server_protocol::JSONRPCRequest;
-use codex_app_server_protocol::JSONRPCResponse;
-use codex_app_server_protocol::RequestId;
 use futures::SinkExt;
 use futures::StreamExt;
+use orbit_code_app_server_protocol::ClientInfo;
+use orbit_code_app_server_protocol::InitializeParams;
+use orbit_code_app_server_protocol::JSONRPCError;
+use orbit_code_app_server_protocol::JSONRPCMessage;
+use orbit_code_app_server_protocol::JSONRPCNotification;
+use orbit_code_app_server_protocol::JSONRPCRequest;
+use orbit_code_app_server_protocol::JSONRPCResponse;
+use orbit_code_app_server_protocol::RequestId;
 use reqwest::StatusCode;
 use serde_json::json;
 use std::net::SocketAddr;
@@ -42,10 +42,10 @@ pub(super) type WsClient = WebSocketStream<MaybeTlsStream<tokio::net::TcpStream>
 #[tokio::test]
 async fn websocket_transport_routes_per_connection_handshake_and_responses() -> Result<()> {
     let server = create_mock_responses_server_sequence_unchecked(Vec::new()).await;
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path(), &server.uri(), "never")?;
+    let orbit_code_home = TempDir::new()?;
+    create_config_toml(orbit_code_home.path(), &server.uri(), "never")?;
 
-    let (mut process, bind_addr) = spawn_websocket_server(codex_home.path()).await?;
+    let (mut process, bind_addr) = spawn_websocket_server(orbit_code_home.path()).await?;
 
     let mut ws1 = connect_websocket(bind_addr).await?;
     let mut ws2 = connect_websocket(bind_addr).await?;
@@ -87,10 +87,10 @@ async fn websocket_transport_routes_per_connection_handshake_and_responses() -> 
 #[tokio::test]
 async fn websocket_transport_serves_health_endpoints_on_same_listener() -> Result<()> {
     let server = create_mock_responses_server_sequence_unchecked(Vec::new()).await;
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path(), &server.uri(), "never")?;
+    let orbit_code_home = TempDir::new()?;
+    create_config_toml(orbit_code_home.path(), &server.uri(), "never")?;
 
-    let (mut process, bind_addr) = spawn_websocket_server(codex_home.path()).await?;
+    let (mut process, bind_addr) = spawn_websocket_server(orbit_code_home.path()).await?;
     let client = reqwest::Client::new();
 
     let readyz = http_get(&client, bind_addr, "/readyz").await?;
@@ -114,10 +114,10 @@ async fn websocket_transport_serves_health_endpoints_on_same_listener() -> Resul
 #[tokio::test]
 async fn websocket_transport_rejects_requests_with_origin_header() -> Result<()> {
     let server = create_mock_responses_server_sequence_unchecked(Vec::new()).await;
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path(), &server.uri(), "never")?;
+    let orbit_code_home = TempDir::new()?;
+    create_config_toml(orbit_code_home.path(), &server.uri(), "never")?;
 
-    let (mut process, bind_addr) = spawn_websocket_server(codex_home.path()).await?;
+    let (mut process, bind_addr) = spawn_websocket_server(orbit_code_home.path()).await?;
     let client = reqwest::Client::new();
 
     let deadline = Instant::now() + Duration::from_secs(10);
@@ -160,8 +160,8 @@ async fn websocket_transport_rejects_requests_with_origin_header() -> Result<()>
     Ok(())
 }
 
-pub(super) async fn spawn_websocket_server(codex_home: &Path) -> Result<(Child, SocketAddr)> {
-    let program = codex_utils_cargo_bin::cargo_bin("codex-app-server")
+pub(super) async fn spawn_websocket_server(orbit_code_home: &Path) -> Result<(Child, SocketAddr)> {
+    let program = orbit_code_utils_cargo_bin::cargo_bin("codex-app-server")
         .context("should find app-server binary")?;
     let mut cmd = Command::new(program);
     cmd.arg("--listen")
@@ -169,7 +169,7 @@ pub(super) async fn spawn_websocket_server(codex_home: &Path) -> Result<(Child, 
         .stdin(Stdio::null())
         .stdout(Stdio::null())
         .stderr(Stdio::piped())
-        .env("CODEX_HOME", codex_home)
+        .env("ORBIT_HOME", orbit_code_home)
         .env("RUST_LOG", "debug");
     let mut process = cmd
         .kill_on_drop(true)
@@ -434,11 +434,11 @@ pub(super) async fn assert_no_message(stream: &mut WsClient, wait_for: Duration)
 }
 
 pub(super) fn create_config_toml(
-    codex_home: &Path,
+    orbit_code_home: &Path,
     server_uri: &str,
     approval_policy: &str,
 ) -> std::io::Result<()> {
-    let config_toml = codex_home.join("config.toml");
+    let config_toml = orbit_code_home.join("config.toml");
     std::fs::write(
         config_toml,
         format!(

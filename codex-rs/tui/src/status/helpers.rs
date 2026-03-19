@@ -2,11 +2,11 @@ use crate::exec_command::relativize_to_home;
 use crate::text_formatting;
 use chrono::DateTime;
 use chrono::Local;
-use codex_core::AuthManager;
-use codex_core::auth::AuthMode as CoreAuthMode;
-use codex_core::config::Config;
-use codex_core::project_doc::discover_project_doc_paths;
-use codex_protocol::account::PlanType;
+use orbit_code_core::AuthManager;
+use orbit_code_core::auth::AuthMode as CoreAuthMode;
+use orbit_code_core::config::Config;
+use orbit_code_core::project_doc::discover_project_doc_paths;
+use orbit_code_protocol::account::PlanType;
 use std::path::Path;
 use unicode_width::UnicodeWidthStr;
 

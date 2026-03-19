@@ -11,50 +11,50 @@ use app_test_support::rollout_path;
 use app_test_support::to_response;
 use app_test_support::write_chatgpt_auth;
 use chrono::Utc;
-use codex_app_server_protocol::AskForApproval;
-use codex_app_server_protocol::CommandExecutionApprovalDecision;
-use codex_app_server_protocol::CommandExecutionRequestApprovalResponse;
-use codex_app_server_protocol::FileChangeApprovalDecision;
-use codex_app_server_protocol::FileChangeRequestApprovalResponse;
-use codex_app_server_protocol::ItemStartedNotification;
-use codex_app_server_protocol::JSONRPCError;
-use codex_app_server_protocol::JSONRPCResponse;
-use codex_app_server_protocol::PatchApplyStatus;
-use codex_app_server_protocol::PatchChangeKind;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::ServerRequest;
-use codex_app_server_protocol::SessionSource;
-use codex_app_server_protocol::ThreadItem;
-use codex_app_server_protocol::ThreadMetadataGitInfoUpdateParams;
-use codex_app_server_protocol::ThreadMetadataUpdateParams;
-use codex_app_server_protocol::ThreadReadParams;
-use codex_app_server_protocol::ThreadReadResponse;
-use codex_app_server_protocol::ThreadResumeParams;
-use codex_app_server_protocol::ThreadResumeResponse;
-use codex_app_server_protocol::ThreadStartParams;
-use codex_app_server_protocol::ThreadStartResponse;
-use codex_app_server_protocol::ThreadStatus;
-use codex_app_server_protocol::TurnStartParams;
-use codex_app_server_protocol::TurnStartResponse;
-use codex_app_server_protocol::TurnStatus;
-use codex_app_server_protocol::UserInput;
-use codex_core::auth::AuthCredentialsStoreMode;
-use codex_core::auth::REFRESH_TOKEN_URL_OVERRIDE_ENV_VAR;
-use codex_protocol::ThreadId;
-use codex_protocol::config_types::Personality;
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::protocol::AgentMessageEvent;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::SessionMeta;
-use codex_protocol::protocol::SessionMetaLine;
-use codex_protocol::protocol::SessionSource as RolloutSessionSource;
-use codex_protocol::protocol::TurnStartedEvent;
-use codex_protocol::user_input::ByteRange;
-use codex_protocol::user_input::TextElement;
-use codex_state::StateRuntime;
 use core_test_support::responses;
 use core_test_support::skip_if_no_network;
+use orbit_code_app_server_protocol::AskForApproval;
+use orbit_code_app_server_protocol::CommandExecutionApprovalDecision;
+use orbit_code_app_server_protocol::CommandExecutionRequestApprovalResponse;
+use orbit_code_app_server_protocol::FileChangeApprovalDecision;
+use orbit_code_app_server_protocol::FileChangeRequestApprovalResponse;
+use orbit_code_app_server_protocol::ItemStartedNotification;
+use orbit_code_app_server_protocol::JSONRPCError;
+use orbit_code_app_server_protocol::JSONRPCResponse;
+use orbit_code_app_server_protocol::PatchApplyStatus;
+use orbit_code_app_server_protocol::PatchChangeKind;
+use orbit_code_app_server_protocol::RequestId;
+use orbit_code_app_server_protocol::ServerRequest;
+use orbit_code_app_server_protocol::SessionSource;
+use orbit_code_app_server_protocol::ThreadItem;
+use orbit_code_app_server_protocol::ThreadMetadataGitInfoUpdateParams;
+use orbit_code_app_server_protocol::ThreadMetadataUpdateParams;
+use orbit_code_app_server_protocol::ThreadReadParams;
+use orbit_code_app_server_protocol::ThreadReadResponse;
+use orbit_code_app_server_protocol::ThreadResumeParams;
+use orbit_code_app_server_protocol::ThreadResumeResponse;
+use orbit_code_app_server_protocol::ThreadStartParams;
+use orbit_code_app_server_protocol::ThreadStartResponse;
+use orbit_code_app_server_protocol::ThreadStatus;
+use orbit_code_app_server_protocol::TurnStartParams;
+use orbit_code_app_server_protocol::TurnStartResponse;
+use orbit_code_app_server_protocol::TurnStatus;
+use orbit_code_app_server_protocol::UserInput;
+use orbit_code_core::auth::AuthCredentialsStoreMode;
+use orbit_code_core::auth::REFRESH_TOKEN_URL_OVERRIDE_ENV_VAR;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::config_types::Personality;
+use orbit_code_protocol::models::ContentItem;
+use orbit_code_protocol::models::ResponseItem;
+use orbit_code_protocol::protocol::AgentMessageEvent;
+use orbit_code_protocol::protocol::EventMsg;
+use orbit_code_protocol::protocol::SessionMeta;
+use orbit_code_protocol::protocol::SessionMetaLine;
+use orbit_code_protocol::protocol::SessionSource as RolloutSessionSource;
+use orbit_code_protocol::protocol::TurnStartedEvent;
+use orbit_code_protocol::user_input::ByteRange;
+use orbit_code_protocol::user_input::TextElement;
+use orbit_code_state::StateRuntime;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use std::fs::FileTimes;
@@ -71,7 +71,7 @@ use wiremock::matchers::method;
 use wiremock::matchers::path;
 
 const DEFAULT_READ_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(10);
-const CODEX_5_2_INSTRUCTIONS_TEMPLATE_DEFAULT: &str = "You are Codex, a coding agent based on GPT-5. You and the user share the same workspace and collaborate to achieve the user's goals.";
+const ORBIT_5_2_INSTRUCTIONS_TEMPLATE_DEFAULT: &str = "You are Codex, a coding agent based on GPT-5. You and the user share the same workspace and collaborate to achieve the user's goals.";
 
 async fn wait_for_responses_request_count(
     server: &wiremock::MockServer,
@@ -106,10 +106,10 @@ async fn wait_for_responses_request_count(
 #[tokio::test]
 async fn thread_resume_rejects_unmaterialized_thread() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path(), &server.uri())?;
+    let orbit_code_home = TempDir::new()?;
+    create_config_toml(orbit_code_home.path(), &server.uri())?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     // Start a thread.
@@ -153,8 +153,8 @@ async fn thread_resume_rejects_unmaterialized_thread() -> Result<()> {
 #[tokio::test]
 async fn thread_resume_returns_rollout_history() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path(), &server.uri())?;
+    let orbit_code_home = TempDir::new()?;
+    create_config_toml(orbit_code_home.path(), &server.uri())?;
 
     let preview = "Saved user message";
     let text_elements = vec![TextElement::new(
@@ -162,7 +162,7 @@ async fn thread_resume_returns_rollout_history() -> Result<()> {
         Some("<note>".into()),
     )];
     let conversation_id = create_fake_rollout_with_text_elements(
-        codex_home.path(),
+        orbit_code_home.path(),
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         preview,
@@ -174,7 +174,7 @@ async fn thread_resume_returns_rollout_history() -> Result<()> {
         None,
     )?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     let resume_id = mcp
@@ -227,8 +227,8 @@ async fn thread_resume_returns_rollout_history() -> Result<()> {
 #[tokio::test]
 async fn thread_resume_prefers_persisted_git_metadata_for_local_threads() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    let config_toml = codex_home.path().join("config.toml");
+    let orbit_code_home = TempDir::new()?;
+    let config_toml = orbit_code_home.path().join("config.toml");
     std::fs::write(
         &config_toml,
         format!(
@@ -254,7 +254,7 @@ stream_max_retries = 0
         ),
     )?;
 
-    let repo_path = codex_home.path().join("repo");
+    let repo_path = orbit_code_home.path().join("repo");
     std::fs::create_dir_all(&repo_path)?;
     assert!(
         Command::new("git")
@@ -311,7 +311,7 @@ stream_max_retries = 0
 
     let thread_id = Uuid::new_v4().to_string();
     let conversation_id = ThreadId::from_string(&thread_id)?;
-    let rollout_path = rollout_path(codex_home.path(), "2025-01-05T12-00-00", &thread_id);
+    let rollout_path = rollout_path(orbit_code_home.path(), "2025-01-05T12-00-00", &thread_id);
     let rollout_dir = rollout_path.parent().expect("rollout parent directory");
     std::fs::create_dir_all(rollout_dir)?;
     let session_meta = SessionMeta {
@@ -366,10 +366,10 @@ stream_max_retries = 0
             + "\n",
     )?;
     let state_db =
-        StateRuntime::init(codex_home.path().to_path_buf(), "mock_provider".into()).await?;
+        StateRuntime::init(orbit_code_home.path().to_path_buf(), "mock_provider".into()).await?;
     state_db.mark_backfill_complete(None).await?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     let update_id = mcp
@@ -416,13 +416,13 @@ stream_max_retries = 0
 async fn thread_resume_and_read_interrupt_incomplete_rollout_turn_when_thread_is_idle() -> Result<()>
 {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path(), &server.uri())?;
+    let orbit_code_home = TempDir::new()?;
+    create_config_toml(orbit_code_home.path(), &server.uri())?;
 
     let filename_ts = "2025-01-05T12-00-00";
     let meta_rfc3339 = "2025-01-05T12:00:00Z";
     let conversation_id = create_fake_rollout_with_text_elements(
-        codex_home.path(),
+        orbit_code_home.path(),
         filename_ts,
         meta_rfc3339,
         "Saved user message",
@@ -430,7 +430,7 @@ async fn thread_resume_and_read_interrupt_incomplete_rollout_turn_when_thread_is
         Some("mock_provider"),
         None,
     )?;
-    let rollout_file_path = rollout_path(codex_home.path(), filename_ts, &conversation_id);
+    let rollout_file_path = rollout_path(orbit_code_home.path(), filename_ts, &conversation_id);
     let persisted_rollout = std::fs::read_to_string(&rollout_file_path)?;
     let turn_id = "incomplete-turn";
     let appended_rollout = [
@@ -461,7 +461,7 @@ async fn thread_resume_and_read_interrupt_incomplete_rollout_turn_when_thread_is
         format!("{persisted_rollout}{appended_rollout}\n"),
     )?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     let resume_id = mcp
@@ -530,11 +530,11 @@ async fn thread_resume_and_read_interrupt_incomplete_rollout_turn_when_thread_is
 #[tokio::test]
 async fn thread_resume_without_overrides_does_not_change_updated_at_or_mtime() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    let rollout = setup_rollout_fixture(codex_home.path(), &server.uri())?;
+    let orbit_code_home = TempDir::new()?;
+    let rollout = setup_rollout_fixture(orbit_code_home.path(), &server.uri())?;
     let thread_id = rollout.conversation_id.clone();
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     let resume_id = mcp
@@ -586,10 +586,10 @@ async fn thread_resume_without_overrides_does_not_change_updated_at_or_mtime() -
 #[tokio::test]
 async fn thread_resume_keeps_in_flight_turn_streaming() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path(), &server.uri())?;
+    let orbit_code_home = TempDir::new()?;
+    create_config_toml(orbit_code_home.path(), &server.uri())?;
 
-    let mut primary = McpProcess::new(codex_home.path()).await?;
+    let mut primary = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_READ_TIMEOUT, primary.initialize()).await??;
 
     let start_id = primary
@@ -627,7 +627,7 @@ async fn thread_resume_keeps_in_flight_turn_streaming() -> Result<()> {
     .await??;
     primary.clear_message_buffer();
 
-    let mut secondary = McpProcess::new(codex_home.path()).await?;
+    let mut secondary = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_READ_TIMEOUT, secondary.initialize()).await??;
 
     let turn_id = primary
@@ -693,10 +693,10 @@ async fn thread_resume_rejects_history_when_thread_is_running() -> Result<()> {
     .set_delay(std::time::Duration::from_millis(500));
     let _first_response_mock = responses::mount_sse_once(&server, first_body).await;
     let _second_response_mock = responses::mount_response_once(&server, second_response).await;
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path(), &server.uri())?;
+    let orbit_code_home = TempDir::new()?;
+    create_config_toml(orbit_code_home.path(), &server.uri())?;
 
-    let mut primary = McpProcess::new(codex_home.path()).await?;
+    let mut primary = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_READ_TIMEOUT, primary.initialize()).await??;
 
     let start_id = primary
@@ -809,10 +809,10 @@ async fn thread_resume_rejects_mismatched_path_when_thread_is_running() -> Resul
     .set_delay(std::time::Duration::from_millis(500));
     let _first_response_mock = responses::mount_sse_once(&server, first_body).await;
     let _second_response_mock = responses::mount_response_once(&server, second_response).await;
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path(), &server.uri())?;
+    let orbit_code_home = TempDir::new()?;
+    create_config_toml(orbit_code_home.path(), &server.uri())?;
 
-    let mut primary = McpProcess::new(codex_home.path()).await?;
+    let mut primary = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_READ_TIMEOUT, primary.initialize()).await??;
 
     let start_id = primary
@@ -915,10 +915,10 @@ async fn thread_resume_rejoins_running_thread_even_with_override_mismatch() -> R
     .set_delay(std::time::Duration::from_millis(500));
     let _response_mock =
         responses::mount_response_sequence(&server, vec![first_response, second_response]).await;
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path(), &server.uri())?;
+    let orbit_code_home = TempDir::new()?;
+    create_config_toml(orbit_code_home.path(), &server.uri())?;
 
-    let mut primary = McpProcess::new(codex_home.path()).await?;
+    let mut primary = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_READ_TIMEOUT, primary.initialize()).await??;
 
     let start_id = primary
@@ -1028,10 +1028,10 @@ async fn thread_resume_replays_pending_command_execution_request_approval() -> R
         create_final_assistant_message_sse_response("done")?,
     ];
     let server = create_mock_responses_server_sequence_unchecked(responses).await;
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path(), &server.uri())?;
+    let orbit_code_home = TempDir::new()?;
+    create_config_toml(orbit_code_home.path(), &server.uri())?;
 
-    let mut primary = McpProcess::new(codex_home.path()).await?;
+    let mut primary = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_READ_TIMEOUT, primary.initialize()).await??;
 
     let start_id = primary
@@ -1150,8 +1150,8 @@ async fn thread_resume_replays_pending_command_execution_request_approval() -> R
 #[tokio::test]
 async fn thread_resume_replays_pending_file_change_request_approval() -> Result<()> {
     let tmp = TempDir::new()?;
-    let codex_home = tmp.path().join("codex_home");
-    std::fs::create_dir(&codex_home)?;
+    let orbit_code_home = tmp.path().join("orbit_code_home");
+    std::fs::create_dir(&orbit_code_home)?;
     let workspace = tmp.path().join("workspace");
     std::fs::create_dir(&workspace)?;
 
@@ -1166,9 +1166,9 @@ async fn thread_resume_replays_pending_file_change_request_approval() -> Result<
         create_final_assistant_message_sse_response("done")?,
     ];
     let server = create_mock_responses_server_sequence_unchecked(responses).await;
-    create_config_toml(&codex_home, &server.uri())?;
+    create_config_toml(&orbit_code_home, &server.uri())?;
 
-    let mut primary = McpProcess::new(&codex_home).await?;
+    let mut primary = McpProcess::new(&orbit_code_home).await?;
     timeout(DEFAULT_READ_TIMEOUT, primary.initialize()).await??;
 
     let start_id = primary
@@ -1242,7 +1242,7 @@ async fn thread_resume_replays_pending_file_change_request_approval() -> Result<
     let expected_readme_path = workspace.join("README.md");
     let expected_file_change = ThreadItem::FileChange {
         id: "patch-call".to_string(),
-        changes: vec![codex_app_server_protocol::FileUpdateChange {
+        changes: vec![orbit_code_app_server_protocol::FileUpdateChange {
             path: expected_readme_path.to_string_lossy().into_owned(),
             kind: PatchChangeKind::Add,
             diff: "new line\n".to_string(),
@@ -1316,14 +1316,14 @@ async fn thread_resume_replays_pending_file_change_request_approval() -> Result<
 #[tokio::test]
 async fn thread_resume_with_overrides_defers_updated_at_until_turn_start() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path(), &server.uri())?;
+    let orbit_code_home = TempDir::new()?;
+    create_config_toml(orbit_code_home.path(), &server.uri())?;
 
     let RestartedThreadFixture {
         mut mcp,
         thread_id,
         rollout_file_path,
-    } = start_materialized_thread_and_restart(codex_home.path(), "materialize").await?;
+    } = start_materialized_thread_and_restart(orbit_code_home.path(), "materialize").await?;
     let expected_updated_at_rfc3339 = "2025-01-07T00:00:00Z";
     set_rollout_mtime(rollout_file_path.as_path(), expected_updated_at_rfc3339)?;
     let before_modified = std::fs::metadata(&rollout_file_path)?.modified()?;
@@ -1384,11 +1384,11 @@ async fn thread_resume_with_overrides_defers_updated_at_until_turn_start() -> Re
 #[tokio::test]
 async fn thread_resume_fails_when_required_mcp_server_fails_to_initialize() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    let rollout = setup_rollout_fixture(codex_home.path(), &server.uri())?;
-    create_config_toml_with_required_broken_mcp(codex_home.path(), &server.uri())?;
+    let orbit_code_home = TempDir::new()?;
+    let rollout = setup_rollout_fixture(orbit_code_home.path(), &server.uri())?;
+    create_config_toml_with_required_broken_mcp(orbit_code_home.path(), &server.uri())?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     let resume_id = mcp
@@ -1439,16 +1439,16 @@ async fn thread_resume_surfaces_cloud_requirements_load_errors() -> Result<()> {
         .mount(&server)
         .await;
 
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let model_server = create_mock_responses_server_repeating_assistant("Done").await;
     let chatgpt_base_url = format!("{}/backend-api", server.uri());
     create_config_toml_with_chatgpt_base_url(
-        codex_home.path(),
+        orbit_code_home.path(),
         &model_server.uri(),
         &chatgpt_base_url,
     )?;
     write_chatgpt_auth(
-        codex_home.path(),
+        orbit_code_home.path(),
         ChatGptAuthFixture::new("chatgpt-token")
             .refresh_token("stale-refresh-token")
             .plan_type("business")
@@ -1458,7 +1458,7 @@ async fn thread_resume_surfaces_cloud_requirements_load_errors() -> Result<()> {
         AuthCredentialsStoreMode::File,
     )?;
     let conversation_id = create_fake_rollout_with_text_elements(
-        codex_home.path(),
+        orbit_code_home.path(),
         "2025-01-05T12-00-00",
         "2025-01-05T12:00:00Z",
         "Saved user message",
@@ -1468,7 +1468,7 @@ async fn thread_resume_surfaces_cloud_requirements_load_errors() -> Result<()> {
     )?;
     let refresh_token_url = format!("{}/oauth/token", server.uri());
     let mut mcp = McpProcess::new_with_env(
-        codex_home.path(),
+        orbit_code_home.path(),
         &[
             ("OPENAI_API_KEY", None),
             (
@@ -1514,10 +1514,10 @@ async fn thread_resume_surfaces_cloud_requirements_load_errors() -> Result<()> {
 #[tokio::test]
 async fn thread_resume_prefers_path_over_thread_id() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path(), &server.uri())?;
+    let orbit_code_home = TempDir::new()?;
+    create_config_toml(orbit_code_home.path(), &server.uri())?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     let start_id = mcp
@@ -1581,12 +1581,12 @@ async fn thread_resume_prefers_path_over_thread_id() -> Result<()> {
 #[tokio::test]
 async fn thread_resume_supports_history_and_overrides() -> Result<()> {
     let server = create_mock_responses_server_repeating_assistant("Done").await;
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path(), &server.uri())?;
+    let orbit_code_home = TempDir::new()?;
+    create_config_toml(orbit_code_home.path(), &server.uri())?;
 
     let RestartedThreadFixture {
         mut mcp, thread_id, ..
-    } = start_materialized_thread_and_restart(codex_home.path(), "seed history").await?;
+    } = start_materialized_thread_and_restart(orbit_code_home.path(), "seed history").await?;
 
     let history_text = "Hello from history";
     let history = vec![ResponseItem::Message {
@@ -1634,10 +1634,10 @@ struct RestartedThreadFixture {
 }
 
 async fn start_materialized_thread_and_restart(
-    codex_home: &Path,
+    orbit_code_home: &Path,
     seed_text: &str,
 ) -> Result<RestartedThreadFixture> {
-    let mut first_mcp = McpProcess::new(codex_home).await?;
+    let mut first_mcp = McpProcess::new(orbit_code_home).await?;
     timeout(DEFAULT_READ_TIMEOUT, first_mcp.initialize()).await??;
 
     let start_id = first_mcp
@@ -1681,7 +1681,7 @@ async fn start_materialized_thread_and_restart(
 
     drop(first_mcp);
 
-    let mut second_mcp = McpProcess::new(codex_home).await?;
+    let mut second_mcp = McpProcess::new(orbit_code_home).await?;
     timeout(DEFAULT_READ_TIMEOUT, second_mcp.initialize()).await??;
 
     Ok(RestartedThreadFixture {
@@ -1708,10 +1708,10 @@ async fn thread_resume_accepts_personality_override() -> Result<()> {
     ]);
     let response_mock = responses::mount_sse_sequence(&server, vec![first_body, second_body]).await;
 
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path(), &server.uri())?;
+    let orbit_code_home = TempDir::new()?;
+    create_config_toml(orbit_code_home.path(), &server.uri())?;
 
-    let mut primary = McpProcess::new(codex_home.path()).await?;
+    let mut primary = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_READ_TIMEOUT, primary.initialize()).await??;
 
     let start_id = primary
@@ -1748,7 +1748,7 @@ async fn thread_resume_accepts_personality_override() -> Result<()> {
     )
     .await??;
 
-    let mut secondary = McpProcess::new(codex_home.path()).await?;
+    let mut secondary = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_READ_TIMEOUT, secondary.initialize()).await??;
 
     let resume_id = secondary
@@ -1802,7 +1802,7 @@ async fn thread_resume_accepts_personality_override() -> Result<()> {
     );
     let instructions_text = request.instructions_text();
     assert!(
-        instructions_text.contains(CODEX_5_2_INSTRUCTIONS_TEMPLATE_DEFAULT),
+        instructions_text.contains(ORBIT_5_2_INSTRUCTIONS_TEMPLATE_DEFAULT),
         "expected default base instructions from history, got {instructions_text:?}"
     );
 
@@ -1810,8 +1810,8 @@ async fn thread_resume_accepts_personality_override() -> Result<()> {
 }
 
 // Helper to create a config.toml pointing at the mock model server.
-fn create_config_toml(codex_home: &std::path::Path, server_uri: &str) -> std::io::Result<()> {
-    let config_toml = codex_home.join("config.toml");
+fn create_config_toml(orbit_code_home: &std::path::Path, server_uri: &str) -> std::io::Result<()> {
+    let config_toml = orbit_code_home.join("config.toml");
     std::fs::write(
         config_toml,
         format!(
@@ -1837,11 +1837,11 @@ stream_max_retries = 0
 }
 
 fn create_config_toml_with_chatgpt_base_url(
-    codex_home: &std::path::Path,
+    orbit_code_home: &std::path::Path,
     server_uri: &str,
     chatgpt_base_url: &str,
 ) -> std::io::Result<()> {
-    let config_toml = codex_home.join("config.toml");
+    let config_toml = orbit_code_home.join("config.toml");
     std::fs::write(
         config_toml,
         format!(
@@ -1868,10 +1868,10 @@ stream_max_retries = 0
 }
 
 fn create_config_toml_with_required_broken_mcp(
-    codex_home: &std::path::Path,
+    orbit_code_home: &std::path::Path,
     server_uri: &str,
 ) -> std::io::Result<()> {
-    let config_toml = codex_home.join("config.toml");
+    let config_toml = orbit_code_home.join("config.toml");
     std::fs::write(
         config_toml,
         format!(
@@ -1918,15 +1918,15 @@ struct RolloutFixture {
     expected_updated_at: i64,
 }
 
-fn setup_rollout_fixture(codex_home: &Path, server_uri: &str) -> Result<RolloutFixture> {
-    create_config_toml(codex_home, server_uri)?;
+fn setup_rollout_fixture(orbit_code_home: &Path, server_uri: &str) -> Result<RolloutFixture> {
+    create_config_toml(orbit_code_home, server_uri)?;
 
     let preview = "Saved user message";
     let filename_ts = "2025-01-05T12-00-00";
     let meta_rfc3339 = "2025-01-05T12:00:00Z";
     let expected_updated_at_rfc3339 = "2025-01-07T00:00:00Z";
     let conversation_id = create_fake_rollout_with_text_elements(
-        codex_home,
+        orbit_code_home,
         filename_ts,
         meta_rfc3339,
         preview,
@@ -1934,7 +1934,7 @@ fn setup_rollout_fixture(codex_home: &Path, server_uri: &str) -> Result<RolloutF
         Some("mock_provider"),
         None,
     )?;
-    let rollout_file_path = rollout_path(codex_home, filename_ts, &conversation_id);
+    let rollout_file_path = rollout_path(orbit_code_home, filename_ts, &conversation_id);
     set_rollout_mtime(rollout_file_path.as_path(), expected_updated_at_rfc3339)?;
     let before_modified = std::fs::metadata(&rollout_file_path)?.modified()?;
     let expected_updated_at = chrono::DateTime::parse_from_rfc3339(expected_updated_at_rfc3339)?

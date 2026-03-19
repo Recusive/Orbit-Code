@@ -1,16 +1,16 @@
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 
-use codex_config::CONFIG_TOML_FILE;
-use codex_core::CodexAuth;
-use codex_core::NewThread;
-use codex_core::features::Feature;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::InitialHistory;
-use codex_protocol::protocol::WarningEvent;
-use codex_utils_absolute_path::AbsolutePathBuf;
 use core::time::Duration;
 use core_test_support::load_default_config_for_test;
 use core_test_support::wait_for_event;
+use orbit_code_config::CONFIG_TOML_FILE;
+use orbit_code_core::CodexAuth;
+use orbit_code_core::NewThread;
+use orbit_code_core::features::Feature;
+use orbit_code_protocol::protocol::EventMsg;
+use orbit_code_protocol::protocol::InitialHistory;
+use orbit_code_protocol::protocol::WarningEvent;
+use orbit_code_utils_absolute_path::AbsolutePathBuf;
 use tempfile::TempDir;
 use tokio::time::timeout;
 use toml::toml;
@@ -24,19 +24,19 @@ async fn emits_warning_when_unstable_features_enabled_via_config() {
         .enable(Feature::ChildAgentsMd)
         .expect("test config should allow feature update");
     let user_config_path =
-        AbsolutePathBuf::from_absolute_path(config.codex_home.join(CONFIG_TOML_FILE))
+        AbsolutePathBuf::from_absolute_path(config.orbit_code_home.join(CONFIG_TOML_FILE))
             .expect("absolute user config path");
     config.config_layer_stack = config.config_layer_stack.with_user_config(
         &user_config_path,
         toml! { features = { child_agents_md = true } }.into(),
     );
 
-    let thread_manager = codex_core::test_support::thread_manager_with_models_provider(
+    let thread_manager = orbit_code_core::test_support::thread_manager_with_models_provider(
         CodexAuth::from_api_key("test"),
         config.model_provider.clone(),
     );
     let auth_manager =
-        codex_core::test_support::auth_manager_from_auth(CodexAuth::from_api_key("test"));
+        orbit_code_core::test_support::auth_manager_from_auth(CodexAuth::from_api_key("test"));
 
     let NewThread {
         thread: conversation,
@@ -65,19 +65,19 @@ async fn suppresses_warning_when_configured() {
         .expect("test config should allow feature update");
     config.suppress_unstable_features_warning = true;
     let user_config_path =
-        AbsolutePathBuf::from_absolute_path(config.codex_home.join(CONFIG_TOML_FILE))
+        AbsolutePathBuf::from_absolute_path(config.orbit_code_home.join(CONFIG_TOML_FILE))
             .expect("absolute user config path");
     config.config_layer_stack = config.config_layer_stack.with_user_config(
         &user_config_path,
         toml! { features = { child_agents_md = true } }.into(),
     );
 
-    let thread_manager = codex_core::test_support::thread_manager_with_models_provider(
+    let thread_manager = orbit_code_core::test_support::thread_manager_with_models_provider(
         CodexAuth::from_api_key("test"),
         config.model_provider.clone(),
     );
     let auth_manager =
-        codex_core::test_support::auth_manager_from_auth(CodexAuth::from_api_key("test"));
+        orbit_code_core::test_support::auth_manager_from_auth(CodexAuth::from_api_key("test"));
 
     let NewThread {
         thread: conversation,

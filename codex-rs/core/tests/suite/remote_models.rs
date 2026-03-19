@@ -4,27 +4,6 @@
 use std::sync::Arc;
 
 use anyhow::Result;
-use codex_core::CodexAuth;
-use codex_core::ModelProviderInfo;
-use codex_core::built_in_model_providers;
-use codex_core::models_manager::manager::ModelsManager;
-use codex_core::models_manager::manager::RefreshStrategy;
-use codex_protocol::config_types::ReasoningSummary;
-use codex_protocol::openai_models::ConfigShellToolType;
-use codex_protocol::openai_models::ModelInfo;
-use codex_protocol::openai_models::ModelPreset;
-use codex_protocol::openai_models::ModelVisibility;
-use codex_protocol::openai_models::ModelsResponse;
-use codex_protocol::openai_models::ReasoningEffort;
-use codex_protocol::openai_models::ReasoningEffortPreset;
-use codex_protocol::openai_models::TruncationPolicyConfig;
-use codex_protocol::openai_models::default_input_modalities;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::ExecCommandSource;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::SandboxPolicy;
-use codex_protocol::user_input::UserInput;
 use core_test_support::load_default_config_for_test;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
@@ -41,6 +20,27 @@ use core_test_support::test_codex::TestCodex;
 use core_test_support::test_codex::test_codex;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_match;
+use orbit_code_core::CodexAuth;
+use orbit_code_core::ModelProviderInfo;
+use orbit_code_core::built_in_model_providers;
+use orbit_code_core::models_manager::manager::ModelsManager;
+use orbit_code_core::models_manager::manager::RefreshStrategy;
+use orbit_code_protocol::config_types::ReasoningSummary;
+use orbit_code_protocol::openai_models::ConfigShellToolType;
+use orbit_code_protocol::openai_models::ModelInfo;
+use orbit_code_protocol::openai_models::ModelPreset;
+use orbit_code_protocol::openai_models::ModelVisibility;
+use orbit_code_protocol::openai_models::ModelsResponse;
+use orbit_code_protocol::openai_models::ReasoningEffort;
+use orbit_code_protocol::openai_models::ReasoningEffortPreset;
+use orbit_code_protocol::openai_models::TruncationPolicyConfig;
+use orbit_code_protocol::openai_models::default_input_modalities;
+use orbit_code_protocol::protocol::AskForApproval;
+use orbit_code_protocol::protocol::EventMsg;
+use orbit_code_protocol::protocol::ExecCommandSource;
+use orbit_code_protocol::protocol::Op;
+use orbit_code_protocol::protocol::SandboxPolicy;
+use orbit_code_protocol::user_input::UserInput;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use tempfile::TempDir;
@@ -89,17 +89,17 @@ async fn remote_models_get_model_info_uses_longest_matching_prefix() -> Result<(
     )
     .await;
 
-    let codex_home = TempDir::new()?;
-    let config = load_default_config_for_test(&codex_home).await;
+    let orbit_code_home = TempDir::new()?;
+    let config = load_default_config_for_test(&orbit_code_home).await;
 
     let auth = CodexAuth::create_dummy_chatgpt_auth_for_testing();
     let provider = ModelProviderInfo {
         base_url: Some(format!("{}/v1", server.uri())),
         ..built_in_model_providers(/* openai_base_url */ None)["openai"].clone()
     };
-    let manager = codex_core::test_support::models_manager_with_provider(
-        codex_home.path().to_path_buf(),
-        codex_core::test_support::auth_manager_from_auth(auth),
+    let manager = orbit_code_core::test_support::models_manager_with_provider(
+        orbit_code_home.path().to_path_buf(),
+        orbit_code_core::test_support::auth_manager_from_auth(auth),
         provider,
     );
 
@@ -647,16 +647,16 @@ async fn remote_models_do_not_append_removed_builtin_presets() -> Result<()> {
     )
     .await;
 
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
 
     let auth = CodexAuth::create_dummy_chatgpt_auth_for_testing();
     let provider = ModelProviderInfo {
         base_url: Some(format!("{}/v1", server.uri())),
         ..built_in_model_providers(/* openai_base_url */ None)["openai"].clone()
     };
-    let manager = codex_core::test_support::models_manager_with_provider(
-        codex_home.path().to_path_buf(),
-        codex_core::test_support::auth_manager_from_auth(auth),
+    let manager = orbit_code_core::test_support::models_manager_with_provider(
+        orbit_code_home.path().to_path_buf(),
+        orbit_code_core::test_support::auth_manager_from_auth(auth),
         provider,
     );
 
@@ -702,16 +702,16 @@ async fn remote_models_merge_adds_new_high_priority_first() -> Result<()> {
     )
     .await;
 
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
 
     let auth = CodexAuth::create_dummy_chatgpt_auth_for_testing();
     let provider = ModelProviderInfo {
         base_url: Some(format!("{}/v1", server.uri())),
         ..built_in_model_providers(/* openai_base_url */ None)["openai"].clone()
     };
-    let manager = codex_core::test_support::models_manager_with_provider(
-        codex_home.path().to_path_buf(),
-        codex_core::test_support::auth_manager_from_auth(auth),
+    let manager = orbit_code_core::test_support::models_manager_with_provider(
+        orbit_code_home.path().to_path_buf(),
+        orbit_code_core::test_support::auth_manager_from_auth(auth),
         provider,
     );
 
@@ -749,16 +749,16 @@ async fn remote_models_merge_replaces_overlapping_model() -> Result<()> {
     )
     .await;
 
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
 
     let auth = CodexAuth::create_dummy_chatgpt_auth_for_testing();
     let provider = ModelProviderInfo {
         base_url: Some(format!("{}/v1", server.uri())),
         ..built_in_model_providers(/* openai_base_url */ None)["openai"].clone()
     };
-    let manager = codex_core::test_support::models_manager_with_provider(
-        codex_home.path().to_path_buf(),
-        codex_core::test_support::auth_manager_from_auth(auth),
+    let manager = orbit_code_core::test_support::models_manager_with_provider(
+        orbit_code_home.path().to_path_buf(),
+        orbit_code_core::test_support::auth_manager_from_auth(auth),
         provider,
     );
 
@@ -793,16 +793,16 @@ async fn remote_models_merge_preserves_bundled_models_on_empty_response() -> Res
     let server = MockServer::start().await;
     let _models_mock = mount_models_once(&server, ModelsResponse { models: Vec::new() }).await;
 
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
 
     let auth = CodexAuth::create_dummy_chatgpt_auth_for_testing();
     let provider = ModelProviderInfo {
         base_url: Some(format!("{}/v1", server.uri())),
         ..built_in_model_providers(/* openai_base_url */ None)["openai"].clone()
     };
-    let manager = codex_core::test_support::models_manager_with_provider(
-        codex_home.path().to_path_buf(),
-        codex_core::test_support::auth_manager_from_auth(auth),
+    let manager = orbit_code_core::test_support::models_manager_with_provider(
+        orbit_code_home.path().to_path_buf(),
+        orbit_code_core::test_support::auth_manager_from_auth(auth),
         provider,
     );
 
@@ -834,16 +834,16 @@ async fn remote_models_request_times_out_after_5s() -> Result<()> {
     )
     .await;
 
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
 
     let auth = CodexAuth::create_dummy_chatgpt_auth_for_testing();
     let provider = ModelProviderInfo {
         base_url: Some(format!("{}/v1", server.uri())),
         ..built_in_model_providers(/* openai_base_url */ None)["openai"].clone()
     };
-    let manager = codex_core::test_support::models_manager_with_provider(
-        codex_home.path().to_path_buf(),
-        codex_core::test_support::auth_manager_from_auth(auth),
+    let manager = orbit_code_core::test_support::models_manager_with_provider(
+        orbit_code_home.path().to_path_buf(),
+        orbit_code_core::test_support::auth_manager_from_auth(auth),
         provider,
     );
 
@@ -900,16 +900,16 @@ async fn remote_models_hide_picker_only_models() -> Result<()> {
     )
     .await;
 
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
 
     let auth = CodexAuth::create_dummy_chatgpt_auth_for_testing();
     let provider = ModelProviderInfo {
         base_url: Some(format!("{}/v1", server.uri())),
         ..built_in_model_providers(/* openai_base_url */ None)["openai"].clone()
     };
-    let manager = codex_core::test_support::models_manager_with_provider(
-        codex_home.path().to_path_buf(),
-        codex_core::test_support::auth_manager_from_auth(auth),
+    let manager = orbit_code_core::test_support::models_manager_with_provider(
+        orbit_code_home.path().to_path_buf(),
+        orbit_code_core::test_support::auth_manager_from_auth(auth),
         provider,
     );
 
@@ -963,7 +963,7 @@ fn bundled_model_slug() -> String {
 }
 
 fn bundled_default_model_slug() -> String {
-    codex_core::test_support::all_model_presets()
+    orbit_code_core::test_support::all_model_presets()
         .iter()
         .find(|preset| preset.is_default)
         .expect("bundled models should include a default")

@@ -7,10 +7,10 @@
 //! ## Usage
 //!
 //! ```no_run
-//! use codex_state::log_db;
+//! use orbit_code_state::log_db;
 //! use tracing_subscriber::prelude::*;
 //!
-//! # async fn example(state_db: std::sync::Arc<codex_state::StateRuntime>) {
+//! # async fn example(state_db: std::sync::Arc<orbit_code_state::StateRuntime>) {
 //! let layer = log_db::start(state_db);
 //! let _ = tracing_subscriber::registry()
 //!     .with(layer)
@@ -449,9 +449,9 @@ mod tests {
 
     #[tokio::test]
     async fn sqlite_feedback_logs_match_feedback_formatter_shape() {
-        let codex_home =
+        let orbit_code_home =
             std::env::temp_dir().join(format!("codex-state-log-db-{}", Uuid::new_v4()));
-        let runtime = StateRuntime::init(codex_home.clone(), "test-provider".to_string())
+        let runtime = StateRuntime::init(orbit_code_home.clone(), "test-provider".to_string())
             .await
             .expect("initialize runtime");
         let writer = SharedWriter::default();
@@ -507,14 +507,14 @@ mod tests {
             tokio::time::sleep(Duration::from_millis(10)).await;
         }
 
-        let _ = tokio::fs::remove_dir_all(codex_home).await;
+        let _ = tokio::fs::remove_dir_all(orbit_code_home).await;
     }
 
     #[tokio::test]
     async fn flush_persists_logs_for_query() {
-        let codex_home =
+        let orbit_code_home =
             std::env::temp_dir().join(format!("codex-state-log-db-{}", Uuid::new_v4()));
-        let runtime = StateRuntime::init(codex_home.clone(), "test-provider".to_string())
+        let runtime = StateRuntime::init(orbit_code_home.clone(), "test-provider".to_string())
             .await
             .expect("initialize runtime");
         let layer = start(runtime.clone());
@@ -539,6 +539,6 @@ mod tests {
         assert_eq!(after_flush.len(), 1);
         assert_eq!(after_flush[0].message.as_deref(), Some("buffered-log"));
 
-        let _ = tokio::fs::remove_dir_all(codex_home).await;
+        let _ = tokio::fs::remove_dir_all(orbit_code_home).await;
     }
 }

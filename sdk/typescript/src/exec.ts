@@ -39,17 +39,17 @@ export type CodexExecArgs = {
   approvalPolicy?: ApprovalMode;
 };
 
-const INTERNAL_ORIGINATOR_ENV = "CODEX_INTERNAL_ORIGINATOR_OVERRIDE";
-const TYPESCRIPT_SDK_ORIGINATOR = "codex_sdk_ts";
-const CODEX_NPM_NAME = "@openai/codex";
+const INTERNAL_ORIGINATOR_ENV = "ORBIT_INTERNAL_ORIGINATOR_OVERRIDE";
+const TYPESCRIPT_SDK_ORIGINATOR = "orbit_code_sdk_ts";
+const ORBIT_NPM_NAME = "@orbit.build/orbit-code";
 
 const PLATFORM_PACKAGE_BY_TARGET: Record<string, string> = {
-  "x86_64-unknown-linux-musl": "@openai/codex-linux-x64",
-  "aarch64-unknown-linux-musl": "@openai/codex-linux-arm64",
-  "x86_64-apple-darwin": "@openai/codex-darwin-x64",
-  "aarch64-apple-darwin": "@openai/codex-darwin-arm64",
-  "x86_64-pc-windows-msvc": "@openai/codex-win32-x64",
-  "aarch64-pc-windows-msvc": "@openai/codex-win32-arm64",
+  "x86_64-unknown-linux-musl": "@orbit.build/orbit-code-linux-x64",
+  "aarch64-unknown-linux-musl": "@orbit.build/orbit-code-linux-arm64",
+  "x86_64-apple-darwin": "@orbit.build/orbit-code-darwin-x64",
+  "aarch64-apple-darwin": "@orbit.build/orbit-code-darwin-arm64",
+  "x86_64-pc-windows-msvc": "@orbit.build/orbit-code-win32-x64",
+  "aarch64-pc-windows-msvc": "@orbit.build/orbit-code-win32-arm64",
 };
 
 const moduleRequire = createRequire(import.meta.url);
@@ -158,7 +158,7 @@ export class CodexExec {
       env[INTERNAL_ORIGINATOR_ENV] = TYPESCRIPT_SDK_ORIGINATOR;
     }
     if (args.apiKey) {
-      env.CODEX_API_KEY = args.apiKey;
+      env.ORBIT_API_KEY = args.apiKey;
     }
 
     const child = spawn(this.executablePath, commandArgs, {
@@ -371,19 +371,20 @@ function findCodexPath() {
 
   let vendorRoot: string;
   try {
-    const codexPackageJsonPath = moduleRequire.resolve(`${CODEX_NPM_NAME}/package.json`);
+    const codexPackageJsonPath = moduleRequire.resolve(`${ORBIT_NPM_NAME}/package.json`);
     const codexRequire = createRequire(codexPackageJsonPath);
     const platformPackageJsonPath = codexRequire.resolve(`${platformPackage}/package.json`);
     vendorRoot = path.join(path.dirname(platformPackageJsonPath), "vendor");
   } catch {
     throw new Error(
-      `Unable to locate Codex CLI binaries. Ensure ${CODEX_NPM_NAME} is installed with optional dependencies.`,
+      `Unable to locate Orbit Code CLI binaries. Ensure ${ORBIT_NPM_NAME} is installed with optional dependencies.`,
     );
   }
 
   const archRoot = path.join(vendorRoot, targetTriple);
-  const codexBinaryName = process.platform === "win32" ? "codex.exe" : "codex";
-  const binaryPath = path.join(archRoot, "codex", codexBinaryName);
+  const orbitCodeBinaryName =
+    process.platform === "win32" ? "orbit-code.exe" : "orbit-code";
+  const binaryPath = path.join(archRoot, "orbit-code", orbitCodeBinaryName);
 
   return binaryPath;
 }

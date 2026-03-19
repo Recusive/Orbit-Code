@@ -1,8 +1,8 @@
 use std::path::PathBuf;
 
 use clap::Parser;
-use codex_core::config::Config;
-use codex_utils_cli::CliConfigOverrides;
+use orbit_code_core::config::Config;
+use orbit_code_utils_cli::CliConfigOverrides;
 
 use crate::chatgpt_token::init_chatgpt_token_from_auth;
 use crate::get_task::GetTaskResponse;
@@ -30,8 +30,11 @@ pub async fn run_apply_command(
     )
     .await?;
 
-    init_chatgpt_token_from_auth(&config.codex_home, config.cli_auth_credentials_store_mode)
-        .await?;
+    init_chatgpt_token_from_auth(
+        &config.orbit_code_home,
+        config.cli_auth_credentials_store_mode,
+    )
+    .await?;
 
     let task_response = get_task(&config, apply_cli.task_id).await?;
     apply_diff_from_task(task_response, cwd).await
@@ -57,13 +60,13 @@ pub async fn apply_diff_from_task(
 
 async fn apply_diff(diff: &str, cwd: Option<PathBuf>) -> anyhow::Result<()> {
     let cwd = cwd.unwrap_or(std::env::current_dir().unwrap_or_else(|_| std::env::temp_dir()));
-    let req = codex_git::ApplyGitRequest {
+    let req = orbit_code_git::ApplyGitRequest {
         cwd,
         diff: diff.to_string(),
         revert: false,
         preflight: false,
     };
-    let res = codex_git::apply_git_patch(&req)?;
+    let res = orbit_code_git::apply_git_patch(&req)?;
     if res.exit_code != 0 {
         anyhow::bail!(
             "Git apply failed (applied={}, skipped={}, conflicts={})\nstdout:\n{}\nstderr:\n{}",

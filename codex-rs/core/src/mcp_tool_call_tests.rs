@@ -6,13 +6,13 @@ use crate::config::types::AppConfig;
 use crate::config::types::AppToolConfig;
 use crate::config::types::AppToolsConfig;
 use crate::config::types::AppsConfigToml;
-use codex_config::CONFIG_TOML_FILE;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_response_created;
 use core_test_support::responses::mount_sse_once;
 use core_test_support::responses::sse;
 use core_test_support::responses::start_mock_server;
+use orbit_code_config::CONFIG_TOML_FILE;
 use pretty_assertions::assert_eq;
 use serde::Deserialize;
 use std::collections::HashMap;
@@ -47,7 +47,7 @@ fn approval_metadata(
         connector_description: connector_description.map(str::to_string),
         tool_title: tool_title.map(str::to_string),
         tool_description: tool_description.map(str::to_string),
-        codex_apps_meta: None,
+        orbit_code_apps_meta: None,
     }
 }
 
@@ -113,7 +113,7 @@ async fn approval_elicitation_request_uses_message_override_and_preserves_tool_p
     let (session, turn_context) = make_session_and_context().await;
     let question = build_mcp_tool_approval_question(
         "q".to_string(),
-        CODEX_APPS_MCP_SERVER_NAME,
+        ORBIT_APPS_MCP_SERVER_NAME,
         "create_event",
         Some("Calendar"),
         prompt_options(true, true),
@@ -124,7 +124,7 @@ async fn approval_elicitation_request_uses_message_override_and_preserves_tool_p
         &session,
         &turn_context,
         McpToolApprovalElicitationRequest {
-            server: CODEX_APPS_MCP_SERVER_NAME,
+            server: ORBIT_APPS_MCP_SERVER_NAME,
             metadata: Some(&approval_metadata(
                 Some("calendar"),
                 Some("Calendar"),
@@ -159,7 +159,7 @@ async fn approval_elicitation_request_uses_message_override_and_preserves_tool_p
         McpServerElicitationRequestParams {
             thread_id: session.conversation_id.to_string(),
             turn_id: Some(turn_context.sub_id),
-            server_name: CODEX_APPS_MCP_SERVER_NAME.to_string(),
+            server_name: ORBIT_APPS_MCP_SERVER_NAME.to_string(),
             request: McpServerElicitationRequest::Form {
                 meta: Some(serde_json::json!({
                     MCP_TOOL_APPROVAL_KIND_KEY: MCP_TOOL_APPROVAL_KIND_MCP_TOOL_CALL,
@@ -229,10 +229,10 @@ fn custom_mcp_tool_question_mentions_server_name() {
 }
 
 #[test]
-fn codex_apps_tool_question_uses_fallback_app_label() {
+fn orbit_code_apps_tool_question_uses_fallback_app_label() {
     let question = build_mcp_tool_approval_question(
         "q".to_string(),
-        CODEX_APPS_MCP_SERVER_NAME,
+        ORBIT_APPS_MCP_SERVER_NAME,
         "run_action",
         None,
         prompt_options(true, true),
@@ -246,10 +246,10 @@ fn codex_apps_tool_question_uses_fallback_app_label() {
 }
 
 #[test]
-fn trusted_codex_apps_tool_question_offers_always_allow() {
+fn trusted_orbit_code_apps_tool_question_offers_always_allow() {
     let question = build_mcp_tool_approval_question(
         "q".to_string(),
-        CODEX_APPS_MCP_SERVER_NAME,
+        ORBIT_APPS_MCP_SERVER_NAME,
         "run_action",
         Some("Calendar"),
         prompt_options(true, true),
@@ -280,16 +280,16 @@ fn trusted_codex_apps_tool_question_offers_always_allow() {
 }
 
 #[test]
-fn codex_apps_tool_question_without_elicitation_omits_always_allow() {
+fn orbit_code_apps_tool_question_without_elicitation_omits_always_allow() {
     let session_key = McpToolApprovalKey {
-        server: CODEX_APPS_MCP_SERVER_NAME.to_string(),
+        server: ORBIT_APPS_MCP_SERVER_NAME.to_string(),
         connector_id: Some("calendar".to_string()),
         tool_name: "run_action".to_string(),
     };
     let persistent_key = session_key.clone();
     let question = build_mcp_tool_approval_question(
         "q".to_string(),
-        CODEX_APPS_MCP_SERVER_NAME,
+        ORBIT_APPS_MCP_SERVER_NAME,
         "run_action",
         Some("Calendar"),
         mcp_tool_approval_prompt_options(Some(&session_key), Some(&persistent_key), false),
@@ -361,15 +361,15 @@ fn custom_servers_keep_session_remember_without_persistent_approval() {
 }
 
 #[test]
-fn codex_apps_connectors_support_persistent_approval() {
+fn orbit_code_apps_connectors_support_persistent_approval() {
     let invocation = McpInvocation {
-        server: CODEX_APPS_MCP_SERVER_NAME.to_string(),
+        server: ORBIT_APPS_MCP_SERVER_NAME.to_string(),
         tool: "calendar/list_events".to_string(),
         arguments: None,
     };
     let metadata = approval_metadata(Some("calendar"), Some("Calendar"), None, None, None);
     let expected = McpToolApprovalKey {
-        server: CODEX_APPS_MCP_SERVER_NAME.to_string(),
+        server: ORBIT_APPS_MCP_SERVER_NAME.to_string(),
         connector_id: Some("calendar".to_string()),
         tool_name: "calendar/list_events".to_string(),
     };
@@ -440,7 +440,7 @@ fn sanitize_mcp_tool_result_for_model_preserves_image_when_supported() {
 }
 
 #[test]
-fn codex_apps_tool_call_request_meta_includes_codex_apps_meta() {
+fn orbit_code_apps_tool_call_request_meta_includes_orbit_code_apps_meta() {
     let metadata = McpToolApprovalMetadata {
         annotations: None,
         connector_id: Some("calendar".to_string()),
@@ -448,7 +448,7 @@ fn codex_apps_tool_call_request_meta_includes_codex_apps_meta() {
         connector_description: Some("Manage events".to_string()),
         tool_title: Some("Create Event".to_string()),
         tool_description: Some("Create a calendar event.".to_string()),
-        codex_apps_meta: Some(
+        orbit_code_apps_meta: Some(
             serde_json::json!({
                 "resource_uri": "connector://calendar/tools/calendar_create_event",
                 "contains_mcp_source": true,
@@ -456,14 +456,14 @@ fn codex_apps_tool_call_request_meta_includes_codex_apps_meta() {
             })
             .as_object()
             .cloned()
-            .expect("_codex_apps metadata should be an object"),
+            .expect("_orbit_code_apps metadata should be an object"),
         ),
     };
 
     assert_eq!(
-        build_mcp_tool_call_request_meta(CODEX_APPS_MCP_SERVER_NAME, Some(&metadata)),
+        build_mcp_tool_call_request_meta(ORBIT_APPS_MCP_SERVER_NAME, Some(&metadata)),
         Some(serde_json::json!({
-            MCP_TOOL_CODEX_APPS_META_KEY: {
+            MCP_TOOL_ORBIT_APPS_META_KEY: {
                 "resource_uri": "connector://calendar/tools/calendar_create_event",
                 "contains_mcp_source": true,
                 "connector_id": "calendar",
@@ -540,7 +540,7 @@ fn approval_elicitation_meta_keeps_session_persist_behavior_for_custom_servers()
 #[test]
 fn guardian_mcp_review_request_includes_invocation_metadata() {
     let invocation = McpInvocation {
-        server: CODEX_APPS_MCP_SERVER_NAME.to_string(),
+        server: ORBIT_APPS_MCP_SERVER_NAME.to_string(),
         tool: "browser_navigate".to_string(),
         arguments: Some(serde_json::json!({
             "url": "https://example.com",
@@ -563,7 +563,7 @@ fn guardian_mcp_review_request_includes_invocation_metadata() {
         request,
         GuardianApprovalRequest::McpToolCall {
             id: "call-1".to_string(),
-            server: CODEX_APPS_MCP_SERVER_NAME.to_string(),
+            server: ORBIT_APPS_MCP_SERVER_NAME.to_string(),
             tool_name: "browser_navigate".to_string(),
             arguments: Some(serde_json::json!({
                 "url": "https://example.com",
@@ -592,7 +592,7 @@ fn guardian_mcp_review_request_includes_annotations_when_present() {
         connector_description: None,
         tool_title: None,
         tool_description: None,
-        codex_apps_meta: None,
+        orbit_code_apps_meta: None,
     };
 
     let request = build_guardian_mcp_tool_review_request("call-1", &invocation, Some(&metadata));
@@ -621,7 +621,7 @@ fn guardian_mcp_review_request_includes_annotations_when_present() {
 #[test]
 fn prepare_arc_request_action_serializes_mcp_tool_call_shape() {
     let invocation = McpInvocation {
-        server: CODEX_APPS_MCP_SERVER_NAME.to_string(),
+        server: ORBIT_APPS_MCP_SERVER_NAME.to_string(),
         tool: "browser_navigate".to_string(),
         arguments: Some(serde_json::json!({
             "url": "https://example.com",
@@ -643,7 +643,7 @@ fn prepare_arc_request_action_serializes_mcp_tool_call_shape() {
         action,
         serde_json::json!({
             "tool": "mcp_tool_call",
-            "server": CODEX_APPS_MCP_SERVER_NAME,
+            "server": ORBIT_APPS_MCP_SERVER_NAME,
             "tool_name": "browser_navigate",
             "arguments": {
                 "url": "https://example.com",
@@ -671,10 +671,10 @@ fn guardian_review_decision_maps_to_mcp_tool_decision() {
 }
 
 #[test]
-fn approval_elicitation_meta_includes_connector_source_for_codex_apps() {
+fn approval_elicitation_meta_includes_connector_source_for_orbit_code_apps() {
     assert_eq!(
         build_mcp_tool_approval_elicitation_meta(
-            CODEX_APPS_MCP_SERVER_NAME,
+            ORBIT_APPS_MCP_SERVER_NAME,
             Some(&approval_metadata(
                 Some("calendar"),
                 Some("Calendar"),
@@ -707,7 +707,7 @@ fn approval_elicitation_meta_includes_connector_source_for_codex_apps() {
 fn approval_elicitation_meta_merges_session_and_always_persist_with_connector_source() {
     assert_eq!(
         build_mcp_tool_approval_elicitation_meta(
-            CODEX_APPS_MCP_SERVER_NAME,
+            ORBIT_APPS_MCP_SERVER_NAME,
             Some(&approval_metadata(
                 Some("calendar"),
                 Some("Calendar"),
@@ -820,10 +820,10 @@ fn accepted_elicitation_without_content_defaults_to_accept() {
 }
 
 #[tokio::test]
-async fn persist_codex_app_tool_approval_writes_tool_override() {
+async fn persist_orbit_code_app_tool_approval_writes_tool_override() {
     let tmp = tempdir().expect("tempdir");
 
-    persist_codex_app_tool_approval(tmp.path(), "calendar", "calendar/list_events")
+    persist_orbit_code_app_tool_approval(tmp.path(), "calendar", "calendar/list_events")
         .await
         .expect("persist approval");
 
@@ -861,10 +861,10 @@ async fn persist_codex_app_tool_approval_writes_tool_override() {
 #[tokio::test]
 async fn maybe_persist_mcp_tool_approval_reloads_session_config() {
     let (session, turn_context) = make_session_and_context().await;
-    let codex_home = session.codex_home().await;
-    std::fs::create_dir_all(&codex_home).expect("create codex home");
+    let orbit_code_home = session.orbit_code_home().await;
+    std::fs::create_dir_all(&orbit_code_home).expect("create codex home");
     let key = McpToolApprovalKey {
-        server: CODEX_APPS_MCP_SERVER_NAME.to_string(),
+        server: ORBIT_APPS_MCP_SERVER_NAME.to_string(),
         connector_id: Some("calendar".to_string()),
         tool_name: "calendar/list_events".to_string(),
     };
@@ -914,7 +914,7 @@ async fn approve_mode_skips_when_annotations_do_not_require_approval() {
         connector_description: None,
         tool_title: Some("Read Only Tool".to_string()),
         tool_description: None,
-        codex_apps_meta: None,
+        orbit_code_apps_meta: None,
     };
 
     let decision = maybe_request_mcp_tool_approval(
@@ -967,7 +967,7 @@ async fn approve_mode_blocks_when_arc_returns_interrupt_for_model() {
     let session = Arc::new(session);
     let turn_context = Arc::new(turn_context);
     let invocation = McpInvocation {
-        server: CODEX_APPS_MCP_SERVER_NAME.to_string(),
+        server: ORBIT_APPS_MCP_SERVER_NAME.to_string(),
         tool: "dangerous_tool".to_string(),
         arguments: Some(serde_json::json!({ "id": 1 })),
     };
@@ -978,7 +978,7 @@ async fn approve_mode_blocks_when_arc_returns_interrupt_for_model() {
         connector_description: Some("Manage events".to_string()),
         tool_title: Some("Dangerous Tool".to_string()),
         tool_description: Some("Performs a risky action.".to_string()),
-        codex_apps_meta: None,
+        orbit_code_apps_meta: None,
     };
 
     let decision = maybe_request_mcp_tool_approval(
@@ -1059,7 +1059,7 @@ async fn approve_mode_routes_arc_ask_user_to_guardian_when_guardian_reviewer_is_
     config.approvals_reviewer = ApprovalsReviewer::GuardianSubagent;
     let config = Arc::new(config);
     let models_manager = Arc::new(crate::test_support::models_manager_with_provider(
-        config.codex_home.clone(),
+        config.orbit_code_home.clone(),
         Arc::clone(&session.services.auth_manager),
         config.model_provider.clone(),
     ));
@@ -1070,7 +1070,7 @@ async fn approve_mode_routes_arc_ask_user_to_guardian_when_guardian_reviewer_is_
     let session = Arc::new(session);
     let turn_context = Arc::new(turn_context);
     let invocation = McpInvocation {
-        server: CODEX_APPS_MCP_SERVER_NAME.to_string(),
+        server: ORBIT_APPS_MCP_SERVER_NAME.to_string(),
         tool: "dangerous_tool".to_string(),
         arguments: Some(serde_json::json!({ "id": 1 })),
     };
@@ -1081,7 +1081,7 @@ async fn approve_mode_routes_arc_ask_user_to_guardian_when_guardian_reviewer_is_
         connector_description: Some("Manage events".to_string()),
         tool_title: Some("Dangerous Tool".to_string()),
         tool_description: Some("Performs a risky action.".to_string()),
-        codex_apps_meta: None,
+        orbit_code_apps_meta: None,
     };
 
     let decision = maybe_request_mcp_tool_approval(

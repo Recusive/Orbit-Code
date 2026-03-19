@@ -27,14 +27,14 @@ use crate::pkce::PkceCodes;
 use crate::pkce::generate_pkce;
 use base64::Engine;
 use chrono::Utc;
-use codex_app_server_protocol::AuthMode;
-use codex_client::build_reqwest_client_with_custom_ca;
-use codex_core::auth::AuthCredentialsStoreMode;
-use codex_core::auth::AuthDotJson;
-use codex_core::auth::save_auth;
-use codex_core::default_client::originator;
-use codex_core::token_data::TokenData;
-use codex_core::token_data::parse_chatgpt_jwt_claims;
+use orbit_code_app_server_protocol::AuthMode;
+use orbit_code_client::build_reqwest_client_with_custom_ca;
+use orbit_code_core::auth::AuthCredentialsStoreMode;
+use orbit_code_core::auth::AuthDotJson;
+use orbit_code_core::auth::save_auth;
+use orbit_code_core::default_client::originator;
+use orbit_code_core::token_data::TokenData;
+use orbit_code_core::token_data::parse_chatgpt_jwt_claims;
 use rand::RngCore;
 use serde_json::Value as JsonValue;
 use tiny_http::Header;
@@ -52,7 +52,7 @@ const DEFAULT_PORT: u16 = 1455;
 /// Options for launching the local login callback server.
 #[derive(Debug, Clone)]
 pub struct ServerOptions {
-    pub codex_home: PathBuf,
+    pub orbit_code_home: PathBuf,
     pub client_id: String,
     pub issuer: String,
     pub port: u16,
@@ -65,13 +65,13 @@ pub struct ServerOptions {
 impl ServerOptions {
     /// Creates a server configuration with the default issuer and port.
     pub fn new(
-        codex_home: PathBuf,
+        orbit_code_home: PathBuf,
         client_id: String,
         forced_chatgpt_workspace_id: Option<String>,
         cli_auth_credentials_store_mode: AuthCredentialsStoreMode,
     ) -> Self {
         Self {
-            codex_home,
+            orbit_code_home,
             client_id,
             issuer: DEFAULT_ISSUER.to_string(),
             port: DEFAULT_PORT,
@@ -343,7 +343,7 @@ async fn process_request(
                         .await
                         .ok();
                     if let Err(err) = persist_tokens_async(
-                        &opts.codex_home,
+                        &opts.orbit_code_home,
                         api_key.clone(),
                         tokens.id_token.clone(),
                         tokens.access_token.clone(),
@@ -482,7 +482,10 @@ fn build_authorize_url(
         ),
         ("code_challenge_method".to_string(), "S256".to_string()),
         ("id_token_add_organizations".to_string(), "true".to_string()),
-        ("codex_cli_simplified_flow".to_string(), "true".to_string()),
+        (
+            "orbit_code_cli_simplified_flow".to_string(),
+            "true".to_string(),
+        ),
         ("state".to_string(), state.to_string()),
         (
             "originator".to_string(),
@@ -751,7 +754,7 @@ pub(crate) async fn exchange_code_for_tokens(
 
 /// Persists exchanged credentials using the configured local auth store.
 pub(crate) async fn persist_tokens_async(
-    codex_home: &Path,
+    orbit_code_home: &Path,
     api_key: Option<String>,
     id_token: String,
     access_token: String,
@@ -759,7 +762,7 @@ pub(crate) async fn persist_tokens_async(
     auth_credentials_store_mode: AuthCredentialsStoreMode,
 ) -> io::Result<()> {
     // Reuse existing synchronous logic but run it off the async runtime.
-    let codex_home = codex_home.to_path_buf();
+    let orbit_code_home = orbit_code_home.to_path_buf();
     tokio::task::spawn_blocking(move || {
         let mut tokens = TokenData {
             id_token: parse_chatgpt_jwt_claims(&id_token).map_err(io::Error::other)?,
@@ -779,7 +782,7 @@ pub(crate) async fn persist_tokens_async(
             tokens: Some(tokens),
             last_refresh: Some(Utc::now()),
         };
-        save_auth(&codex_home, &auth, auth_credentials_store_mode)
+        save_auth(&orbit_code_home, &auth, auth_credentials_store_mode)
     })
     .await
     .map_err(|e| io::Error::other(format!("persist task failed: {e}")))?
@@ -905,18 +908,21 @@ fn login_error_response(
 }
 
 /// Returns true when the OAuth callback represents a missing Codex entitlement.
-fn is_missing_codex_entitlement_error(error_code: &str, error_description: Option<&str>) -> bool {
+fn is_missing_orbit_code_entitlement_error(
+    error_code: &str,
+    error_description: Option<&str>,
+) -> bool {
     error_code == "access_denied"
         && error_description.is_some_and(|description| {
             description
                 .to_ascii_lowercase()
-                .contains("missing_codex_entitlement")
+                .contains("missing_orbit_code_entitlement")
         })
 }
 
 /// Converts OAuth callback errors into a user-facing message.
 fn oauth_callback_error_message(error_code: &str, error_description: Option<&str>) -> String {
-    if is_missing_codex_entitlement_error(error_code, error_description) {
+    if is_missing_orbit_code_entitlement_error(error_code, error_description) {
         return "Codex is not enabled for your workspace. Contact your workspace administrator to request access to Codex.".to_string();
     }
 
@@ -1007,7 +1013,7 @@ fn render_login_error_page(
     let template = include_str!("assets/error.html");
     let code = error_code.unwrap_or("unknown_error");
     let (title, display_message, display_description, help_text) =
-        if is_missing_codex_entitlement_error(code, error_description) {
+        if is_missing_orbit_code_entitlement_error(code, error_description) {
             (
                 "You do not have access to Codex".to_string(),
                 "This account is not currently authorized to use Codex in this workspace."

@@ -11,7 +11,7 @@ use zip::ZipWriter;
 use zip::write::SimpleFileOptions;
 
 #[test]
-fn curated_plugins_repo_path_uses_codex_home_tmp_dir() {
+fn curated_plugins_repo_path_uses_orbit_code_home_tmp_dir() {
     let tmp = tempdir().expect("tempdir");
     assert_eq!(
         curated_plugins_repo_path(tmp.path()),

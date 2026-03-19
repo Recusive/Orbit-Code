@@ -4,15 +4,15 @@ use std::sync::Arc;
 use std::sync::atomic::AtomicI64;
 use std::sync::atomic::Ordering;
 
-use codex_app_server_protocol::JSONRPCErrorError;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::Result;
-use codex_app_server_protocol::ServerNotification;
-use codex_app_server_protocol::ServerRequest;
-use codex_app_server_protocol::ServerRequestPayload;
-use codex_otel::span_w3c_trace_context;
-use codex_protocol::ThreadId;
-use codex_protocol::protocol::W3cTraceContext;
+use orbit_code_app_server_protocol::JSONRPCErrorError;
+use orbit_code_app_server_protocol::RequestId;
+use orbit_code_app_server_protocol::Result;
+use orbit_code_app_server_protocol::ServerNotification;
+use orbit_code_app_server_protocol::ServerRequest;
+use orbit_code_app_server_protocol::ServerRequestPayload;
+use orbit_code_otel::span_w3c_trace_context;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::protocol::W3cTraceContext;
 use serde::Serialize;
 use tokio::sync::Mutex;
 use tokio::sync::mpsc;
@@ -25,7 +25,7 @@ use crate::error_code::INTERNAL_ERROR_CODE;
 use crate::server_request_error::TURN_TRANSITION_PENDING_REQUEST_ERROR_REASON;
 
 #[cfg(test)]
-use codex_protocol::account::PlanType;
+use orbit_code_protocol::account::PlanType;
 
 pub(crate) type ClientRequestResult = std::result::Result<Result, JSONRPCErrorError>;
 
@@ -632,20 +632,20 @@ pub(crate) struct OutgoingError {
 mod tests {
     use std::time::Duration;
 
-    use codex_app_server_protocol::AccountLoginCompletedNotification;
-    use codex_app_server_protocol::AccountRateLimitsUpdatedNotification;
-    use codex_app_server_protocol::AccountUpdatedNotification;
-    use codex_app_server_protocol::ApplyPatchApprovalParams;
-    use codex_app_server_protocol::AuthMode;
-    use codex_app_server_protocol::ConfigWarningNotification;
-    use codex_app_server_protocol::DynamicToolCallParams;
-    use codex_app_server_protocol::FileChangeRequestApprovalParams;
-    use codex_app_server_protocol::ModelRerouteReason;
-    use codex_app_server_protocol::ModelReroutedNotification;
-    use codex_app_server_protocol::RateLimitSnapshot;
-    use codex_app_server_protocol::RateLimitWindow;
-    use codex_app_server_protocol::ToolRequestUserInputParams;
-    use codex_protocol::ThreadId;
+    use orbit_code_app_server_protocol::AccountLoginCompletedNotification;
+    use orbit_code_app_server_protocol::AccountRateLimitsUpdatedNotification;
+    use orbit_code_app_server_protocol::AccountUpdatedNotification;
+    use orbit_code_app_server_protocol::ApplyPatchApprovalParams;
+    use orbit_code_app_server_protocol::AuthMode;
+    use orbit_code_app_server_protocol::ConfigWarningNotification;
+    use orbit_code_app_server_protocol::DynamicToolCallParams;
+    use orbit_code_app_server_protocol::FileChangeRequestApprovalParams;
+    use orbit_code_app_server_protocol::ModelRerouteReason;
+    use orbit_code_app_server_protocol::ModelReroutedNotification;
+    use orbit_code_app_server_protocol::RateLimitSnapshot;
+    use orbit_code_app_server_protocol::RateLimitWindow;
+    use orbit_code_app_server_protocol::ToolRequestUserInputParams;
+    use orbit_code_protocol::ThreadId;
     use pretty_assertions::assert_eq;
     use serde_json::json;
     use std::sync::Arc;

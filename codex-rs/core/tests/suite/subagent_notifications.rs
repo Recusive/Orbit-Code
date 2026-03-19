@@ -1,9 +1,4 @@
 use anyhow::Result;
-use codex_core::ThreadConfigSnapshot;
-use codex_core::config::AgentRoleConfig;
-use codex_core::features::Feature;
-use codex_protocol::ThreadId;
-use codex_protocol::openai_models::ReasoningEffort;
 use core_test_support::responses::ResponsesRequest;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
@@ -17,6 +12,11 @@ use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
 use core_test_support::test_codex::TestCodex;
 use core_test_support::test_codex::test_codex;
+use orbit_code_core::ThreadConfigSnapshot;
+use orbit_code_core::config::AgentRoleConfig;
+use orbit_code_core::features::Feature;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::openai_models::ReasoningEffort;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use std::time::Duration;
@@ -447,7 +447,7 @@ async fn spawn_agent_role_overrides_requested_model_and_reasoning_settings() -> 
         }),
         |builder| {
             builder.with_config(|config| {
-                let role_path = config.codex_home.join("custom-role.toml");
+                let role_path = config.orbit_code_home.join("custom-role.toml");
                 std::fs::write(
                     &role_path,
                     format!(
@@ -495,7 +495,7 @@ async fn spawn_agent_tool_description_mentions_role_locked_settings() -> Result<
             .features
             .enable(Feature::Collab)
             .expect("test config should allow feature update");
-        let role_path = config.codex_home.join("custom-role.toml");
+        let role_path = config.orbit_code_home.join("custom-role.toml");
         std::fs::write(
             &role_path,
             format!(

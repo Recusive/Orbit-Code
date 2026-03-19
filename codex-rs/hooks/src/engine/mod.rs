@@ -7,8 +7,8 @@ pub(crate) mod schema_loader;
 
 use std::path::PathBuf;
 
-use codex_config::ConfigLayerStack;
-use codex_protocol::protocol::HookRunSummary;
+use orbit_code_config::ConfigLayerStack;
+use orbit_code_protocol::protocol::HookRunSummary;
 
 use crate::events::session_start::SessionStartOutcome;
 use crate::events::session_start::SessionStartRequest;
@@ -25,7 +25,7 @@ pub(crate) struct CommandShell {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct ConfiguredHandler {
-    pub event_name: codex_protocol::protocol::HookEventName,
+    pub event_name: orbit_code_protocol::protocol::HookEventName,
     pub matcher: Option<String>,
     pub command: String,
     pub timeout_sec: u64,
@@ -46,9 +46,9 @@ impl ConfiguredHandler {
 
     fn event_name_label(&self) -> &'static str {
         match self.event_name {
-            codex_protocol::protocol::HookEventName::SessionStart => "session-start",
-            codex_protocol::protocol::HookEventName::UserPromptSubmit => "user-prompt-submit",
-            codex_protocol::protocol::HookEventName::Stop => "stop",
+            orbit_code_protocol::protocol::HookEventName::SessionStart => "session-start",
+            orbit_code_protocol::protocol::HookEventName::UserPromptSubmit => "user-prompt-submit",
+            orbit_code_protocol::protocol::HookEventName::Stop => "stop",
         }
     }
 }

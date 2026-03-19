@@ -18,15 +18,15 @@ use axum::http::StatusCode;
 use axum::http::Uri;
 use axum::http::header::AUTHORIZATION;
 use axum::routing::get;
-use codex_app_server_protocol::AppInfo;
-use codex_app_server_protocol::AppSummary;
-use codex_app_server_protocol::JSONRPCResponse;
-use codex_app_server_protocol::PluginAuthPolicy;
-use codex_app_server_protocol::PluginInstallParams;
-use codex_app_server_protocol::PluginInstallResponse;
-use codex_app_server_protocol::RequestId;
-use codex_core::auth::AuthCredentialsStoreMode;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use orbit_code_app_server_protocol::AppInfo;
+use orbit_code_app_server_protocol::AppSummary;
+use orbit_code_app_server_protocol::JSONRPCResponse;
+use orbit_code_app_server_protocol::PluginAuthPolicy;
+use orbit_code_app_server_protocol::PluginInstallParams;
+use orbit_code_app_server_protocol::PluginInstallResponse;
+use orbit_code_app_server_protocol::RequestId;
+use orbit_code_core::auth::AuthCredentialsStoreMode;
+use orbit_code_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use rmcp::handler::server::ServerHandler;
 use rmcp::model::JsonObject;
@@ -55,8 +55,8 @@ const DEFAULT_TIMEOUT: Duration = Duration::from_secs(10);
 
 #[tokio::test]
 async fn plugin_install_rejects_relative_marketplace_paths() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let orbit_code_home = TempDir::new()?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_TIMEOUT, mcp.initialize()).await??;
 
     let request_id = mcp
@@ -82,14 +82,14 @@ async fn plugin_install_rejects_relative_marketplace_paths() -> Result<()> {
 
 #[tokio::test]
 async fn plugin_install_returns_invalid_request_for_missing_marketplace_file() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let orbit_code_home = TempDir::new()?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_TIMEOUT, mcp.initialize()).await??;
 
     let request_id = mcp
         .send_plugin_install_request(PluginInstallParams {
             marketplace_path: AbsolutePathBuf::try_from(
-                codex_home.path().join("missing-marketplace.json"),
+                orbit_code_home.path().join("missing-marketplace.json"),
             )?,
             plugin_name: "missing-plugin".to_string(),
             force_remote_sync: false,
@@ -110,7 +110,7 @@ async fn plugin_install_returns_invalid_request_for_missing_marketplace_file() -
 
 #[tokio::test]
 async fn plugin_install_returns_invalid_request_for_not_available_plugin() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let repo_root = TempDir::new()?;
     write_plugin_marketplace(
         repo_root.path(),
@@ -124,7 +124,7 @@ async fn plugin_install_returns_invalid_request_for_not_available_plugin() -> Re
     let marketplace_path =
         AbsolutePathBuf::try_from(repo_root.path().join(".agents/plugins/marketplace.json"))?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_TIMEOUT, mcp.initialize()).await??;
 
     let request_id = mcp
@@ -150,10 +150,13 @@ async fn plugin_install_returns_invalid_request_for_not_available_plugin() -> Re
 async fn plugin_install_force_remote_sync_enables_remote_plugin_before_local_install() -> Result<()>
 {
     let server = MockServer::start().await;
-    let codex_home = TempDir::new()?;
-    write_plugin_remote_sync_config(codex_home.path(), &format!("{}/backend-api/", server.uri()))?;
+    let orbit_code_home = TempDir::new()?;
+    write_plugin_remote_sync_config(
+        orbit_code_home.path(),
+        &format!("{}/backend-api/", server.uri()),
+    )?;
     write_chatgpt_auth(
-        codex_home.path(),
+        orbit_code_home.path(),
         ChatGptAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
@@ -186,7 +189,7 @@ async fn plugin_install_force_remote_sync_enables_remote_plugin_before_local_ins
         .mount(&server)
         .await;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_TIMEOUT, mcp.initialize()).await??;
 
     let request_id = mcp
@@ -205,12 +208,12 @@ async fn plugin_install_force_remote_sync_enables_remote_plugin_before_local_ins
     assert_eq!(response.apps_needing_auth, Vec::<AppSummary>::new());
 
     assert!(
-        codex_home
+        orbit_code_home
             .path()
             .join("plugins/cache/debug/sample-plugin/local/.codex-plugin/plugin.json")
             .is_file()
     );
-    let config = std::fs::read_to_string(codex_home.path().join("config.toml"))?;
+    let config = std::fs::read_to_string(orbit_code_home.path().join("config.toml"))?;
     assert!(config.contains(r#"[plugins."sample-plugin@debug"]"#));
     assert!(config.contains("enabled = true"));
     Ok(())
@@ -219,10 +222,10 @@ async fn plugin_install_force_remote_sync_enables_remote_plugin_before_local_ins
 #[tokio::test]
 async fn plugin_install_tracks_analytics_event() -> Result<()> {
     let analytics_server = start_analytics_events_server().await?;
-    let codex_home = TempDir::new()?;
-    write_analytics_config(codex_home.path(), &analytics_server.uri())?;
+    let orbit_code_home = TempDir::new()?;
+    write_analytics_config(orbit_code_home.path(), &analytics_server.uri())?;
     write_chatgpt_auth(
-        codex_home.path(),
+        orbit_code_home.path(),
         ChatGptAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
@@ -243,7 +246,7 @@ async fn plugin_install_tracks_analytics_event() -> Result<()> {
     let marketplace_path =
         AbsolutePathBuf::try_from(repo_root.path().join(".agents/plugins/marketplace.json"))?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_TIMEOUT, mcp.initialize()).await??;
 
     let request_id = mcp
@@ -281,7 +284,7 @@ async fn plugin_install_tracks_analytics_event() -> Result<()> {
         payload,
         json!({
             "events": [{
-                "event_type": "codex_plugin_installed",
+                "event_type": "orbit_code_plugin_installed",
                 "event_params": {
                     "plugin_id": "sample-plugin@debug",
                     "plugin_name": "sample-plugin",
@@ -334,10 +337,10 @@ async fn plugin_install_returns_apps_needing_auth() -> Result<()> {
     let tools = vec![connector_tool("beta", "Beta App")?];
     let (server_url, server_handle) = start_apps_server(connectors, tools).await?;
 
-    let codex_home = TempDir::new()?;
-    write_connectors_config(codex_home.path(), &server_url)?;
+    let orbit_code_home = TempDir::new()?;
+    write_connectors_config(orbit_code_home.path(), &server_url)?;
     write_chatgpt_auth(
-        codex_home.path(),
+        orbit_code_home.path(),
         ChatGptAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
@@ -358,7 +361,7 @@ async fn plugin_install_returns_apps_needing_auth() -> Result<()> {
     let marketplace_path =
         AbsolutePathBuf::try_from(repo_root.path().join(".agents/plugins/marketplace.json"))?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_TIMEOUT, mcp.initialize()).await??;
 
     let request_id = mcp
@@ -413,10 +416,10 @@ async fn plugin_install_filters_disallowed_apps_needing_auth() -> Result<()> {
     }];
     let (server_url, server_handle) = start_apps_server(connectors, Vec::new()).await?;
 
-    let codex_home = TempDir::new()?;
-    write_connectors_config(codex_home.path(), &server_url)?;
+    let orbit_code_home = TempDir::new()?;
+    write_connectors_config(orbit_code_home.path(), &server_url)?;
     write_chatgpt_auth(
-        codex_home.path(),
+        orbit_code_home.path(),
         ChatGptAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
@@ -441,7 +444,7 @@ async fn plugin_install_filters_disallowed_apps_needing_auth() -> Result<()> {
     let marketplace_path =
         AbsolutePathBuf::try_from(repo_root.path().join(".agents/plugins/marketplace.json"))?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_TIMEOUT, mcp.initialize()).await??;
 
     let request_id = mcp
@@ -609,9 +612,12 @@ fn connector_tool(connector_id: &str, connector_name: &str) -> Result<Tool> {
     Ok(tool)
 }
 
-fn write_connectors_config(codex_home: &std::path::Path, base_url: &str) -> std::io::Result<()> {
+fn write_connectors_config(
+    orbit_code_home: &std::path::Path,
+    base_url: &str,
+) -> std::io::Result<()> {
     std::fs::write(
-        codex_home.join("config.toml"),
+        orbit_code_home.join("config.toml"),
         format!(
             r#"
 chatgpt_base_url = "{base_url}"
@@ -624,19 +630,22 @@ connectors = true
     )
 }
 
-fn write_analytics_config(codex_home: &std::path::Path, base_url: &str) -> std::io::Result<()> {
+fn write_analytics_config(
+    orbit_code_home: &std::path::Path,
+    base_url: &str,
+) -> std::io::Result<()> {
     std::fs::write(
-        codex_home.join("config.toml"),
+        orbit_code_home.join("config.toml"),
         format!("chatgpt_base_url = \"{base_url}\"\n"),
     )
 }
 
 fn write_plugin_remote_sync_config(
-    codex_home: &std::path::Path,
+    orbit_code_home: &std::path::Path,
     base_url: &str,
 ) -> std::io::Result<()> {
     std::fs::write(
-        codex_home.join("config.toml"),
+        orbit_code_home.join("config.toml"),
         format!(
             r#"
 chatgpt_base_url = "{base_url}"

@@ -7,11 +7,11 @@ use app_test_support::McpProcess;
 use app_test_support::start_analytics_events_server;
 use app_test_support::to_response;
 use app_test_support::write_chatgpt_auth;
-use codex_app_server_protocol::JSONRPCResponse;
-use codex_app_server_protocol::PluginUninstallParams;
-use codex_app_server_protocol::PluginUninstallResponse;
-use codex_app_server_protocol::RequestId;
-use codex_core::auth::AuthCredentialsStoreMode;
+use orbit_code_app_server_protocol::JSONRPCResponse;
+use orbit_code_app_server_protocol::PluginUninstallParams;
+use orbit_code_app_server_protocol::PluginUninstallResponse;
+use orbit_code_app_server_protocol::RequestId;
+use orbit_code_core::auth::AuthCredentialsStoreMode;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use tempfile::TempDir;
@@ -27,10 +27,10 @@ const DEFAULT_TIMEOUT: Duration = Duration::from_secs(10);
 
 #[tokio::test]
 async fn plugin_uninstall_removes_plugin_cache_and_config_entry() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    write_installed_plugin(&codex_home, "debug", "sample-plugin")?;
+    let orbit_code_home = TempDir::new()?;
+    write_installed_plugin(&orbit_code_home, "debug", "sample-plugin")?;
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        orbit_code_home.path().join("config.toml"),
         r#"[features]
 plugins = true
 
@@ -39,7 +39,7 @@ enabled = true
 "#,
     )?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_TIMEOUT, mcp.initialize()).await??;
 
     let params = PluginUninstallParams {
@@ -57,12 +57,12 @@ enabled = true
     assert_eq!(response, PluginUninstallResponse {});
 
     assert!(
-        !codex_home
+        !orbit_code_home
             .path()
             .join("plugins/cache/debug/sample-plugin")
             .exists()
     );
-    let config = std::fs::read_to_string(codex_home.path().join("config.toml"))?;
+    let config = std::fs::read_to_string(orbit_code_home.path().join("config.toml"))?;
     assert!(!config.contains(r#"[plugins."sample-plugin@debug"]"#));
 
     let request_id = mcp.send_plugin_uninstall_request(params).await?;
@@ -80,10 +80,10 @@ enabled = true
 #[tokio::test]
 async fn plugin_uninstall_force_remote_sync_calls_remote_uninstall_first() -> Result<()> {
     let server = MockServer::start().await;
-    let codex_home = TempDir::new()?;
-    write_installed_plugin(&codex_home, "debug", "sample-plugin")?;
+    let orbit_code_home = TempDir::new()?;
+    write_installed_plugin(&orbit_code_home, "debug", "sample-plugin")?;
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        orbit_code_home.path().join("config.toml"),
         format!(
             r#"chatgpt_base_url = "{}/backend-api/"
 
@@ -97,7 +97,7 @@ enabled = true
         ),
     )?;
     write_chatgpt_auth(
-        codex_home.path(),
+        orbit_code_home.path(),
         ChatGptAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
@@ -117,7 +117,7 @@ enabled = true
         .mount(&server)
         .await;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_TIMEOUT, mcp.initialize()).await??;
 
     let request_id = mcp
@@ -135,12 +135,12 @@ enabled = true
     assert_eq!(response, PluginUninstallResponse {});
 
     assert!(
-        !codex_home
+        !orbit_code_home
             .path()
             .join("plugins/cache/debug/sample-plugin")
             .exists()
     );
-    let config = std::fs::read_to_string(codex_home.path().join("config.toml"))?;
+    let config = std::fs::read_to_string(orbit_code_home.path().join("config.toml"))?;
     assert!(!config.contains(r#"[plugins."sample-plugin@debug"]"#));
     Ok(())
 }
@@ -148,17 +148,17 @@ enabled = true
 #[tokio::test]
 async fn plugin_uninstall_tracks_analytics_event() -> Result<()> {
     let analytics_server = start_analytics_events_server().await?;
-    let codex_home = TempDir::new()?;
-    write_installed_plugin(&codex_home, "debug", "sample-plugin")?;
+    let orbit_code_home = TempDir::new()?;
+    write_installed_plugin(&orbit_code_home, "debug", "sample-plugin")?;
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        orbit_code_home.path().join("config.toml"),
         format!(
             "chatgpt_base_url = \"{}\"\n\n[features]\nplugins = true\n\n[plugins.\"sample-plugin@debug\"]\nenabled = true\n",
             analytics_server.uri()
         ),
     )?;
     write_chatgpt_auth(
-        codex_home.path(),
+        orbit_code_home.path(),
         ChatGptAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
@@ -166,7 +166,7 @@ async fn plugin_uninstall_tracks_analytics_event() -> Result<()> {
         AuthCredentialsStoreMode::File,
     )?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_TIMEOUT, mcp.initialize()).await??;
 
     let request_id = mcp
@@ -203,7 +203,7 @@ async fn plugin_uninstall_tracks_analytics_event() -> Result<()> {
         payload,
         json!({
             "events": [{
-                "event_type": "codex_plugin_uninstalled",
+                "event_type": "orbit_code_plugin_uninstalled",
                 "event_params": {
                     "plugin_id": "sample-plugin@debug",
                     "plugin_name": "sample-plugin",
@@ -220,11 +220,11 @@ async fn plugin_uninstall_tracks_analytics_event() -> Result<()> {
 }
 
 fn write_installed_plugin(
-    codex_home: &TempDir,
+    orbit_code_home: &TempDir,
     marketplace_name: &str,
     plugin_name: &str,
 ) -> Result<()> {
-    let plugin_root = codex_home
+    let plugin_root = orbit_code_home
         .path()
         .join("plugins/cache")
         .join(marketplace_name)

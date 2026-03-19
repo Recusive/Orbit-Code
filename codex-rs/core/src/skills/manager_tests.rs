@@ -10,8 +10,8 @@ use std::fs;
 use std::path::PathBuf;
 use tempfile::TempDir;
 
-fn write_user_skill(codex_home: &TempDir, dir: &str, name: &str, description: &str) {
-    let skill_dir = codex_home.path().join("skills").join(dir);
+fn write_user_skill(orbit_code_home: &TempDir, dir: &str, name: &str, description: &str) {
+    let skill_dir = orbit_code_home.path().join("skills").join(dir);
     fs::create_dir_all(&skill_dir).unwrap();
     let content = format!("---\nname: {name}\ndescription: {description}\n---\n\n# Body\n");
     fs::write(skill_dir.join("SKILL.md"), content).unwrap();
@@ -19,29 +19,29 @@ fn write_user_skill(codex_home: &TempDir, dir: &str, name: &str, description: &s
 
 #[test]
 fn new_with_disabled_bundled_skills_removes_stale_cached_system_skills() {
-    let codex_home = tempfile::tempdir().expect("tempdir");
-    let stale_system_skill_dir = codex_home.path().join("skills/.system/stale-skill");
+    let orbit_code_home = tempfile::tempdir().expect("tempdir");
+    let stale_system_skill_dir = orbit_code_home.path().join("skills/.system/stale-skill");
     fs::create_dir_all(&stale_system_skill_dir).expect("create stale system skill dir");
     fs::write(stale_system_skill_dir.join("SKILL.md"), "# stale\n")
         .expect("write stale system skill");
 
-    let plugins_manager = Arc::new(PluginsManager::new(codex_home.path().to_path_buf()));
+    let plugins_manager = Arc::new(PluginsManager::new(orbit_code_home.path().to_path_buf()));
     let _skills_manager =
-        SkillsManager::new(codex_home.path().to_path_buf(), plugins_manager, false);
+        SkillsManager::new(orbit_code_home.path().to_path_buf(), plugins_manager, false);
 
     assert!(
-        !codex_home.path().join("skills/.system").exists(),
+        !orbit_code_home.path().join("skills/.system").exists(),
         "expected disabling system skills to remove stale cached bundled skills"
     );
 }
 
 #[tokio::test]
 async fn skills_for_config_reuses_cache_for_same_effective_config() {
-    let codex_home = tempfile::tempdir().expect("tempdir");
+    let orbit_code_home = tempfile::tempdir().expect("tempdir");
     let cwd = tempfile::tempdir().expect("tempdir");
 
     let cfg = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
+        .orbit_code_home(orbit_code_home.path().to_path_buf())
         .harness_overrides(ConfigOverrides {
             cwd: Some(cwd.path().to_path_buf()),
             ..Default::default()
@@ -50,10 +50,11 @@ async fn skills_for_config_reuses_cache_for_same_effective_config() {
         .await
         .expect("defaults for test should always succeed");
 
-    let plugins_manager = Arc::new(PluginsManager::new(codex_home.path().to_path_buf()));
-    let skills_manager = SkillsManager::new(codex_home.path().to_path_buf(), plugins_manager, true);
+    let plugins_manager = Arc::new(PluginsManager::new(orbit_code_home.path().to_path_buf()));
+    let skills_manager =
+        SkillsManager::new(orbit_code_home.path().to_path_buf(), plugins_manager, true);
 
-    write_user_skill(&codex_home, "a", "skill-a", "from a");
+    write_user_skill(&orbit_code_home, "a", "skill-a", "from a");
     let outcome1 = skills_manager.skills_for_config(&cfg);
     assert!(
         outcome1.skills.iter().any(|s| s.name == "skill-a"),
@@ -62,7 +63,7 @@ async fn skills_for_config_reuses_cache_for_same_effective_config() {
 
     // Write a new skill after the first call; the second call should reuse the config-aware cache
     // entry because the effective skill config is unchanged.
-    write_user_skill(&codex_home, "b", "skill-b", "from b");
+    write_user_skill(&orbit_code_home, "b", "skill-b", "from b");
     let outcome2 = skills_manager.skills_for_config(&cfg);
     assert_eq!(outcome2.errors, outcome1.errors);
     assert_eq!(outcome2.skills, outcome1.skills);
@@ -70,12 +71,12 @@ async fn skills_for_config_reuses_cache_for_same_effective_config() {
 
 #[tokio::test]
 async fn skills_for_cwd_reuses_cached_entry_even_when_entry_has_extra_roots() {
-    let codex_home = tempfile::tempdir().expect("tempdir");
+    let orbit_code_home = tempfile::tempdir().expect("tempdir");
     let cwd = tempfile::tempdir().expect("tempdir");
     let extra_root = tempfile::tempdir().expect("tempdir");
 
     let config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
+        .orbit_code_home(orbit_code_home.path().to_path_buf())
         .harness_overrides(ConfigOverrides {
             cwd: Some(cwd.path().to_path_buf()),
             ..Default::default()
@@ -84,8 +85,9 @@ async fn skills_for_cwd_reuses_cached_entry_even_when_entry_has_extra_roots() {
         .await
         .expect("defaults for test should always succeed");
 
-    let plugins_manager = Arc::new(PluginsManager::new(codex_home.path().to_path_buf()));
-    let skills_manager = SkillsManager::new(codex_home.path().to_path_buf(), plugins_manager, true);
+    let plugins_manager = Arc::new(PluginsManager::new(orbit_code_home.path().to_path_buf()));
+    let skills_manager =
+        SkillsManager::new(orbit_code_home.path().to_path_buf(), plugins_manager, true);
     let _ = skills_manager.skills_for_config(&config);
 
     write_user_skill(&extra_root, "x", "extra-skill", "from extra root");
@@ -122,9 +124,9 @@ async fn skills_for_cwd_reuses_cached_entry_even_when_entry_has_extra_roots() {
 
 #[tokio::test]
 async fn skills_for_config_excludes_bundled_skills_when_disabled_in_config() {
-    let codex_home = tempfile::tempdir().expect("tempdir");
+    let orbit_code_home = tempfile::tempdir().expect("tempdir");
     let cwd = tempfile::tempdir().expect("tempdir");
-    let bundled_skill_dir = codex_home.path().join("skills/.system/bundled-skill");
+    let bundled_skill_dir = orbit_code_home.path().join("skills/.system/bundled-skill");
     fs::create_dir_all(&bundled_skill_dir).expect("create bundled skill dir");
     fs::write(
         bundled_skill_dir.join("SKILL.md"),
@@ -133,13 +135,13 @@ async fn skills_for_config_excludes_bundled_skills_when_disabled_in_config() {
     .expect("write bundled skill");
 
     fs::write(
-        codex_home.path().join(crate::config::CONFIG_TOML_FILE),
+        orbit_code_home.path().join(crate::config::CONFIG_TOML_FILE),
         "[skills.bundled]\nenabled = false\n",
     )
     .expect("write config");
 
     let config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
+        .orbit_code_home(orbit_code_home.path().to_path_buf())
         .harness_overrides(ConfigOverrides {
             cwd: Some(cwd.path().to_path_buf()),
             ..Default::default()
@@ -148,9 +150,9 @@ async fn skills_for_config_excludes_bundled_skills_when_disabled_in_config() {
         .await
         .expect("load config");
 
-    let plugins_manager = Arc::new(PluginsManager::new(codex_home.path().to_path_buf()));
+    let plugins_manager = Arc::new(PluginsManager::new(orbit_code_home.path().to_path_buf()));
     let skills_manager = SkillsManager::new(
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
         plugins_manager,
         config.bundled_skills_enabled(),
     );
@@ -181,13 +183,13 @@ async fn skills_for_config_excludes_bundled_skills_when_disabled_in_config() {
 
 #[tokio::test]
 async fn skills_for_cwd_with_extra_roots_only_refreshes_on_force_reload() {
-    let codex_home = tempfile::tempdir().expect("tempdir");
+    let orbit_code_home = tempfile::tempdir().expect("tempdir");
     let cwd = tempfile::tempdir().expect("tempdir");
     let extra_root_a = tempfile::tempdir().expect("tempdir");
     let extra_root_b = tempfile::tempdir().expect("tempdir");
 
     let config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
+        .orbit_code_home(orbit_code_home.path().to_path_buf())
         .harness_overrides(ConfigOverrides {
             cwd: Some(cwd.path().to_path_buf()),
             ..Default::default()
@@ -196,8 +198,9 @@ async fn skills_for_cwd_with_extra_roots_only_refreshes_on_force_reload() {
         .await
         .expect("defaults for test should always succeed");
 
-    let plugins_manager = Arc::new(PluginsManager::new(codex_home.path().to_path_buf()));
-    let skills_manager = SkillsManager::new(codex_home.path().to_path_buf(), plugins_manager, true);
+    let plugins_manager = Arc::new(PluginsManager::new(orbit_code_home.path().to_path_buf()));
+    let skills_manager =
+        SkillsManager::new(orbit_code_home.path().to_path_buf(), plugins_manager, true);
     let _ = skills_manager.skills_for_config(&config);
 
     write_user_skill(&extra_root_a, "x", "extra-skill-a", "from extra root a");
@@ -364,9 +367,9 @@ enabled = false
 #[cfg_attr(windows, ignore)]
 #[tokio::test]
 async fn skills_for_config_ignores_cwd_cache_when_session_flags_reenable_skill() {
-    let codex_home = tempfile::tempdir().expect("tempdir");
+    let orbit_code_home = tempfile::tempdir().expect("tempdir");
     let cwd = tempfile::tempdir().expect("tempdir");
-    let skill_dir = codex_home.path().join("skills").join("demo");
+    let skill_dir = orbit_code_home.path().join("skills").join("demo");
     fs::create_dir_all(&skill_dir).expect("create skill dir");
     let skill_path = skill_dir.join("SKILL.md");
     fs::write(
@@ -375,7 +378,7 @@ async fn skills_for_config_ignores_cwd_cache_when_session_flags_reenable_skill()
     )
     .expect("write skill");
     fs::write(
-        codex_home.path().join(crate::config::CONFIG_TOML_FILE),
+        orbit_code_home.path().join(crate::config::CONFIG_TOML_FILE),
         format!(
             r#"[[skills.config]]
 path = "{}"
@@ -387,7 +390,7 @@ enabled = false
     .expect("write config");
 
     let parent_config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
+        .orbit_code_home(orbit_code_home.path().to_path_buf())
         .harness_overrides(ConfigOverrides {
             cwd: Some(cwd.path().to_path_buf()),
             ..Default::default()
@@ -395,7 +398,7 @@ enabled = false
         .build()
         .await
         .expect("load parent config");
-    let role_path = codex_home.path().join("enable-role.toml");
+    let role_path = orbit_code_home.path().join("enable-role.toml");
     fs::write(
         &role_path,
         format!(
@@ -420,8 +423,9 @@ enabled = true
         .await
         .expect("custom role should apply");
 
-    let plugins_manager = Arc::new(PluginsManager::new(codex_home.path().to_path_buf()));
-    let skills_manager = SkillsManager::new(codex_home.path().to_path_buf(), plugins_manager, true);
+    let plugins_manager = Arc::new(PluginsManager::new(orbit_code_home.path().to_path_buf()));
+    let skills_manager =
+        SkillsManager::new(orbit_code_home.path().to_path_buf(), plugins_manager, true);
 
     let parent_outcome = skills_manager
         .skills_for_cwd(cwd.path(), &parent_config, true)

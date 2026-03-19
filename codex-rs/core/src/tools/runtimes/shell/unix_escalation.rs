@@ -19,36 +19,36 @@ use crate::tools::sandboxing::SandboxAttempt;
 use crate::tools::sandboxing::SandboxablePreference;
 use crate::tools::sandboxing::ToolCtx;
 use crate::tools::sandboxing::ToolError;
-use codex_execpolicy::Decision;
-use codex_execpolicy::Evaluation;
-use codex_execpolicy::MatchOptions;
-use codex_execpolicy::Policy;
-use codex_execpolicy::RuleMatch;
-use codex_protocol::config_types::WindowsSandboxLevel;
-use codex_protocol::models::MacOsSeatbeltProfileExtensions;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::permissions::FileSystemSandboxPolicy;
-use codex_protocol::permissions::NetworkSandboxPolicy;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::ExecApprovalRequestSkillMetadata;
-use codex_protocol::protocol::NetworkPolicyRuleAction;
-use codex_protocol::protocol::ReviewDecision;
-use codex_protocol::protocol::SandboxPolicy;
-use codex_shell_command::bash::parse_shell_lc_plain_commands;
-use codex_shell_command::bash::parse_shell_lc_single_command_prefix;
-use codex_shell_escalation::EscalateServer;
-use codex_shell_escalation::EscalationDecision;
-use codex_shell_escalation::EscalationExecution;
-use codex_shell_escalation::EscalationPermissions;
-use codex_shell_escalation::EscalationPolicy;
-use codex_shell_escalation::EscalationSession;
-use codex_shell_escalation::ExecParams;
-use codex_shell_escalation::ExecResult;
-use codex_shell_escalation::Permissions as EscalatedPermissions;
-use codex_shell_escalation::PreparedExec;
-use codex_shell_escalation::ShellCommandExecutor;
-use codex_shell_escalation::Stopwatch;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use orbit_code_execpolicy::Decision;
+use orbit_code_execpolicy::Evaluation;
+use orbit_code_execpolicy::MatchOptions;
+use orbit_code_execpolicy::Policy;
+use orbit_code_execpolicy::RuleMatch;
+use orbit_code_protocol::config_types::WindowsSandboxLevel;
+use orbit_code_protocol::models::MacOsSeatbeltProfileExtensions;
+use orbit_code_protocol::models::PermissionProfile;
+use orbit_code_protocol::permissions::FileSystemSandboxPolicy;
+use orbit_code_protocol::permissions::NetworkSandboxPolicy;
+use orbit_code_protocol::protocol::AskForApproval;
+use orbit_code_protocol::protocol::ExecApprovalRequestSkillMetadata;
+use orbit_code_protocol::protocol::NetworkPolicyRuleAction;
+use orbit_code_protocol::protocol::ReviewDecision;
+use orbit_code_protocol::protocol::SandboxPolicy;
+use orbit_code_shell_command::bash::parse_shell_lc_plain_commands;
+use orbit_code_shell_command::bash::parse_shell_lc_single_command_prefix;
+use orbit_code_shell_escalation::EscalateServer;
+use orbit_code_shell_escalation::EscalationDecision;
+use orbit_code_shell_escalation::EscalationExecution;
+use orbit_code_shell_escalation::EscalationPermissions;
+use orbit_code_shell_escalation::EscalationPolicy;
+use orbit_code_shell_escalation::EscalationSession;
+use orbit_code_shell_escalation::ExecParams;
+use orbit_code_shell_escalation::ExecResult;
+use orbit_code_shell_escalation::Permissions as EscalatedPermissions;
+use orbit_code_shell_escalation::PreparedExec;
+use orbit_code_shell_escalation::ShellCommandExecutor;
+use orbit_code_shell_escalation::Stopwatch;
+use orbit_code_utils_absolute_path::AbsolutePathBuf;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -162,7 +162,7 @@ pub(super) async fn try_run_zsh_fork(
             .permissions
             .macos_seatbelt_profile_extensions
             .clone(),
-        codex_linux_sandbox_exe: ctx.turn.codex_linux_sandbox_exe.clone(),
+        orbit_code_linux_sandbox_exe: ctx.turn.orbit_code_linux_sandbox_exe.clone(),
         use_legacy_landlock: ctx.turn.features.use_legacy_landlock(),
     };
     let main_execve_wrapper_exe = ctx
@@ -268,7 +268,7 @@ pub(crate) async fn prepare_unified_exec_zsh_fork(
             .permissions
             .macos_seatbelt_profile_extensions
             .clone(),
-        codex_linux_sandbox_exe: ctx.turn.codex_linux_sandbox_exe.clone(),
+        orbit_code_linux_sandbox_exe: ctx.turn.orbit_code_linux_sandbox_exe.clone(),
         use_legacy_landlock: ctx.turn.features.use_legacy_landlock(),
     };
     let escalation_policy = CoreShellActionProvider {
@@ -853,7 +853,7 @@ struct CoreShellCommandExecutor {
     network_sandbox_policy: NetworkSandboxPolicy,
     sandbox: SandboxType,
     env: HashMap<String, String>,
-    network: Option<codex_network_proxy::NetworkProxy>,
+    network: Option<orbit_code_network_proxy::NetworkProxy>,
     windows_sandbox_level: WindowsSandboxLevel,
     sandbox_permissions: SandboxPermissions,
     justification: Option<String>,
@@ -861,7 +861,7 @@ struct CoreShellCommandExecutor {
     sandbox_policy_cwd: PathBuf,
     #[cfg_attr(not(target_os = "macos"), allow(dead_code))]
     macos_seatbelt_profile_extensions: Option<MacOsSeatbeltProfileExtensions>,
-    codex_linux_sandbox_exe: Option<PathBuf>,
+    orbit_code_linux_sandbox_exe: Option<PathBuf>,
     use_legacy_landlock: bool,
 }
 
@@ -890,7 +890,7 @@ impl ShellCommandExecutor for CoreShellCommandExecutor {
         let mut exec_env = self.env.clone();
         // `env_overlay` comes from `EscalationSession::env()`, so merge only the
         // wrapper/socket variables into the base shell environment.
-        for var in ["CODEX_ESCALATE_SOCKET", "EXEC_WRAPPER", "BASH_EXEC_WRAPPER"] {
+        for var in ["ORBIT_ESCALATE_SOCKET", "EXEC_WRAPPER", "BASH_EXEC_WRAPPER"] {
             if let Some(value) = env_overlay.get(var) {
                 exec_env.insert(var.to_string(), value.clone());
             }
@@ -1059,7 +1059,7 @@ impl CoreShellCommandExecutor {
                 sandbox_policy_cwd: &self.sandbox_policy_cwd,
                 #[cfg(target_os = "macos")]
                 macos_seatbelt_profile_extensions,
-                codex_linux_sandbox_exe: self.codex_linux_sandbox_exe.as_ref(),
+                orbit_code_linux_sandbox_exe: self.orbit_code_linux_sandbox_exe.as_ref(),
                 use_legacy_landlock: self.use_legacy_landlock,
                 windows_sandbox_level: self.windows_sandbox_level,
                 windows_sandbox_private_desktop: false,

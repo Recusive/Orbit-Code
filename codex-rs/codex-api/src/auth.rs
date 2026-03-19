@@ -1,6 +1,6 @@
-use codex_client::Request;
 use http::HeaderMap;
 use http::HeaderValue;
+use orbit_code_client::Request;
 
 /// Provides bearer and account identity information for API requests.
 ///

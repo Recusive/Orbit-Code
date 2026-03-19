@@ -1,16 +1,16 @@
 [package]
 edition.workspace = true
 license.workspace = true
-name = "codex-core"
+name = "orbit-code-core"
 version.workspace = true
 
 [lib]
 doctest = false
-name = "codex_core"
+name = "orbit_code_core"
 path = "src/lib.rs"
 
 [[bin]]
-name = "codex-write-config-schema"
+name = "orbit-code-write-config-schema"
 path = "src/bin/config_schema.rs"
 
 [lints]
@@ -27,37 +27,37 @@ bm25 = { workspace = true }
 chardetng = { workspace = true }
 chrono = { workspace = true, features = ["serde"] }
 clap = { workspace = true, features = ["derive"] }
-codex-api = { workspace = true }
-codex-app-server-protocol = { workspace = true }
-codex-apply-patch = { workspace = true }
-codex-async-utils = { workspace = true }
-codex-client = { workspace = true }
-codex-connectors = { workspace = true }
-codex-config = { workspace = true }
-codex-environment = { workspace = true }
-codex-shell-command = { workspace = true }
-codex-skills = { workspace = true }
-codex-execpolicy = { workspace = true }
-codex-file-search = { workspace = true }
-codex-git = { workspace = true }
-codex-hooks = { workspace = true }
-codex-keyring-store = { workspace = true }
-codex-network-proxy = { workspace = true }
-codex-otel = { workspace = true }
-codex-artifacts = { workspace = true }
-codex-protocol = { workspace = true }
-codex-rmcp-client = { workspace = true }
-codex-state = { workspace = true }
-codex-utils-absolute-path = { workspace = true }
-codex-utils-cache = { workspace = true }
-codex-utils-image = { workspace = true }
-codex-utils-home-dir = { workspace = true }
-codex-utils-pty = { workspace = true }
-codex-utils-readiness = { workspace = true }
-codex-secrets = { workspace = true }
-codex-utils-string = { workspace = true }
-codex-utils-stream-parser = { workspace = true }
-codex-windows-sandbox = { package = "codex-windows-sandbox", path = "../windows-sandbox-rs" }
+orbit-code-api = { workspace = true }
+orbit-code-app-server-protocol = { workspace = true }
+orbit-code-apply-patch = { workspace = true }
+orbit-code-async-utils = { workspace = true }
+orbit-code-client = { workspace = true }
+orbit-code-connectors = { workspace = true }
+orbit-code-config = { workspace = true }
+orbit-code-environment = { workspace = true }
+orbit-code-shell-command = { workspace = true }
+orbit-code-skills = { workspace = true }
+orbit-code-execpolicy = { workspace = true }
+orbit-code-file-search = { workspace = true }
+orbit-code-git = { workspace = true }
+orbit-code-hooks = { workspace = true }
+orbit-code-keyring-store = { workspace = true }
+orbit-code-network-proxy = { workspace = true }
+orbit-code-otel = { workspace = true }
+orbit-code-artifacts = { workspace = true }
+orbit-code-protocol = { workspace = true }
+orbit-code-rmcp-client = { workspace = true }
+orbit-code-state = { workspace = true }
+orbit-code-utils-absolute-path = { workspace = true }
+orbit-code-utils-cache = { workspace = true }
+orbit-code-utils-image = { workspace = true }
+orbit-code-utils-home-dir = { workspace = true }
+orbit-code-utils-pty = { workspace = true }
+orbit-code-utils-readiness = { workspace = true }
+orbit-code-secrets = { workspace = true }
+orbit-code-utils-string = { workspace = true }
+orbit-code-utils-stream-parser = { workspace = true }
+orbit-code-windows-sandbox = { package = "orbit-code-windows-sandbox", path = "../windows-sandbox-rs" }
 csv = { workspace = true }
 dirs = { workspace = true }
 dunce = { workspace = true }
@@ -147,17 +147,17 @@ windows-sys = { version = "0.52", features = [
 keyring = { workspace = true, features = ["sync-secret-service"] }
 
 [target.'cfg(unix)'.dependencies]
-codex-shell-escalation = { workspace = true }
+orbit-code-shell-escalation = { workspace = true }
 
 [dev-dependencies]
 assert_cmd = { workspace = true }
 assert_matches = { workspace = true }
-codex-arg0 = { workspace = true }
-codex-otel = { workspace = true, features = [
+orbit-code-arg0 = { workspace = true }
+orbit-code-otel = { workspace = true, features = [
     "disable-default-metrics-exporter",
 ] }
-codex-test-macros = { workspace = true }
-codex-utils-cargo-bin = { workspace = true }
+orbit-code-test-macros = { workspace = true }
+orbit-code-utils-cargo-bin = { workspace = true }
 core_test_support = { workspace = true }
 ctor = { workspace = true }
 insta = { workspace = true }

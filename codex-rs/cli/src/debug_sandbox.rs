@@ -6,20 +6,20 @@ mod seatbelt;
 use std::path::PathBuf;
 use std::process::Stdio;
 
-use codex_core::config::Config;
-use codex_core::config::ConfigBuilder;
-use codex_core::config::ConfigOverrides;
-use codex_core::config::NetworkProxyAuditMetadata;
-use codex_core::exec_env::create_env;
-use codex_core::landlock::create_linux_sandbox_command_args_for_policies;
+use orbit_code_core::config::Config;
+use orbit_code_core::config::ConfigBuilder;
+use orbit_code_core::config::ConfigOverrides;
+use orbit_code_core::config::NetworkProxyAuditMetadata;
+use orbit_code_core::exec_env::create_env;
+use orbit_code_core::landlock::create_linux_sandbox_command_args_for_policies;
 #[cfg(target_os = "macos")]
-use codex_core::seatbelt::create_seatbelt_command_args_for_policies_with_extensions;
+use orbit_code_core::seatbelt::create_seatbelt_command_args_for_policies_with_extensions;
 #[cfg(target_os = "macos")]
-use codex_core::spawn::CODEX_SANDBOX_ENV_VAR;
-use codex_core::spawn::CODEX_SANDBOX_NETWORK_DISABLED_ENV_VAR;
-use codex_protocol::config_types::SandboxMode;
-use codex_protocol::permissions::NetworkSandboxPolicy;
-use codex_utils_cli::CliConfigOverrides;
+use orbit_code_core::spawn::CODEX_SANDBOX_ENV_VAR;
+use orbit_code_core::spawn::CODEX_SANDBOX_NETWORK_DISABLED_ENV_VAR;
+use orbit_code_protocol::config_types::SandboxMode;
+use orbit_code_protocol::permissions::NetworkSandboxPolicy;
+use orbit_code_utils_cli::CliConfigOverrides;
 use tokio::process::Child;
 use tokio::process::Command as TokioCommand;
 use toml::Value as TomlValue;
@@ -35,7 +35,7 @@ use seatbelt::DenialLogger;
 #[cfg(target_os = "macos")]
 pub async fn run_command_under_seatbelt(
     command: SeatbeltCommand,
-    codex_linux_sandbox_exe: Option<PathBuf>,
+    orbit_code_linux_sandbox_exe: Option<PathBuf>,
 ) -> anyhow::Result<()> {
     let SeatbeltCommand {
         full_auto,
@@ -47,7 +47,7 @@ pub async fn run_command_under_seatbelt(
         full_auto,
         command,
         config_overrides,
-        codex_linux_sandbox_exe,
+        orbit_code_linux_sandbox_exe,
         SandboxType::Seatbelt,
         log_denials,
     )
@@ -57,14 +57,14 @@ pub async fn run_command_under_seatbelt(
 #[cfg(not(target_os = "macos"))]
 pub async fn run_command_under_seatbelt(
     _command: SeatbeltCommand,
-    _codex_linux_sandbox_exe: Option<PathBuf>,
+    _orbit_code_linux_sandbox_exe: Option<PathBuf>,
 ) -> anyhow::Result<()> {
     anyhow::bail!("Seatbelt sandbox is only available on macOS");
 }
 
 pub async fn run_command_under_landlock(
     command: LandlockCommand,
-    codex_linux_sandbox_exe: Option<PathBuf>,
+    orbit_code_linux_sandbox_exe: Option<PathBuf>,
 ) -> anyhow::Result<()> {
     let LandlockCommand {
         full_auto,
@@ -75,7 +75,7 @@ pub async fn run_command_under_landlock(
         full_auto,
         command,
         config_overrides,
-        codex_linux_sandbox_exe,
+        orbit_code_linux_sandbox_exe,
         SandboxType::Landlock,
         /*log_denials*/ false,
     )
@@ -84,7 +84,7 @@ pub async fn run_command_under_landlock(
 
 pub async fn run_command_under_windows(
     command: WindowsCommand,
-    codex_linux_sandbox_exe: Option<PathBuf>,
+    orbit_code_linux_sandbox_exe: Option<PathBuf>,
 ) -> anyhow::Result<()> {
     let WindowsCommand {
         full_auto,
@@ -95,7 +95,7 @@ pub async fn run_command_under_windows(
         full_auto,
         command,
         config_overrides,
-        codex_linux_sandbox_exe,
+        orbit_code_linux_sandbox_exe,
         SandboxType::Windows,
         /*log_denials*/ false,
     )
@@ -113,7 +113,7 @@ async fn run_command_under_sandbox(
     full_auto: bool,
     command: Vec<String>,
     config_overrides: CliConfigOverrides,
-    codex_linux_sandbox_exe: Option<PathBuf>,
+    orbit_code_linux_sandbox_exe: Option<PathBuf>,
     sandbox_type: SandboxType,
     log_denials: bool,
 ) -> anyhow::Result<()> {
@@ -121,7 +121,7 @@ async fn run_command_under_sandbox(
         config_overrides
             .parse_overrides()
             .map_err(anyhow::Error::msg)?,
-        codex_linux_sandbox_exe,
+        orbit_code_linux_sandbox_exe,
         full_auto,
     )
     .await?;
@@ -143,10 +143,10 @@ async fn run_command_under_sandbox(
     if let SandboxType::Windows = sandbox_type {
         #[cfg(target_os = "windows")]
         {
-            use codex_core::windows_sandbox::WindowsSandboxLevelExt;
-            use codex_protocol::config_types::WindowsSandboxLevel;
-            use codex_windows_sandbox::run_windows_sandbox_capture;
-            use codex_windows_sandbox::run_windows_sandbox_capture_elevated;
+            use orbit_code_core::windows_sandbox::WindowsSandboxLevelExt;
+            use orbit_code_protocol::config_types::WindowsSandboxLevel;
+            use orbit_code_windows_sandbox::run_windows_sandbox_capture;
+            use orbit_code_windows_sandbox::run_windows_sandbox_capture_elevated;
 
             let policy_str = serde_json::to_string(config.permissions.sandbox_policy.get())?;
 
@@ -154,7 +154,7 @@ async fn run_command_under_sandbox(
             let cwd_clone = cwd.clone();
             let env_map = env.clone();
             let command_vec = command.clone();
-            let base_dir = config.codex_home.clone();
+            let base_dir = config.orbit_code_home.clone();
             let use_elevated = matches!(
                 WindowsSandboxLevel::from_config(&config),
                 WindowsSandboxLevel::Elevated
@@ -241,7 +241,7 @@ async fn run_command_under_sandbox(
     };
     let network = network_proxy
         .as_ref()
-        .map(codex_core::config::StartedNetworkProxy::proxy);
+        .map(orbit_code_core::config::StartedNetworkProxy::proxy);
 
     let mut child = match sandbox_type {
         #[cfg(target_os = "macos")]
@@ -274,8 +274,8 @@ async fn run_command_under_sandbox(
         }
         SandboxType::Landlock => {
             #[expect(clippy::expect_used)]
-            let codex_linux_sandbox_exe = config
-                .codex_linux_sandbox_exe
+            let orbit_code_linux_sandbox_exe = config
+                .orbit_code_linux_sandbox_exe
                 .expect("codex-linux-sandbox executable not found");
             let use_legacy_landlock = config.features.use_legacy_landlock();
             let args = create_linux_sandbox_command_args_for_policies(
@@ -290,7 +290,7 @@ async fn run_command_under_sandbox(
             );
             let network_policy = config.permissions.network_sandbox_policy;
             spawn_debug_sandbox_child(
-                codex_linux_sandbox_exe,
+                orbit_code_linux_sandbox_exe,
                 args,
                 Some("codex-linux-sandbox"),
                 cwd,
@@ -373,31 +373,31 @@ async fn spawn_debug_sandbox_child(
 
 async fn load_debug_sandbox_config(
     cli_overrides: Vec<(String, TomlValue)>,
-    codex_linux_sandbox_exe: Option<PathBuf>,
+    orbit_code_linux_sandbox_exe: Option<PathBuf>,
     full_auto: bool,
 ) -> anyhow::Result<Config> {
-    load_debug_sandbox_config_with_codex_home(
+    load_debug_sandbox_config_with_orbit_code_home(
         cli_overrides,
-        codex_linux_sandbox_exe,
+        orbit_code_linux_sandbox_exe,
         full_auto,
-        /*codex_home*/ None,
+        /*orbit_code_home*/ None,
     )
     .await
 }
 
-async fn load_debug_sandbox_config_with_codex_home(
+async fn load_debug_sandbox_config_with_orbit_code_home(
     cli_overrides: Vec<(String, TomlValue)>,
-    codex_linux_sandbox_exe: Option<PathBuf>,
+    orbit_code_linux_sandbox_exe: Option<PathBuf>,
     full_auto: bool,
-    codex_home: Option<PathBuf>,
+    orbit_code_home: Option<PathBuf>,
 ) -> anyhow::Result<Config> {
     let config = build_debug_sandbox_config(
         cli_overrides.clone(),
         ConfigOverrides {
-            codex_linux_sandbox_exe: codex_linux_sandbox_exe.clone(),
+            orbit_code_linux_sandbox_exe: orbit_code_linux_sandbox_exe.clone(),
             ..Default::default()
         },
-        codex_home.clone(),
+        orbit_code_home.clone(),
     )
     .await?;
 
@@ -414,10 +414,10 @@ async fn load_debug_sandbox_config_with_codex_home(
         cli_overrides,
         ConfigOverrides {
             sandbox_mode: Some(create_sandbox_mode(full_auto)),
-            codex_linux_sandbox_exe,
+            orbit_code_linux_sandbox_exe,
             ..Default::default()
         },
-        codex_home,
+        orbit_code_home,
     )
     .await
     .map_err(Into::into)
@@ -426,15 +426,15 @@ async fn load_debug_sandbox_config_with_codex_home(
 async fn build_debug_sandbox_config(
     cli_overrides: Vec<(String, TomlValue)>,
     harness_overrides: ConfigOverrides,
-    codex_home: Option<PathBuf>,
+    orbit_code_home: Option<PathBuf>,
 ) -> std::io::Result<Config> {
     let mut builder = ConfigBuilder::default()
         .cli_overrides(cli_overrides)
         .harness_overrides(harness_overrides);
-    if let Some(codex_home) = codex_home {
+    if let Some(orbit_code_home) = orbit_code_home {
         builder = builder
-            .codex_home(codex_home.clone())
-            .fallback_cwd(Some(codex_home));
+            .orbit_code_home(orbit_code_home.clone())
+            .fallback_cwd(Some(orbit_code_home));
     }
     builder.build().await
 }
@@ -457,7 +457,7 @@ mod tests {
     }
 
     fn write_permissions_profile_config(
-        codex_home: &TempDir,
+        orbit_code_home: &TempDir,
         docs: &std::path::Path,
         private: &std::path::Path,
     ) -> std::io::Result<()> {
@@ -474,23 +474,23 @@ mod tests {
             escape_toml_path(docs),
             escape_toml_path(private),
         );
-        std::fs::write(codex_home.path().join("config.toml"), config)?;
+        std::fs::write(orbit_code_home.path().join("config.toml"), config)?;
         Ok(())
     }
 
     #[tokio::test]
     async fn debug_sandbox_honors_active_permission_profiles() -> anyhow::Result<()> {
-        let codex_home = TempDir::new()?;
+        let orbit_code_home = TempDir::new()?;
         let sandbox_paths = TempDir::new()?;
         let docs = sandbox_paths.path().join("docs");
         let private = docs.join("private");
-        write_permissions_profile_config(&codex_home, &docs, &private)?;
-        let codex_home_path = codex_home.path().to_path_buf();
+        write_permissions_profile_config(&orbit_code_home, &docs, &private)?;
+        let orbit_code_home_path = orbit_code_home.path().to_path_buf();
 
         let profile_config = build_debug_sandbox_config(
             Vec::new(),
             ConfigOverrides::default(),
-            Some(codex_home_path.clone()),
+            Some(orbit_code_home_path.clone()),
         )
         .await?;
         let legacy_config = build_debug_sandbox_config(
@@ -499,15 +499,15 @@ mod tests {
                 sandbox_mode: Some(create_sandbox_mode(false)),
                 ..Default::default()
             },
-            Some(codex_home_path.clone()),
+            Some(orbit_code_home_path.clone()),
         )
         .await?;
 
-        let config = load_debug_sandbox_config_with_codex_home(
+        let config = load_debug_sandbox_config_with_orbit_code_home(
             Vec::new(),
             None,
             false,
-            Some(codex_home_path),
+            Some(orbit_code_home_path),
         )
         .await?;
 
@@ -531,17 +531,17 @@ mod tests {
 
     #[tokio::test]
     async fn debug_sandbox_rejects_full_auto_for_permission_profiles() -> anyhow::Result<()> {
-        let codex_home = TempDir::new()?;
+        let orbit_code_home = TempDir::new()?;
         let sandbox_paths = TempDir::new()?;
         let docs = sandbox_paths.path().join("docs");
         let private = docs.join("private");
-        write_permissions_profile_config(&codex_home, &docs, &private)?;
+        write_permissions_profile_config(&orbit_code_home, &docs, &private)?;
 
-        let err = load_debug_sandbox_config_with_codex_home(
+        let err = load_debug_sandbox_config_with_orbit_code_home(
             Vec::new(),
             None,
             true,
-            Some(codex_home.path().to_path_buf()),
+            Some(orbit_code_home.path().to_path_buf()),
         )
         .await
         .expect_err("full-auto should be rejected for active permission profiles");

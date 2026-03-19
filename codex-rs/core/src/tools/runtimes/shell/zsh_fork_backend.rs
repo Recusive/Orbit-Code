@@ -48,8 +48,8 @@ mod imp {
     use super::*;
     use crate::tools::runtimes::shell::unix_escalation;
     use crate::unified_exec::SpawnLifecycle;
-    use codex_shell_escalation::ESCALATE_SOCKET_ENV_VAR;
-    use codex_shell_escalation::EscalationSession;
+    use orbit_code_shell_escalation::ESCALATE_SOCKET_ENV_VAR;
+    use orbit_code_shell_escalation::EscalationSession;
 
     #[derive(Debug)]
     struct ZshForkSpawnLifecycle {

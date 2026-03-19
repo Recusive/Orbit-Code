@@ -35,12 +35,12 @@ use crate::history_cell::UserHistoryCell;
 use crate::pager_overlay::Overlay;
 use crate::tui;
 use crate::tui::TuiEvent;
-use codex_protocol::ThreadId;
-use codex_protocol::user_input::TextElement;
 use color_eyre::eyre::Result;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyEventKind;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::user_input::TextElement;
 
 /// Aggregates all backtrack-related state used by the App.
 #[derive(Default)]

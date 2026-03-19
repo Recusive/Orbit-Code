@@ -15,9 +15,9 @@ use std::sync::Arc;
 use std::sync::Mutex;
 use std::sync::RwLock;
 
-use codex_app_server_protocol::AuthMode as ApiAuthMode;
-use codex_otel::TelemetryAuthMode;
-use codex_protocol::config_types::ForcedLoginMethod;
+use orbit_code_app_server_protocol::AuthMode as ApiAuthMode;
+use orbit_code_otel::TelemetryAuthMode;
+use orbit_code_protocol::config_types::ForcedLoginMethod;
 
 pub use crate::auth::storage::AuthCredentialsStoreMode;
 pub use crate::auth::storage::AuthDotJson;
@@ -31,8 +31,8 @@ use crate::token_data::PlanType as InternalPlanType;
 use crate::token_data::TokenData;
 use crate::token_data::parse_chatgpt_jwt_claims;
 use crate::util::try_parse_error_message;
-use codex_client::CodexHttpClient;
-use codex_protocol::account::PlanType as AccountPlanType;
+use orbit_code_client::CodexHttpClient;
+use orbit_code_protocol::account::PlanType as AccountPlanType;
 use serde_json::Value;
 use thiserror::Error;
 
@@ -102,7 +102,7 @@ const REFRESH_TOKEN_UNKNOWN_MESSAGE: &str =
     "Your access token could not be refreshed. Please log out and sign in again.";
 const REFRESH_TOKEN_ACCOUNT_MISMATCH_MESSAGE: &str = "Your access token could not be refreshed because you have since logged out or signed in to another account. Please sign in again.";
 const REFRESH_TOKEN_URL: &str = "https://auth.openai.com/oauth/token";
-pub const REFRESH_TOKEN_URL_OVERRIDE_ENV_VAR: &str = "CODEX_REFRESH_TOKEN_URL_OVERRIDE";
+pub const REFRESH_TOKEN_URL_OVERRIDE_ENV_VAR: &str = "ORBIT_REFRESH_TOKEN_URL_OVERRIDE";
 
 #[derive(Debug, Error)]
 pub enum RefreshTokenError {
@@ -158,7 +158,7 @@ impl From<RefreshTokenError> for std::io::Error {
 
 impl CodexAuth {
     fn from_auth_dot_json(
-        codex_home: &Path,
+        orbit_code_home: &Path,
         auth_dot_json: AuthDotJson,
         auth_credentials_store_mode: AuthCredentialsStoreMode,
         client: CodexHttpClient,
@@ -179,7 +179,7 @@ impl CodexAuth {
 
         match auth_mode {
             ApiAuthMode::Chatgpt => {
-                let storage = create_auth_storage(codex_home.to_path_buf(), storage_mode);
+                let storage = create_auth_storage(orbit_code_home.to_path_buf(), storage_mode);
                 Ok(Self::Chatgpt(ChatgptAuth { state, storage }))
             }
             ApiAuthMode::ChatgptAuthTokens => {
@@ -191,12 +191,12 @@ impl CodexAuth {
 
     /// Loads the available auth information from auth storage.
     pub fn from_auth_storage(
-        codex_home: &Path,
+        orbit_code_home: &Path,
         auth_credentials_store_mode: AuthCredentialsStoreMode,
     ) -> std::io::Result<Option<Self>> {
         load_auth(
-            codex_home,
-            /*enable_codex_api_key_env*/ false,
+            orbit_code_home,
+            /*enable_orbit_code_api_key_env*/ false,
             auth_credentials_store_mode,
         )
     }
@@ -375,7 +375,8 @@ impl ChatgptAuth {
 }
 
 pub const OPENAI_API_KEY_ENV_VAR: &str = "OPENAI_API_KEY";
-pub const CODEX_API_KEY_ENV_VAR: &str = "CODEX_API_KEY";
+pub const ORBIT_API_KEY_ENV_VAR: &str = "ORBIT_API_KEY";
+pub const LEGACY_CODEX_API_KEY_ENV_VAR: &str = "CODEX_API_KEY";
 
 pub fn read_openai_api_key_from_env() -> Option<String> {
     env::var(OPENAI_API_KEY_ENV_VAR)
@@ -384,26 +385,36 @@ pub fn read_openai_api_key_from_env() -> Option<String> {
         .filter(|value| !value.is_empty())
 }
 
-pub fn read_codex_api_key_from_env() -> Option<String> {
-    env::var(CODEX_API_KEY_ENV_VAR)
+pub fn read_orbit_api_key_from_env() -> Option<String> {
+    env::var(ORBIT_API_KEY_ENV_VAR)
         .ok()
         .map(|value| value.trim().to_string())
         .filter(|value| !value.is_empty())
+        .or_else(|| {
+            env::var(LEGACY_CODEX_API_KEY_ENV_VAR)
+                .ok()
+                .map(|value| value.trim().to_string())
+                .filter(|value| !value.is_empty())
+        })
 }
 
-/// Delete the auth.json file inside `codex_home` if it exists. Returns `Ok(true)`
+pub fn read_orbit_code_api_key_from_env() -> Option<String> {
+    read_orbit_api_key_from_env()
+}
+
+/// Delete the auth.json file inside `orbit_code_home` if it exists. Returns `Ok(true)`
 /// if a file was removed, `Ok(false)` if no auth file was present.
 pub fn logout(
-    codex_home: &Path,
+    orbit_code_home: &Path,
     auth_credentials_store_mode: AuthCredentialsStoreMode,
 ) -> std::io::Result<bool> {
-    let storage = create_auth_storage(codex_home.to_path_buf(), auth_credentials_store_mode);
+    let storage = create_auth_storage(orbit_code_home.to_path_buf(), auth_credentials_store_mode);
     storage.delete()
 }
 
 /// Writes an `auth.json` that contains only the API key.
 pub fn login_with_api_key(
-    codex_home: &Path,
+    orbit_code_home: &Path,
     api_key: &str,
     auth_credentials_store_mode: AuthCredentialsStoreMode,
 ) -> std::io::Result<()> {
@@ -413,12 +424,12 @@ pub fn login_with_api_key(
         tokens: None,
         last_refresh: None,
     };
-    save_auth(codex_home, &auth_dot_json, auth_credentials_store_mode)
+    save_auth(orbit_code_home, &auth_dot_json, auth_credentials_store_mode)
 }
 
 /// Writes an in-memory auth payload for externally managed ChatGPT tokens.
 pub fn login_with_chatgpt_auth_tokens(
-    codex_home: &Path,
+    orbit_code_home: &Path,
     access_token: &str,
     chatgpt_account_id: &str,
     chatgpt_plan_type: Option<&str>,
@@ -429,7 +440,7 @@ pub fn login_with_chatgpt_auth_tokens(
         chatgpt_plan_type,
     )?;
     save_auth(
-        codex_home,
+        orbit_code_home,
         &auth_dot_json,
         AuthCredentialsStoreMode::Ephemeral,
     )
@@ -437,11 +448,11 @@ pub fn login_with_chatgpt_auth_tokens(
 
 /// Persist the provided auth payload using the specified backend.
 pub fn save_auth(
-    codex_home: &Path,
+    orbit_code_home: &Path,
     auth: &AuthDotJson,
     auth_credentials_store_mode: AuthCredentialsStoreMode,
 ) -> std::io::Result<()> {
-    let storage = create_auth_storage(codex_home.to_path_buf(), auth_credentials_store_mode);
+    let storage = create_auth_storage(orbit_code_home.to_path_buf(), auth_credentials_store_mode);
     storage.save(auth)
 }
 
@@ -451,17 +462,17 @@ pub fn save_auth(
 /// from the auth.json storage. It should use the AuthManager abstraction
 /// instead.
 pub fn load_auth_dot_json(
-    codex_home: &Path,
+    orbit_code_home: &Path,
     auth_credentials_store_mode: AuthCredentialsStoreMode,
 ) -> std::io::Result<Option<AuthDotJson>> {
-    let storage = create_auth_storage(codex_home.to_path_buf(), auth_credentials_store_mode);
+    let storage = create_auth_storage(orbit_code_home.to_path_buf(), auth_credentials_store_mode);
     storage.load()
 }
 
 pub fn enforce_login_restrictions(config: &Config) -> std::io::Result<()> {
     let Some(auth) = load_auth(
-        &config.codex_home,
-        /*enable_codex_api_key_env*/ true,
+        &config.orbit_code_home,
+        /*enable_orbit_code_api_key_env*/ true,
         config.cli_auth_credentials_store_mode,
     )?
     else {
@@ -484,7 +495,7 @@ pub fn enforce_login_restrictions(config: &Config) -> std::io::Result<()> {
 
         if let Some(message) = method_violation {
             return logout_with_message(
-                &config.codex_home,
+                &config.orbit_code_home,
                 message,
                 config.cli_auth_credentials_store_mode,
             );
@@ -500,7 +511,7 @@ pub fn enforce_login_restrictions(config: &Config) -> std::io::Result<()> {
             Ok(data) => data,
             Err(err) => {
                 return logout_with_message(
-                    &config.codex_home,
+                    &config.orbit_code_home,
                     format!(
                         "Failed to load ChatGPT credentials while enforcing workspace restrictions: {err}. Logging out."
                     ),
@@ -521,7 +532,7 @@ pub fn enforce_login_restrictions(config: &Config) -> std::io::Result<()> {
                 ),
             };
             return logout_with_message(
-                &config.codex_home,
+                &config.orbit_code_home,
                 message,
                 config.cli_auth_credentials_store_mode,
             );
@@ -532,13 +543,13 @@ pub fn enforce_login_restrictions(config: &Config) -> std::io::Result<()> {
 }
 
 fn logout_with_message(
-    codex_home: &Path,
+    orbit_code_home: &Path,
     message: String,
     auth_credentials_store_mode: AuthCredentialsStoreMode,
 ) -> std::io::Result<()> {
     // External auth tokens live in the ephemeral store, but persistent auth may still exist
     // from earlier logins. Clear both so a forced logout truly removes all active auth.
-    let removal_result = logout_all_stores(codex_home, auth_credentials_store_mode);
+    let removal_result = logout_all_stores(orbit_code_home, auth_credentials_store_mode);
     let error_message = match removal_result {
         Ok(_) => message,
         Err(err) => format!("{message}. Failed to remove auth.json: {err}"),
@@ -547,29 +558,29 @@ fn logout_with_message(
 }
 
 fn logout_all_stores(
-    codex_home: &Path,
+    orbit_code_home: &Path,
     auth_credentials_store_mode: AuthCredentialsStoreMode,
 ) -> std::io::Result<bool> {
     if auth_credentials_store_mode == AuthCredentialsStoreMode::Ephemeral {
-        return logout(codex_home, AuthCredentialsStoreMode::Ephemeral);
+        return logout(orbit_code_home, AuthCredentialsStoreMode::Ephemeral);
     }
-    let removed_ephemeral = logout(codex_home, AuthCredentialsStoreMode::Ephemeral)?;
-    let removed_managed = logout(codex_home, auth_credentials_store_mode)?;
+    let removed_ephemeral = logout(orbit_code_home, AuthCredentialsStoreMode::Ephemeral)?;
+    let removed_managed = logout(orbit_code_home, auth_credentials_store_mode)?;
     Ok(removed_ephemeral || removed_managed)
 }
 
 fn load_auth(
-    codex_home: &Path,
-    enable_codex_api_key_env: bool,
+    orbit_code_home: &Path,
+    enable_orbit_code_api_key_env: bool,
     auth_credentials_store_mode: AuthCredentialsStoreMode,
 ) -> std::io::Result<Option<CodexAuth>> {
     let build_auth = |auth_dot_json: AuthDotJson, storage_mode| {
         let client = crate::default_client::create_client();
-        CodexAuth::from_auth_dot_json(codex_home, auth_dot_json, storage_mode, client)
+        CodexAuth::from_auth_dot_json(orbit_code_home, auth_dot_json, storage_mode, client)
     };
 
     // API key via env var takes precedence over any other auth method.
-    if enable_codex_api_key_env && let Some(api_key) = read_codex_api_key_from_env() {
+    if enable_orbit_code_api_key_env && let Some(api_key) = read_orbit_api_key_from_env() {
         let client = crate::default_client::create_client();
         return Ok(Some(CodexAuth::from_api_key_with_client(
             api_key.as_str(),
@@ -580,7 +591,7 @@ fn load_auth(
     // External ChatGPT auth tokens live in the in-memory (ephemeral) store. Always check this
     // first so external auth takes precedence over any persisted credentials.
     let ephemeral_storage = create_auth_storage(
-        codex_home.to_path_buf(),
+        orbit_code_home.to_path_buf(),
         AuthCredentialsStoreMode::Ephemeral,
     );
     if let Some(auth_dot_json) = ephemeral_storage.load()? {
@@ -594,7 +605,7 @@ fn load_auth(
     }
 
     // Fall back to the configured persistent store (file/keyring/auto) for managed auth.
-    let storage = create_auth_storage(codex_home.to_path_buf(), auth_credentials_store_mode);
+    let storage = create_auth_storage(orbit_code_home.to_path_buf(), auth_credentials_store_mode);
     let auth_dot_json = match storage.load()? {
         Some(auth) => auth,
         None => return Ok(None),
@@ -1040,9 +1051,9 @@ impl UnauthorizedRecovery {
 /// different parts of the program seeing inconsistent auth data mid‑run.
 #[derive(Debug)]
 pub struct AuthManager {
-    codex_home: PathBuf,
+    orbit_code_home: PathBuf,
     inner: RwLock<CachedAuth>,
-    enable_codex_api_key_env: bool,
+    enable_orbit_code_api_key_env: bool,
     auth_credentials_store_mode: AuthCredentialsStoreMode,
     forced_chatgpt_workspace_id: RwLock<Option<String>>,
 }
@@ -1053,24 +1064,24 @@ impl AuthManager {
     /// simply return `None` in that case so callers can treat it as an
     /// unauthenticated state.
     pub fn new(
-        codex_home: PathBuf,
-        enable_codex_api_key_env: bool,
+        orbit_code_home: PathBuf,
+        enable_orbit_code_api_key_env: bool,
         auth_credentials_store_mode: AuthCredentialsStoreMode,
     ) -> Self {
         let managed_auth = load_auth(
-            &codex_home,
-            enable_codex_api_key_env,
+            &orbit_code_home,
+            enable_orbit_code_api_key_env,
             auth_credentials_store_mode,
         )
         .ok()
         .flatten();
         Self {
-            codex_home,
+            orbit_code_home,
             inner: RwLock::new(CachedAuth {
                 auth: managed_auth,
                 external_refresher: None,
             }),
-            enable_codex_api_key_env,
+            enable_orbit_code_api_key_env,
             auth_credentials_store_mode,
             forced_chatgpt_workspace_id: RwLock::new(None),
         }
@@ -1084,9 +1095,9 @@ impl AuthManager {
         };
 
         Arc::new(Self {
-            codex_home: PathBuf::from("non-existent"),
+            orbit_code_home: PathBuf::from("non-existent"),
             inner: RwLock::new(cached),
-            enable_codex_api_key_env: false,
+            enable_orbit_code_api_key_env: false,
             auth_credentials_store_mode: AuthCredentialsStoreMode::File,
             forced_chatgpt_workspace_id: RwLock::new(None),
         })
@@ -1095,16 +1106,16 @@ impl AuthManager {
     /// Create an AuthManager with a specific CodexAuth and codex home, for testing only.
     pub(crate) fn from_auth_for_testing_with_home(
         auth: CodexAuth,
-        codex_home: PathBuf,
+        orbit_code_home: PathBuf,
     ) -> Arc<Self> {
         let cached = CachedAuth {
             auth: Some(auth),
             external_refresher: None,
         };
         Arc::new(Self {
-            codex_home,
+            orbit_code_home,
             inner: RwLock::new(cached),
-            enable_codex_api_key_env: false,
+            enable_orbit_code_api_key_env: false,
             auth_credentials_store_mode: AuthCredentialsStoreMode::File,
             forced_chatgpt_workspace_id: RwLock::new(None),
         })
@@ -1191,8 +1202,8 @@ impl AuthManager {
 
     fn load_auth_from_storage(&self) -> Option<CodexAuth> {
         load_auth(
-            &self.codex_home,
-            self.enable_codex_api_key_env,
+            &self.orbit_code_home,
+            self.enable_orbit_code_api_key_env,
             self.auth_credentials_store_mode,
         )
         .ok()
@@ -1250,19 +1261,19 @@ impl AuthManager {
             .is_some_and(CodexAuth::is_external_chatgpt_tokens)
     }
 
-    pub fn codex_api_key_env_enabled(&self) -> bool {
-        self.enable_codex_api_key_env
+    pub fn orbit_code_api_key_env_enabled(&self) -> bool {
+        self.enable_orbit_code_api_key_env
     }
 
     /// Convenience constructor returning an `Arc` wrapper.
     pub fn shared(
-        codex_home: PathBuf,
-        enable_codex_api_key_env: bool,
+        orbit_code_home: PathBuf,
+        enable_orbit_code_api_key_env: bool,
         auth_credentials_store_mode: AuthCredentialsStoreMode,
     ) -> Arc<Self> {
         Arc::new(Self::new(
-            codex_home,
-            enable_codex_api_key_env,
+            orbit_code_home,
+            enable_orbit_code_api_key_env,
             auth_credentials_store_mode,
         ))
     }
@@ -1332,7 +1343,7 @@ impl AuthManager {
     /// reloads the in‑memory auth cache so callers immediately observe the
     /// unauthenticated state.
     pub fn logout(&self) -> std::io::Result<bool> {
-        let removed = logout_all_stores(&self.codex_home, self.auth_credentials_store_mode)?;
+        let removed = logout_all_stores(&self.orbit_code_home, self.auth_credentials_store_mode)?;
         // Always reload to clear any cached auth (even if file absent).
         self.reload();
         Ok(removed)
@@ -1415,7 +1426,7 @@ impl AuthManager {
         let auth_dot_json =
             AuthDotJson::from_external_tokens(&refreshed).map_err(RefreshTokenError::Transient)?;
         save_auth(
-            &self.codex_home,
+            &self.orbit_code_home,
             &auth_dot_json,
             AuthCredentialsStoreMode::Ephemeral,
         )

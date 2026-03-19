@@ -15,7 +15,7 @@ import urllib.request
 import zipfile
 from pathlib import Path
 
-PACKAGE_NAME = "codex-cli-bin"
+PACKAGE_NAME = "orbit-code-cli-bin"
 PINNED_RUNTIME_VERSION = "0.116.0-alpha.1"
 REPO_SLUG = "openai/codex"
 
@@ -103,9 +103,9 @@ def _installed_runtime_version(python_executable: str | Path) -> str | None:
     snippet = (
         "import importlib.metadata, json, sys\n"
         "try:\n"
-        "    from codex_cli_bin import bundled_codex_path\n"
-        "    bundled_codex_path()\n"
-        "    print(json.dumps({'version': importlib.metadata.version('codex-cli-bin')}))\n"
+        "    from orbit_code_cli_bin import bundled_orbit_code_path\n"
+        "    bundled_orbit_code_path()\n"
+        "    print(json.dumps({'version': importlib.metadata.version('orbit-code-cli-bin')}))\n"
         "except Exception:\n"
         "    sys.exit(1)\n"
     )

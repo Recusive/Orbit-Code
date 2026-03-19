@@ -7,11 +7,11 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use codex_protocol::config_types::CollaborationModeMask;
-use codex_protocol::openai_models::ModelInfo;
-use codex_protocol::openai_models::ModelPreset;
-use codex_protocol::openai_models::ModelsResponse;
 use once_cell::sync::Lazy;
+use orbit_code_protocol::config_types::CollaborationModeMask;
+use orbit_code_protocol::openai_models::ModelInfo;
+use orbit_code_protocol::openai_models::ModelPreset;
+use orbit_code_protocol::openai_models::ModelsResponse;
 
 use crate::AuthManager;
 use crate::CodexAuth;
@@ -45,8 +45,11 @@ pub fn auth_manager_from_auth(auth: CodexAuth) -> Arc<AuthManager> {
     AuthManager::from_auth_for_testing(auth)
 }
 
-pub fn auth_manager_from_auth_with_home(auth: CodexAuth, codex_home: PathBuf) -> Arc<AuthManager> {
-    AuthManager::from_auth_for_testing_with_home(auth, codex_home)
+pub fn auth_manager_from_auth_with_home(
+    auth: CodexAuth,
+    orbit_code_home: PathBuf,
+) -> Arc<AuthManager> {
+    AuthManager::from_auth_for_testing_with_home(auth, orbit_code_home)
 }
 
 pub fn thread_manager_with_models_provider(
@@ -59,9 +62,9 @@ pub fn thread_manager_with_models_provider(
 pub fn thread_manager_with_models_provider_and_home(
     auth: CodexAuth,
     provider: ModelProviderInfo,
-    codex_home: PathBuf,
+    orbit_code_home: PathBuf,
 ) -> ThreadManager {
-    ThreadManager::with_models_provider_and_home_for_tests(auth, provider, codex_home)
+    ThreadManager::with_models_provider_and_home_for_tests(auth, provider, orbit_code_home)
 }
 
 pub async fn start_thread_with_user_shell_override(
@@ -92,11 +95,11 @@ pub async fn resume_thread_from_rollout_with_user_shell_override(
 }
 
 pub fn models_manager_with_provider(
-    codex_home: PathBuf,
+    orbit_code_home: PathBuf,
     auth_manager: Arc<AuthManager>,
     provider: ModelProviderInfo,
 ) -> ModelsManager {
-    ModelsManager::with_provider_for_tests(codex_home, auth_manager, provider)
+    ModelsManager::with_provider_for_tests(orbit_code_home, auth_manager, provider)
 }
 
 pub fn get_model_offline(model: Option<&str>) -> String {

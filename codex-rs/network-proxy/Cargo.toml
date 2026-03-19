@@ -1,11 +1,11 @@
 [package]
-name = "codex-network-proxy"
+name = "orbit-code-network-proxy"
 edition = "2024"
 version = { workspace = true }
 license.workspace = true
 
 [lib]
-name = "codex_network_proxy"
+name = "orbit_code_network_proxy"
 path = "src/lib.rs"
 
 [lints]
@@ -16,9 +16,9 @@ anyhow = { workspace = true }
 async-trait = { workspace = true }
 clap = { workspace = true, features = ["derive"] }
 chrono = { workspace = true }
-codex-utils-absolute-path = { workspace = true }
-codex-utils-home-dir = { workspace = true }
-codex-utils-rustls-provider = { workspace = true }
+orbit-code-utils-absolute-path = { workspace = true }
+orbit-code-utils-home-dir = { workspace = true }
+orbit-code-utils-rustls-provider = { workspace = true }
 globset = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }

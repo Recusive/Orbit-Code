@@ -3,8 +3,8 @@ use crate::status::StatusAccountDisplay;
 use crate::text_formatting;
 use chrono::DateTime;
 use chrono::Local;
-use codex_core::config::Config;
-use codex_core::project_doc::discover_project_doc_paths;
+use orbit_code_core::config::Config;
+use orbit_code_core::project_doc::discover_project_doc_paths;
 use std::path::Path;
 use unicode_width::UnicodeWidthStr;
 

@@ -27,8 +27,8 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::Weak;
 
-use codex_network_proxy::NetworkProxy;
-use codex_protocol::models::PermissionProfile;
+use orbit_code_network_proxy::NetworkProxy;
+use orbit_code_protocol::models::PermissionProfile;
 use rand::Rng;
 use rand::rng;
 use tokio::sync::Mutex;

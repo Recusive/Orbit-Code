@@ -8,30 +8,30 @@ use app_test_support::ChatGptIdTokenClaims;
 use app_test_support::encode_id_token;
 use app_test_support::write_chatgpt_auth;
 use app_test_support::write_models_cache;
-use codex_app_server_protocol::Account;
-use codex_app_server_protocol::AuthMode;
-use codex_app_server_protocol::CancelLoginAccountParams;
-use codex_app_server_protocol::CancelLoginAccountResponse;
-use codex_app_server_protocol::CancelLoginAccountStatus;
-use codex_app_server_protocol::ChatgptAuthTokensRefreshReason;
-use codex_app_server_protocol::ChatgptAuthTokensRefreshResponse;
-use codex_app_server_protocol::GetAccountParams;
-use codex_app_server_protocol::GetAccountResponse;
-use codex_app_server_protocol::JSONRPCError;
-use codex_app_server_protocol::JSONRPCErrorError;
-use codex_app_server_protocol::JSONRPCNotification;
-use codex_app_server_protocol::JSONRPCResponse;
-use codex_app_server_protocol::LoginAccountResponse;
-use codex_app_server_protocol::LogoutAccountResponse;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::ServerNotification;
-use codex_app_server_protocol::ServerRequest;
-use codex_app_server_protocol::TurnCompletedNotification;
-use codex_app_server_protocol::TurnStatus;
-use codex_core::auth::AuthCredentialsStoreMode;
-use codex_login::login_with_api_key;
-use codex_protocol::account::PlanType as AccountPlanType;
 use core_test_support::responses;
+use orbit_code_app_server_protocol::Account;
+use orbit_code_app_server_protocol::AuthMode;
+use orbit_code_app_server_protocol::CancelLoginAccountParams;
+use orbit_code_app_server_protocol::CancelLoginAccountResponse;
+use orbit_code_app_server_protocol::CancelLoginAccountStatus;
+use orbit_code_app_server_protocol::ChatgptAuthTokensRefreshReason;
+use orbit_code_app_server_protocol::ChatgptAuthTokensRefreshResponse;
+use orbit_code_app_server_protocol::GetAccountParams;
+use orbit_code_app_server_protocol::GetAccountResponse;
+use orbit_code_app_server_protocol::JSONRPCError;
+use orbit_code_app_server_protocol::JSONRPCErrorError;
+use orbit_code_app_server_protocol::JSONRPCNotification;
+use orbit_code_app_server_protocol::JSONRPCResponse;
+use orbit_code_app_server_protocol::LoginAccountResponse;
+use orbit_code_app_server_protocol::LogoutAccountResponse;
+use orbit_code_app_server_protocol::RequestId;
+use orbit_code_app_server_protocol::ServerNotification;
+use orbit_code_app_server_protocol::ServerRequest;
+use orbit_code_app_server_protocol::TurnCompletedNotification;
+use orbit_code_app_server_protocol::TurnStatus;
+use orbit_code_core::auth::AuthCredentialsStoreMode;
+use orbit_code_login::login_with_api_key;
+use orbit_code_protocol::account::PlanType as AccountPlanType;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use serial_test::serial;
@@ -53,8 +53,11 @@ struct CreateConfigTomlParams {
     base_url: Option<String>,
 }
 
-fn create_config_toml(codex_home: &Path, params: CreateConfigTomlParams) -> std::io::Result<()> {
-    let config_toml = codex_home.join("config.toml");
+fn create_config_toml(
+    orbit_code_home: &Path,
+    params: CreateConfigTomlParams,
+) -> std::io::Result<()> {
+    let config_toml = orbit_code_home.join("config.toml");
     let base_url = params
         .base_url
         .unwrap_or_else(|| "http://127.0.0.1:0/v1".to_string());
@@ -100,17 +103,18 @@ stream_max_retries = 0
 
 #[tokio::test]
 async fn logout_account_removes_auth_and_notifies() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path(), CreateConfigTomlParams::default())?;
+    let orbit_code_home = TempDir::new()?;
+    create_config_toml(orbit_code_home.path(), CreateConfigTomlParams::default())?;
 
     login_with_api_key(
-        codex_home.path(),
+        orbit_code_home.path(),
         "sk-test-key",
         AuthCredentialsStoreMode::File,
     )?;
-    assert!(codex_home.path().join("auth.json").exists());
+    assert!(orbit_code_home.path().join("auth.json").exists());
 
-    let mut mcp = McpProcess::new_with_env(codex_home.path(), &[("OPENAI_API_KEY", None)]).await?;
+    let mut mcp =
+        McpProcess::new_with_env(orbit_code_home.path(), &[("OPENAI_API_KEY", None)]).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     let id = mcp.send_logout_account_request().await?;
@@ -137,7 +141,7 @@ async fn logout_account_removes_auth_and_notifies() -> Result<()> {
     assert_eq!(payload.plan_type, None);
 
     assert!(
-        !codex_home.path().join("auth.json").exists(),
+        !orbit_code_home.path().join("auth.json").exists(),
         "auth.json should be deleted"
     );
 
@@ -158,17 +162,17 @@ async fn logout_account_removes_auth_and_notifies() -> Result<()> {
 
 #[tokio::test]
 async fn set_auth_token_updates_account_and_notifies() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let mock_server = MockServer::start().await;
     create_config_toml(
-        codex_home.path(),
+        orbit_code_home.path(),
         CreateConfigTomlParams {
             requires_openai_auth: Some(true),
             base_url: Some(format!("{}/v1", mock_server.uri())),
             ..Default::default()
         },
     )?;
-    write_models_cache(codex_home.path())?;
+    write_models_cache(orbit_code_home.path())?;
 
     let access_token = encode_id_token(
         &ChatGptIdTokenClaims::new()
@@ -177,7 +181,8 @@ async fn set_auth_token_updates_account_and_notifies() -> Result<()> {
             .chatgpt_account_id("org-embedded"),
     )?;
 
-    let mut mcp = McpProcess::new_with_env(codex_home.path(), &[("OPENAI_API_KEY", None)]).await?;
+    let mut mcp =
+        McpProcess::new_with_env(orbit_code_home.path(), &[("OPENAI_API_KEY", None)]).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     let set_id = mcp
@@ -234,15 +239,15 @@ async fn set_auth_token_updates_account_and_notifies() -> Result<()> {
 
 #[tokio::test]
 async fn account_read_refresh_token_is_noop_in_external_mode() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     create_config_toml(
-        codex_home.path(),
+        orbit_code_home.path(),
         CreateConfigTomlParams {
             requires_openai_auth: Some(true),
             ..Default::default()
         },
     )?;
-    write_models_cache(codex_home.path())?;
+    write_models_cache(orbit_code_home.path())?;
 
     let access_token = encode_id_token(
         &ChatGptIdTokenClaims::new()
@@ -251,7 +256,8 @@ async fn account_read_refresh_token_is_noop_in_external_mode() -> Result<()> {
             .chatgpt_account_id("org-embedded"),
     )?;
 
-    let mut mcp = McpProcess::new_with_env(codex_home.path(), &[("OPENAI_API_KEY", None)]).await?;
+    let mut mcp =
+        McpProcess::new_with_env(orbit_code_home.path(), &[("OPENAI_API_KEY", None)]).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     let set_id = mcp
@@ -337,17 +343,17 @@ async fn respond_to_refresh_request(
 #[tokio::test]
 // 401 response triggers account/chatgptAuthTokens/refresh and retries with new tokens.
 async fn external_auth_refreshes_on_unauthorized() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let mock_server = MockServer::start().await;
     create_config_toml(
-        codex_home.path(),
+        orbit_code_home.path(),
         CreateConfigTomlParams {
             requires_openai_auth: Some(true),
             base_url: Some(format!("{}/v1", mock_server.uri())),
             ..Default::default()
         },
     )?;
-    write_models_cache(codex_home.path())?;
+    write_models_cache(orbit_code_home.path())?;
 
     let success_sse = responses::sse(vec![
         responses::ev_response_created("resp-turn"),
@@ -376,7 +382,8 @@ async fn external_auth_refreshes_on_unauthorized() -> Result<()> {
             .chatgpt_account_id("org-refreshed"),
     )?;
 
-    let mut mcp = McpProcess::new_with_env(codex_home.path(), &[("OPENAI_API_KEY", None)]).await?;
+    let mut mcp =
+        McpProcess::new_with_env(orbit_code_home.path(), &[("OPENAI_API_KEY", None)]).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     let set_id = mcp
@@ -400,7 +407,7 @@ async fn external_auth_refreshes_on_unauthorized() -> Result<()> {
     .await??;
 
     let thread_req = mcp
-        .send_thread_start_request(codex_app_server_protocol::ThreadStartParams {
+        .send_thread_start_request(orbit_code_app_server_protocol::ThreadStartParams {
             model: Some("mock-model".to_string()),
             ..Default::default()
         })
@@ -410,12 +417,12 @@ async fn external_auth_refreshes_on_unauthorized() -> Result<()> {
         mcp.read_stream_until_response_message(RequestId::Integer(thread_req)),
     )
     .await??;
-    let thread = to_response::<codex_app_server_protocol::ThreadStartResponse>(thread_resp)?;
+    let thread = to_response::<orbit_code_app_server_protocol::ThreadStartResponse>(thread_resp)?;
 
     let turn_req = mcp
-        .send_turn_start_request(codex_app_server_protocol::TurnStartParams {
+        .send_turn_start_request(orbit_code_app_server_protocol::TurnStartParams {
             thread_id: thread.thread.id,
-            input: vec![codex_app_server_protocol::UserInput::Text {
+            input: vec![orbit_code_app_server_protocol::UserInput::Text {
                 text: "Hello".to_string(),
                 text_elements: Vec::new(),
             }],
@@ -457,17 +464,17 @@ async fn external_auth_refreshes_on_unauthorized() -> Result<()> {
 #[tokio::test]
 // Client returns JSON-RPC error to refresh; turn fails.
 async fn external_auth_refresh_error_fails_turn() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let mock_server = MockServer::start().await;
     create_config_toml(
-        codex_home.path(),
+        orbit_code_home.path(),
         CreateConfigTomlParams {
             requires_openai_auth: Some(true),
             base_url: Some(format!("{}/v1", mock_server.uri())),
             ..Default::default()
         },
     )?;
-    write_models_cache(codex_home.path())?;
+    write_models_cache(orbit_code_home.path())?;
 
     let unauthorized = ResponseTemplate::new(401).set_body_json(json!({
         "error": { "message": "unauthorized" }
@@ -482,7 +489,8 @@ async fn external_auth_refresh_error_fails_turn() -> Result<()> {
             .chatgpt_account_id("org-initial"),
     )?;
 
-    let mut mcp = McpProcess::new_with_env(codex_home.path(), &[("OPENAI_API_KEY", None)]).await?;
+    let mut mcp =
+        McpProcess::new_with_env(orbit_code_home.path(), &[("OPENAI_API_KEY", None)]).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     let set_id = mcp
@@ -506,7 +514,7 @@ async fn external_auth_refresh_error_fails_turn() -> Result<()> {
     .await??;
 
     let thread_req = mcp
-        .send_thread_start_request(codex_app_server_protocol::ThreadStartParams {
+        .send_thread_start_request(orbit_code_app_server_protocol::ThreadStartParams {
             model: Some("mock-model".to_string()),
             ..Default::default()
         })
@@ -516,12 +524,12 @@ async fn external_auth_refresh_error_fails_turn() -> Result<()> {
         mcp.read_stream_until_response_message(RequestId::Integer(thread_req)),
     )
     .await??;
-    let thread = to_response::<codex_app_server_protocol::ThreadStartResponse>(thread_resp)?;
+    let thread = to_response::<orbit_code_app_server_protocol::ThreadStartResponse>(thread_resp)?;
 
     let turn_req = mcp
-        .send_turn_start_request(codex_app_server_protocol::TurnStartParams {
+        .send_turn_start_request(orbit_code_app_server_protocol::TurnStartParams {
             thread_id: thread.thread.id.clone(),
-            input: vec![codex_app_server_protocol::UserInput::Text {
+            input: vec![orbit_code_app_server_protocol::UserInput::Text {
                 text: "Hello".to_string(),
                 text_elements: Vec::new(),
             }],
@@ -572,10 +580,10 @@ async fn external_auth_refresh_error_fails_turn() -> Result<()> {
 #[tokio::test]
 // Refresh returns tokens for the wrong workspace; turn fails.
 async fn external_auth_refresh_mismatched_workspace_fails_turn() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let mock_server = MockServer::start().await;
     create_config_toml(
-        codex_home.path(),
+        orbit_code_home.path(),
         CreateConfigTomlParams {
             forced_workspace_id: Some("org-expected".to_string()),
             requires_openai_auth: Some(true),
@@ -583,7 +591,7 @@ async fn external_auth_refresh_mismatched_workspace_fails_turn() -> Result<()> {
             ..Default::default()
         },
     )?;
-    write_models_cache(codex_home.path())?;
+    write_models_cache(orbit_code_home.path())?;
 
     let unauthorized = ResponseTemplate::new(401).set_body_json(json!({
         "error": { "message": "unauthorized" }
@@ -604,7 +612,8 @@ async fn external_auth_refresh_mismatched_workspace_fails_turn() -> Result<()> {
             .chatgpt_account_id("org-other"),
     )?;
 
-    let mut mcp = McpProcess::new_with_env(codex_home.path(), &[("OPENAI_API_KEY", None)]).await?;
+    let mut mcp =
+        McpProcess::new_with_env(orbit_code_home.path(), &[("OPENAI_API_KEY", None)]).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     let set_id = mcp
@@ -628,7 +637,7 @@ async fn external_auth_refresh_mismatched_workspace_fails_turn() -> Result<()> {
     .await??;
 
     let thread_req = mcp
-        .send_thread_start_request(codex_app_server_protocol::ThreadStartParams {
+        .send_thread_start_request(orbit_code_app_server_protocol::ThreadStartParams {
             model: Some("mock-model".to_string()),
             ..Default::default()
         })
@@ -638,12 +647,12 @@ async fn external_auth_refresh_mismatched_workspace_fails_turn() -> Result<()> {
         mcp.read_stream_until_response_message(RequestId::Integer(thread_req)),
     )
     .await??;
-    let thread = to_response::<codex_app_server_protocol::ThreadStartResponse>(thread_resp)?;
+    let thread = to_response::<orbit_code_app_server_protocol::ThreadStartResponse>(thread_resp)?;
 
     let turn_req = mcp
-        .send_turn_start_request(codex_app_server_protocol::TurnStartParams {
+        .send_turn_start_request(orbit_code_app_server_protocol::TurnStartParams {
             thread_id: thread.thread.id.clone(),
-            input: vec![codex_app_server_protocol::UserInput::Text {
+            input: vec![orbit_code_app_server_protocol::UserInput::Text {
                 text: "Hello".to_string(),
                 text_elements: Vec::new(),
             }],
@@ -694,17 +703,17 @@ async fn external_auth_refresh_mismatched_workspace_fails_turn() -> Result<()> {
 #[tokio::test]
 // Refresh returns a malformed access token; turn fails.
 async fn external_auth_refresh_invalid_access_token_fails_turn() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let mock_server = MockServer::start().await;
     create_config_toml(
-        codex_home.path(),
+        orbit_code_home.path(),
         CreateConfigTomlParams {
             requires_openai_auth: Some(true),
             base_url: Some(format!("{}/v1", mock_server.uri())),
             ..Default::default()
         },
     )?;
-    write_models_cache(codex_home.path())?;
+    write_models_cache(orbit_code_home.path())?;
 
     let unauthorized = ResponseTemplate::new(401).set_body_json(json!({
         "error": { "message": "unauthorized" }
@@ -719,7 +728,8 @@ async fn external_auth_refresh_invalid_access_token_fails_turn() -> Result<()> {
             .chatgpt_account_id("org-initial"),
     )?;
 
-    let mut mcp = McpProcess::new_with_env(codex_home.path(), &[("OPENAI_API_KEY", None)]).await?;
+    let mut mcp =
+        McpProcess::new_with_env(orbit_code_home.path(), &[("OPENAI_API_KEY", None)]).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     let set_id = mcp
@@ -743,7 +753,7 @@ async fn external_auth_refresh_invalid_access_token_fails_turn() -> Result<()> {
     .await??;
 
     let thread_req = mcp
-        .send_thread_start_request(codex_app_server_protocol::ThreadStartParams {
+        .send_thread_start_request(orbit_code_app_server_protocol::ThreadStartParams {
             model: Some("mock-model".to_string()),
             ..Default::default()
         })
@@ -753,12 +763,12 @@ async fn external_auth_refresh_invalid_access_token_fails_turn() -> Result<()> {
         mcp.read_stream_until_response_message(RequestId::Integer(thread_req)),
     )
     .await??;
-    let thread = to_response::<codex_app_server_protocol::ThreadStartResponse>(thread_resp)?;
+    let thread = to_response::<orbit_code_app_server_protocol::ThreadStartResponse>(thread_resp)?;
 
     let turn_req = mcp
-        .send_turn_start_request(codex_app_server_protocol::TurnStartParams {
+        .send_turn_start_request(orbit_code_app_server_protocol::TurnStartParams {
             thread_id: thread.thread.id.clone(),
-            input: vec![codex_app_server_protocol::UserInput::Text {
+            input: vec![orbit_code_app_server_protocol::UserInput::Text {
                 text: "Hello".to_string(),
                 text_elements: Vec::new(),
             }],
@@ -808,10 +818,10 @@ async fn external_auth_refresh_invalid_access_token_fails_turn() -> Result<()> {
 
 #[tokio::test]
 async fn login_account_api_key_succeeds_and_notifies() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path(), CreateConfigTomlParams::default())?;
+    let orbit_code_home = TempDir::new()?;
+    create_config_toml(orbit_code_home.path(), CreateConfigTomlParams::default())?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     let req_id = mcp
@@ -850,22 +860,22 @@ async fn login_account_api_key_succeeds_and_notifies() -> Result<()> {
     pretty_assertions::assert_eq!(payload.auth_mode, Some(AuthMode::ApiKey));
     pretty_assertions::assert_eq!(payload.plan_type, None);
 
-    assert!(codex_home.path().join("auth.json").exists());
+    assert!(orbit_code_home.path().join("auth.json").exists());
     Ok(())
 }
 
 #[tokio::test]
 async fn login_account_api_key_rejected_when_forced_chatgpt() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     create_config_toml(
-        codex_home.path(),
+        orbit_code_home.path(),
         CreateConfigTomlParams {
             forced_method: Some("chatgpt".to_string()),
             ..Default::default()
         },
     )?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     let request_id = mcp
@@ -886,16 +896,16 @@ async fn login_account_api_key_rejected_when_forced_chatgpt() -> Result<()> {
 
 #[tokio::test]
 async fn login_account_chatgpt_rejected_when_forced_api() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     create_config_toml(
-        codex_home.path(),
+        orbit_code_home.path(),
         CreateConfigTomlParams {
             forced_method: Some("api".to_string()),
             ..Default::default()
         },
     )?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     let request_id = mcp.send_login_account_chatgpt_request().await?;
@@ -916,10 +926,10 @@ async fn login_account_chatgpt_rejected_when_forced_api() -> Result<()> {
 // Serialize tests that launch the login server since it binds to a fixed port.
 #[serial(login_port)]
 async fn login_account_chatgpt_start_can_be_cancelled() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path(), CreateConfigTomlParams::default())?;
+    let orbit_code_home = TempDir::new()?;
+    create_config_toml(orbit_code_home.path(), CreateConfigTomlParams::default())?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     let request_id = mcp.send_login_account_chatgpt_request().await?;
@@ -982,10 +992,10 @@ async fn login_account_chatgpt_start_can_be_cancelled() -> Result<()> {
 // Serialize tests that launch the login server since it binds to a fixed port.
 #[serial(login_port)]
 async fn set_auth_token_cancels_active_chatgpt_login() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    create_config_toml(codex_home.path(), CreateConfigTomlParams::default())?;
+    let orbit_code_home = TempDir::new()?;
+    create_config_toml(orbit_code_home.path(), CreateConfigTomlParams::default())?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     // Initiate the ChatGPT login flow
@@ -1051,16 +1061,16 @@ async fn set_auth_token_cancels_active_chatgpt_login() -> Result<()> {
 // Serialize tests that launch the login server since it binds to a fixed port.
 #[serial(login_port)]
 async fn login_account_chatgpt_includes_forced_workspace_query_param() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     create_config_toml(
-        codex_home.path(),
+        orbit_code_home.path(),
         CreateConfigTomlParams {
             forced_workspace_id: Some("ws-forced".to_string()),
             ..Default::default()
         },
     )?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     let request_id = mcp.send_login_account_chatgpt_request().await?;
@@ -1083,16 +1093,17 @@ async fn login_account_chatgpt_includes_forced_workspace_query_param() -> Result
 
 #[tokio::test]
 async fn get_account_no_auth() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     create_config_toml(
-        codex_home.path(),
+        orbit_code_home.path(),
         CreateConfigTomlParams {
             requires_openai_auth: Some(true),
             ..Default::default()
         },
     )?;
 
-    let mut mcp = McpProcess::new_with_env(codex_home.path(), &[("OPENAI_API_KEY", None)]).await?;
+    let mut mcp =
+        McpProcess::new_with_env(orbit_code_home.path(), &[("OPENAI_API_KEY", None)]).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     let params = GetAccountParams {
@@ -1114,16 +1125,16 @@ async fn get_account_no_auth() -> Result<()> {
 
 #[tokio::test]
 async fn get_account_with_api_key() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     create_config_toml(
-        codex_home.path(),
+        orbit_code_home.path(),
         CreateConfigTomlParams {
             requires_openai_auth: Some(true),
             ..Default::default()
         },
     )?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     let req_id = mcp
@@ -1158,16 +1169,16 @@ async fn get_account_with_api_key() -> Result<()> {
 
 #[tokio::test]
 async fn get_account_when_auth_not_required() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     create_config_toml(
-        codex_home.path(),
+        orbit_code_home.path(),
         CreateConfigTomlParams {
             requires_openai_auth: Some(false),
             ..Default::default()
         },
     )?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     let params = GetAccountParams {
@@ -1192,23 +1203,24 @@ async fn get_account_when_auth_not_required() -> Result<()> {
 
 #[tokio::test]
 async fn get_account_with_chatgpt() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     create_config_toml(
-        codex_home.path(),
+        orbit_code_home.path(),
         CreateConfigTomlParams {
             requires_openai_auth: Some(true),
             ..Default::default()
         },
     )?;
     write_chatgpt_auth(
-        codex_home.path(),
+        orbit_code_home.path(),
         ChatGptAuthFixture::new("access-chatgpt")
             .email("user@example.com")
             .plan_type("pro"),
         AuthCredentialsStoreMode::File,
     )?;
 
-    let mut mcp = McpProcess::new_with_env(codex_home.path(), &[("OPENAI_API_KEY", None)]).await?;
+    let mut mcp =
+        McpProcess::new_with_env(orbit_code_home.path(), &[("OPENAI_API_KEY", None)]).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     let params = GetAccountParams {
@@ -1236,21 +1248,22 @@ async fn get_account_with_chatgpt() -> Result<()> {
 
 #[tokio::test]
 async fn get_account_with_chatgpt_missing_plan_claim_returns_unknown() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     create_config_toml(
-        codex_home.path(),
+        orbit_code_home.path(),
         CreateConfigTomlParams {
             requires_openai_auth: Some(true),
             ..Default::default()
         },
     )?;
     write_chatgpt_auth(
-        codex_home.path(),
+        orbit_code_home.path(),
         ChatGptAuthFixture::new("access-chatgpt").email("user@example.com"),
         AuthCredentialsStoreMode::File,
     )?;
 
-    let mut mcp = McpProcess::new_with_env(codex_home.path(), &[("OPENAI_API_KEY", None)]).await?;
+    let mut mcp =
+        McpProcess::new_with_env(orbit_code_home.path(), &[("OPENAI_API_KEY", None)]).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     let params = GetAccountParams {

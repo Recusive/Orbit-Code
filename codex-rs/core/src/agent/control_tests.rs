@@ -10,17 +10,17 @@ use crate::config_loader::LoaderOverrides;
 use crate::contextual_user_message::SUBAGENT_NOTIFICATION_OPEN_TAG;
 use crate::features::Feature;
 use assert_matches::assert_matches;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::protocol::ErrorEvent;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::SubAgentSource;
-use codex_protocol::protocol::TurnAbortReason;
-use codex_protocol::protocol::TurnAbortedEvent;
-use codex_protocol::protocol::TurnCompleteEvent;
-use codex_protocol::protocol::TurnStartedEvent;
+use orbit_code_protocol::config_types::ModeKind;
+use orbit_code_protocol::models::ContentItem;
+use orbit_code_protocol::models::ResponseItem;
+use orbit_code_protocol::protocol::ErrorEvent;
+use orbit_code_protocol::protocol::EventMsg;
+use orbit_code_protocol::protocol::SessionSource;
+use orbit_code_protocol::protocol::SubAgentSource;
+use orbit_code_protocol::protocol::TurnAbortReason;
+use orbit_code_protocol::protocol::TurnAbortedEvent;
+use orbit_code_protocol::protocol::TurnCompleteEvent;
+use orbit_code_protocol::protocol::TurnStartedEvent;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 use tokio::time::Duration;
@@ -33,7 +33,7 @@ async fn test_config_with_cli_overrides(
 ) -> (TempDir, Config) {
     let home = TempDir::new().expect("create temp dir");
     let config = ConfigBuilder::default()
-        .codex_home(home.path().to_path_buf())
+        .orbit_code_home(home.path().to_path_buf())
         .cli_overrides(cli_overrides)
         .loader_overrides(LoaderOverrides {
             #[cfg(target_os = "macos")]
@@ -71,7 +71,7 @@ impl AgentControlHarness {
         let manager = ThreadManager::with_models_provider_and_home_for_tests(
             CodexAuth::from_api_key("dummy"),
             config.model_provider.clone(),
-            config.codex_home.clone(),
+            config.orbit_code_home.clone(),
         );
         let control = manager.agent_control();
         Self {
@@ -193,7 +193,7 @@ async fn on_event_updates_status_from_task_complete() {
 async fn on_event_updates_status_from_error() {
     let status = agent_status_from_event(&EventMsg::Error(ErrorEvent {
         message: "boom".to_string(),
-        codex_error_info: None,
+        orbit_code_error_info: None,
     }));
 
     let expected = AgentStatus::Errored("boom".to_string());
@@ -626,7 +626,7 @@ async fn spawn_agent_respects_max_threads_limit() {
     let manager = ThreadManager::with_models_provider_and_home_for_tests(
         CodexAuth::from_api_key("dummy"),
         config.model_provider.clone(),
-        config.codex_home.clone(),
+        config.orbit_code_home.clone(),
     );
     let control = manager.agent_control();
 
@@ -669,7 +669,7 @@ async fn spawn_agent_releases_slot_after_shutdown() {
     let manager = ThreadManager::with_models_provider_and_home_for_tests(
         CodexAuth::from_api_key("dummy"),
         config.model_provider.clone(),
-        config.codex_home.clone(),
+        config.orbit_code_home.clone(),
     );
     let control = manager.agent_control();
 
@@ -703,7 +703,7 @@ async fn spawn_agent_limit_shared_across_clones() {
     let manager = ThreadManager::with_models_provider_and_home_for_tests(
         CodexAuth::from_api_key("dummy"),
         config.model_provider.clone(),
-        config.codex_home.clone(),
+        config.orbit_code_home.clone(),
     );
     let control = manager.agent_control();
     let cloned = control.clone();
@@ -739,7 +739,7 @@ async fn resume_agent_respects_max_threads_limit() {
     let manager = ThreadManager::with_models_provider_and_home_for_tests(
         CodexAuth::from_api_key("dummy"),
         config.model_provider.clone(),
-        config.codex_home.clone(),
+        config.orbit_code_home.clone(),
     );
     let control = manager.agent_control();
 
@@ -786,7 +786,7 @@ async fn resume_agent_releases_slot_after_resume_failure() {
     let manager = ThreadManager::with_models_provider_and_home_for_tests(
         CodexAuth::from_api_key("dummy"),
         config.model_provider.clone(),
-        config.codex_home.clone(),
+        config.orbit_code_home.clone(),
     );
     let control = manager.agent_control();
 
@@ -971,7 +971,7 @@ async fn resume_thread_subagent_restores_stored_nickname_and_role() {
     let manager = ThreadManager::with_models_provider_and_home_for_tests(
         CodexAuth::from_api_key("dummy"),
         config.model_provider.clone(),
-        config.codex_home.clone(),
+        config.orbit_code_home.clone(),
     );
     let control = manager.agent_control();
     let harness = AgentControlHarness {

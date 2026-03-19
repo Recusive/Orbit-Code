@@ -1,20 +1,20 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
 
-use codex_protocol::ThreadId;
-use codex_protocol::config_types::ForcedLoginMethod;
-use codex_protocol::config_types::ReasoningSummary;
-use codex_protocol::config_types::SandboxMode;
-use codex_protocol::config_types::Verbosity;
-use codex_protocol::openai_models::ReasoningEffort;
-use codex_protocol::parse_command::ParsedCommand;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::FileChange;
-use codex_protocol::protocol::ReviewDecision;
-use codex_protocol::protocol::SandboxPolicy;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::TurnAbortReason;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::config_types::ForcedLoginMethod;
+use orbit_code_protocol::config_types::ReasoningSummary;
+use orbit_code_protocol::config_types::SandboxMode;
+use orbit_code_protocol::config_types::Verbosity;
+use orbit_code_protocol::openai_models::ReasoningEffort;
+use orbit_code_protocol::parse_command::ParsedCommand;
+use orbit_code_protocol::protocol::AskForApproval;
+use orbit_code_protocol::protocol::FileChange;
+use orbit_code_protocol::protocol::ReviewDecision;
+use orbit_code_protocol::protocol::SandboxPolicy;
+use orbit_code_protocol::protocol::SessionSource;
+use orbit_code_protocol::protocol::TurnAbortReason;
+use orbit_code_utils_absolute_path::AbsolutePathBuf;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;
@@ -123,8 +123,8 @@ pub struct GitDiffToRemoteResponse {
 #[serde(rename_all = "camelCase")]
 pub struct ApplyPatchApprovalParams {
     pub conversation_id: ThreadId,
-    /// Use to correlate this with [codex_protocol::protocol::PatchApplyBeginEvent]
-    /// and [codex_protocol::protocol::PatchApplyEndEvent].
+    /// Use to correlate this with [orbit_code_protocol::protocol::PatchApplyBeginEvent]
+    /// and [orbit_code_protocol::protocol::PatchApplyEndEvent].
     pub call_id: String,
     pub file_changes: HashMap<PathBuf, FileChange>,
     /// Optional explanatory reason (e.g. request for extra write access).
@@ -144,8 +144,8 @@ pub struct ApplyPatchApprovalResponse {
 #[serde(rename_all = "camelCase")]
 pub struct ExecCommandApprovalParams {
     pub conversation_id: ThreadId,
-    /// Use to correlate this with [codex_protocol::protocol::ExecCommandBeginEvent]
-    /// and [codex_protocol::protocol::ExecCommandEndEvent].
+    /// Use to correlate this with [orbit_code_protocol::protocol::ExecCommandBeginEvent]
+    /// and [orbit_code_protocol::protocol::ExecCommandEndEvent].
     pub call_id: String,
     /// Identifier for this specific approval callback.
     pub approval_id: Option<String>,

@@ -47,7 +47,7 @@ from .retry import retry_on_overload
 
 ModelT = TypeVar("ModelT", bound=BaseModel)
 ApprovalHandler = Callable[[str, JsonObject | None], JsonObject]
-RUNTIME_PKG_NAME = "codex-cli-bin"
+RUNTIME_PKG_NAME = "orbit-code-cli-bin"
 
 
 def _params_dict(
@@ -77,64 +77,64 @@ def _params_dict(
     raise TypeError(f"Expected generated params model or dict, got {type(params).__name__}")
 
 
-def _installed_codex_path() -> Path:
+def _installed_orbit_code_path() -> Path:
     try:
-        from codex_cli_bin import bundled_codex_path
+        from orbit_code_cli_bin import bundled_orbit_code_path
     except ImportError as exc:
         raise FileNotFoundError(
-            "Unable to locate the pinned Codex runtime. Install the published SDK build "
-            f"with its {RUNTIME_PKG_NAME} dependency, or set AppServerConfig.codex_bin "
+            "Unable to locate the pinned Orbit Code runtime. Install the published SDK build "
+            f"with its {RUNTIME_PKG_NAME} dependency, or set AppServerConfig.orbit_code_bin "
             "explicitly."
         ) from exc
 
-    return bundled_codex_path()
+    return bundled_orbit_code_path()
 
 
 @dataclass(frozen=True)
 class CodexBinResolverOps:
-    installed_codex_path: Callable[[], Path]
+    installed_orbit_code_path: Callable[[], Path]
     path_exists: Callable[[Path], bool]
 
 
-def _default_codex_bin_resolver_ops() -> CodexBinResolverOps:
+def _default_orbit_code_bin_resolver_ops() -> CodexBinResolverOps:
     return CodexBinResolverOps(
-        installed_codex_path=_installed_codex_path,
+        installed_orbit_code_path=_installed_orbit_code_path,
         path_exists=lambda path: path.exists(),
     )
 
 
-def resolve_codex_bin(config: "AppServerConfig", ops: CodexBinResolverOps) -> Path:
-    if config.codex_bin is not None:
-        codex_bin = Path(config.codex_bin)
-        if not ops.path_exists(codex_bin):
+def resolve_orbit_code_bin(config: "AppServerConfig", ops: CodexBinResolverOps) -> Path:
+    if config.orbit_code_bin is not None:
+        orbit_code_bin = Path(config.orbit_code_bin)
+        if not ops.path_exists(orbit_code_bin):
             raise FileNotFoundError(
-                f"Codex binary not found at {codex_bin}. Set AppServerConfig.codex_bin "
+                f"Orbit Code binary not found at {orbit_code_bin}. Set AppServerConfig.orbit_code_bin "
                 "to a valid binary path."
             )
-        return codex_bin
+        return orbit_code_bin
 
-    return ops.installed_codex_path()
+    return ops.installed_orbit_code_path()
 
 
-def _resolve_codex_bin(config: "AppServerConfig") -> Path:
-    return resolve_codex_bin(config, _default_codex_bin_resolver_ops())
+def _resolve_orbit_code_bin(config: "AppServerConfig") -> Path:
+    return resolve_orbit_code_bin(config, _default_orbit_code_bin_resolver_ops())
 
 
 @dataclass(slots=True)
 class AppServerConfig:
-    codex_bin: str | None = None
+    orbit_code_bin: str | None = None
     launch_args_override: tuple[str, ...] | None = None
     config_overrides: tuple[str, ...] = ()
     cwd: str | None = None
     env: dict[str, str] | None = None
-    client_name: str = "codex_python_sdk"
-    client_title: str = "Codex Python SDK"
+    client_name: str = "orbit_code_python_sdk"
+    client_title: str = "Orbit Code Python SDK"
     client_version: str = "0.2.0"
     experimental_api: bool = True
 
 
 class AppServerClient:
-    """Synchronous typed JSON-RPC client for `codex app-server` over stdio."""
+    """Synchronous typed JSON-RPC client for `orbit-code app-server` over stdio."""
 
     def __init__(
         self,
@@ -165,8 +165,8 @@ class AppServerClient:
         if self.config.launch_args_override is not None:
             args = list(self.config.launch_args_override)
         else:
-            codex_bin = _resolve_codex_bin(self.config)
-            args = [str(codex_bin)]
+            orbit_code_bin = _resolve_orbit_code_bin(self.config)
+            args = [str(orbit_code_bin)]
             for kv in self.config.config_overrides:
                 args.extend(["--config", kv])
             args.extend(["app-server", "--listen", "stdio://"])
@@ -536,5 +536,5 @@ class AppServerClient:
         return message
 
 
-def default_codex_home() -> str:
-    return str(Path.home() / ".codex")
+def default_orbit_code_home() -> str:
+    return str(Path.home() / ".orbit")

@@ -5,9 +5,9 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::RwLock;
 
-use codex_app_server_protocol::ConfigLayerSource;
-use codex_protocol::protocol::SkillScope;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use orbit_code_app_server_protocol::ConfigLayerSource;
+use orbit_code_protocol::protocol::SkillScope;
+use orbit_code_utils_absolute_path::AbsolutePathBuf;
 use toml::Value as TomlValue;
 use tracing::info;
 use tracing::warn;
@@ -28,7 +28,7 @@ use crate::skills::system::install_system_skills;
 use crate::skills::system::uninstall_system_skills;
 
 pub struct SkillsManager {
-    codex_home: PathBuf,
+    orbit_code_home: PathBuf,
     plugins_manager: Arc<PluginsManager>,
     cache_by_cwd: RwLock<HashMap<PathBuf, SkillLoadOutcome>>,
     cache_by_config: RwLock<HashMap<ConfigSkillsCacheKey, SkillLoadOutcome>>,
@@ -36,12 +36,12 @@ pub struct SkillsManager {
 
 impl SkillsManager {
     pub fn new(
-        codex_home: PathBuf,
+        orbit_code_home: PathBuf,
         plugins_manager: Arc<PluginsManager>,
         bundled_skills_enabled: bool,
     ) -> Self {
         let manager = Self {
-            codex_home,
+            orbit_code_home,
             plugins_manager,
             cache_by_cwd: RwLock::new(HashMap::new()),
             cache_by_config: RwLock::new(HashMap::new()),
@@ -49,8 +49,8 @@ impl SkillsManager {
         if !bundled_skills_enabled {
             // The loader caches bundled skills under `skills/.system`. Clearing that directory is
             // best-effort cleanup; root selection still enforces the config even if removal fails.
-            uninstall_system_skills(&manager.codex_home);
-        } else if let Err(err) = install_system_skills(&manager.codex_home) {
+            uninstall_system_skills(&manager.orbit_code_home);
+        } else if let Err(err) = install_system_skills(&manager.orbit_code_home) {
             tracing::error!("failed to install system skills: {err}");
         }
         manager
@@ -133,7 +133,7 @@ impl SkillsManager {
 
         let cli_overrides: Vec<(String, TomlValue)> = Vec::new();
         let config_layer_stack = match load_config_layers_state(
-            &self.codex_home,
+            &self.orbit_code_home,
             Some(cwd_abs),
             &cli_overrides,
             LoaderOverrides::default(),

@@ -7,9 +7,9 @@ from types import SimpleNamespace
 
 import pytest
 
-import codex_app_server.api as public_api_module
-from codex_app_server.client import AppServerClient
-from codex_app_server.generated.v2_all import (
+import orbit_code_app_server.api as public_api_module
+from orbit_code_app_server.client import AppServerClient
+from orbit_code_app_server.generated.v2_all import (
     AgentMessageDeltaNotification,
     ItemCompletedNotification,
     MessagePhase,
@@ -17,8 +17,8 @@ from codex_app_server.generated.v2_all import (
     TurnCompletedNotification,
     TurnStatus,
 )
-from codex_app_server.models import InitializeResponse, Notification
-from codex_app_server.api import (
+from orbit_code_app_server.models import InitializeResponse, Notification
+from orbit_code_app_server.api import (
     AsyncCodex,
     AsyncThread,
     AsyncTurnHandle,
@@ -133,7 +133,7 @@ def _token_usage_notification(
     )
 
 
-def test_codex_init_failure_closes_client(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_orbit_code_init_failure_closes_client(monkeypatch: pytest.MonkeyPatch) -> None:
     closed: list[bool] = []
 
     class FakeClient:
@@ -158,7 +158,7 @@ def test_codex_init_failure_closes_client(monkeypatch: pytest.MonkeyPatch) -> No
     assert closed == [True]
 
 
-def test_async_codex_init_failure_closes_client() -> None:
+def test_async_orbit_code_init_failure_closes_client() -> None:
     async def scenario() -> None:
         codex = AsyncCodex()
         close_calls = 0
@@ -187,7 +187,7 @@ def test_async_codex_init_failure_closes_client() -> None:
     asyncio.run(scenario())
 
 
-def test_async_codex_initializes_only_once_under_concurrency() -> None:
+def test_async_orbit_code_initializes_only_once_under_concurrency() -> None:
     async def scenario() -> None:
         codex = AsyncCodex()
         start_calls = 0

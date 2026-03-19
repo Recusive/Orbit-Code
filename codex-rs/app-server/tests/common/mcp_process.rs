@@ -11,73 +11,73 @@ use tokio::process::ChildStdin;
 use tokio::process::ChildStdout;
 
 use anyhow::Context;
-use codex_app_server_protocol::AppsListParams;
-use codex_app_server_protocol::CancelLoginAccountParams;
-use codex_app_server_protocol::ClientInfo;
-use codex_app_server_protocol::ClientNotification;
-use codex_app_server_protocol::CollaborationModeListParams;
-use codex_app_server_protocol::CommandExecParams;
-use codex_app_server_protocol::CommandExecResizeParams;
-use codex_app_server_protocol::CommandExecTerminateParams;
-use codex_app_server_protocol::CommandExecWriteParams;
-use codex_app_server_protocol::ConfigBatchWriteParams;
-use codex_app_server_protocol::ConfigReadParams;
-use codex_app_server_protocol::ConfigValueWriteParams;
-use codex_app_server_protocol::ExperimentalFeatureListParams;
-use codex_app_server_protocol::FeedbackUploadParams;
-use codex_app_server_protocol::FsCopyParams;
-use codex_app_server_protocol::FsCreateDirectoryParams;
-use codex_app_server_protocol::FsGetMetadataParams;
-use codex_app_server_protocol::FsReadDirectoryParams;
-use codex_app_server_protocol::FsReadFileParams;
-use codex_app_server_protocol::FsRemoveParams;
-use codex_app_server_protocol::FsWriteFileParams;
-use codex_app_server_protocol::GetAccountParams;
-use codex_app_server_protocol::GetAuthStatusParams;
-use codex_app_server_protocol::GetConversationSummaryParams;
-use codex_app_server_protocol::InitializeCapabilities;
-use codex_app_server_protocol::InitializeParams;
-use codex_app_server_protocol::JSONRPCError;
-use codex_app_server_protocol::JSONRPCErrorError;
-use codex_app_server_protocol::JSONRPCMessage;
-use codex_app_server_protocol::JSONRPCNotification;
-use codex_app_server_protocol::JSONRPCRequest;
-use codex_app_server_protocol::JSONRPCResponse;
-use codex_app_server_protocol::LoginAccountParams;
-use codex_app_server_protocol::MockExperimentalMethodParams;
-use codex_app_server_protocol::ModelListParams;
-use codex_app_server_protocol::PluginInstallParams;
-use codex_app_server_protocol::PluginListParams;
-use codex_app_server_protocol::PluginReadParams;
-use codex_app_server_protocol::PluginUninstallParams;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::ReviewStartParams;
-use codex_app_server_protocol::ServerRequest;
-use codex_app_server_protocol::SkillsListParams;
-use codex_app_server_protocol::ThreadArchiveParams;
-use codex_app_server_protocol::ThreadCompactStartParams;
-use codex_app_server_protocol::ThreadForkParams;
-use codex_app_server_protocol::ThreadListParams;
-use codex_app_server_protocol::ThreadLoadedListParams;
-use codex_app_server_protocol::ThreadMetadataUpdateParams;
-use codex_app_server_protocol::ThreadReadParams;
-use codex_app_server_protocol::ThreadRealtimeAppendAudioParams;
-use codex_app_server_protocol::ThreadRealtimeAppendTextParams;
-use codex_app_server_protocol::ThreadRealtimeStartParams;
-use codex_app_server_protocol::ThreadRealtimeStopParams;
-use codex_app_server_protocol::ThreadResumeParams;
-use codex_app_server_protocol::ThreadRollbackParams;
-use codex_app_server_protocol::ThreadSetNameParams;
-use codex_app_server_protocol::ThreadShellCommandParams;
-use codex_app_server_protocol::ThreadStartParams;
-use codex_app_server_protocol::ThreadUnarchiveParams;
-use codex_app_server_protocol::ThreadUnsubscribeParams;
-use codex_app_server_protocol::TurnCompletedNotification;
-use codex_app_server_protocol::TurnInterruptParams;
-use codex_app_server_protocol::TurnStartParams;
-use codex_app_server_protocol::TurnSteerParams;
-use codex_app_server_protocol::WindowsSandboxSetupStartParams;
-use codex_core::default_client::CODEX_INTERNAL_ORIGINATOR_OVERRIDE_ENV_VAR;
+use orbit_code_app_server_protocol::AppsListParams;
+use orbit_code_app_server_protocol::CancelLoginAccountParams;
+use orbit_code_app_server_protocol::ClientInfo;
+use orbit_code_app_server_protocol::ClientNotification;
+use orbit_code_app_server_protocol::CollaborationModeListParams;
+use orbit_code_app_server_protocol::CommandExecParams;
+use orbit_code_app_server_protocol::CommandExecResizeParams;
+use orbit_code_app_server_protocol::CommandExecTerminateParams;
+use orbit_code_app_server_protocol::CommandExecWriteParams;
+use orbit_code_app_server_protocol::ConfigBatchWriteParams;
+use orbit_code_app_server_protocol::ConfigReadParams;
+use orbit_code_app_server_protocol::ConfigValueWriteParams;
+use orbit_code_app_server_protocol::ExperimentalFeatureListParams;
+use orbit_code_app_server_protocol::FeedbackUploadParams;
+use orbit_code_app_server_protocol::FsCopyParams;
+use orbit_code_app_server_protocol::FsCreateDirectoryParams;
+use orbit_code_app_server_protocol::FsGetMetadataParams;
+use orbit_code_app_server_protocol::FsReadDirectoryParams;
+use orbit_code_app_server_protocol::FsReadFileParams;
+use orbit_code_app_server_protocol::FsRemoveParams;
+use orbit_code_app_server_protocol::FsWriteFileParams;
+use orbit_code_app_server_protocol::GetAccountParams;
+use orbit_code_app_server_protocol::GetAuthStatusParams;
+use orbit_code_app_server_protocol::GetConversationSummaryParams;
+use orbit_code_app_server_protocol::InitializeCapabilities;
+use orbit_code_app_server_protocol::InitializeParams;
+use orbit_code_app_server_protocol::JSONRPCError;
+use orbit_code_app_server_protocol::JSONRPCErrorError;
+use orbit_code_app_server_protocol::JSONRPCMessage;
+use orbit_code_app_server_protocol::JSONRPCNotification;
+use orbit_code_app_server_protocol::JSONRPCRequest;
+use orbit_code_app_server_protocol::JSONRPCResponse;
+use orbit_code_app_server_protocol::LoginAccountParams;
+use orbit_code_app_server_protocol::MockExperimentalMethodParams;
+use orbit_code_app_server_protocol::ModelListParams;
+use orbit_code_app_server_protocol::PluginInstallParams;
+use orbit_code_app_server_protocol::PluginListParams;
+use orbit_code_app_server_protocol::PluginReadParams;
+use orbit_code_app_server_protocol::PluginUninstallParams;
+use orbit_code_app_server_protocol::RequestId;
+use orbit_code_app_server_protocol::ReviewStartParams;
+use orbit_code_app_server_protocol::ServerRequest;
+use orbit_code_app_server_protocol::SkillsListParams;
+use orbit_code_app_server_protocol::ThreadArchiveParams;
+use orbit_code_app_server_protocol::ThreadCompactStartParams;
+use orbit_code_app_server_protocol::ThreadForkParams;
+use orbit_code_app_server_protocol::ThreadListParams;
+use orbit_code_app_server_protocol::ThreadLoadedListParams;
+use orbit_code_app_server_protocol::ThreadMetadataUpdateParams;
+use orbit_code_app_server_protocol::ThreadReadParams;
+use orbit_code_app_server_protocol::ThreadRealtimeAppendAudioParams;
+use orbit_code_app_server_protocol::ThreadRealtimeAppendTextParams;
+use orbit_code_app_server_protocol::ThreadRealtimeStartParams;
+use orbit_code_app_server_protocol::ThreadRealtimeStopParams;
+use orbit_code_app_server_protocol::ThreadResumeParams;
+use orbit_code_app_server_protocol::ThreadRollbackParams;
+use orbit_code_app_server_protocol::ThreadSetNameParams;
+use orbit_code_app_server_protocol::ThreadShellCommandParams;
+use orbit_code_app_server_protocol::ThreadStartParams;
+use orbit_code_app_server_protocol::ThreadUnarchiveParams;
+use orbit_code_app_server_protocol::ThreadUnsubscribeParams;
+use orbit_code_app_server_protocol::TurnCompletedNotification;
+use orbit_code_app_server_protocol::TurnInterruptParams;
+use orbit_code_app_server_protocol::TurnStartParams;
+use orbit_code_app_server_protocol::TurnSteerParams;
+use orbit_code_app_server_protocol::WindowsSandboxSetupStartParams;
+use orbit_code_core::default_client::ORBIT_INTERNAL_ORIGINATOR_OVERRIDE_ENV_VAR;
 use tokio::process::Command;
 
 pub struct McpProcess {
@@ -95,8 +95,8 @@ pub struct McpProcess {
 pub const DEFAULT_CLIENT_NAME: &str = "codex-app-server-tests";
 
 impl McpProcess {
-    pub async fn new(codex_home: &Path) -> anyhow::Result<Self> {
-        Self::new_with_env(codex_home, &[]).await
+    pub async fn new(orbit_code_home: &Path) -> anyhow::Result<Self> {
+        Self::new_with_env(orbit_code_home, &[]).await
     }
 
     /// Creates a new MCP process, allowing tests to override or remove
@@ -105,20 +105,20 @@ impl McpProcess {
     /// Pass a tuple of (key, Some(value)) to set/override, or (key, None) to
     /// remove a variable from the child's environment.
     pub async fn new_with_env(
-        codex_home: &Path,
+        orbit_code_home: &Path,
         env_overrides: &[(&str, Option<&str>)],
     ) -> anyhow::Result<Self> {
-        let program = codex_utils_cargo_bin::cargo_bin("codex-app-server")
+        let program = orbit_code_utils_cargo_bin::cargo_bin("codex-app-server")
             .context("should find binary for codex-app-server")?;
         let mut cmd = Command::new(program);
 
         cmd.stdin(Stdio::piped());
         cmd.stdout(Stdio::piped());
         cmd.stderr(Stdio::piped());
-        cmd.current_dir(codex_home);
-        cmd.env("CODEX_HOME", codex_home);
+        cmd.current_dir(orbit_code_home);
+        cmd.env("ORBIT_HOME", orbit_code_home);
         cmd.env("RUST_LOG", "info");
-        cmd.env_remove(CODEX_INTERNAL_ORIGINATOR_OVERRIDE_ENV_VAR);
+        cmd.env_remove(ORBIT_INTERNAL_ORIGINATOR_OVERRIDE_ENV_VAR);
 
         for (k, v) in env_overrides {
             match v {

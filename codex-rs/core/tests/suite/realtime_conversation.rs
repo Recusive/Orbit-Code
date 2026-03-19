@@ -1,22 +1,6 @@
 use anyhow::Context;
 use anyhow::Result;
 use chrono::Utc;
-use codex_core::CodexAuth;
-use codex_core::auth::OPENAI_API_KEY_ENV_VAR;
-use codex_protocol::ThreadId;
-use codex_protocol::protocol::CodexErrorInfo;
-use codex_protocol::protocol::ConversationAudioParams;
-use codex_protocol::protocol::ConversationStartParams;
-use codex_protocol::protocol::ConversationTextParams;
-use codex_protocol::protocol::ErrorEvent;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::RealtimeAudioFrame;
-use codex_protocol::protocol::RealtimeConversationRealtimeEvent;
-use codex_protocol::protocol::RealtimeConversationVersion;
-use codex_protocol::protocol::RealtimeEvent;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::user_input::UserInput;
 use core_test_support::responses;
 use core_test_support::responses::start_mock_server;
 use core_test_support::responses::start_websocket_server;
@@ -27,6 +11,22 @@ use core_test_support::test_codex::TestCodex;
 use core_test_support::test_codex::test_codex;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_match;
+use orbit_code_core::CodexAuth;
+use orbit_code_core::auth::OPENAI_API_KEY_ENV_VAR;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::protocol::CodexErrorInfo;
+use orbit_code_protocol::protocol::ConversationAudioParams;
+use orbit_code_protocol::protocol::ConversationStartParams;
+use orbit_code_protocol::protocol::ConversationTextParams;
+use orbit_code_protocol::protocol::ErrorEvent;
+use orbit_code_protocol::protocol::EventMsg;
+use orbit_code_protocol::protocol::Op;
+use orbit_code_protocol::protocol::RealtimeAudioFrame;
+use orbit_code_protocol::protocol::RealtimeConversationRealtimeEvent;
+use orbit_code_protocol::protocol::RealtimeConversationVersion;
+use orbit_code_protocol::protocol::RealtimeEvent;
+use orbit_code_protocol::protocol::SessionSource;
+use orbit_code_protocol::user_input::UserInput;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 use serde_json::json;
@@ -40,7 +40,7 @@ const STARTUP_CONTEXT_HEADER: &str = "Startup context from Codex.";
 const MEMORY_PROMPT_PHRASE: &str =
     "You have access to a memory folder with guidance from prior runs.";
 const REALTIME_CONVERSATION_TEST_SUBPROCESS_ENV_VAR: &str =
-    "CODEX_REALTIME_CONVERSATION_TEST_SUBPROCESS";
+    "ORBIT_REALTIME_CONVERSATION_TEST_SUBPROCESS";
 fn websocket_request_text(
     request: &core_test_support::responses::WebSocketRequest,
 ) -> Option<String> {
@@ -120,9 +120,9 @@ async fn seed_recent_thread(
     let db = test.codex.state_db().context("state db enabled")?;
     let thread_id = ThreadId::new();
     let updated_at = Utc::now();
-    let mut metadata_builder = codex_state::ThreadMetadataBuilder::new(
+    let mut metadata_builder = orbit_code_state::ThreadMetadataBuilder::new(
         thread_id,
-        test.codex_home_path()
+        test.orbit_code_home_path()
             .join(format!("rollout-{thread_id}.jsonl")),
         updated_at,
         SessionSource::Cli,
@@ -428,7 +428,7 @@ async fn conversation_audio_before_start_emits_error() -> Result<()> {
         _ => None,
     })
     .await;
-    assert_eq!(err.codex_error_info, Some(CodexErrorInfo::BadRequest));
+    assert_eq!(err.orbit_code_error_info, Some(CodexErrorInfo::BadRequest));
     assert_eq!(err.message, "conversation is not running");
 
     server.shutdown().await;
@@ -539,7 +539,7 @@ async fn conversation_text_before_start_emits_error() -> Result<()> {
         _ => None,
     })
     .await;
-    assert_eq!(err.codex_error_info, Some(CodexErrorInfo::BadRequest));
+    assert_eq!(err.orbit_code_error_info, Some(CodexErrorInfo::BadRequest));
     assert_eq!(err.message, "conversation is not running");
 
     server.shutdown().await;

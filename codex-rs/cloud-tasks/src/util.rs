@@ -4,11 +4,11 @@ use chrono::Local;
 use chrono::Utc;
 use reqwest::header::HeaderMap;
 
-use codex_core::config::Config;
-use codex_login::AuthManager;
+use orbit_code_core::config::Config;
+use orbit_code_login::AuthManager;
 
 pub fn set_user_agent_suffix(suffix: &str) {
-    if let Ok(mut guard) = codex_core::default_client::USER_AGENT_SUFFIX.lock() {
+    if let Ok(mut guard) = orbit_code_core::default_client::USER_AGENT_SUFFIX.lock() {
         guard.replace(suffix.to_string());
     }
 }
@@ -63,8 +63,8 @@ pub async fn load_auth_manager() -> Option<AuthManager> {
     // TODO: pass in cli overrides once cloud tasks properly support them.
     let config = Config::load_with_cli_overrides(Vec::new()).await.ok()?;
     Some(AuthManager::new(
-        config.codex_home,
-        /*enable_codex_api_key_env*/ false,
+        config.orbit_code_home,
+        /*enable_orbit_code_api_key_env*/ false,
         config.cli_auth_credentials_store_mode,
     ))
 }
@@ -77,8 +77,8 @@ pub async fn build_chatgpt_headers() -> HeaderMap {
     use reqwest::header::HeaderValue;
     use reqwest::header::USER_AGENT;
 
-    set_user_agent_suffix("codex_cloud_tasks_tui");
-    let ua = codex_core::default_client::get_codex_user_agent();
+    set_user_agent_suffix("orbit_code_cloud_tasks_tui");
+    let ua = orbit_code_core::default_client::get_orbit_code_user_agent();
     let mut headers = HeaderMap::new();
     headers.insert(
         USER_AGENT,

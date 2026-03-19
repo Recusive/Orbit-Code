@@ -19,10 +19,10 @@ from urllib.parse import urlparse
 from urllib.request import urlopen
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-CODEX_CLI_ROOT = SCRIPT_DIR.parent
+ORBIT_CLI_ROOT = SCRIPT_DIR.parent
 DEFAULT_WORKFLOW_URL = "https://github.com/openai/codex/actions/runs/17952349351"  # rust-v0.40.0
 VENDOR_DIR_NAME = "vendor"
-RG_MANIFEST = CODEX_CLI_ROOT / "bin" / "rg"
+RG_MANIFEST = ORBIT_CLI_ROOT / "bin" / "rg"
 BINARY_TARGETS = (
     "x86_64-unknown-linux-musl",
     "aarch64-unknown-linux-musl",
@@ -154,8 +154,8 @@ def parse_args() -> argparse.Namespace:
 def main() -> int:
     args = parse_args()
 
-    codex_cli_root = (args.root or CODEX_CLI_ROOT).resolve()
-    vendor_dir = codex_cli_root / VENDOR_DIR_NAME
+    orbit_code_cli_root = (args.root or ORBIT_CLI_ROOT).resolve()
+    vendor_dir = orbit_code_cli_root / VENDOR_DIR_NAME
     vendor_dir.mkdir(parents=True, exist_ok=True)
 
     components = args.components or [

@@ -1,11 +1,11 @@
 use crate::model::ThreadMetadata;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::RolloutItem;
-use codex_protocol::protocol::SessionMetaLine;
-use codex_protocol::protocol::TurnContextItem;
-use codex_protocol::protocol::USER_MESSAGE_BEGIN;
-use codex_protocol::protocol::UserMessageEvent;
+use orbit_code_protocol::models::ResponseItem;
+use orbit_code_protocol::protocol::EventMsg;
+use orbit_code_protocol::protocol::RolloutItem;
+use orbit_code_protocol::protocol::SessionMetaLine;
+use orbit_code_protocol::protocol::TurnContextItem;
+use orbit_code_protocol::protocol::USER_MESSAGE_BEGIN;
+use orbit_code_protocol::protocol::UserMessageEvent;
 use serde::Serialize;
 use serde_json::Value;
 
@@ -139,21 +139,21 @@ mod tests {
     use crate::model::ThreadMetadata;
     use chrono::DateTime;
     use chrono::Utc;
-    use codex_protocol::ThreadId;
-    use codex_protocol::config_types::ReasoningSummary;
-    use codex_protocol::models::ContentItem;
-    use codex_protocol::models::ResponseItem;
-    use codex_protocol::openai_models::ReasoningEffort;
-    use codex_protocol::protocol::AskForApproval;
-    use codex_protocol::protocol::EventMsg;
-    use codex_protocol::protocol::RolloutItem;
-    use codex_protocol::protocol::SandboxPolicy;
-    use codex_protocol::protocol::SessionMeta;
-    use codex_protocol::protocol::SessionMetaLine;
-    use codex_protocol::protocol::SessionSource;
-    use codex_protocol::protocol::TurnContextItem;
-    use codex_protocol::protocol::USER_MESSAGE_BEGIN;
-    use codex_protocol::protocol::UserMessageEvent;
+    use orbit_code_protocol::ThreadId;
+    use orbit_code_protocol::config_types::ReasoningSummary;
+    use orbit_code_protocol::models::ContentItem;
+    use orbit_code_protocol::models::ResponseItem;
+    use orbit_code_protocol::openai_models::ReasoningEffort;
+    use orbit_code_protocol::protocol::AskForApproval;
+    use orbit_code_protocol::protocol::EventMsg;
+    use orbit_code_protocol::protocol::RolloutItem;
+    use orbit_code_protocol::protocol::SandboxPolicy;
+    use orbit_code_protocol::protocol::SessionMeta;
+    use orbit_code_protocol::protocol::SessionMetaLine;
+    use orbit_code_protocol::protocol::SessionSource;
+    use orbit_code_protocol::protocol::TurnContextItem;
+    use orbit_code_protocol::protocol::USER_MESSAGE_BEGIN;
+    use orbit_code_protocol::protocol::UserMessageEvent;
 
     use pretty_assertions::assert_eq;
     use std::path::PathBuf;
@@ -248,7 +248,7 @@ mod tests {
                     ),
                     timestamp: "2026-02-26T00:00:00.000Z".to_string(),
                     cwd: PathBuf::from("/child/worktree"),
-                    originator: "codex_cli_rs".to_string(),
+                    originator: "orbit_code_cli_rs".to_string(),
                     cli_version: "0.0.0".to_string(),
                     source: SessionSource::Cli,
                     agent_nickname: None,
@@ -374,7 +374,7 @@ mod tests {
                     forked_from_id: None,
                     timestamp: "2026-02-26T00:00:00.000Z".to_string(),
                     cwd: PathBuf::from("/workspace"),
-                    originator: "codex_cli_rs".to_string(),
+                    originator: "orbit_code_cli_rs".to_string(),
                     cli_version: "0.0.0".to_string(),
                     source: SessionSource::Cli,
                     agent_nickname: None,

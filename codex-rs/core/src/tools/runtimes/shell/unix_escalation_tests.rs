@@ -23,30 +23,30 @@ use crate::sandboxing::SandboxPermissions;
 #[cfg(target_os = "macos")]
 use crate::seatbelt::MACOS_PATH_TO_SEATBELT_EXECUTABLE;
 use crate::skills::SkillMetadata;
-use codex_execpolicy::Decision;
-use codex_execpolicy::Evaluation;
-use codex_execpolicy::PolicyParser;
-use codex_execpolicy::RuleMatch;
+use orbit_code_execpolicy::Decision;
+use orbit_code_execpolicy::Evaluation;
+use orbit_code_execpolicy::PolicyParser;
+use orbit_code_execpolicy::RuleMatch;
 #[cfg(target_os = "macos")]
-use codex_protocol::config_types::WindowsSandboxLevel;
-use codex_protocol::models::FileSystemPermissions;
-use codex_protocol::models::MacOsPreferencesPermission;
-use codex_protocol::models::MacOsSeatbeltProfileExtensions;
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::permissions::FileSystemAccessMode;
-use codex_protocol::permissions::FileSystemPath;
-use codex_protocol::permissions::FileSystemSandboxEntry;
-use codex_protocol::permissions::FileSystemSandboxPolicy;
-use codex_protocol::permissions::FileSystemSpecialPath;
-use codex_protocol::permissions::NetworkSandboxPolicy;
-use codex_protocol::protocol::SkillScope;
-use codex_shell_escalation::EscalationExecution;
-use codex_shell_escalation::EscalationPermissions;
-use codex_shell_escalation::ExecResult;
-use codex_shell_escalation::Permissions as EscalatedPermissions;
+use orbit_code_protocol::config_types::WindowsSandboxLevel;
+use orbit_code_protocol::models::FileSystemPermissions;
+use orbit_code_protocol::models::MacOsPreferencesPermission;
+use orbit_code_protocol::models::MacOsSeatbeltProfileExtensions;
+use orbit_code_protocol::models::PermissionProfile;
+use orbit_code_protocol::permissions::FileSystemAccessMode;
+use orbit_code_protocol::permissions::FileSystemPath;
+use orbit_code_protocol::permissions::FileSystemSandboxEntry;
+use orbit_code_protocol::permissions::FileSystemSandboxPolicy;
+use orbit_code_protocol::permissions::FileSystemSpecialPath;
+use orbit_code_protocol::permissions::NetworkSandboxPolicy;
+use orbit_code_protocol::protocol::SkillScope;
+use orbit_code_shell_escalation::EscalationExecution;
+use orbit_code_shell_escalation::EscalationPermissions;
+use orbit_code_shell_escalation::ExecResult;
+use orbit_code_shell_escalation::Permissions as EscalatedPermissions;
 #[cfg(target_os = "macos")]
-use codex_shell_escalation::ShellCommandExecutor;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use orbit_code_shell_escalation::ShellCommandExecutor;
+use orbit_code_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 #[cfg(target_os = "macos")]
 use std::collections::HashMap;
@@ -207,7 +207,7 @@ fn extract_shell_script_supports_wrapped_command_prefixes() {
     assert_eq!(
         extract_shell_script(&[
             "/usr/bin/env".into(),
-            "CODEX_EXECVE_WRAPPER=1".into(),
+            "ORBIT_EXECVE_WRAPPER=1".into(),
             "/bin/zsh".into(),
             "-lc".into(),
             "echo hello".into()
@@ -668,7 +668,7 @@ async fn prepare_escalated_exec_turn_default_preserves_macos_seatbelt_extensions
             macos_preferences: MacOsPreferencesPermission::ReadWrite,
             ..Default::default()
         }),
-        codex_linux_sandbox_exe: None,
+        orbit_code_linux_sandbox_exe: None,
         use_legacy_landlock: false,
     };
 
@@ -717,7 +717,7 @@ async fn prepare_escalated_exec_permissions_preserve_macos_seatbelt_extensions()
         arg0: None,
         sandbox_policy_cwd: cwd.to_path_buf(),
         macos_seatbelt_profile_extensions: None,
-        codex_linux_sandbox_exe: None,
+        orbit_code_linux_sandbox_exe: None,
         use_legacy_landlock: false,
     };
 
@@ -725,7 +725,7 @@ async fn prepare_escalated_exec_permissions_preserve_macos_seatbelt_extensions()
         approval_policy: Constrained::allow_any(AskForApproval::Never),
         sandbox_policy: Constrained::allow_any(SandboxPolicy::new_read_only_policy()),
         file_system_sandbox_policy: read_only_file_system_sandbox_policy(),
-        network_sandbox_policy: codex_protocol::permissions::NetworkSandboxPolicy::Restricted,
+        network_sandbox_policy: orbit_code_protocol::permissions::NetworkSandboxPolicy::Restricted,
         network: None,
         allow_login_shell: true,
         shell_environment_policy: ShellEnvironmentPolicy::default(),
@@ -795,7 +795,7 @@ async fn prepare_escalated_exec_permission_profile_unions_turn_and_requested_mac
             macos_preferences: MacOsPreferencesPermission::ReadOnly,
             ..Default::default()
         }),
-        codex_linux_sandbox_exe: None,
+        orbit_code_linux_sandbox_exe: None,
         use_legacy_landlock: false,
     };
 

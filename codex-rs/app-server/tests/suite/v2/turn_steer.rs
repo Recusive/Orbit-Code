@@ -6,20 +6,20 @@ use app_test_support::create_mock_responses_server_sequence;
 use app_test_support::create_mock_responses_server_sequence_unchecked;
 use app_test_support::create_shell_command_sse_response;
 use app_test_support::to_response;
-use codex_app_server::INPUT_TOO_LARGE_ERROR_CODE;
-use codex_app_server::INVALID_PARAMS_ERROR_CODE;
-use codex_app_server_protocol::JSONRPCError;
-use codex_app_server_protocol::JSONRPCNotification;
-use codex_app_server_protocol::JSONRPCResponse;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::ThreadStartParams;
-use codex_app_server_protocol::ThreadStartResponse;
-use codex_app_server_protocol::TurnStartParams;
-use codex_app_server_protocol::TurnStartResponse;
-use codex_app_server_protocol::TurnSteerParams;
-use codex_app_server_protocol::TurnSteerResponse;
-use codex_app_server_protocol::UserInput as V2UserInput;
-use codex_protocol::user_input::MAX_USER_INPUT_TEXT_CHARS;
+use orbit_code_app_server::INPUT_TOO_LARGE_ERROR_CODE;
+use orbit_code_app_server::INVALID_PARAMS_ERROR_CODE;
+use orbit_code_app_server_protocol::JSONRPCError;
+use orbit_code_app_server_protocol::JSONRPCNotification;
+use orbit_code_app_server_protocol::JSONRPCResponse;
+use orbit_code_app_server_protocol::RequestId;
+use orbit_code_app_server_protocol::ThreadStartParams;
+use orbit_code_app_server_protocol::ThreadStartResponse;
+use orbit_code_app_server_protocol::TurnStartParams;
+use orbit_code_app_server_protocol::TurnStartResponse;
+use orbit_code_app_server_protocol::TurnSteerParams;
+use orbit_code_app_server_protocol::TurnSteerResponse;
+use orbit_code_app_server_protocol::UserInput as V2UserInput;
+use orbit_code_protocol::user_input::MAX_USER_INPUT_TEXT_CHARS;
 use tempfile::TempDir;
 use tokio::time::timeout;
 
@@ -28,13 +28,13 @@ const DEFAULT_READ_TIMEOUT: std::time::Duration = std::time::Duration::from_secs
 #[tokio::test]
 async fn turn_steer_requires_active_turn() -> Result<()> {
     let tmp = TempDir::new()?;
-    let codex_home = tmp.path().join("codex_home");
-    std::fs::create_dir(&codex_home)?;
+    let orbit_code_home = tmp.path().join("orbit_code_home");
+    std::fs::create_dir(&orbit_code_home)?;
 
     let server = create_mock_responses_server_sequence(vec![]).await;
-    create_config_toml(&codex_home, &server.uri())?;
+    create_config_toml(&orbit_code_home, &server.uri())?;
 
-    let mut mcp = McpProcess::new(&codex_home).await?;
+    let mut mcp = McpProcess::new(&orbit_code_home).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     let thread_req = mcp
@@ -82,8 +82,8 @@ async fn turn_steer_rejects_oversized_text_input() -> Result<()> {
     let shell_command = vec!["sleep".to_string(), "10".to_string()];
 
     let tmp = TempDir::new()?;
-    let codex_home = tmp.path().join("codex_home");
-    std::fs::create_dir(&codex_home)?;
+    let orbit_code_home = tmp.path().join("orbit_code_home");
+    std::fs::create_dir(&orbit_code_home)?;
     let working_directory = tmp.path().join("workdir");
     std::fs::create_dir(&working_directory)?;
 
@@ -95,9 +95,9 @@ async fn turn_steer_rejects_oversized_text_input() -> Result<()> {
             "call_sleep",
         )?])
         .await;
-    create_config_toml(&codex_home, &server.uri())?;
+    create_config_toml(&orbit_code_home, &server.uri())?;
 
-    let mut mcp = McpProcess::new(&codex_home).await?;
+    let mut mcp = McpProcess::new(&orbit_code_home).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     let thread_req = mcp
@@ -185,8 +185,8 @@ async fn turn_steer_returns_active_turn_id() -> Result<()> {
     let shell_command = vec!["sleep".to_string(), "10".to_string()];
 
     let tmp = TempDir::new()?;
-    let codex_home = tmp.path().join("codex_home");
-    std::fs::create_dir(&codex_home)?;
+    let orbit_code_home = tmp.path().join("orbit_code_home");
+    std::fs::create_dir(&orbit_code_home)?;
     let working_directory = tmp.path().join("workdir");
     std::fs::create_dir(&working_directory)?;
 
@@ -198,9 +198,9 @@ async fn turn_steer_returns_active_turn_id() -> Result<()> {
             "call_sleep",
         )?])
         .await;
-    create_config_toml(&codex_home, &server.uri())?;
+    create_config_toml(&orbit_code_home, &server.uri())?;
 
-    let mut mcp = McpProcess::new(&codex_home).await?;
+    let mut mcp = McpProcess::new(&orbit_code_home).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     let thread_req = mcp
@@ -264,8 +264,8 @@ async fn turn_steer_returns_active_turn_id() -> Result<()> {
     Ok(())
 }
 
-fn create_config_toml(codex_home: &std::path::Path, server_uri: &str) -> std::io::Result<()> {
-    let config_toml = codex_home.join("config.toml");
+fn create_config_toml(orbit_code_home: &std::path::Path, server_uri: &str) -> std::io::Result<()> {
+    let config_toml = orbit_code_home.join("config.toml");
     std::fs::write(
         config_toml,
         format!(

@@ -28,20 +28,20 @@ use crate::metrics::tags::SessionMetricTagValues;
 use crate::metrics::timer::Timer;
 use crate::provider::OtelProvider;
 use crate::sanitize_metric_tag_value;
-use codex_api::ApiError;
-use codex_api::ResponseEvent;
-use codex_protocol::ThreadId;
-use codex_protocol::config_types::ReasoningSummary;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::openai_models::ReasoningEffort;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::ReviewDecision;
-use codex_protocol::protocol::SandboxPolicy;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::user_input::UserInput;
 use eventsource_stream::Event as StreamEvent;
 use eventsource_stream::EventStreamError as StreamError;
 use opentelemetry_sdk::metrics::data::ResourceMetrics;
+use orbit_code_api::ApiError;
+use orbit_code_api::ResponseEvent;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::config_types::ReasoningSummary;
+use orbit_code_protocol::models::ResponseItem;
+use orbit_code_protocol::openai_models::ReasoningEffort;
+use orbit_code_protocol::protocol::AskForApproval;
+use orbit_code_protocol::protocol::ReviewDecision;
+use orbit_code_protocol::protocol::SandboxPolicy;
+use orbit_code_protocol::protocol::SessionSource;
+use orbit_code_protocol::user_input::UserInput;
 use reqwest::Error;
 use reqwest::Response;
 use std::borrow::Cow;
@@ -65,8 +65,8 @@ const RESPONSES_API_ENGINE_SERVICE_TBT_FIELD: &str = "engine_service_tbt_across_
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct AuthEnvTelemetryMetadata {
     pub openai_api_key_env_present: bool,
-    pub codex_api_key_env_present: bool,
-    pub codex_api_key_env_enabled: bool,
+    pub orbit_code_api_key_env_present: bool,
+    pub orbit_code_api_key_env_enabled: bool,
     pub provider_env_key_name: Option<String>,
     pub provider_env_key_present: Option<bool>,
     pub refresh_token_url_override_present: bool,
@@ -327,8 +327,8 @@ impl SessionTelemetry {
                 event.name = "codex.conversation_starts",
                 provider_name = %provider_name,
                 auth.env_openai_api_key_present = self.metadata.auth_env.openai_api_key_env_present,
-                auth.env_codex_api_key_present = self.metadata.auth_env.codex_api_key_env_present,
-                auth.env_codex_api_key_enabled = self.metadata.auth_env.codex_api_key_env_enabled,
+                auth.env_orbit_code_api_key_present = self.metadata.auth_env.orbit_code_api_key_env_present,
+                auth.env_orbit_code_api_key_enabled = self.metadata.auth_env.orbit_code_api_key_env_enabled,
                 auth.env_provider_key_name = self.metadata.auth_env.provider_env_key_name.as_deref(),
                 auth.env_provider_key_present = self.metadata.auth_env.provider_env_key_present,
                 auth.env_refresh_token_url_override_present = self.metadata.auth_env.refresh_token_url_override_present,
@@ -431,8 +431,8 @@ impl SessionTelemetry {
                 auth.recovery_phase = recovery_phase,
                 endpoint = endpoint,
                 auth.env_openai_api_key_present = self.metadata.auth_env.openai_api_key_env_present,
-                auth.env_codex_api_key_present = self.metadata.auth_env.codex_api_key_env_present,
-                auth.env_codex_api_key_enabled = self.metadata.auth_env.codex_api_key_env_enabled,
+                auth.env_orbit_code_api_key_present = self.metadata.auth_env.orbit_code_api_key_env_present,
+                auth.env_orbit_code_api_key_enabled = self.metadata.auth_env.orbit_code_api_key_env_enabled,
                 auth.env_provider_key_name = self.metadata.auth_env.provider_env_key_name.as_deref(),
                 auth.env_provider_key_present = self.metadata.auth_env.provider_env_key_present,
                 auth.env_refresh_token_url_override_present = self.metadata.auth_env.refresh_token_url_override_present,
@@ -484,8 +484,8 @@ impl SessionTelemetry {
                 auth.recovery_phase = recovery_phase,
                 endpoint = endpoint,
                 auth.env_openai_api_key_present = self.metadata.auth_env.openai_api_key_env_present,
-                auth.env_codex_api_key_present = self.metadata.auth_env.codex_api_key_env_present,
-                auth.env_codex_api_key_enabled = self.metadata.auth_env.codex_api_key_env_enabled,
+                auth.env_orbit_code_api_key_present = self.metadata.auth_env.orbit_code_api_key_env_present,
+                auth.env_orbit_code_api_key_enabled = self.metadata.auth_env.orbit_code_api_key_env_enabled,
                 auth.env_provider_key_name = self.metadata.auth_env.provider_env_key_name.as_deref(),
                 auth.env_provider_key_present = self.metadata.auth_env.provider_env_key_present,
                 auth.env_refresh_token_url_override_present = self.metadata.auth_env.refresh_token_url_override_present,
@@ -525,8 +525,8 @@ impl SessionTelemetry {
                 success = success_str,
                 error.message = error,
                 auth.env_openai_api_key_present = self.metadata.auth_env.openai_api_key_env_present,
-                auth.env_codex_api_key_present = self.metadata.auth_env.codex_api_key_env_present,
-                auth.env_codex_api_key_enabled = self.metadata.auth_env.codex_api_key_env_enabled,
+                auth.env_orbit_code_api_key_present = self.metadata.auth_env.orbit_code_api_key_env_present,
+                auth.env_orbit_code_api_key_enabled = self.metadata.auth_env.orbit_code_api_key_env_enabled,
                 auth.env_provider_key_name = self.metadata.auth_env.provider_env_key_name.as_deref(),
                 auth.env_provider_key_present = self.metadata.auth_env.provider_env_key_present,
                 auth.env_refresh_token_url_override_present = self.metadata.auth_env.refresh_token_url_override_present,

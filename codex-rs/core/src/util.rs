@@ -2,7 +2,7 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::time::Duration;
 
-use codex_protocol::ThreadId;
+use orbit_code_protocol::ThreadId;
 use rand::Rng;
 use tracing::debug;
 use tracing::error;
@@ -16,7 +16,7 @@ const BACKOFF_FACTOR: f64 = 2.0;
 /// Emit structured feedback metadata as key/value pairs.
 ///
 /// This logs a tracing event with `target: "feedback_tags"`. If
-/// `codex_feedback::CodexFeedback::metadata_layer()` is installed, these fields are captured and
+/// `orbit_code_feedback::CodexFeedback::metadata_layer()` is installed, these fields are captured and
 /// later attached as tags when feedback is uploaded.
 ///
 /// Values are wrapped with [`tracing::field::DebugValue`], so the expression only needs to
@@ -25,8 +25,8 @@ const BACKOFF_FACTOR: f64 = 2.0;
 /// Example:
 ///
 /// ```rust
-/// codex_core::feedback_tags!(model = "gpt-5", cached = true);
-/// codex_core::feedback_tags!(provider = provider_id, request_id = request_id);
+/// orbit_code_core::feedback_tags!(model = "gpt-5", cached = true);
+/// orbit_code_core::feedback_tags!(provider = provider_id, request_id = request_id);
 /// ```
 #[macro_export]
 macro_rules! feedback_tags {
@@ -166,8 +166,8 @@ pub(crate) fn emit_feedback_request_tags_with_auth_env(
         auth_recovery_followup_success = snapshot.auth_recovery_followup_success,
         auth_recovery_followup_status = snapshot.auth_recovery_followup_status,
         auth_env_openai_api_key_present = auth_env.openai_api_key_env_present,
-        auth_env_codex_api_key_present = auth_env.codex_api_key_env_present,
-        auth_env_codex_api_key_enabled = auth_env.codex_api_key_env_enabled,
+        auth_env_orbit_code_api_key_present = auth_env.orbit_code_api_key_env_present,
+        auth_env_orbit_code_api_key_enabled = auth_env.orbit_code_api_key_env_enabled,
         auth_env_provider_key_name = auth_env.provider_env_key_name.as_deref().unwrap_or(""),
         auth_env_provider_key_present = auth_env
             .provider_env_key_present
@@ -259,9 +259,9 @@ pub fn resume_command(thread_name: Option<&str>, thread_id: Option<ThreadId>) ->
         let needs_double_dash = target.starts_with('-');
         let escaped = shlex_join(&[target]);
         if needs_double_dash {
-            format!("codex resume -- {escaped}")
+            format!("orbit-code resume -- {escaped}")
         } else {
-            format!("codex resume {escaped}")
+            format!("orbit-code resume {escaped}")
         }
     })
 }

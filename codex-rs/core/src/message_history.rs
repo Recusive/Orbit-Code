@@ -38,7 +38,7 @@ use tokio::io::AsyncReadExt;
 use crate::config::Config;
 use crate::config::types::HistoryPersistence;
 
-use codex_protocol::ThreadId;
+use orbit_code_protocol::ThreadId;
 #[cfg(unix)]
 use std::os::unix::fs::OpenOptionsExt;
 #[cfg(unix)]
@@ -61,7 +61,7 @@ pub struct HistoryEntry {
 }
 
 fn history_filepath(config: &Config) -> PathBuf {
-    let mut path = config.codex_home.clone();
+    let mut path = config.orbit_code_home.clone();
     path.push(HISTORY_FILENAME);
     path
 }

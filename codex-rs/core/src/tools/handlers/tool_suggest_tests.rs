@@ -7,8 +7,8 @@ use crate::plugins::test_support::write_openai_curated_marketplace;
 use crate::plugins::test_support::write_plugins_feature_config;
 use crate::tools::discoverable::DiscoverablePluginInfo;
 use crate::tools::discoverable::filter_tool_suggest_discoverable_tools_for_client;
-use codex_app_server_protocol::AppInfo;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use orbit_code_app_server_protocol::AppInfo;
+use orbit_code_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use std::collections::BTreeMap;
@@ -54,10 +54,10 @@ fn build_tool_suggestion_elicitation_request_uses_expected_shape() {
         McpServerElicitationRequestParams {
             thread_id: "thread-1".to_string(),
             turn_id: Some("turn-1".to_string()),
-            server_name: CODEX_APPS_MCP_SERVER_NAME.to_string(),
+            server_name: ORBIT_APPS_MCP_SERVER_NAME.to_string(),
             request: McpServerElicitationRequest::Form {
                 meta: Some(json!(ToolSuggestMeta {
-                    codex_approval_kind: TOOL_SUGGEST_APPROVAL_KIND_VALUE,
+                    orbit_code_approval_kind: TOOL_SUGGEST_APPROVAL_KIND_VALUE,
                     tool_type: DiscoverableToolType::Connector,
                     suggest_type: DiscoverableToolAction::Install,
                     suggest_reason: "Plan and reference events from your calendar",
@@ -109,10 +109,10 @@ fn build_tool_suggestion_elicitation_request_for_plugin_omits_install_url() {
         McpServerElicitationRequestParams {
             thread_id: "thread-1".to_string(),
             turn_id: Some("turn-1".to_string()),
-            server_name: CODEX_APPS_MCP_SERVER_NAME.to_string(),
+            server_name: ORBIT_APPS_MCP_SERVER_NAME.to_string(),
             request: McpServerElicitationRequest::Form {
                 meta: Some(json!(ToolSuggestMeta {
-                    codex_approval_kind: TOOL_SUGGEST_APPROVAL_KIND_VALUE,
+                    orbit_code_approval_kind: TOOL_SUGGEST_APPROVAL_KIND_VALUE,
                     tool_type: DiscoverableToolType::Plugin,
                     suggest_type: DiscoverableToolAction::Install,
                     suggest_reason: "Use the sample plugin's skills and MCP server",
@@ -146,7 +146,7 @@ fn build_tool_suggestion_meta_uses_expected_shape() {
     assert_eq!(
         meta,
         ToolSuggestMeta {
-            codex_approval_kind: TOOL_SUGGEST_APPROVAL_KIND_VALUE,
+            orbit_code_approval_kind: TOOL_SUGGEST_APPROVAL_KIND_VALUE,
             tool_type: DiscoverableToolType::Connector,
             suggest_type: DiscoverableToolAction::Install,
             suggest_reason: "Find and reference emails from your inbox",
@@ -160,7 +160,7 @@ fn build_tool_suggestion_meta_uses_expected_shape() {
 }
 
 #[test]
-fn filter_tool_suggest_discoverable_tools_for_codex_tui_omits_plugins() {
+fn filter_tool_suggest_discoverable_tools_for_orbit_code_tui_omits_plugins() {
     let discoverable_tools = vec![
         DiscoverableTool::Connector(Box::new(AppInfo {
             id: "connector_google_calendar".to_string(),
@@ -237,14 +237,14 @@ fn verified_connector_suggestion_completed_requires_accessible_connector() {
 
 #[tokio::test]
 async fn verified_plugin_suggestion_completed_requires_installed_plugin() {
-    let codex_home = tempdir().expect("tempdir should succeed");
-    let curated_root = crate::plugins::curated_plugins_repo_path(codex_home.path());
+    let orbit_code_home = tempdir().expect("tempdir should succeed");
+    let curated_root = crate::plugins::curated_plugins_repo_path(orbit_code_home.path());
     write_openai_curated_marketplace(&curated_root, &["sample"]);
-    write_curated_plugin_sha(codex_home.path());
-    write_plugins_feature_config(codex_home.path());
+    write_curated_plugin_sha(orbit_code_home.path());
+    write_plugins_feature_config(orbit_code_home.path());
 
-    let config = load_plugins_config(codex_home.path()).await;
-    let plugins_manager = PluginsManager::new(codex_home.path().to_path_buf());
+    let config = load_plugins_config(orbit_code_home.path()).await;
+    let plugins_manager = PluginsManager::new(orbit_code_home.path().to_path_buf());
 
     assert!(!verified_plugin_suggestion_completed(
         "sample@openai-curated",
@@ -263,7 +263,7 @@ async fn verified_plugin_suggestion_completed_requires_installed_plugin() {
         .await
         .expect("plugin should install");
 
-    let refreshed_config = load_plugins_config(codex_home.path()).await;
+    let refreshed_config = load_plugins_config(orbit_code_home.path()).await;
     assert!(verified_plugin_suggestion_completed(
         "sample@openai-curated",
         &refreshed_config,

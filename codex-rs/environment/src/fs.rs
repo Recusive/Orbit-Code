@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use orbit_code_utils_absolute_path::AbsolutePathBuf;
 use std::path::Component;
 use std::path::Path;
 use std::path::PathBuf;

@@ -5,12 +5,12 @@ use std::sync::Mutex as StdMutex;
 use std::time::Duration;
 use std::time::Instant;
 
-use codex_rmcp_client::ElicitationAction;
-use codex_rmcp_client::ElicitationResponse;
-use codex_rmcp_client::OAuthCredentialsStoreMode;
-use codex_rmcp_client::RmcpClient;
-use codex_utils_cargo_bin::CargoBinError;
 use futures::FutureExt as _;
+use orbit_code_rmcp_client::ElicitationAction;
+use orbit_code_rmcp_client::ElicitationResponse;
+use orbit_code_rmcp_client::OAuthCredentialsStoreMode;
+use orbit_code_rmcp_client::RmcpClient;
+use orbit_code_utils_cargo_bin::CargoBinError;
 use pretty_assertions::assert_eq;
 use rmcp::model::CallToolResult;
 use rmcp::model::ClientCapabilities;
@@ -28,7 +28,7 @@ use tokio::time::sleep;
 const SESSION_POST_FAILURE_CONTROL_PATH: &str = "/test/control/session-post-failure";
 
 fn streamable_http_server_bin() -> Result<PathBuf, CargoBinError> {
-    codex_utils_cargo_bin::cargo_bin("test_streamable_http_server")
+    orbit_code_utils_cargo_bin::cargo_bin("test_streamable_http_server")
 }
 
 fn init_params() -> InitializeRequestParams {

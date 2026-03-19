@@ -1,24 +1,4 @@
 use anyhow::Result;
-use codex_core::CodexAuth;
-use codex_core::config::types::Personality;
-use codex_core::features::Feature;
-use codex_core::models_manager::manager::RefreshStrategy;
-use codex_protocol::config_types::ReasoningSummary;
-use codex_protocol::config_types::ServiceTier;
-use codex_protocol::openai_models::ConfigShellToolType;
-use codex_protocol::openai_models::InputModality;
-use codex_protocol::openai_models::ModelInfo;
-use codex_protocol::openai_models::ModelVisibility;
-use codex_protocol::openai_models::ModelsResponse;
-use codex_protocol::openai_models::ReasoningEffort;
-use codex_protocol::openai_models::ReasoningEffortPreset;
-use codex_protocol::openai_models::TruncationPolicyConfig;
-use codex_protocol::openai_models::default_input_modalities;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::SandboxPolicy;
-use codex_protocol::user_input::UserInput;
 use core_test_support::responses::ev_completed_with_tokens;
 use core_test_support::responses::ev_image_generation_call;
 use core_test_support::responses::ev_response_created;
@@ -31,6 +11,26 @@ use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
 use core_test_support::test_codex::test_codex;
 use core_test_support::wait_for_event;
+use orbit_code_core::CodexAuth;
+use orbit_code_core::config::types::Personality;
+use orbit_code_core::features::Feature;
+use orbit_code_core::models_manager::manager::RefreshStrategy;
+use orbit_code_protocol::config_types::ReasoningSummary;
+use orbit_code_protocol::config_types::ServiceTier;
+use orbit_code_protocol::openai_models::ConfigShellToolType;
+use orbit_code_protocol::openai_models::InputModality;
+use orbit_code_protocol::openai_models::ModelInfo;
+use orbit_code_protocol::openai_models::ModelVisibility;
+use orbit_code_protocol::openai_models::ModelsResponse;
+use orbit_code_protocol::openai_models::ReasoningEffort;
+use orbit_code_protocol::openai_models::ReasoningEffortPreset;
+use orbit_code_protocol::openai_models::TruncationPolicyConfig;
+use orbit_code_protocol::openai_models::default_input_modalities;
+use orbit_code_protocol::protocol::AskForApproval;
+use orbit_code_protocol::protocol::EventMsg;
+use orbit_code_protocol::protocol::Op;
+use orbit_code_protocol::protocol::SandboxPolicy;
+use orbit_code_protocol::user_input::UserInput;
 use pretty_assertions::assert_eq;
 use wiremock::MockServer;
 
@@ -427,13 +427,13 @@ async fn model_change_from_image_to_text_strips_prior_image_content() -> Result<
     assert!(
         second_user_texts
             .iter()
-            .any(|text| text == &codex_protocol::models::image_open_tag_text()),
+            .any(|text| text == &orbit_code_protocol::models::image_open_tag_text()),
         "second request should preserve the image open tag text"
     );
     assert!(
         second_user_texts
             .iter()
-            .any(|text| text == &codex_protocol::models::image_close_tag_text()),
+            .any(|text| text == &orbit_code_protocol::models::image_close_tag_text()),
         "second request should preserve the image close tag text"
     );
 

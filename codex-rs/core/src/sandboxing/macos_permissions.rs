@@ -1,9 +1,9 @@
 use std::collections::BTreeSet;
 
-use codex_protocol::models::MacOsAutomationPermission;
-use codex_protocol::models::MacOsContactsPermission;
-use codex_protocol::models::MacOsPreferencesPermission;
-use codex_protocol::models::MacOsSeatbeltProfileExtensions;
+use orbit_code_protocol::models::MacOsAutomationPermission;
+use orbit_code_protocol::models::MacOsContactsPermission;
+use orbit_code_protocol::models::MacOsPreferencesPermission;
+use orbit_code_protocol::models::MacOsSeatbeltProfileExtensions;
 
 /// Merges macOS seatbelt profile extensions by taking the permissive union of
 /// each permission field.

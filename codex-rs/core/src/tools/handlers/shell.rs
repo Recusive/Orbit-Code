@@ -1,7 +1,7 @@
 use async_trait::async_trait;
-use codex_protocol::ThreadId;
-use codex_protocol::models::ShellCommandToolCallParams;
-use codex_protocol::models::ShellToolCallParams;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::models::ShellCommandToolCallParams;
+use orbit_code_protocol::models::ShellToolCallParams;
 use std::sync::Arc;
 
 use crate::codex::TurnContext;
@@ -33,7 +33,7 @@ use crate::tools::runtimes::shell::ShellRuntime;
 use crate::tools::runtimes::shell::ShellRuntimeBackend;
 use crate::tools::sandboxing::ToolCtx;
 use crate::tools::spec::ShellCommandBackendConfig;
-use codex_protocol::models::PermissionProfile;
+use orbit_code_protocol::models::PermissionProfile;
 
 pub struct ShellHandler;
 
@@ -385,7 +385,7 @@ impl ShellHandler {
             && !effective_additional_permissions.permissions_preapproved
             && !matches!(
                 turn.approval_policy.value(),
-                codex_protocol::protocol::AskForApproval::OnRequest
+                orbit_code_protocol::protocol::AskForApproval::OnRequest
             )
         {
             let approval_policy = turn.approval_policy.value();
@@ -434,7 +434,7 @@ impl ShellHandler {
                 sandbox_policy: turn.sandbox_policy.get(),
                 file_system_sandbox_policy: &turn.file_system_sandbox_policy,
                 sandbox_permissions: if effective_additional_permissions.permissions_preapproved {
-                    codex_protocol::models::SandboxPermissions::UseDefault
+                    orbit_code_protocol::models::SandboxPermissions::UseDefault
                 } else {
                     effective_additional_permissions.sandbox_permissions
                 },

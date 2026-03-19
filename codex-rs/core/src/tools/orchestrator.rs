@@ -26,10 +26,10 @@ use crate::tools::sandboxing::ToolCtx;
 use crate::tools::sandboxing::ToolError;
 use crate::tools::sandboxing::ToolRuntime;
 use crate::tools::sandboxing::default_exec_approval_requirement;
-use codex_otel::ToolDecisionSource;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::NetworkPolicyRuleAction;
-use codex_protocol::protocol::ReviewDecision;
+use orbit_code_otel::ToolDecisionSource;
+use orbit_code_protocol::protocol::AskForApproval;
+use orbit_code_protocol::protocol::NetworkPolicyRuleAction;
+use orbit_code_protocol::protocol::ReviewDecision;
 
 pub(crate) struct ToolOrchestrator {
     sandbox: SandboxManager,
@@ -193,7 +193,7 @@ impl ToolOrchestrator {
             enforce_managed_network: has_managed_network_requirements,
             manager: &self.sandbox,
             sandbox_cwd: &turn_ctx.cwd,
-            codex_linux_sandbox_exe: turn_ctx.codex_linux_sandbox_exe.as_ref(),
+            orbit_code_linux_sandbox_exe: turn_ctx.orbit_code_linux_sandbox_exe.as_ref(),
             use_legacy_landlock,
             windows_sandbox_level: turn_ctx.windows_sandbox_level,
             windows_sandbox_private_desktop: turn_ctx
@@ -319,7 +319,7 @@ impl ToolOrchestrator {
                     enforce_managed_network: has_managed_network_requirements,
                     manager: &self.sandbox,
                     sandbox_cwd: &turn_ctx.cwd,
-                    codex_linux_sandbox_exe: None,
+                    orbit_code_linux_sandbox_exe: None,
                     use_legacy_landlock,
                     windows_sandbox_level: turn_ctx.windows_sandbox_level,
                     windows_sandbox_private_desktop: turn_ctx

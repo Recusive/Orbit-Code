@@ -21,10 +21,10 @@ if root_str not in sys.path:
 
 from _runtime_setup import ensure_runtime_package_installed, pinned_runtime_version
 
-RUN_REAL_CODEX_TESTS = os.environ.get("RUN_REAL_CODEX_TESTS") == "1"
+RUN_REAL_ORBIT_TESTS = os.environ.get("RUN_REAL_ORBIT_TESTS") == "1"
 pytestmark = pytest.mark.skipif(
-    not RUN_REAL_CODEX_TESTS,
-    reason="set RUN_REAL_CODEX_TESTS=1 to run real Codex integration coverage",
+    not RUN_REAL_ORBIT_TESTS,
+    reason="set RUN_REAL_ORBIT_TESTS=1 to run real Codex integration coverage",
 )
 
 # 11_cli_mini_app is interactive; we still run it by feeding one prompt, then '/exit'.
@@ -96,7 +96,7 @@ def runtime_env(tmp_path_factory: pytest.TempPathFactory) -> PreparedRuntimeEnv:
 
     env = os.environ.copy()
     env["PYTHONPATH"] = os.pathsep.join([str(isolated_site), str(ROOT / "src")])
-    env["CODEX_PYTHON_SDK_DIR"] = str(ROOT)
+    env["ORBIT_PYTHON_SDK_DIR"] = str(ROOT)
     return PreparedRuntimeEnv(python=python, env=env, runtime_version=runtime_version)
 
 
@@ -205,7 +205,7 @@ def test_real_initialize_and_model_list(runtime_env: PreparedRuntimeEnv) -> None
         textwrap.dedent(
             """
             import json
-            from codex_app_server import Codex
+            from orbit_code_app_server import Codex
 
             with Codex() as codex:
                 models = codex.models(include_hidden=True)
@@ -234,7 +234,7 @@ def test_real_thread_and_turn_start_smoke(runtime_env: PreparedRuntimeEnv) -> No
         textwrap.dedent(
             """
             import json
-            from codex_app_server import Codex, TextInput
+            from orbit_code_app_server import Codex, TextInput
 
             with Codex() as codex:
                 thread = codex.thread_start(
@@ -271,7 +271,7 @@ def test_real_thread_run_convenience_smoke(runtime_env: PreparedRuntimeEnv) -> N
         textwrap.dedent(
             """
             import json
-            from codex_app_server import Codex
+            from orbit_code_app_server import Codex
 
             with Codex() as codex:
                 thread = codex.thread_start(
@@ -304,7 +304,7 @@ def test_real_async_thread_turn_usage_and_ids_smoke(
             """
             import asyncio
             import json
-            from codex_app_server import AsyncCodex, TextInput
+            from orbit_code_app_server import AsyncCodex, TextInput
 
             async def main():
                 async with AsyncCodex() as codex:
@@ -347,7 +347,7 @@ def test_real_async_thread_run_convenience_smoke(
             """
             import asyncio
             import json
-            from codex_app_server import AsyncCodex
+            from orbit_code_app_server import AsyncCodex
 
             async def main():
                 async with AsyncCodex() as codex:
@@ -436,7 +436,7 @@ def test_real_streaming_smoke_turn_completed(runtime_env: PreparedRuntimeEnv) ->
         textwrap.dedent(
             """
             import json
-            from codex_app_server import Codex, TextInput
+            from orbit_code_app_server import Codex, TextInput
 
             with Codex() as codex:
                 thread = codex.thread_start(
@@ -469,7 +469,7 @@ def test_real_turn_interrupt_smoke(runtime_env: PreparedRuntimeEnv) -> None:
         textwrap.dedent(
             """
             import json
-            from codex_app_server import Codex, TextInput
+            from orbit_code_app_server import Codex, TextInput
 
             with Codex() as codex:
                 thread = codex.thread_start(

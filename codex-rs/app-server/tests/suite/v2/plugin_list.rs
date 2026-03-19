@@ -6,16 +6,16 @@ use app_test_support::ChatGptAuthFixture;
 use app_test_support::McpProcess;
 use app_test_support::to_response;
 use app_test_support::write_chatgpt_auth;
-use codex_app_server_protocol::JSONRPCResponse;
-use codex_app_server_protocol::PluginAuthPolicy;
-use codex_app_server_protocol::PluginInstallPolicy;
-use codex_app_server_protocol::PluginListParams;
-use codex_app_server_protocol::PluginListResponse;
-use codex_app_server_protocol::RequestId;
-use codex_core::auth::AuthCredentialsStoreMode;
-use codex_core::config::set_project_trust_level;
-use codex_protocol::config_types::TrustLevel;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use orbit_code_app_server_protocol::JSONRPCResponse;
+use orbit_code_app_server_protocol::PluginAuthPolicy;
+use orbit_code_app_server_protocol::PluginInstallPolicy;
+use orbit_code_app_server_protocol::PluginListParams;
+use orbit_code_app_server_protocol::PluginListResponse;
+use orbit_code_app_server_protocol::RequestId;
+use orbit_code_core::auth::AuthCredentialsStoreMode;
+use orbit_code_core::config::set_project_trust_level;
+use orbit_code_protocol::config_types::TrustLevel;
+use orbit_code_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 use tokio::time::timeout;
@@ -29,9 +29,9 @@ use wiremock::matchers::path;
 const DEFAULT_TIMEOUT: Duration = Duration::from_secs(10);
 const TEST_CURATED_PLUGIN_SHA: &str = "0123456789abcdef0123456789abcdef01234567";
 
-fn write_plugins_enabled_config(codex_home: &std::path::Path) -> std::io::Result<()> {
+fn write_plugins_enabled_config(orbit_code_home: &std::path::Path) -> std::io::Result<()> {
     std::fs::write(
-        codex_home.join("config.toml"),
+        orbit_code_home.join("config.toml"),
         r#"[features]
 plugins = true
 "#,
@@ -40,19 +40,19 @@ plugins = true
 
 #[tokio::test]
 async fn plugin_list_skips_invalid_marketplace_file() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let repo_root = TempDir::new()?;
     std::fs::create_dir_all(repo_root.path().join(".git"))?;
     std::fs::create_dir_all(repo_root.path().join(".agents/plugins"))?;
-    write_plugins_enabled_config(codex_home.path())?;
+    write_plugins_enabled_config(orbit_code_home.path())?;
     std::fs::write(
         repo_root.path().join(".agents/plugins/marketplace.json"),
         "{not json",
     )?;
 
-    let home = codex_home.path().to_string_lossy().into_owned();
+    let home = orbit_code_home.path().to_string_lossy().into_owned();
     let mut mcp = McpProcess::new_with_env(
-        codex_home.path(),
+        orbit_code_home.path(),
         &[
             ("HOME", Some(home.as_str())),
             ("USERPROFILE", Some(home.as_str())),
@@ -90,8 +90,8 @@ async fn plugin_list_skips_invalid_marketplace_file() -> Result<()> {
 
 #[tokio::test]
 async fn plugin_list_rejects_relative_cwds() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let orbit_code_home = TempDir::new()?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_TIMEOUT, mcp.initialize()).await??;
 
     let request_id = mcp
@@ -116,11 +116,13 @@ async fn plugin_list_rejects_relative_cwds() -> Result<()> {
 
 #[tokio::test]
 async fn plugin_list_accepts_omitted_cwds() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    std::fs::create_dir_all(codex_home.path().join(".agents/plugins"))?;
-    write_plugins_enabled_config(codex_home.path())?;
+    let orbit_code_home = TempDir::new()?;
+    std::fs::create_dir_all(orbit_code_home.path().join(".agents/plugins"))?;
+    write_plugins_enabled_config(orbit_code_home.path())?;
     std::fs::write(
-        codex_home.path().join(".agents/plugins/marketplace.json"),
+        orbit_code_home
+            .path()
+            .join(".agents/plugins/marketplace.json"),
         r#"{
   "name": "codex-curated",
   "plugins": [
@@ -134,9 +136,9 @@ async fn plugin_list_accepts_omitted_cwds() -> Result<()> {
   ]
 }"#,
     )?;
-    let home = codex_home.path().to_string_lossy().into_owned();
+    let home = orbit_code_home.path().to_string_lossy().into_owned();
     let mut mcp = McpProcess::new_with_env(
-        codex_home.path(),
+        orbit_code_home.path(),
         &[
             ("HOME", Some(home.as_str())),
             ("USERPROFILE", Some(home.as_str())),
@@ -163,12 +165,12 @@ async fn plugin_list_accepts_omitted_cwds() -> Result<()> {
 
 #[tokio::test]
 async fn plugin_list_includes_install_and_enabled_state_from_config() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let repo_root = TempDir::new()?;
     std::fs::create_dir_all(repo_root.path().join(".git"))?;
     std::fs::create_dir_all(repo_root.path().join(".agents/plugins"))?;
-    write_installed_plugin(&codex_home, "codex-curated", "enabled-plugin")?;
-    write_installed_plugin(&codex_home, "codex-curated", "disabled-plugin")?;
+    write_installed_plugin(&orbit_code_home, "codex-curated", "enabled-plugin")?;
+    write_installed_plugin(&orbit_code_home, "codex-curated", "disabled-plugin")?;
     std::fs::write(
         repo_root.path().join(".agents/plugins/marketplace.json"),
         r#"{
@@ -202,7 +204,7 @@ async fn plugin_list_includes_install_and_enabled_state_from_config() -> Result<
 }"#,
     )?;
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        orbit_code_home.path().join("config.toml"),
         r#"[features]
 plugins = true
 
@@ -214,7 +216,7 @@ enabled = false
 "#,
     )?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_TIMEOUT, mcp.initialize()).await??;
 
     let request_id = mcp
@@ -296,11 +298,13 @@ enabled = false
 
 #[tokio::test]
 async fn plugin_list_uses_home_config_for_enabled_state() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    std::fs::create_dir_all(codex_home.path().join(".agents/plugins"))?;
-    write_installed_plugin(&codex_home, "codex-curated", "shared-plugin")?;
+    let orbit_code_home = TempDir::new()?;
+    std::fs::create_dir_all(orbit_code_home.path().join(".agents/plugins"))?;
+    write_installed_plugin(&orbit_code_home, "codex-curated", "shared-plugin")?;
     std::fs::write(
-        codex_home.path().join(".agents/plugins/marketplace.json"),
+        orbit_code_home
+            .path()
+            .join(".agents/plugins/marketplace.json"),
         r#"{
   "name": "codex-curated",
   "plugins": [
@@ -315,7 +319,7 @@ async fn plugin_list_uses_home_config_for_enabled_state() -> Result<()> {
 }"#,
     )?;
     std::fs::write(
-        codex_home.path().join("config.toml"),
+        orbit_code_home.path().join("config.toml"),
         r#"[features]
 plugins = true
 
@@ -352,15 +356,15 @@ enabled = false
 "#,
     )?;
     set_project_trust_level(
-        codex_home.path(),
+        orbit_code_home.path(),
         workspace_enabled.path(),
         TrustLevel::Trusted,
     )?;
 
     let workspace_default = TempDir::new()?;
-    let home = codex_home.path().to_string_lossy().into_owned();
+    let home = orbit_code_home.path().to_string_lossy().into_owned();
     let mut mcp = McpProcess::new_with_env(
-        codex_home.path(),
+        orbit_code_home.path(),
         &[
             ("HOME", Some(home.as_str())),
             ("USERPROFILE", Some(home.as_str())),
@@ -400,13 +404,13 @@ enabled = false
 
 #[tokio::test]
 async fn plugin_list_returns_plugin_interface_with_absolute_asset_paths() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let repo_root = TempDir::new()?;
     let plugin_root = repo_root.path().join("plugins/demo-plugin");
     std::fs::create_dir_all(repo_root.path().join(".git"))?;
     std::fs::create_dir_all(repo_root.path().join(".agents/plugins"))?;
     std::fs::create_dir_all(plugin_root.join(".codex-plugin"))?;
-    write_plugins_enabled_config(codex_home.path())?;
+    write_plugins_enabled_config(orbit_code_home.path())?;
     std::fs::write(
         repo_root.path().join(".agents/plugins/marketplace.json"),
         r#"{
@@ -453,7 +457,7 @@ async fn plugin_list_returns_plugin_interface_with_absolute_asset_paths() -> Res
 }"##,
     )?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_TIMEOUT, mcp.initialize()).await??;
 
     let request_id = mcp
@@ -534,13 +538,13 @@ async fn plugin_list_returns_plugin_interface_with_absolute_asset_paths() -> Res
 
 #[tokio::test]
 async fn plugin_list_accepts_legacy_string_default_prompt() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let repo_root = TempDir::new()?;
     let plugin_root = repo_root.path().join("plugins/demo-plugin");
     std::fs::create_dir_all(repo_root.path().join(".git"))?;
     std::fs::create_dir_all(repo_root.path().join(".agents/plugins"))?;
     std::fs::create_dir_all(plugin_root.join(".codex-plugin"))?;
-    write_plugins_enabled_config(codex_home.path())?;
+    write_plugins_enabled_config(orbit_code_home.path())?;
     std::fs::write(
         repo_root.path().join(".agents/plugins/marketplace.json"),
         r#"{
@@ -566,7 +570,7 @@ async fn plugin_list_accepts_legacy_string_default_prompt() -> Result<()> {
 }"##,
     )?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_TIMEOUT, mcp.initialize()).await??;
 
     let request_id = mcp
@@ -601,12 +605,12 @@ async fn plugin_list_accepts_legacy_string_default_prompt() -> Result<()> {
 
 #[tokio::test]
 async fn plugin_list_force_remote_sync_returns_remote_sync_error_on_fail_open() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    write_plugin_sync_config(codex_home.path(), "https://chatgpt.com/backend-api/")?;
-    write_openai_curated_marketplace(codex_home.path(), &["linear"])?;
-    write_installed_plugin(&codex_home, "openai-curated", "linear")?;
+    let orbit_code_home = TempDir::new()?;
+    write_plugin_sync_config(orbit_code_home.path(), "https://chatgpt.com/backend-api/")?;
+    write_openai_curated_marketplace(orbit_code_home.path(), &["linear"])?;
+    write_installed_plugin(&orbit_code_home, "openai-curated", "linear")?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_TIMEOUT, mcp.initialize()).await??;
 
     let request_id = mcp
@@ -647,21 +651,24 @@ async fn plugin_list_force_remote_sync_returns_remote_sync_error_on_fail_open() 
 
 #[tokio::test]
 async fn plugin_list_force_remote_sync_reconciles_curated_plugin_state() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let server = MockServer::start().await;
-    write_plugin_sync_config(codex_home.path(), &format!("{}/backend-api/", server.uri()))?;
+    write_plugin_sync_config(
+        orbit_code_home.path(),
+        &format!("{}/backend-api/", server.uri()),
+    )?;
     write_chatgpt_auth(
-        codex_home.path(),
+        orbit_code_home.path(),
         ChatGptAuthFixture::new("chatgpt-token")
             .account_id("account-123")
             .chatgpt_user_id("user-123")
             .chatgpt_account_id("account-123"),
         AuthCredentialsStoreMode::File,
     )?;
-    write_openai_curated_marketplace(codex_home.path(), &["linear", "gmail", "calendar"])?;
-    write_installed_plugin(&codex_home, "openai-curated", "linear")?;
-    write_installed_plugin(&codex_home, "openai-curated", "gmail")?;
-    write_installed_plugin(&codex_home, "openai-curated", "calendar")?;
+    write_openai_curated_marketplace(orbit_code_home.path(), &["linear", "gmail", "calendar"])?;
+    write_installed_plugin(&orbit_code_home, "openai-curated", "linear")?;
+    write_installed_plugin(&orbit_code_home, "openai-curated", "gmail")?;
+    write_installed_plugin(&orbit_code_home, "openai-curated", "calendar")?;
 
     Mock::given(method("GET"))
         .and(path("/backend-api/plugins/list"))
@@ -686,7 +693,7 @@ async fn plugin_list_force_remote_sync_reconciles_curated_plugin_state() -> Resu
         .mount(&server)
         .await;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_TIMEOUT, mcp.initialize()).await??;
 
     let request_id = mcp
@@ -729,25 +736,25 @@ async fn plugin_list_force_remote_sync_reconciles_curated_plugin_state() -> Resu
         ]
     );
 
-    let config = std::fs::read_to_string(codex_home.path().join("config.toml"))?;
+    let config = std::fs::read_to_string(orbit_code_home.path().join("config.toml"))?;
     assert!(config.contains(r#"[plugins."linear@openai-curated"]"#));
     assert!(!config.contains(r#"[plugins."gmail@openai-curated"]"#));
     assert!(!config.contains(r#"[plugins."calendar@openai-curated"]"#));
 
     assert!(
-        codex_home
+        orbit_code_home
             .path()
             .join("plugins/cache/openai-curated/linear/local")
             .is_dir()
     );
     assert!(
-        !codex_home
+        !orbit_code_home
             .path()
             .join("plugins/cache/openai-curated/gmail")
             .exists()
     );
     assert!(
-        !codex_home
+        !orbit_code_home
             .path()
             .join("plugins/cache/openai-curated/calendar")
             .exists()
@@ -757,10 +764,13 @@ async fn plugin_list_force_remote_sync_reconciles_curated_plugin_state() -> Resu
 
 #[tokio::test]
 async fn plugin_list_fetches_featured_plugin_ids_without_chatgpt_auth() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let server = MockServer::start().await;
-    write_plugin_sync_config(codex_home.path(), &format!("{}/backend-api/", server.uri()))?;
-    write_openai_curated_marketplace(codex_home.path(), &["linear", "gmail"])?;
+    write_plugin_sync_config(
+        orbit_code_home.path(),
+        &format!("{}/backend-api/", server.uri()),
+    )?;
+    write_openai_curated_marketplace(orbit_code_home.path(), &["linear", "gmail"])?;
 
     Mock::given(method("GET"))
         .and(path("/backend-api/plugins/featured"))
@@ -768,7 +778,7 @@ async fn plugin_list_fetches_featured_plugin_ids_without_chatgpt_auth() -> Resul
         .mount(&server)
         .await;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_TIMEOUT, mcp.initialize()).await??;
 
     let request_id = mcp
@@ -795,10 +805,13 @@ async fn plugin_list_fetches_featured_plugin_ids_without_chatgpt_auth() -> Resul
 
 #[tokio::test]
 async fn plugin_list_uses_warmed_featured_plugin_ids_cache_on_first_request() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let server = MockServer::start().await;
-    write_plugin_sync_config(codex_home.path(), &format!("{}/backend-api/", server.uri()))?;
-    write_openai_curated_marketplace(codex_home.path(), &["linear", "gmail"])?;
+    write_plugin_sync_config(
+        orbit_code_home.path(),
+        &format!("{}/backend-api/", server.uri()),
+    )?;
+    write_openai_curated_marketplace(orbit_code_home.path(), &["linear", "gmail"])?;
 
     Mock::given(method("GET"))
         .and(path("/backend-api/plugins/featured"))
@@ -807,7 +820,7 @@ async fn plugin_list_uses_warmed_featured_plugin_ids_cache_on_first_request() ->
         .mount(&server)
         .await;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_TIMEOUT, mcp.initialize()).await??;
     wait_for_featured_plugin_request_count(&server, 1).await?;
 
@@ -864,11 +877,11 @@ async fn wait_for_featured_plugin_request_count(
 }
 
 fn write_installed_plugin(
-    codex_home: &TempDir,
+    orbit_code_home: &TempDir,
     marketplace_name: &str,
     plugin_name: &str,
 ) -> Result<()> {
-    let plugin_root = codex_home
+    let plugin_root = orbit_code_home
         .path()
         .join("plugins/cache")
         .join(marketplace_name)
@@ -882,9 +895,12 @@ fn write_installed_plugin(
     Ok(())
 }
 
-fn write_plugin_sync_config(codex_home: &std::path::Path, base_url: &str) -> std::io::Result<()> {
+fn write_plugin_sync_config(
+    orbit_code_home: &std::path::Path,
+    base_url: &str,
+) -> std::io::Result<()> {
     std::fs::write(
-        codex_home.join("config.toml"),
+        orbit_code_home.join("config.toml"),
         format!(
             r#"
 chatgpt_base_url = "{base_url}"
@@ -906,10 +922,10 @@ enabled = true
 }
 
 fn write_openai_curated_marketplace(
-    codex_home: &std::path::Path,
+    orbit_code_home: &std::path::Path,
     plugin_names: &[&str],
 ) -> std::io::Result<()> {
-    let curated_root = codex_home.join(".tmp/plugins");
+    let curated_root = orbit_code_home.join(".tmp/plugins");
     std::fs::create_dir_all(curated_root.join(".git"))?;
     std::fs::create_dir_all(curated_root.join(".agents/plugins"))?;
     let plugins = plugin_names
@@ -947,9 +963,9 @@ fn write_openai_curated_marketplace(
             format!(r#"{{"name":"{plugin_name}"}}"#),
         )?;
     }
-    std::fs::create_dir_all(codex_home.join(".tmp"))?;
+    std::fs::create_dir_all(orbit_code_home.join(".tmp"))?;
     std::fs::write(
-        codex_home.join(".tmp/plugins.sha"),
+        orbit_code_home.join(".tmp/plugins.sha"),
         format!("{TEST_CURATED_PLUGIN_SHA}\n"),
     )?;
     Ok(())

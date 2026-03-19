@@ -1,18 +1,18 @@
 use std::future::Future;
 use std::sync::Arc;
 
-use codex_hooks::SessionStartOutcome;
-use codex_hooks::UserPromptSubmitOutcome;
-use codex_hooks::UserPromptSubmitRequest;
-use codex_protocol::items::TurnItem;
-use codex_protocol::models::DeveloperInstructions;
-use codex_protocol::models::ResponseInputItem;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::HookCompletedEvent;
-use codex_protocol::protocol::HookRunSummary;
-use codex_protocol::user_input::UserInput;
+use orbit_code_hooks::SessionStartOutcome;
+use orbit_code_hooks::UserPromptSubmitOutcome;
+use orbit_code_hooks::UserPromptSubmitRequest;
+use orbit_code_protocol::items::TurnItem;
+use orbit_code_protocol::models::DeveloperInstructions;
+use orbit_code_protocol::models::ResponseInputItem;
+use orbit_code_protocol::models::ResponseItem;
+use orbit_code_protocol::protocol::AskForApproval;
+use orbit_code_protocol::protocol::EventMsg;
+use orbit_code_protocol::protocol::HookCompletedEvent;
+use orbit_code_protocol::protocol::HookRunSummary;
+use orbit_code_protocol::user_input::UserInput;
 
 use crate::codex::Session;
 use crate::codex::TurnContext;
@@ -88,7 +88,7 @@ pub(crate) async fn run_pending_session_start_hooks(
         return false;
     };
 
-    let request = codex_hooks::SessionStartRequest {
+    let request = orbit_code_hooks::SessionStartRequest {
         session_id: sess.conversation_id,
         cwd: turn_context.cwd.clone(),
         transcript_path: sess.hook_transcript_path().await,
@@ -277,7 +277,7 @@ fn hook_permission_mode(turn_context: &TurnContext) -> String {
 
 #[cfg(test)]
 mod tests {
-    use codex_protocol::models::ContentItem;
+    use orbit_code_protocol::models::ContentItem;
     use pretty_assertions::assert_eq;
 
     use super::additional_context_messages;
@@ -294,7 +294,9 @@ mod tests {
             messages
                 .iter()
                 .map(|message| match message {
-                    codex_protocol::models::ResponseItem::Message { role, content, .. } => {
+                    orbit_code_protocol::models::ResponseItem::Message {
+                        role, content, ..
+                    } => {
                         let text = content
                             .iter()
                             .map(|item| match item {

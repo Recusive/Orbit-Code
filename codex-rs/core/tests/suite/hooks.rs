@@ -3,14 +3,6 @@ use std::path::Path;
 
 use anyhow::Context;
 use anyhow::Result;
-use codex_core::features::Feature;
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::RolloutItem;
-use codex_protocol::protocol::RolloutLine;
-use codex_protocol::user_input::UserInput;
 use core_test_support::responses::ev_assistant_message;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_message_item_added;
@@ -25,6 +17,14 @@ use core_test_support::streaming_sse::StreamingSseChunk;
 use core_test_support::streaming_sse::start_streaming_sse_server;
 use core_test_support::test_codex::test_codex;
 use core_test_support::wait_for_event;
+use orbit_code_core::features::Feature;
+use orbit_code_protocol::models::ContentItem;
+use orbit_code_protocol::models::ResponseItem;
+use orbit_code_protocol::protocol::EventMsg;
+use orbit_code_protocol::protocol::Op;
+use orbit_code_protocol::protocol::RolloutItem;
+use orbit_code_protocol::protocol::RolloutLine;
+use orbit_code_protocol::user_input::UserInput;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 use std::time::Duration;
@@ -317,7 +317,7 @@ async fn stop_hook_can_block_multiple_times_in_same_turn() -> Result<()> {
         "third request should include the second continuation prompt",
     );
 
-    let hook_inputs = read_stop_hook_inputs(test.codex_home_path())?;
+    let hook_inputs = read_stop_hook_inputs(test.orbit_code_home_path())?;
     assert_eq!(hook_inputs.len(), 3);
     let stop_turn_ids = hook_inputs
         .iter()
@@ -400,7 +400,7 @@ async fn session_start_hook_sees_materialized_transcript_path() -> Result<()> {
 
     test.submit_turn("hello").await?;
 
-    let hook_inputs = read_session_start_hook_inputs(test.codex_home_path())?;
+    let hook_inputs = read_session_start_hook_inputs(test.orbit_code_home_path())?;
     assert_eq!(hook_inputs.len(), 1);
     assert_eq!(
         hook_inputs[0]
@@ -547,7 +547,7 @@ async fn blocked_user_prompt_submit_persists_additional_context_for_next_turn() 
         "second request should include the accepted prompt",
     );
 
-    let hook_inputs = read_user_prompt_submit_hook_inputs(test.codex_home_path())?;
+    let hook_inputs = read_user_prompt_submit_hook_inputs(test.orbit_code_home_path())?;
     assert_eq!(hook_inputs.len(), 2);
     assert_eq!(
         hook_inputs
@@ -687,7 +687,7 @@ async fn blocked_queued_prompt_does_not_strand_earlier_accepted_prompt() -> Resu
         "second request should not include the blocked queued prompt",
     );
 
-    let hook_inputs = read_user_prompt_submit_hook_inputs(test.codex_home_path())?;
+    let hook_inputs = read_user_prompt_submit_hook_inputs(test.orbit_code_home_path())?;
     assert_eq!(hook_inputs.len(), 3);
     assert_eq!(
         hook_inputs

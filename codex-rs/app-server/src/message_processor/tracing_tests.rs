@@ -7,26 +7,6 @@ use crate::transport::AppServerTransport;
 use anyhow::Result;
 use app_test_support::create_mock_responses_server_repeating_assistant;
 use app_test_support::write_mock_responses_config_toml;
-use codex_app_server_protocol::ClientInfo;
-use codex_app_server_protocol::ClientRequest;
-use codex_app_server_protocol::InitializeCapabilities;
-use codex_app_server_protocol::InitializeParams;
-use codex_app_server_protocol::InitializeResponse;
-use codex_app_server_protocol::JSONRPCRequest;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::ThreadStartParams;
-use codex_app_server_protocol::ThreadStartResponse;
-use codex_app_server_protocol::TurnStartParams;
-use codex_app_server_protocol::TurnStartResponse;
-use codex_app_server_protocol::UserInput;
-use codex_arg0::Arg0DispatchPaths;
-use codex_core::config::Config;
-use codex_core::config::ConfigBuilder;
-use codex_core::config_loader::CloudRequirementsLoader;
-use codex_core::config_loader::LoaderOverrides;
-use codex_feedback::CodexFeedback;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::W3cTraceContext;
 use opentelemetry::global;
 use opentelemetry::trace::SpanId;
 use opentelemetry::trace::SpanKind;
@@ -36,6 +16,26 @@ use opentelemetry_sdk::propagation::TraceContextPropagator;
 use opentelemetry_sdk::trace::InMemorySpanExporter;
 use opentelemetry_sdk::trace::SdkTracerProvider;
 use opentelemetry_sdk::trace::SpanData;
+use orbit_code_app_server_protocol::ClientInfo;
+use orbit_code_app_server_protocol::ClientRequest;
+use orbit_code_app_server_protocol::InitializeCapabilities;
+use orbit_code_app_server_protocol::InitializeParams;
+use orbit_code_app_server_protocol::InitializeResponse;
+use orbit_code_app_server_protocol::JSONRPCRequest;
+use orbit_code_app_server_protocol::RequestId;
+use orbit_code_app_server_protocol::ThreadStartParams;
+use orbit_code_app_server_protocol::ThreadStartResponse;
+use orbit_code_app_server_protocol::TurnStartParams;
+use orbit_code_app_server_protocol::TurnStartResponse;
+use orbit_code_app_server_protocol::UserInput;
+use orbit_code_arg0::Arg0DispatchPaths;
+use orbit_code_core::config::Config;
+use orbit_code_core::config::ConfigBuilder;
+use orbit_code_core::config_loader::CloudRequirementsLoader;
+use orbit_code_core::config_loader::LoaderOverrides;
+use orbit_code_feedback::CodexFeedback;
+use orbit_code_protocol::protocol::SessionSource;
+use orbit_code_protocol::protocol::W3cTraceContext;
 use pretty_assertions::assert_eq;
 use std::collections::BTreeMap;
 use std::path::Path;
@@ -105,7 +105,7 @@ fn tracing_test_guard() -> &'static tokio::sync::Mutex<()> {
 
 struct TracingHarness {
     _server: MockServer,
-    _codex_home: TempDir,
+    _orbit_code_home: TempDir,
     processor: MessageProcessor,
     outgoing_rx: mpsc::Receiver<crate::outgoing_message::OutgoingEnvelope>,
     session: ConnectionSessionState,
@@ -115,15 +115,15 @@ struct TracingHarness {
 impl TracingHarness {
     async fn new() -> Result<Self> {
         let server = create_mock_responses_server_repeating_assistant("Done").await;
-        let codex_home = TempDir::new()?;
-        let config = Arc::new(build_test_config(codex_home.path(), &server.uri()).await?);
+        let orbit_code_home = TempDir::new()?;
+        let config = Arc::new(build_test_config(orbit_code_home.path(), &server.uri()).await?);
         let (processor, outgoing_rx) = build_test_processor(config);
         let tracing = init_test_tracing();
         tracing.exporter.reset();
         tracing::callsite::rebuild_interest_cache();
         let mut harness = Self {
             _server: server,
-            _codex_home: codex_home,
+            _orbit_code_home: orbit_code_home,
             processor,
             outgoing_rx,
             session: ConnectionSessionState::default(),
@@ -207,9 +207,9 @@ impl TracingHarness {
     }
 }
 
-async fn build_test_config(codex_home: &Path, server_uri: &str) -> Result<Config> {
+async fn build_test_config(orbit_code_home: &Path, server_uri: &str) -> Result<Config> {
     write_mock_responses_config_toml(
-        codex_home,
+        orbit_code_home,
         server_uri,
         &BTreeMap::new(),
         8_192,
@@ -219,7 +219,7 @@ async fn build_test_config(codex_home: &Path, server_uri: &str) -> Result<Config
     )?;
 
     Ok(ConfigBuilder::default()
-        .codex_home(codex_home.to_path_buf())
+        .orbit_code_home(orbit_code_home.to_path_buf())
         .build()
         .await?)
 }
@@ -245,7 +245,7 @@ fn build_test_processor(
         log_db: None,
         config_warnings: Vec::new(),
         session_source: SessionSource::VSCode,
-        enable_codex_api_key_env: false,
+        enable_orbit_code_api_key_env: false,
     });
     (processor, outgoing_rx)
 }
@@ -433,7 +433,7 @@ async fn read_thread_started_notification(
                 };
                 if matches!(
                     notification,
-                    codex_app_server_protocol::ServerNotification::ThreadStarted(_)
+                    orbit_code_app_server_protocol::ServerNotification::ThreadStarted(_)
                 ) {
                     return;
                 }
@@ -446,7 +446,7 @@ async fn read_thread_started_notification(
                 };
                 if matches!(
                     notification,
-                    codex_app_server_protocol::ServerNotification::ThreadStarted(_)
+                    orbit_code_app_server_protocol::ServerNotification::ThreadStarted(_)
                 ) {
                     return;
                 }

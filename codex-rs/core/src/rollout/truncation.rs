@@ -4,10 +4,10 @@
 //! interpreting them via `event_mapping::parse_turn_item(...)`.
 
 use crate::event_mapping;
-use codex_protocol::items::TurnItem;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::RolloutItem;
+use orbit_code_protocol::items::TurnItem;
+use orbit_code_protocol::models::ResponseItem;
+use orbit_code_protocol::protocol::EventMsg;
+use orbit_code_protocol::protocol::RolloutItem;
 
 /// Return the indices of user message boundaries in a rollout.
 ///

@@ -4,10 +4,10 @@ use super::merge_macos_seatbelt_profile_extensions;
 use super::union_macos_automation_permission;
 use super::union_macos_contacts_permission;
 use super::union_macos_preferences_permission;
-use codex_protocol::models::MacOsAutomationPermission;
-use codex_protocol::models::MacOsContactsPermission;
-use codex_protocol::models::MacOsPreferencesPermission;
-use codex_protocol::models::MacOsSeatbeltProfileExtensions;
+use orbit_code_protocol::models::MacOsAutomationPermission;
+use orbit_code_protocol::models::MacOsContactsPermission;
+use orbit_code_protocol::models::MacOsPreferencesPermission;
+use orbit_code_protocol::models::MacOsSeatbeltProfileExtensions;
 use pretty_assertions::assert_eq;
 
 #[test]

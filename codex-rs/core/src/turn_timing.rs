@@ -1,10 +1,10 @@
 use std::time::Duration;
 use std::time::Instant;
 
-use codex_otel::metrics::names::TURN_TTFM_DURATION_METRIC;
-use codex_otel::metrics::names::TURN_TTFT_DURATION_METRIC;
-use codex_protocol::items::TurnItem;
-use codex_protocol::models::ResponseItem;
+use orbit_code_otel::metrics::names::TURN_TTFM_DURATION_METRIC;
+use orbit_code_otel::metrics::names::TURN_TTFT_DURATION_METRIC;
+use orbit_code_protocol::items::TurnItem;
+use orbit_code_protocol::models::ResponseItem;
 use tokio::sync::Mutex;
 
 use crate::ResponseEvent;
@@ -126,13 +126,13 @@ fn response_item_records_turn_ttft(item: &ResponseItem) -> bool {
             summary, content, ..
         } => {
             summary.iter().any(|entry| match entry {
-                codex_protocol::models::ReasoningItemReasoningSummary::SummaryText { text } => {
-                    !text.is_empty()
-                }
+                orbit_code_protocol::models::ReasoningItemReasoningSummary::SummaryText {
+                    text,
+                } => !text.is_empty(),
             }) || content.as_ref().is_some_and(|entries| {
                 entries.iter().any(|entry| match entry {
-                    codex_protocol::models::ReasoningItemContent::ReasoningText { text }
-                    | codex_protocol::models::ReasoningItemContent::Text { text } => {
+                    orbit_code_protocol::models::ReasoningItemContent::ReasoningText { text }
+                    | orbit_code_protocol::models::ReasoningItemContent::Text { text } => {
                         !text.is_empty()
                     }
                 })

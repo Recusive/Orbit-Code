@@ -1,5 +1,5 @@
 [package]
-name = "codex-state"
+name = "orbit-code-state"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -8,7 +8,7 @@ license.workspace = true
 anyhow = { workspace = true }
 chrono = { workspace = true }
 clap = { workspace = true, features = ["derive", "env"] }
-codex-protocol = { workspace = true }
+orbit-code-protocol = { workspace = true }
 dirs = { workspace = true }
 log = { workspace = true }
 owo-colors = { workspace = true }

@@ -17,13 +17,13 @@ use super::ARCHIVED_SESSIONS_SUBDIR;
 use super::SESSIONS_SUBDIR;
 use crate::protocol::EventMsg;
 use crate::state_db;
-use codex_file_search as file_search;
-use codex_protocol::ThreadId;
-use codex_protocol::protocol::RolloutItem;
-use codex_protocol::protocol::RolloutLine;
-use codex_protocol::protocol::SessionMetaLine;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::USER_MESSAGE_BEGIN;
+use orbit_code_file_search as file_search;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::protocol::RolloutItem;
+use orbit_code_protocol::protocol::RolloutLine;
+use orbit_code_protocol::protocol::SessionMetaLine;
+use orbit_code_protocol::protocol::SessionSource;
+use orbit_code_protocol::protocol::USER_MESSAGE_BEGIN;
 
 /// Returned page of thread (thread) summaries.
 #[derive(Debug, Default, PartialEq)]
@@ -288,8 +288,8 @@ impl<'de> serde::Deserialize<'de> for Cursor {
     }
 }
 
-impl From<codex_state::Anchor> for Cursor {
-    fn from(anchor: codex_state::Anchor) -> Self {
+impl From<orbit_code_state::Anchor> for Cursor {
+    fn from(anchor: orbit_code_state::Anchor) -> Self {
         let ts = OffsetDateTime::from_unix_timestamp(anchor.ts.timestamp())
             .unwrap_or(OffsetDateTime::UNIX_EPOCH);
         Self::new(ts, anchor.id)
@@ -301,7 +301,7 @@ impl From<codex_state::Anchor> for Cursor {
 /// concurrent new sessions being appended. Ordering is stable by the requested sort key
 /// (timestamp desc, then UUID desc).
 pub(crate) async fn get_threads(
-    codex_home: &Path,
+    orbit_code_home: &Path,
     page_size: usize,
     cursor: Option<&Cursor>,
     sort_key: ThreadSortKey,
@@ -309,7 +309,7 @@ pub(crate) async fn get_threads(
     model_providers: Option<&[String]>,
     default_provider: &str,
 ) -> io::Result<ThreadsPage> {
-    let root = codex_home.join(SESSIONS_SUBDIR);
+    let root = orbit_code_home.join(SESSIONS_SUBDIR);
     get_threads_in_root(
         root,
         page_size,
@@ -1168,7 +1168,7 @@ fn truncate_to_seconds(dt: OffsetDateTime) -> Option<OffsetDateTime> {
 }
 
 async fn find_thread_path_by_id_str_in_subdir(
-    codex_home: &Path,
+    orbit_code_home: &Path,
     subdir: &str,
     id_str: &str,
 ) -> io::Result<Option<PathBuf>> {
@@ -1185,7 +1185,7 @@ async fn find_thread_path_by_id_str_in_subdir(
         _ => None,
     };
     let thread_id = ThreadId::from_string(id_str).ok();
-    let state_db_ctx = state_db::open_if_present(codex_home, "").await;
+    let state_db_ctx = state_db::open_if_present(orbit_code_home, "").await;
     if let Some(state_db_ctx) = state_db_ctx.as_deref()
         && let Some(thread_id) = thread_id
         && let Some(db_path) = state_db::find_rollout_path_by_id(
@@ -1208,7 +1208,7 @@ async fn find_thread_path_by_id_str_in_subdir(
         );
     }
 
-    let mut root = codex_home.to_path_buf();
+    let mut root = orbit_code_home.to_path_buf();
     root.push(subdir);
     if !root.exists() {
         return Ok(None);
@@ -1248,18 +1248,18 @@ async fn find_thread_path_by_id_str_in_subdir(
 /// paginated listing implementation. Returns `Ok(Some(path))` if found, `Ok(None)` if not present
 /// or the id is invalid.
 pub async fn find_thread_path_by_id_str(
-    codex_home: &Path,
+    orbit_code_home: &Path,
     id_str: &str,
 ) -> io::Result<Option<PathBuf>> {
-    find_thread_path_by_id_str_in_subdir(codex_home, SESSIONS_SUBDIR, id_str).await
+    find_thread_path_by_id_str_in_subdir(orbit_code_home, SESSIONS_SUBDIR, id_str).await
 }
 
 /// Locate an archived thread rollout file by its UUID string.
 pub async fn find_archived_thread_path_by_id_str(
-    codex_home: &Path,
+    orbit_code_home: &Path,
     id_str: &str,
 ) -> io::Result<Option<PathBuf>> {
-    find_thread_path_by_id_str_in_subdir(codex_home, ARCHIVED_SESSIONS_SUBDIR, id_str).await
+    find_thread_path_by_id_str_in_subdir(orbit_code_home, ARCHIVED_SESSIONS_SUBDIR, id_str).await
 }
 
 /// Extract the `YYYY/MM/DD` directory components from a rollout filename.

@@ -1,15 +1,15 @@
 [package]
-name = "codex-cli"
+name = "orbit-code"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [[bin]]
-name = "codex"
+name = "orbit-code"
 path = "src/main.rs"
 
 [lib]
-name = "codex_cli"
+name = "orbit_code_cli"
 path = "src/lib.rs"
 
 [lints]
@@ -19,26 +19,26 @@ workspace = true
 anyhow = { workspace = true }
 clap = { workspace = true, features = ["derive"] }
 clap_complete = { workspace = true }
-codex-app-server = { workspace = true }
-codex-app-server-protocol = { workspace = true }
-codex-app-server-test-client = { workspace = true }
-codex-arg0 = { workspace = true }
-codex-chatgpt = { workspace = true }
-codex-cloud-tasks = { path = "../cloud-tasks" }
-codex-utils-cli = { workspace = true }
-codex-config = { workspace = true }
-codex-core = { workspace = true }
-codex-exec = { workspace = true }
-codex-execpolicy = { workspace = true }
-codex-login = { workspace = true }
-codex-mcp-server = { workspace = true }
-codex-protocol = { workspace = true }
-codex-responses-api-proxy = { workspace = true }
-codex-rmcp-client = { workspace = true }
-codex-state = { workspace = true }
-codex-stdio-to-uds = { workspace = true }
-codex-tui = { workspace = true }
-codex-tui-app-server = { workspace = true }
+orbit-code-app-server = { workspace = true }
+orbit-code-app-server-protocol = { workspace = true }
+orbit-code-app-server-test-client = { workspace = true }
+orbit-code-arg0 = { workspace = true }
+orbit-code-chatgpt = { workspace = true }
+orbit-code-cloud-tasks = { path = "../cloud-tasks" }
+orbit-code-utils-cli = { workspace = true }
+orbit-code-config = { workspace = true }
+orbit-code-core = { workspace = true }
+orbit-code-exec = { workspace = true }
+orbit-code-execpolicy = { workspace = true }
+orbit-code-login = { workspace = true }
+orbit-code-mcp-server = { workspace = true }
+orbit-code-protocol = { workspace = true }
+orbit-code-responses-api-proxy = { workspace = true }
+orbit-code-rmcp-client = { workspace = true }
+orbit-code-state = { workspace = true }
+orbit-code-stdio-to-uds = { workspace = true }
+orbit-code-tui = { workspace = true }
+orbit-code-tui-app-server = { workspace = true }
 libc = { workspace = true }
 owo-colors = { workspace = true }
 regex-lite = { workspace = true }
@@ -58,12 +58,12 @@ tracing-appender = { workspace = true }
 tracing-subscriber = { workspace = true }
 
 [target.'cfg(target_os = "windows")'.dependencies]
-codex_windows_sandbox = { package = "codex-windows-sandbox", path = "../windows-sandbox-rs" }
+orbit_code_windows_sandbox = { package = "orbit-code-windows-sandbox", path = "../windows-sandbox-rs" }
 
 [dev-dependencies]
 assert_cmd = { workspace = true }
 assert_matches = { workspace = true }
-codex-utils-cargo-bin = { workspace = true }
+orbit-code-utils-cargo-bin = { workspace = true }
 predicates = { workspace = true }
 pretty_assertions = { workspace = true }
 sqlx = { workspace = true }

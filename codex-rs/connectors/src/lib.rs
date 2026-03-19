@@ -5,9 +5,9 @@ use std::sync::Mutex as StdMutex;
 use std::time::Duration;
 use std::time::Instant;
 
-use codex_app_server_protocol::AppBranding;
-use codex_app_server_protocol::AppInfo;
-use codex_app_server_protocol::AppMetadata;
+use orbit_code_app_server_protocol::AppBranding;
+use orbit_code_app_server_protocol::AppInfo;
+use orbit_code_app_server_protocol::AppMetadata;
 use serde::Deserialize;
 
 pub const CONNECTORS_CACHE_TTL: Duration = Duration::from_secs(3600);

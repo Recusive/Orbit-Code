@@ -1,6 +1,6 @@
 use anyhow::Result;
 use clap::Parser;
-use codex_execpolicy::execpolicycheck::ExecPolicyCheckCommand;
+use orbit_code_execpolicy::execpolicycheck::ExecPolicyCheckCommand;
 
 /// CLI for evaluating exec policies
 #[derive(Parser)]

@@ -1,8 +1,8 @@
 use crate::bottom_pane::ApprovalRequest;
 use crate::bottom_pane::McpServerElicitationFormRequest;
 use crate::render::renderable::Renderable;
-use codex_protocol::request_user_input::RequestUserInputEvent;
 use crossterm::event::KeyEvent;
+use orbit_code_protocol::request_user_input::RequestUserInputEvent;
 
 use super::CancellationEvent;
 

@@ -262,7 +262,7 @@ pub const PROXY_URL_ENV_KEYS: &[&str] = &[
 ];
 
 pub const ALL_PROXY_ENV_KEYS: &[&str] = &["ALL_PROXY", "all_proxy"];
-pub const ALLOW_LOCAL_BINDING_ENV_KEY: &str = "CODEX_NETWORK_ALLOW_LOCAL_BINDING";
+pub const ALLOW_LOCAL_BINDING_ENV_KEY: &str = "ORBIT_NETWORK_ALLOW_LOCAL_BINDING";
 
 const FTP_PROXY_ENV_KEYS: &[&str] = &["FTP_PROXY", "ftp_proxy"];
 const WEBSOCKET_PROXY_ENV_KEYS: &[&str] = &["WS_PROXY", "WSS_PROXY", "ws_proxy", "wss_proxy"];
@@ -594,7 +594,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn non_codex_managed_proxy_builder_uses_configured_ports() {
+    async fn non_orbit_code_managed_proxy_builder_uses_configured_ports() {
         let settings = NetworkProxySettings {
             proxy_url: "http://127.0.0.1:43128".to_string(),
             socks_url: "http://127.0.0.1:48081".to_string(),

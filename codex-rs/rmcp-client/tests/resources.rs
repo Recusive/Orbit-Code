@@ -2,11 +2,11 @@ use std::ffi::OsString;
 use std::path::PathBuf;
 use std::time::Duration;
 
-use codex_rmcp_client::ElicitationAction;
-use codex_rmcp_client::ElicitationResponse;
-use codex_rmcp_client::RmcpClient;
-use codex_utils_cargo_bin::CargoBinError;
 use futures::FutureExt as _;
+use orbit_code_rmcp_client::ElicitationAction;
+use orbit_code_rmcp_client::ElicitationResponse;
+use orbit_code_rmcp_client::RmcpClient;
+use orbit_code_utils_cargo_bin::CargoBinError;
 use rmcp::model::AnnotateAble;
 use rmcp::model::ClientCapabilities;
 use rmcp::model::ElicitationCapability;
@@ -22,7 +22,7 @@ use serde_json::json;
 const RESOURCE_URI: &str = "memo://codex/example-note";
 
 fn stdio_server_bin() -> Result<PathBuf, CargoBinError> {
-    codex_utils_cargo_bin::cargo_bin("test_stdio_server")
+    orbit_code_utils_cargo_bin::cargo_bin("test_stdio_server")
 }
 
 fn init_params() -> InitializeRequestParams {

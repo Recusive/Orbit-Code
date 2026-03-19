@@ -1,12 +1,12 @@
 use clap::Parser;
-use codex_arg0::Arg0DispatchPaths;
-use codex_arg0::arg0_dispatch_or_else;
-use codex_tui::AppExitInfo;
-use codex_tui::Cli;
-use codex_tui::ExitReason;
-use codex_tui::run_main;
-use codex_tui::update_action::UpdateAction;
-use codex_utils_cli::CliConfigOverrides;
+use orbit_code_arg0::Arg0DispatchPaths;
+use orbit_code_arg0::arg0_dispatch_or_else;
+use orbit_code_tui::AppExitInfo;
+use orbit_code_tui::Cli;
+use orbit_code_tui::ExitReason;
+use orbit_code_tui::run_main;
+use orbit_code_tui::update_action::UpdateAction;
+use orbit_code_utils_cli::CliConfigOverrides;
 
 #[derive(Parser, Debug)]
 struct TopCli {
@@ -17,8 +17,8 @@ struct TopCli {
     inner: Cli,
 }
 
-fn into_app_server_cli(cli: Cli) -> codex_tui_app_server::Cli {
-    codex_tui_app_server::Cli {
+fn into_app_server_cli(cli: Cli) -> orbit_code_tui_app_server::Cli {
+    orbit_code_tui_app_server::Cli {
         prompt: cli.prompt,
         images: cli.images,
         resume_picker: cli.resume_picker,
@@ -46,27 +46,29 @@ fn into_app_server_cli(cli: Cli) -> codex_tui_app_server::Cli {
 }
 
 fn into_legacy_update_action(
-    action: codex_tui_app_server::update_action::UpdateAction,
+    action: orbit_code_tui_app_server::update_action::UpdateAction,
 ) -> UpdateAction {
     match action {
-        codex_tui_app_server::update_action::UpdateAction::NpmGlobalLatest => {
+        orbit_code_tui_app_server::update_action::UpdateAction::NpmGlobalLatest => {
             UpdateAction::NpmGlobalLatest
         }
-        codex_tui_app_server::update_action::UpdateAction::BunGlobalLatest => {
+        orbit_code_tui_app_server::update_action::UpdateAction::BunGlobalLatest => {
             UpdateAction::BunGlobalLatest
         }
-        codex_tui_app_server::update_action::UpdateAction::BrewUpgrade => UpdateAction::BrewUpgrade,
+        orbit_code_tui_app_server::update_action::UpdateAction::BrewUpgrade => {
+            UpdateAction::BrewUpgrade
+        }
     }
 }
 
-fn into_legacy_exit_reason(reason: codex_tui_app_server::ExitReason) -> ExitReason {
+fn into_legacy_exit_reason(reason: orbit_code_tui_app_server::ExitReason) -> ExitReason {
     match reason {
-        codex_tui_app_server::ExitReason::UserRequested => ExitReason::UserRequested,
-        codex_tui_app_server::ExitReason::Fatal(message) => ExitReason::Fatal(message),
+        orbit_code_tui_app_server::ExitReason::UserRequested => ExitReason::UserRequested,
+        orbit_code_tui_app_server::ExitReason::Fatal(message) => ExitReason::Fatal(message),
     }
 }
 
-fn into_legacy_exit_info(exit_info: codex_tui_app_server::AppExitInfo) -> AppExitInfo {
+fn into_legacy_exit_info(exit_info: orbit_code_tui_app_server::AppExitInfo) -> AppExitInfo {
     AppExitInfo {
         token_usage: exit_info.token_usage,
         thread_id: exit_info.thread_id,
@@ -84,13 +86,13 @@ fn main() -> anyhow::Result<()> {
             .config_overrides
             .raw_overrides
             .splice(0..0, top_cli.config_overrides.raw_overrides);
-        let use_app_server_tui = codex_tui::should_use_app_server_tui(&inner).await?;
+        let use_app_server_tui = orbit_code_tui::should_use_app_server_tui(&inner).await?;
         let exit_info = if use_app_server_tui {
             into_legacy_exit_info(
-                codex_tui_app_server::run_main(
+                orbit_code_tui_app_server::run_main(
                     into_app_server_cli(inner),
                     arg0_paths,
-                    codex_core::config_loader::LoaderOverrides::default(),
+                    orbit_code_core::config_loader::LoaderOverrides::default(),
                     /*remote*/ None,
                 )
                 .await?,
@@ -99,7 +101,7 @@ fn main() -> anyhow::Result<()> {
             run_main(
                 inner,
                 arg0_paths,
-                codex_core::config_loader::LoaderOverrides::default(),
+                orbit_code_core::config_loader::LoaderOverrides::default(),
             )
             .await?
         };
@@ -107,7 +109,7 @@ fn main() -> anyhow::Result<()> {
         if !token_usage.is_zero() {
             println!(
                 "{}",
-                codex_protocol::protocol::FinalOutput::from(token_usage),
+                orbit_code_protocol::protocol::FinalOutput::from(token_usage),
             );
         }
         Ok(())

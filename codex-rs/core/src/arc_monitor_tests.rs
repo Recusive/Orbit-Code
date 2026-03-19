@@ -14,12 +14,12 @@ use wiremock::matchers::path;
 
 use super::*;
 use crate::codex::make_session_and_context;
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::LocalShellAction;
-use codex_protocol::models::LocalShellExecAction;
-use codex_protocol::models::LocalShellStatus;
-use codex_protocol::models::MessagePhase;
-use codex_protocol::models::ResponseItem;
+use orbit_code_protocol::models::ContentItem;
+use orbit_code_protocol::models::LocalShellAction;
+use orbit_code_protocol::models::LocalShellExecAction;
+use orbit_code_protocol::models::LocalShellStatus;
+use orbit_code_protocol::models::MessagePhase;
+use orbit_code_protocol::models::ResponseItem;
 
 struct EnvVarGuard {
     key: &'static str,
@@ -185,8 +185,8 @@ async fn build_arc_monitor_request_includes_relevant_history_and_null_policies()
         request,
         ArcMonitorRequest {
             metadata: ArcMonitorMetadata {
-                codex_thread_id: session.conversation_id.to_string(),
-                codex_turn_id: turn_context.sub_id.clone(),
+                orbit_code_thread_id: session.conversation_id.to_string(),
+                orbit_code_turn_id: turn_context.sub_id.clone(),
                 conversation_id: Some(session.conversation_id.to_string()),
                 protection_client_callsite: None,
             },
@@ -282,8 +282,8 @@ async fn monitor_action_posts_expected_arc_request() {
         .and(header("chatgpt-account-id", "account_id"))
         .and(body_json(serde_json::json!({
             "metadata": {
-                "codex_thread_id": session.conversation_id.to_string(),
-                "codex_turn_id": turn_context.sub_id.clone(),
+                "orbit_code_thread_id": session.conversation_id.to_string(),
+                "orbit_code_turn_id": turn_context.sub_id.clone(),
                 "conversation_id": session.conversation_id.to_string(),
             },
             "messages": [{
@@ -334,10 +334,10 @@ async fn monitor_action_posts_expected_arc_request() {
 async fn monitor_action_uses_env_url_and_token_overrides() {
     let server = MockServer::start().await;
     let _url_guard = EnvVarGuard::set(
-        CODEX_ARC_MONITOR_ENDPOINT_OVERRIDE,
+        ORBIT_ARC_MONITOR_ENDPOINT_OVERRIDE,
         OsStr::new(&format!("{}/override/arc", server.uri())),
     );
-    let _token_guard = EnvVarGuard::set(CODEX_ARC_MONITOR_TOKEN, OsStr::new("override-token"));
+    let _token_guard = EnvVarGuard::set(ORBIT_ARC_MONITOR_TOKEN, OsStr::new("override-token"));
 
     let (session, turn_context) = make_session_and_context().await;
     session

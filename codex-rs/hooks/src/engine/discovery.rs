@@ -1,8 +1,8 @@
 use std::fs;
 use std::path::Path;
 
-use codex_config::ConfigLayerStack;
-use codex_config::ConfigLayerStackOrdering;
+use orbit_code_config::ConfigLayerStack;
+use orbit_code_config::ConfigLayerStackOrdering;
 use regex::Regex;
 
 use super::ConfiguredHandler;
@@ -75,9 +75,9 @@ pub(crate) fn discover_handlers(config_layer_stack: Option<&ConfigLayerStack>) -
                 &mut warnings,
                 &mut display_order,
                 source_path.as_path(),
-                codex_protocol::protocol::HookEventName::SessionStart,
+                orbit_code_protocol::protocol::HookEventName::SessionStart,
                 effective_matcher(
-                    codex_protocol::protocol::HookEventName::SessionStart,
+                    orbit_code_protocol::protocol::HookEventName::SessionStart,
                     group.matcher.as_deref(),
                 ),
                 group.hooks,
@@ -90,9 +90,9 @@ pub(crate) fn discover_handlers(config_layer_stack: Option<&ConfigLayerStack>) -
                 &mut warnings,
                 &mut display_order,
                 source_path.as_path(),
-                codex_protocol::protocol::HookEventName::UserPromptSubmit,
+                orbit_code_protocol::protocol::HookEventName::UserPromptSubmit,
                 effective_matcher(
-                    codex_protocol::protocol::HookEventName::UserPromptSubmit,
+                    orbit_code_protocol::protocol::HookEventName::UserPromptSubmit,
                     group.matcher.as_deref(),
                 ),
                 group.hooks,
@@ -105,9 +105,9 @@ pub(crate) fn discover_handlers(config_layer_stack: Option<&ConfigLayerStack>) -
                 &mut warnings,
                 &mut display_order,
                 source_path.as_path(),
-                codex_protocol::protocol::HookEventName::Stop,
+                orbit_code_protocol::protocol::HookEventName::Stop,
                 effective_matcher(
-                    codex_protocol::protocol::HookEventName::Stop,
+                    orbit_code_protocol::protocol::HookEventName::Stop,
                     group.matcher.as_deref(),
                 ),
                 group.hooks,
@@ -119,13 +119,13 @@ pub(crate) fn discover_handlers(config_layer_stack: Option<&ConfigLayerStack>) -
 }
 
 fn effective_matcher(
-    event_name: codex_protocol::protocol::HookEventName,
+    event_name: orbit_code_protocol::protocol::HookEventName,
     matcher: Option<&str>,
 ) -> Option<&str> {
     match event_name {
-        codex_protocol::protocol::HookEventName::SessionStart => matcher,
-        codex_protocol::protocol::HookEventName::UserPromptSubmit
-        | codex_protocol::protocol::HookEventName::Stop => None,
+        orbit_code_protocol::protocol::HookEventName::SessionStart => matcher,
+        orbit_code_protocol::protocol::HookEventName::UserPromptSubmit
+        | orbit_code_protocol::protocol::HookEventName::Stop => None,
     }
 }
 
@@ -134,7 +134,7 @@ fn append_group_handlers(
     warnings: &mut Vec<String>,
     display_order: &mut i64,
     source_path: &Path,
-    event_name: codex_protocol::protocol::HookEventName,
+    event_name: orbit_code_protocol::protocol::HookEventName,
     matcher: Option<&str>,
     group_handlers: Vec<HookHandlerConfig>,
 ) {
@@ -199,7 +199,7 @@ mod tests {
     use std::path::Path;
     use std::path::PathBuf;
 
-    use codex_protocol::protocol::HookEventName;
+    use orbit_code_protocol::protocol::HookEventName;
     use pretty_assertions::assert_eq;
 
     use super::ConfiguredHandler;

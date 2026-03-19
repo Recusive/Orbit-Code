@@ -2,15 +2,15 @@
 
 use anyhow::Context as _;
 use anyhow::ensure;
-use codex_utils_cargo_bin::CargoBinError;
 use ctor::ctor;
+use orbit_code_utils_cargo_bin::CargoBinError;
 use tempfile::TempDir;
 
-use codex_core::CodexThread;
-use codex_core::config::Config;
-use codex_core::config::ConfigBuilder;
-use codex_core::config::ConfigOverrides;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use orbit_code_core::CodexThread;
+use orbit_code_core::config::Config;
+use orbit_code_core::config::ConfigBuilder;
+use orbit_code_core::config::ConfigOverrides;
+use orbit_code_utils_absolute_path::AbsolutePathBuf;
 use regex_lite::Regex;
 use std::path::PathBuf;
 
@@ -20,14 +20,14 @@ pub mod process;
 pub mod responses;
 pub mod streaming_sse;
 pub mod test_codex;
-pub mod test_codex_exec;
+pub mod test_orbit_code_exec;
 pub mod tracing;
 pub mod zsh_fork;
 
 #[ctor]
 fn enable_deterministic_unified_exec_process_ids_for_tests() {
-    codex_core::test_support::set_thread_manager_test_mode(/*enabled*/ true);
-    codex_core::test_support::set_deterministic_process_ids(/*enabled*/ true);
+    orbit_code_core::test_support::set_thread_manager_test_mode(/*enabled*/ true);
+    orbit_code_core::test_support::set_deterministic_process_ids(/*enabled*/ true);
 }
 
 #[ctor]
@@ -36,7 +36,7 @@ fn configure_insta_workspace_root_for_snapshot_tests() {
         return;
     }
 
-    let workspace_root = codex_utils_cargo_bin::repo_root()
+    let workspace_root = orbit_code_utils_cargo_bin::repo_root()
         .ok()
         .map(|root| root.join("codex-rs"));
 
@@ -142,9 +142,9 @@ pub fn fetch_dotslash_file(
 /// Returns a default `Config` whose on-disk state is confined to the provided
 /// temporary directory. Using a per-test directory keeps tests hermetic and
 /// avoids clobbering a developer’s real `~/.codex`.
-pub async fn load_default_config_for_test(codex_home: &TempDir) -> Config {
+pub async fn load_default_config_for_test(orbit_code_home: &TempDir) -> Config {
     ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
+        .orbit_code_home(orbit_code_home.path().to_path_buf())
         .harness_overrides(default_test_overrides())
         .build()
         .await
@@ -154,8 +154,8 @@ pub async fn load_default_config_for_test(codex_home: &TempDir) -> Config {
 #[cfg(target_os = "linux")]
 fn default_test_overrides() -> ConfigOverrides {
     ConfigOverrides {
-        codex_linux_sandbox_exe: Some(
-            codex_utils_cargo_bin::cargo_bin("codex-linux-sandbox")
+        orbit_code_linux_sandbox_exe: Some(
+            orbit_code_utils_cargo_bin::cargo_bin("codex-linux-sandbox")
                 .expect("should find binary for codex-linux-sandbox"),
         ),
         ..ConfigOverrides::default()
@@ -218,9 +218,9 @@ pub fn load_sse_fixture_with_id_from_str(raw: &str, id: &str) -> String {
 pub async fn wait_for_event<F>(
     codex: &CodexThread,
     predicate: F,
-) -> codex_protocol::protocol::EventMsg
+) -> orbit_code_protocol::protocol::EventMsg
 where
-    F: FnMut(&codex_protocol::protocol::EventMsg) -> bool,
+    F: FnMut(&orbit_code_protocol::protocol::EventMsg) -> bool,
 {
     use tokio::time::Duration;
     wait_for_event_with_timeout(codex, predicate, Duration::from_secs(1)).await
@@ -228,7 +228,7 @@ where
 
 pub async fn wait_for_event_match<T, F>(codex: &CodexThread, matcher: F) -> T
 where
-    F: Fn(&codex_protocol::protocol::EventMsg) -> Option<T>,
+    F: Fn(&orbit_code_protocol::protocol::EventMsg) -> Option<T>,
 {
     let ev = wait_for_event(codex, |ev| matcher(ev).is_some()).await;
     matcher(&ev).unwrap()
@@ -238,9 +238,9 @@ pub async fn wait_for_event_with_timeout<F>(
     codex: &CodexThread,
     mut predicate: F,
     wait_time: tokio::time::Duration,
-) -> codex_protocol::protocol::EventMsg
+) -> orbit_code_protocol::protocol::EventMsg
 where
-    F: FnMut(&codex_protocol::protocol::EventMsg) -> bool,
+    F: FnMut(&orbit_code_protocol::protocol::EventMsg) -> bool,
 {
     use tokio::time::Duration;
     use tokio::time::timeout;
@@ -257,15 +257,16 @@ where
 }
 
 pub fn sandbox_env_var() -> &'static str {
-    codex_core::spawn::CODEX_SANDBOX_ENV_VAR
+    orbit_code_core::spawn::CODEX_SANDBOX_ENV_VAR
 }
 
 pub fn sandbox_network_env_var() -> &'static str {
-    codex_core::spawn::CODEX_SANDBOX_NETWORK_DISABLED_ENV_VAR
+    orbit_code_core::spawn::CODEX_SANDBOX_NETWORK_DISABLED_ENV_VAR
 }
 
 pub fn format_with_current_shell(command: &str) -> Vec<String> {
-    codex_core::shell::default_user_shell().derive_exec_args(command, /*use_login_shell*/ true)
+    orbit_code_core::shell::default_user_shell()
+        .derive_exec_args(command, /*use_login_shell*/ true)
 }
 
 pub fn format_with_current_shell_display(command: &str) -> String {
@@ -274,7 +275,7 @@ pub fn format_with_current_shell_display(command: &str) -> String {
 }
 
 pub fn format_with_current_shell_non_login(command: &str) -> Vec<String> {
-    codex_core::shell::default_user_shell()
+    orbit_code_core::shell::default_user_shell()
         .derive_exec_args(command, /*use_login_shell*/ false)
 }
 
@@ -285,7 +286,8 @@ pub fn format_with_current_shell_display_non_login(command: &str) -> String {
 }
 
 pub fn stdio_server_bin() -> Result<String, CargoBinError> {
-    codex_utils_cargo_bin::cargo_bin("test_stdio_server").map(|p| p.to_string_lossy().to_string())
+    orbit_code_utils_cargo_bin::cargo_bin("test_stdio_server")
+        .map(|p| p.to_string_lossy().to_string())
 }
 
 pub mod fs_wait {
@@ -478,11 +480,11 @@ macro_rules! skip_if_no_network {
 }
 
 #[macro_export]
-macro_rules! codex_linux_sandbox_exe_or_skip {
+macro_rules! orbit_code_linux_sandbox_exe_or_skip {
     () => {{
         #[cfg(target_os = "linux")]
         {
-            match codex_utils_cargo_bin::cargo_bin("codex-linux-sandbox") {
+            match orbit_code_utils_cargo_bin::cargo_bin("codex-linux-sandbox") {
                 Ok(path) => Some(path),
                 Err(err) => {
                     eprintln!("codex-linux-sandbox binary not available, skipping test: {err}");
@@ -498,7 +500,7 @@ macro_rules! codex_linux_sandbox_exe_or_skip {
     ($return_value:expr $(,)?) => {{
         #[cfg(target_os = "linux")]
         {
-            match codex_utils_cargo_bin::cargo_bin("codex-linux-sandbox") {
+            match orbit_code_utils_cargo_bin::cargo_bin("codex-linux-sandbox") {
                 Ok(path) => Some(path),
                 Err(err) => {
                     eprintln!("codex-linux-sandbox binary not available, skipping test: {err}");

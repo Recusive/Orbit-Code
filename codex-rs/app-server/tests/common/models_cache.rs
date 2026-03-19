@@ -1,13 +1,13 @@
 use chrono::DateTime;
 use chrono::Utc;
-use codex_core::test_support::all_model_presets;
-use codex_protocol::config_types::ReasoningSummary;
-use codex_protocol::openai_models::ConfigShellToolType;
-use codex_protocol::openai_models::ModelInfo;
-use codex_protocol::openai_models::ModelPreset;
-use codex_protocol::openai_models::ModelVisibility;
-use codex_protocol::openai_models::TruncationPolicyConfig;
-use codex_protocol::openai_models::default_input_modalities;
+use orbit_code_core::test_support::all_model_presets;
+use orbit_code_protocol::config_types::ReasoningSummary;
+use orbit_code_protocol::openai_models::ConfigShellToolType;
+use orbit_code_protocol::openai_models::ModelInfo;
+use orbit_code_protocol::openai_models::ModelPreset;
+use orbit_code_protocol::openai_models::ModelVisibility;
+use orbit_code_protocol::openai_models::TruncationPolicyConfig;
+use orbit_code_protocol::openai_models::default_input_modalities;
 use serde_json::json;
 use std::path::Path;
 
@@ -54,7 +54,7 @@ fn preset_to_info(preset: &ModelPreset, priority: i32) -> ModelInfo {
 /// This prevents ModelsManager from making network requests to refresh models.
 /// The cache will be treated as fresh (within TTL) and used instead of fetching from the network.
 /// Uses bundled-catalog-derived presets, converted to ModelInfo format.
-pub fn write_models_cache(codex_home: &Path) -> std::io::Result<()> {
+pub fn write_models_cache(orbit_code_home: &Path) -> std::io::Result<()> {
     // Get a stable bundled-catalog-derived preset list and filter for picker-visible entries.
     let presets: Vec<&ModelPreset> = all_model_presets()
         .iter()
@@ -72,19 +72,19 @@ pub fn write_models_cache(codex_home: &Path) -> std::io::Result<()> {
         })
         .collect();
 
-    write_models_cache_with_models(codex_home, models)
+    write_models_cache_with_models(orbit_code_home, models)
 }
 
 /// Write a models_cache.json file with specific models.
 /// Useful when tests need specific models to be available.
 pub fn write_models_cache_with_models(
-    codex_home: &Path,
+    orbit_code_home: &Path,
     models: Vec<ModelInfo>,
 ) -> std::io::Result<()> {
-    let cache_path = codex_home.join("models_cache.json");
+    let cache_path = orbit_code_home.join("models_cache.json");
     // DateTime<Utc> serializes to RFC3339 format by default with serde
     let fetched_at: DateTime<Utc> = Utc::now();
-    let client_version = codex_core::models_manager::client_version_to_whole();
+    let client_version = orbit_code_core::models_manager::client_version_to_whole();
     let cache = json!({
         "fetched_at": fetched_at,
         "etag": null,

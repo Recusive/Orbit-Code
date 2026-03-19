@@ -3,13 +3,6 @@
 
 use anyhow::Context;
 use anyhow::Result;
-use codex_core::config::types::McpServerConfig;
-use codex_core::config::types::McpServerTransportConfig;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::SandboxPolicy;
-use codex_protocol::user_input::UserInput;
 use core_test_support::assert_regex_match;
 use core_test_support::responses;
 use core_test_support::responses::ev_assistant_message;
@@ -23,6 +16,13 @@ use core_test_support::skip_if_no_network;
 use core_test_support::stdio_server_bin;
 use core_test_support::test_codex::test_codex;
 use core_test_support::wait_for_event;
+use orbit_code_core::config::types::McpServerConfig;
+use orbit_code_core::config::types::McpServerTransportConfig;
+use orbit_code_protocol::protocol::AskForApproval;
+use orbit_code_protocol::protocol::EventMsg;
+use orbit_code_protocol::protocol::Op;
+use orbit_code_protocol::protocol::SandboxPolicy;
+use orbit_code_protocol::user_input::UserInput;
 use serde_json::Value;
 use serde_json::json;
 use std::collections::HashMap;
@@ -354,8 +354,8 @@ async fn mcp_tool_call_output_exceeds_limit_truncated_for_model() -> Result<()> 
         let mut servers = config.mcp_servers.get().clone();
         servers.insert(
             server_name.to_string(),
-            codex_core::config::types::McpServerConfig {
-                transport: codex_core::config::types::McpServerTransportConfig::Stdio {
+            orbit_code_core::config::types::McpServerConfig {
+                transport: orbit_code_core::config::types::McpServerTransportConfig::Stdio {
                     command: rmcp_test_server_bin,
                     args: Vec::new(),
                     env: None,
@@ -716,8 +716,8 @@ async fn mcp_tool_call_output_not_truncated_with_custom_limit() -> Result<()> {
         let mut servers = config.mcp_servers.get().clone();
         servers.insert(
             server_name.to_string(),
-            codex_core::config::types::McpServerConfig {
-                transport: codex_core::config::types::McpServerTransportConfig::Stdio {
+            orbit_code_core::config::types::McpServerConfig {
+                transport: orbit_code_core::config::types::McpServerTransportConfig::Stdio {
                     command: rmcp_test_server_bin,
                     args: Vec::new(),
                     env: None,

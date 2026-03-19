@@ -38,20 +38,20 @@ use crate::exec_events::TurnFailedEvent;
 use crate::exec_events::TurnStartedEvent;
 use crate::exec_events::Usage;
 use crate::exec_events::WebSearchItem;
-use codex_core::config::Config;
-use codex_protocol::models::WebSearchAction;
-use codex_protocol::plan_tool::StepStatus;
-use codex_protocol::plan_tool::UpdatePlanArgs;
-use codex_protocol::protocol;
-use codex_protocol::protocol::AgentStatus as CoreAgentStatus;
-use codex_protocol::protocol::CollabAgentInteractionBeginEvent;
-use codex_protocol::protocol::CollabAgentInteractionEndEvent;
-use codex_protocol::protocol::CollabAgentSpawnBeginEvent;
-use codex_protocol::protocol::CollabAgentSpawnEndEvent;
-use codex_protocol::protocol::CollabCloseBeginEvent;
-use codex_protocol::protocol::CollabCloseEndEvent;
-use codex_protocol::protocol::CollabWaitingBeginEvent;
-use codex_protocol::protocol::CollabWaitingEndEvent;
+use orbit_code_core::config::Config;
+use orbit_code_protocol::models::WebSearchAction;
+use orbit_code_protocol::plan_tool::StepStatus;
+use orbit_code_protocol::plan_tool::UpdatePlanArgs;
+use orbit_code_protocol::protocol;
+use orbit_code_protocol::protocol::AgentStatus as CoreAgentStatus;
+use orbit_code_protocol::protocol::CollabAgentInteractionBeginEvent;
+use orbit_code_protocol::protocol::CollabAgentInteractionEndEvent;
+use orbit_code_protocol::protocol::CollabAgentSpawnBeginEvent;
+use orbit_code_protocol::protocol::CollabAgentSpawnEndEvent;
+use orbit_code_protocol::protocol::CollabCloseBeginEvent;
+use orbit_code_protocol::protocol::CollabCloseEndEvent;
+use orbit_code_protocol::protocol::CollabWaitingBeginEvent;
+use orbit_code_protocol::protocol::CollabWaitingEndEvent;
 use serde_json::Value as JsonValue;
 use tracing::error;
 use tracing::warn;
@@ -65,7 +65,7 @@ pub struct EventProcessorWithJsonOutput {
     running_patch_applies: HashMap<String, protocol::PatchApplyBeginEvent>,
     // Tracks the todo list for the current turn (at most one per turn).
     running_todo_list: Option<RunningTodoList>,
-    last_total_token_usage: Option<codex_protocol::protocol::TokenUsage>,
+    last_total_token_usage: Option<orbit_code_protocol::protocol::TokenUsage>,
     running_mcp_tool_calls: HashMap<String, RunningMcpToolCall>,
     running_collab_tool_calls: HashMap<String, RunningCollabToolCall>,
     running_web_search_calls: HashMap<String, String>,
@@ -122,7 +122,7 @@ impl EventProcessorWithJsonOutput {
             protocol::EventMsg::ThreadNameUpdated(_) => Vec::new(),
             protocol::EventMsg::AgentMessage(ev) => self.handle_agent_message(ev),
             protocol::EventMsg::ItemCompleted(protocol::ItemCompletedEvent {
-                item: codex_protocol::items::TurnItem::Plan(item),
+                item: orbit_code_protocol::items::TurnItem::Plan(item),
                 ..
             }) => {
                 self.last_proposed_plan = Some(item.text.clone());

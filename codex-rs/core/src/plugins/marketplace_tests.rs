@@ -1,5 +1,5 @@
 use super::*;
-use codex_protocol::protocol::Product;
+use orbit_code_protocol::protocol::Product;
 use pretty_assertions::assert_eq;
 use tempfile::tempdir;
 

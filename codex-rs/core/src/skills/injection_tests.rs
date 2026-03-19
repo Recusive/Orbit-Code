@@ -14,7 +14,7 @@ fn make_skill(name: &str, path: &str) -> SkillMetadata {
         permission_profile: None,
         managed_network_override: None,
         path_to_skills_md: PathBuf::from(path),
-        scope: codex_protocol::protocol::SkillScope::User,
+        scope: orbit_code_protocol::protocol::SkillScope::User,
     }
 }
 

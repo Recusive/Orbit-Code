@@ -1,8 +1,8 @@
-use codex_protocol::account::PlanType;
-use codex_protocol::protocol::CreditsSnapshot;
-use codex_protocol::protocol::RateLimitSnapshot;
-use codex_protocol::protocol::RateLimitWindow;
 use http::HeaderMap;
+use orbit_code_protocol::account::PlanType;
+use orbit_code_protocol::protocol::CreditsSnapshot;
+use orbit_code_protocol::protocol::RateLimitSnapshot;
+use orbit_code_protocol::protocol::RateLimitWindow;
 use serde::Deserialize;
 use std::collections::BTreeSet;
 use std::fmt::Display;
@@ -52,7 +52,7 @@ pub fn parse_all_rate_limits(headers: &HeaderMap) -> Vec<RateLimitSnapshot> {
 /// Parses rate-limit headers for the provided limit id.
 ///
 /// `limit_id` should match the server-provided metered limit id (e.g. `codex`,
-/// `codex_other`). When omitted, this defaults to the legacy `codex` header family.
+/// `orbit_code_other`). When omitted, this defaults to the legacy `codex` header family.
 pub fn parse_rate_limit_for_limit(
     headers: &HeaderMap,
     limit_id: Option<&str>,
@@ -262,7 +262,7 @@ mod tests {
     use pretty_assertions::assert_eq;
 
     #[test]
-    fn parse_rate_limit_for_limit_defaults_to_codex_headers() {
+    fn parse_rate_limit_for_limit_defaults_to_orbit_code_headers() {
         let mut headers = HeaderMap::new();
         headers.insert(
             "x-codex-primary-used-percent",
@@ -303,8 +303,8 @@ mod tests {
         );
 
         let snapshot =
-            parse_rate_limit_for_limit(&headers, Some("codex_secondary")).expect("snapshot");
-        assert_eq!(snapshot.limit_id.as_deref(), Some("codex_secondary"));
+            parse_rate_limit_for_limit(&headers, Some("orbit_code_secondary")).expect("snapshot");
+        assert_eq!(snapshot.limit_id.as_deref(), Some("orbit_code_secondary"));
         assert_eq!(snapshot.limit_name, None);
         let primary = snapshot.primary.expect("primary");
         assert_eq!(primary.used_percent, 80.0);
@@ -326,8 +326,8 @@ mod tests {
         );
 
         let snapshot =
-            parse_rate_limit_for_limit(&headers, Some("codex_bengalfox")).expect("snapshot");
-        assert_eq!(snapshot.limit_id.as_deref(), Some("codex_bengalfox"));
+            parse_rate_limit_for_limit(&headers, Some("orbit_code_bengalfox")).expect("snapshot");
+        assert_eq!(snapshot.limit_id.as_deref(), Some("orbit_code_bengalfox"));
         assert_eq!(snapshot.limit_name.as_deref(), Some("gpt-5.2-codex-sonic"));
     }
 
@@ -346,13 +346,13 @@ mod tests {
         let updates = parse_all_rate_limits(&headers);
         assert_eq!(updates.len(), 2);
         assert_eq!(updates[0].limit_id.as_deref(), Some("codex"));
-        assert_eq!(updates[1].limit_id.as_deref(), Some("codex_secondary"));
+        assert_eq!(updates[1].limit_id.as_deref(), Some("orbit_code_secondary"));
         assert_eq!(updates[0].limit_name, None);
         assert_eq!(updates[1].limit_name, None);
     }
 
     #[test]
-    fn parse_all_rate_limits_includes_default_codex_snapshot() {
+    fn parse_all_rate_limits_includes_default_orbit_code_snapshot() {
         let headers = HeaderMap::new();
 
         let updates = parse_all_rate_limits(&headers);

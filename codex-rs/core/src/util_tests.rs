@@ -100,8 +100,8 @@ fn emit_feedback_request_tags_records_sentry_feedback_fields() {
 
     let auth_env = AuthEnvTelemetry {
         openai_api_key_env_present: true,
-        codex_api_key_env_present: false,
-        codex_api_key_env_enabled: true,
+        orbit_code_api_key_env_present: false,
+        orbit_code_api_key_env_enabled: true,
         provider_env_key_name: Some("configured".to_string()),
         provider_env_key_present: Some(true),
         refresh_token_url_override_present: true,
@@ -146,12 +146,12 @@ fn emit_feedback_request_tags_records_sentry_feedback_fields() {
         Some("true")
     );
     assert_eq!(
-        tags.get("auth_env_codex_api_key_present")
+        tags.get("auth_env_orbit_code_api_key_present")
             .map(String::as_str),
         Some("false")
     );
     assert_eq!(
-        tags.get("auth_env_codex_api_key_enabled")
+        tags.get("auth_env_orbit_code_api_key_enabled")
             .map(String::as_str),
         Some("true")
     );
@@ -344,8 +344,8 @@ fn emit_feedback_request_tags_preserves_auth_env_fields_for_legacy_emitters() {
 
     let auth_env = AuthEnvTelemetry {
         openai_api_key_env_present: true,
-        codex_api_key_env_present: true,
-        codex_api_key_env_enabled: true,
+        orbit_code_api_key_env_present: true,
+        orbit_code_api_key_env_enabled: true,
         provider_env_key_name: Some("configured".to_string()),
         provider_env_key_present: Some(true),
         refresh_token_url_override_present: true,
@@ -409,12 +409,12 @@ fn emit_feedback_request_tags_preserves_auth_env_fields_for_legacy_emitters() {
         Some("true")
     );
     assert_eq!(
-        tags.get("auth_env_codex_api_key_present")
+        tags.get("auth_env_orbit_code_api_key_present")
             .map(String::as_str),
         Some("true")
     );
     assert_eq!(
-        tags.get("auth_env_codex_api_key_enabled")
+        tags.get("auth_env_orbit_code_api_key_enabled")
             .map(String::as_str),
         Some("true")
     );
@@ -458,7 +458,7 @@ fn normalize_thread_name_trims_and_rejects_empty() {
 fn resume_command_prefers_name_over_id() {
     let thread_id = ThreadId::from_string("123e4567-e89b-12d3-a456-426614174000").unwrap();
     let command = resume_command(Some("my-thread"), Some(thread_id));
-    assert_eq!(command, Some("codex resume my-thread".to_string()));
+    assert_eq!(command, Some("orbit-code resume my-thread".to_string()));
 }
 
 #[test]
@@ -467,7 +467,7 @@ fn resume_command_with_only_id() {
     let command = resume_command(None, Some(thread_id));
     assert_eq!(
         command,
-        Some("codex resume 123e4567-e89b-12d3-a456-426614174000".to_string())
+        Some("orbit-code resume 123e4567-e89b-12d3-a456-426614174000".to_string())
     );
 }
 
@@ -482,12 +482,15 @@ fn resume_command_quotes_thread_name_when_needed() {
     let command = resume_command(Some("-starts-with-dash"), None);
     assert_eq!(
         command,
-        Some("codex resume -- -starts-with-dash".to_string())
+        Some("orbit-code resume -- -starts-with-dash".to_string())
     );
 
     let command = resume_command(Some("two words"), None);
-    assert_eq!(command, Some("codex resume 'two words'".to_string()));
+    assert_eq!(command, Some("orbit-code resume 'two words'".to_string()));
 
     let command = resume_command(Some("quote'case"), None);
-    assert_eq!(command, Some("codex resume \"quote'case\"".to_string()));
+    assert_eq!(
+        command,
+        Some("orbit-code resume \"quote'case\"".to_string())
+    );
 }

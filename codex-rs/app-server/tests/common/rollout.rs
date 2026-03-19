@@ -1,9 +1,9 @@
 use anyhow::Result;
-use codex_protocol::ThreadId;
-use codex_protocol::protocol::GitInfo;
-use codex_protocol::protocol::SessionMeta;
-use codex_protocol::protocol::SessionMetaLine;
-use codex_protocol::protocol::SessionSource;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::protocol::GitInfo;
+use orbit_code_protocol::protocol::SessionMeta;
+use orbit_code_protocol::protocol::SessionMetaLine;
+use orbit_code_protocol::protocol::SessionSource;
 use serde_json::json;
 use std::fs;
 use std::fs::FileTimes;
@@ -11,11 +11,11 @@ use std::path::Path;
 use std::path::PathBuf;
 use uuid::Uuid;
 
-pub fn rollout_path(codex_home: &Path, filename_ts: &str, thread_id: &str) -> PathBuf {
+pub fn rollout_path(orbit_code_home: &Path, filename_ts: &str, thread_id: &str) -> PathBuf {
     let year = &filename_ts[0..4];
     let month = &filename_ts[5..7];
     let day = &filename_ts[8..10];
-    codex_home
+    orbit_code_home
         .join("sessions")
         .join(year)
         .join(month)
@@ -23,7 +23,7 @@ pub fn rollout_path(codex_home: &Path, filename_ts: &str, thread_id: &str) -> Pa
         .join(format!("rollout-{filename_ts}-{thread_id}.jsonl"))
 }
 
-/// Create a minimal rollout file under `CODEX_HOME/sessions/YYYY/MM/DD/`.
+/// Create a minimal rollout file under `ORBIT_HOME/sessions/YYYY/MM/DD/`.
 ///
 /// - `filename_ts` is the filename timestamp component in `YYYY-MM-DDThh-mm-ss` format.
 /// - `meta_rfc3339` is the envelope timestamp used in JSON lines.
@@ -32,7 +32,7 @@ pub fn rollout_path(codex_home: &Path, filename_ts: &str, thread_id: &str) -> Pa
 ///
 /// Returns the generated conversation/session UUID as a string.
 pub fn create_fake_rollout(
-    codex_home: &Path,
+    orbit_code_home: &Path,
     filename_ts: &str,
     meta_rfc3339: &str,
     preview: &str,
@@ -40,7 +40,7 @@ pub fn create_fake_rollout(
     git_info: Option<GitInfo>,
 ) -> Result<String> {
     create_fake_rollout_with_source(
-        codex_home,
+        orbit_code_home,
         filename_ts,
         meta_rfc3339,
         preview,
@@ -52,7 +52,7 @@ pub fn create_fake_rollout(
 
 /// Create a minimal rollout file with an explicit session source.
 pub fn create_fake_rollout_with_source(
-    codex_home: &Path,
+    orbit_code_home: &Path,
     filename_ts: &str,
     meta_rfc3339: &str,
     preview: &str,
@@ -64,7 +64,7 @@ pub fn create_fake_rollout_with_source(
     let uuid_str = uuid.to_string();
     let conversation_id = ThreadId::from_string(&uuid_str)?;
 
-    let file_path = rollout_path(codex_home, filename_ts, &uuid_str);
+    let file_path = rollout_path(orbit_code_home, filename_ts, &uuid_str);
     let dir = file_path
         .parent()
         .ok_or_else(|| anyhow::anyhow!("missing rollout parent directory"))?;
@@ -131,7 +131,7 @@ pub fn create_fake_rollout_with_source(
 }
 
 pub fn create_fake_rollout_with_text_elements(
-    codex_home: &Path,
+    orbit_code_home: &Path,
     filename_ts: &str,
     meta_rfc3339: &str,
     preview: &str,
@@ -147,7 +147,11 @@ pub fn create_fake_rollout_with_text_elements(
     let year = &filename_ts[0..4];
     let month = &filename_ts[5..7];
     let day = &filename_ts[8..10];
-    let dir = codex_home.join("sessions").join(year).join(month).join(day);
+    let dir = orbit_code_home
+        .join("sessions")
+        .join(year)
+        .join(month)
+        .join(day);
     fs::create_dir_all(&dir)?;
 
     let file_path = dir.join(format!("rollout-{filename_ts}-{uuid}.jsonl"));

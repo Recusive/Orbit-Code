@@ -4,9 +4,9 @@ import importlib.resources as resources
 import inspect
 from typing import Any
 
-from codex_app_server import AppServerConfig, RunResult
-from codex_app_server.models import InitializeResponse
-from codex_app_server.api import AsyncCodex, AsyncThread, Codex, Thread
+from orbit_code_app_server import AppServerConfig, RunResult
+from orbit_code_app_server.models import InitializeResponse
+from orbit_code_app_server.api import AsyncCodex, AsyncThread, Codex, Thread
 
 
 def _keyword_only_names(fn: object) -> list[str]:
@@ -36,7 +36,7 @@ def test_root_exports_run_result() -> None:
 
 
 def test_package_includes_py_typed_marker() -> None:
-    marker = resources.files("codex_app_server").joinpath("py.typed")
+    marker = resources.files("orbit_code_app_server").joinpath("py.typed")
     assert marker.is_file()
 
 
@@ -201,7 +201,7 @@ def test_generated_public_signatures_are_snake_case_and_typed() -> None:
         _assert_no_any_annotations(fn)
 
 
-def test_lifecycle_methods_are_codex_scoped() -> None:
+def test_lifecycle_methods_are_orbit_code_scoped() -> None:
     assert hasattr(Codex, "thread_resume")
     assert hasattr(Codex, "thread_fork")
     assert hasattr(Codex, "thread_archive")

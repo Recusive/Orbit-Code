@@ -508,7 +508,7 @@ mod tests {
     }
 
     #[test]
-    fn prompt_snapshot_gpt5_codex_mini() {
+    fn prompt_snapshot_gpt5_orbit_code_mini() {
         let backend = VT100Backend::new(60, 22);
         let mut terminal = Terminal::with_options(backend).expect("terminal");
         terminal.set_viewport_area(Rect::new(0, 0, 60, 22));
@@ -531,7 +531,10 @@ mod tests {
             frame.render_widget_ref(&screen, frame.area());
         }
         terminal.flush().expect("flush");
-        assert_snapshot!("model_migration_prompt_gpt5_codex_mini", terminal.backend());
+        assert_snapshot!(
+            "model_migration_prompt_gpt5_orbit_code_mini",
+            terminal.backend()
+        );
     }
 
     #[test]

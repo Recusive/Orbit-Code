@@ -24,8 +24,8 @@ pub struct CapSids {
     pub workspace_by_cwd: HashMap<String, String>,
 }
 
-pub fn cap_sid_file(codex_home: &Path) -> PathBuf {
-    codex_home.join("cap_sid")
+pub fn cap_sid_file(orbit_code_home: &Path) -> PathBuf {
+    orbit_code_home.join("cap_sid")
 }
 
 fn make_random_cap_sid_string() -> String {
@@ -46,8 +46,8 @@ fn persist_caps(path: &Path, caps: &CapSids) -> Result<()> {
     Ok(())
 }
 
-pub fn load_or_create_cap_sids(codex_home: &Path) -> Result<CapSids> {
-    let path = cap_sid_file(codex_home);
+pub fn load_or_create_cap_sids(orbit_code_home: &Path) -> Result<CapSids> {
+    let path = cap_sid_file(orbit_code_home);
     if path.exists() {
         let txt = fs::read_to_string(&path)
             .with_context(|| format!("read cap sid file {}", path.display()))?;
@@ -76,9 +76,9 @@ pub fn load_or_create_cap_sids(codex_home: &Path) -> Result<CapSids> {
 }
 
 /// Returns the workspace-specific capability SID for `cwd`, creating and persisting it if missing.
-pub fn workspace_cap_sid_for_cwd(codex_home: &Path, cwd: &Path) -> Result<String> {
-    let path = cap_sid_file(codex_home);
-    let mut caps = load_or_create_cap_sids(codex_home)?;
+pub fn workspace_cap_sid_for_cwd(orbit_code_home: &Path, cwd: &Path) -> Result<String> {
+    let path = cap_sid_file(orbit_code_home);
+    let mut caps = load_or_create_cap_sids(orbit_code_home)?;
     let key = canonical_path_key(cwd);
     if let Some(sid) = caps.workspace_by_cwd.get(&key) {
         return Ok(sid.clone());
@@ -99,8 +99,8 @@ mod tests {
     #[test]
     fn equivalent_cwd_spellings_share_workspace_sid_key() {
         let temp = tempfile::tempdir().expect("tempdir");
-        let codex_home = temp.path().join("codex-home");
-        std::fs::create_dir_all(&codex_home).expect("create codex home");
+        let orbit_code_home = temp.path().join("codex-home");
+        std::fs::create_dir_all(&orbit_code_home).expect("create codex home");
 
         let workspace = temp.path().join("WorkspaceRoot");
         std::fs::create_dir_all(&workspace).expect("create workspace root");
@@ -109,13 +109,13 @@ mod tests {
         let alt_spelling = PathBuf::from(canonical.to_string_lossy().replace('\\', "/").to_ascii_uppercase());
 
         let first_sid =
-            workspace_cap_sid_for_cwd(&codex_home, canonical.as_path()).expect("first sid");
+            workspace_cap_sid_for_cwd(&orbit_code_home, canonical.as_path()).expect("first sid");
         let second_sid =
-            workspace_cap_sid_for_cwd(&codex_home, alt_spelling.as_path()).expect("second sid");
+            workspace_cap_sid_for_cwd(&orbit_code_home, alt_spelling.as_path()).expect("second sid");
 
         assert_eq!(first_sid, second_sid);
 
-        let caps = load_or_create_cap_sids(&codex_home).expect("load caps");
+        let caps = load_or_create_cap_sids(&orbit_code_home).expect("load caps");
         assert_eq!(caps.workspace_by_cwd.len(), 1);
     }
 }

@@ -3,11 +3,11 @@ use crate::config::types::OtelExporterKind as Kind;
 use crate::config::types::OtelHttpProtocol as Protocol;
 use crate::default_client::originator;
 use crate::features::Feature;
-use codex_otel::OtelProvider;
-use codex_otel::config::OtelExporter;
-use codex_otel::config::OtelHttpProtocol;
-use codex_otel::config::OtelSettings;
-use codex_otel::config::OtelTlsConfig as OtelTlsSettings;
+use orbit_code_otel::OtelProvider;
+use orbit_code_otel::config::OtelExporter;
+use orbit_code_otel::config::OtelHttpProtocol;
+use orbit_code_otel::config::OtelSettings;
+use orbit_code_otel::config::OtelTlsConfig as OtelTlsSettings;
 use std::error::Error;
 
 /// Build an OpenTelemetry provider from the app Config.
@@ -83,7 +83,7 @@ pub fn build_provider(
     OtelProvider::from(&OtelSettings {
         service_name: service_name.to_string(),
         service_version: service_version.to_string(),
-        codex_home: config.codex_home.clone(),
+        orbit_code_home: config.orbit_code_home.clone(),
         environment: config.otel.environment.to_string(),
         exporter,
         trace_exporter,
@@ -93,7 +93,7 @@ pub fn build_provider(
 }
 
 /// Filter predicate for exporting only Codex-owned events via OTEL.
-/// Keeps events that originated from codex_otel module
-pub fn codex_export_filter(meta: &tracing::Metadata<'_>) -> bool {
-    meta.target().starts_with("codex_otel")
+/// Keeps events that originated from orbit_code_otel module
+pub fn orbit_code_export_filter(meta: &tracing::Metadata<'_>) -> bool {
+    meta.target().starts_with("orbit_code_otel")
 }

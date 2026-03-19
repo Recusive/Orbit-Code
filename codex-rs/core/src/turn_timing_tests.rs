@@ -1,8 +1,8 @@
-use codex_protocol::items::AgentMessageItem;
-use codex_protocol::items::TurnItem;
-use codex_protocol::models::ContentItem;
-use codex_protocol::models::FunctionCallOutputPayload;
-use codex_protocol::models::ResponseItem;
+use orbit_code_protocol::items::AgentMessageItem;
+use orbit_code_protocol::items::TurnItem;
+use orbit_code_protocol::models::ContentItem;
+use orbit_code_protocol::models::FunctionCallOutputPayload;
+use orbit_code_protocol::models::ResponseItem;
 use pretty_assertions::assert_eq;
 use std::time::Instant;
 

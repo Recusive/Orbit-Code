@@ -35,24 +35,24 @@ struct GitHubGitRefObject {
     sha: String,
 }
 
-pub(crate) fn curated_plugins_repo_path(codex_home: &Path) -> PathBuf {
-    codex_home.join(CURATED_PLUGINS_RELATIVE_DIR)
+pub(crate) fn curated_plugins_repo_path(orbit_code_home: &Path) -> PathBuf {
+    orbit_code_home.join(CURATED_PLUGINS_RELATIVE_DIR)
 }
 
-pub(crate) fn read_curated_plugins_sha(codex_home: &Path) -> Option<String> {
-    read_sha_file(codex_home.join(CURATED_PLUGINS_SHA_FILE).as_path())
+pub(crate) fn read_curated_plugins_sha(orbit_code_home: &Path) -> Option<String> {
+    read_sha_file(orbit_code_home.join(CURATED_PLUGINS_SHA_FILE).as_path())
 }
 
-pub(crate) fn sync_openai_plugins_repo(codex_home: &Path) -> Result<String, String> {
-    sync_openai_plugins_repo_with_api_base_url(codex_home, GITHUB_API_BASE_URL)
+pub(crate) fn sync_openai_plugins_repo(orbit_code_home: &Path) -> Result<String, String> {
+    sync_openai_plugins_repo_with_api_base_url(orbit_code_home, GITHUB_API_BASE_URL)
 }
 
 fn sync_openai_plugins_repo_with_api_base_url(
-    codex_home: &Path,
+    orbit_code_home: &Path,
     api_base_url: &str,
 ) -> Result<String, String> {
-    let repo_path = curated_plugins_repo_path(codex_home);
-    let sha_path = codex_home.join(CURATED_PLUGINS_SHA_FILE);
+    let repo_path = curated_plugins_repo_path(orbit_code_home);
+    let sha_path = orbit_code_home.join(CURATED_PLUGINS_SHA_FILE);
     let runtime = tokio::runtime::Builder::new_current_thread()
         .enable_all()
         .build()

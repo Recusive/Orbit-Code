@@ -8,8 +8,8 @@
 use std::time::Duration;
 use std::time::Instant;
 
-use codex_protocol::parse_command::ParsedCommand;
-use codex_protocol::protocol::ExecCommandSource;
+use orbit_code_protocol::parse_command::ParsedCommand;
+use orbit_code_protocol::protocol::ExecCommandSource;
 
 #[derive(Clone, Debug, Default)]
 pub(crate) struct CommandOutput {

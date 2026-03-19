@@ -14,19 +14,19 @@ use base64::engine::general_purpose::STANDARD as BASE64_STANDARD;
 use chrono::DateTime;
 use chrono::Duration as ChronoDuration;
 use chrono::Utc;
-use codex_backend_client::Client as BackendClient;
-use codex_core::AuthManager;
-use codex_core::auth::AuthCredentialsStoreMode;
-use codex_core::auth::CodexAuth;
-use codex_core::auth::RefreshTokenError;
-use codex_core::config_loader::CloudRequirementsLoadError;
-use codex_core::config_loader::CloudRequirementsLoadErrorCode;
-use codex_core::config_loader::CloudRequirementsLoader;
-use codex_core::config_loader::ConfigRequirementsToml;
-use codex_core::util::backoff;
-use codex_protocol::account::PlanType;
 use hmac::Hmac;
 use hmac::Mac;
+use orbit_code_backend_client::Client as BackendClient;
+use orbit_code_core::AuthManager;
+use orbit_code_core::auth::AuthCredentialsStoreMode;
+use orbit_code_core::auth::CodexAuth;
+use orbit_code_core::auth::RefreshTokenError;
+use orbit_code_core::config_loader::CloudRequirementsLoadError;
+use orbit_code_core::config_loader::CloudRequirementsLoadErrorCode;
+use orbit_code_core::config_loader::CloudRequirementsLoader;
+use orbit_code_core::config_loader::ConfigRequirementsToml;
+use orbit_code_core::util::backoff;
+use orbit_code_protocol::account::PlanType;
 use serde::Deserialize;
 use serde::Serialize;
 use sha2::Sha256;
@@ -256,13 +256,13 @@ impl CloudRequirementsService {
     fn new(
         auth_manager: Arc<AuthManager>,
         fetcher: Arc<dyn RequirementsFetcher>,
-        codex_home: PathBuf,
+        orbit_code_home: PathBuf,
         timeout: Duration,
     ) -> Self {
         Self {
             auth_manager,
             fetcher,
-            cache_path: codex_home.join(CLOUD_REQUIREMENTS_CACHE_FILENAME),
+            cache_path: orbit_code_home.join(CLOUD_REQUIREMENTS_CACHE_FILENAME),
             timeout,
         }
     }
@@ -271,7 +271,7 @@ impl CloudRequirementsService {
         &self,
     ) -> Result<Option<ConfigRequirementsToml>, CloudRequirementsLoadError> {
         let _timer =
-            codex_otel::start_global_timer("codex.cloud_requirements.fetch.duration_ms", &[]);
+            orbit_code_otel::start_global_timer("codex.cloud_requirements.fetch.duration_ms", &[]);
         let started_at = Instant::now();
         let fetch_result = timeout(self.timeout, self.fetch())
             .await
@@ -689,12 +689,12 @@ impl CloudRequirementsService {
 pub fn cloud_requirements_loader(
     auth_manager: Arc<AuthManager>,
     chatgpt_base_url: String,
-    codex_home: PathBuf,
+    orbit_code_home: PathBuf,
 ) -> CloudRequirementsLoader {
     let service = CloudRequirementsService::new(
         auth_manager,
         Arc::new(BackendRequirementsFetcher::new(chatgpt_base_url)),
-        codex_home,
+        orbit_code_home,
         CLOUD_REQUIREMENTS_TIMEOUT,
     );
     let refresh_service = service.clone();
@@ -721,17 +721,17 @@ pub fn cloud_requirements_loader(
 }
 
 pub fn cloud_requirements_loader_for_storage(
-    codex_home: PathBuf,
-    enable_codex_api_key_env: bool,
+    orbit_code_home: PathBuf,
+    enable_orbit_code_api_key_env: bool,
     credentials_store_mode: AuthCredentialsStoreMode,
     chatgpt_base_url: String,
 ) -> CloudRequirementsLoader {
     let auth_manager = AuthManager::shared(
-        codex_home.clone(),
-        enable_codex_api_key_env,
+        orbit_code_home.clone(),
+        enable_orbit_code_api_key_env,
         credentials_store_mode,
     );
-    cloud_requirements_loader(auth_manager, chatgpt_base_url, codex_home)
+    cloud_requirements_loader(auth_manager, chatgpt_base_url, orbit_code_home)
 }
 
 fn parse_cloud_requirements(
@@ -806,7 +806,7 @@ fn status_code_tag(status_code: Option<u16>) -> String {
 }
 
 fn emit_metric(metric_name: &str, tags: Vec<(&str, String)>) {
-    if let Some(metrics) = codex_otel::metrics::global() {
+    if let Some(metrics) = orbit_code_otel::metrics::global() {
         let tag_refs = tags
             .iter()
             .map(|(key, value)| (*key, value.as_str()))
@@ -820,8 +820,8 @@ mod tests {
     use super::*;
     use base64::Engine;
     use base64::engine::general_purpose::URL_SAFE_NO_PAD;
-    use codex_core::auth::AuthCredentialsStoreMode;
-    use codex_protocol::protocol::AskForApproval;
+    use orbit_code_core::auth::AuthCredentialsStoreMode;
+    use orbit_code_protocol::protocol::AskForApproval;
     use pretty_assertions::assert_eq;
     use serde_json::json;
     use std::collections::BTreeMap;
@@ -833,8 +833,11 @@ mod tests {
     use tempfile::TempDir;
     use tempfile::tempdir;
 
-    fn write_auth_json(codex_home: &Path, value: serde_json::Value) -> std::io::Result<()> {
-        std::fs::write(codex_home.join("auth.json"), serde_json::to_string(&value)?)?;
+    fn write_auth_json(orbit_code_home: &Path, value: serde_json::Value) -> std::io::Result<()> {
+        std::fs::write(
+            orbit_code_home.join("auth.json"),
+            serde_json::to_string(&value)?,
+        )?;
         Ok(())
     }
 
@@ -1081,11 +1084,11 @@ mod tests {
     #[tokio::test]
     async fn fetch_cloud_requirements_skips_non_chatgpt_auth() {
         let auth_manager = auth_manager_with_api_key();
-        let codex_home = tempdir().expect("tempdir");
+        let orbit_code_home = tempdir().expect("tempdir");
         let service = CloudRequirementsService::new(
             auth_manager,
             Arc::new(StaticFetcher { contents: None }),
-            codex_home.path().to_path_buf(),
+            orbit_code_home.path().to_path_buf(),
             CLOUD_REQUIREMENTS_TIMEOUT,
         );
         let result = service.fetch().await;
@@ -1094,11 +1097,11 @@ mod tests {
 
     #[tokio::test]
     async fn fetch_cloud_requirements_skips_non_business_or_enterprise_plan() {
-        let codex_home = tempdir().expect("tempdir");
+        let orbit_code_home = tempdir().expect("tempdir");
         let service = CloudRequirementsService::new(
             auth_manager_with_plan("pro"),
             Arc::new(StaticFetcher { contents: None }),
-            codex_home.path().to_path_buf(),
+            orbit_code_home.path().to_path_buf(),
             CLOUD_REQUIREMENTS_TIMEOUT,
         );
         let result = service.fetch().await;
@@ -1107,13 +1110,13 @@ mod tests {
 
     #[tokio::test]
     async fn fetch_cloud_requirements_allows_business_plan() {
-        let codex_home = tempdir().expect("tempdir");
+        let orbit_code_home = tempdir().expect("tempdir");
         let service = CloudRequirementsService::new(
             auth_manager_with_plan("business"),
             Arc::new(StaticFetcher {
                 contents: Some("allowed_approval_policies = [\"never\"]".to_string()),
             }),
-            codex_home.path().to_path_buf(),
+            orbit_code_home.path().to_path_buf(),
             CLOUD_REQUIREMENTS_TIMEOUT,
         );
         assert_eq!(
@@ -1190,10 +1193,10 @@ enabled = false
         assert_eq!(
             result,
             Some(ConfigRequirementsToml {
-                apps: Some(codex_core::config_loader::AppsRequirementsToml {
+                apps: Some(orbit_code_core::config_loader::AppsRequirementsToml {
                     apps: BTreeMap::from([(
                         "connector_5f3c8c41a1e54ad7a76272c89e2554fa".to_string(),
-                        codex_core::config_loader::AppRequirementToml {
+                        orbit_code_core::config_loader::AppRequirementToml {
                             enabled: Some(false),
                         },
                     )]),
@@ -1206,11 +1209,11 @@ enabled = false
     #[tokio::test(start_paused = true)]
     async fn fetch_cloud_requirements_times_out() {
         let auth_manager = auth_manager_with_plan("enterprise");
-        let codex_home = tempdir().expect("tempdir");
+        let orbit_code_home = tempdir().expect("tempdir");
         let service = CloudRequirementsService::new(
             auth_manager,
             Arc::new(PendingFetcher),
-            codex_home.path().to_path_buf(),
+            orbit_code_home.path().to_path_buf(),
             CLOUD_REQUIREMENTS_TIMEOUT,
         );
         let handle = tokio::spawn(async move { service.fetch_with_timeout().await });
@@ -1230,11 +1233,11 @@ enabled = false
             Err(request_error()),
             Ok(Some("allowed_approval_policies = [\"never\"]".to_string())),
         ]));
-        let codex_home = tempdir().expect("tempdir");
+        let orbit_code_home = tempdir().expect("tempdir");
         let service = CloudRequirementsService::new(
             auth_manager_with_plan("business"),
             fetcher.clone(),
-            codex_home.path().to_path_buf(),
+            orbit_code_home.path().to_path_buf(),
             CLOUD_REQUIREMENTS_TIMEOUT,
         );
 
@@ -1286,11 +1289,11 @@ enabled = false
             contents: "allowed_approval_policies = [\"never\"]".to_string(),
             request_count: AtomicUsize::new(0),
         });
-        let codex_home = tempdir().expect("tempdir");
+        let orbit_code_home = tempdir().expect("tempdir");
         let service = CloudRequirementsService::new(
             Arc::clone(&auth.manager),
             fetcher.clone(),
-            codex_home.path().to_path_buf(),
+            orbit_code_home.path().to_path_buf(),
             CLOUD_REQUIREMENTS_TIMEOUT,
         );
 
@@ -1338,11 +1341,11 @@ enabled = false
             contents: "allowed_approval_policies = [\"never\"]".to_string(),
             request_count: AtomicUsize::new(0),
         });
-        let codex_home = tempdir().expect("tempdir");
+        let orbit_code_home = tempdir().expect("tempdir");
         let service = CloudRequirementsService::new(
             Arc::clone(&auth.manager),
             fetcher.clone(),
-            codex_home.path().to_path_buf(),
+            orbit_code_home.path().to_path_buf(),
             CLOUD_REQUIREMENTS_TIMEOUT,
         );
 
@@ -1362,7 +1365,9 @@ enabled = false
             }))
         );
 
-        let path = codex_home.path().join(CLOUD_REQUIREMENTS_CACHE_FILENAME);
+        let path = orbit_code_home
+            .path()
+            .join(CLOUD_REQUIREMENTS_CACHE_FILENAME);
         let cache_file: CloudRequirementsCacheFile =
             serde_json::from_str(&std::fs::read_to_string(path).expect("read cache"))
                 .expect("parse cache");
@@ -1402,11 +1407,11 @@ enabled = false
             message: "GET /config/requirements failed: 401".to_string(),
             request_count: AtomicUsize::new(0),
         });
-        let codex_home = tempdir().expect("tempdir");
+        let orbit_code_home = tempdir().expect("tempdir");
         let service = CloudRequirementsService::new(
             Arc::clone(&auth.manager),
             fetcher.clone(),
-            codex_home.path().to_path_buf(),
+            orbit_code_home.path().to_path_buf(),
             CLOUD_REQUIREMENTS_TIMEOUT,
         );
 
@@ -1448,11 +1453,11 @@ enabled = false
                     .to_string(),
             request_count: AtomicUsize::new(0),
         });
-        let codex_home = tempdir().expect("tempdir");
+        let orbit_code_home = tempdir().expect("tempdir");
         let service = CloudRequirementsService::new(
             auth_manager,
             fetcher.clone(),
-            codex_home.path().to_path_buf(),
+            orbit_code_home.path().to_path_buf(),
             CLOUD_REQUIREMENTS_TIMEOUT,
         );
 
@@ -1475,11 +1480,11 @@ enabled = false
             Ok(Some("not = [".to_string())),
             Ok(Some("allowed_approval_policies = [\"never\"]".to_string())),
         ]));
-        let codex_home = tempdir().expect("tempdir");
+        let orbit_code_home = tempdir().expect("tempdir");
         let service = CloudRequirementsService::new(
             auth_manager_with_plan("business"),
             fetcher.clone(),
-            codex_home.path().to_path_buf(),
+            orbit_code_home.path().to_path_buf(),
             CLOUD_REQUIREMENTS_TIMEOUT,
         );
 
@@ -1489,13 +1494,13 @@ enabled = false
 
     #[tokio::test]
     async fn fetch_cloud_requirements_uses_cache_when_valid() {
-        let codex_home = tempdir().expect("tempdir");
+        let orbit_code_home = tempdir().expect("tempdir");
         let prime_service = CloudRequirementsService::new(
             auth_manager_with_plan("business"),
             Arc::new(StaticFetcher {
                 contents: Some("allowed_approval_policies = [\"never\"]".to_string()),
             }),
-            codex_home.path().to_path_buf(),
+            orbit_code_home.path().to_path_buf(),
             CLOUD_REQUIREMENTS_TIMEOUT,
         );
         let _ = prime_service.fetch().await;
@@ -1504,7 +1509,7 @@ enabled = false
         let service = CloudRequirementsService::new(
             auth_manager_with_plan("business"),
             fetcher.clone(),
-            codex_home.path().to_path_buf(),
+            orbit_code_home.path().to_path_buf(),
             CLOUD_REQUIREMENTS_TIMEOUT,
         );
 
@@ -1528,13 +1533,13 @@ enabled = false
 
     #[tokio::test]
     async fn fetch_cloud_requirements_writes_cache_when_identity_is_incomplete() {
-        let codex_home = tempdir().expect("tempdir");
+        let orbit_code_home = tempdir().expect("tempdir");
         let service = CloudRequirementsService::new(
             auth_manager_with_plan_and_identity("business", None, Some("account-12345")),
             Arc::new(StaticFetcher {
                 contents: Some("allowed_approval_policies = [\"never\"]".to_string()),
             }),
-            codex_home.path().to_path_buf(),
+            orbit_code_home.path().to_path_buf(),
             CLOUD_REQUIREMENTS_TIMEOUT,
         );
 
@@ -1554,7 +1559,9 @@ enabled = false
             }))
         );
 
-        let path = codex_home.path().join(CLOUD_REQUIREMENTS_CACHE_FILENAME);
+        let path = orbit_code_home
+            .path()
+            .join(CLOUD_REQUIREMENTS_CACHE_FILENAME);
         let cache_file: CloudRequirementsCacheFile =
             serde_json::from_str(&std::fs::read_to_string(path).expect("read cache"))
                 .expect("parse cache");
@@ -1567,13 +1574,13 @@ enabled = false
 
     #[tokio::test]
     async fn fetch_cloud_requirements_does_not_use_cache_when_auth_identity_is_incomplete() {
-        let codex_home = tempdir().expect("tempdir");
+        let orbit_code_home = tempdir().expect("tempdir");
         let prime_service = CloudRequirementsService::new(
             auth_manager_with_plan("business"),
             Arc::new(StaticFetcher {
                 contents: Some("allowed_approval_policies = [\"never\"]".to_string()),
             }),
-            codex_home.path().to_path_buf(),
+            orbit_code_home.path().to_path_buf(),
             CLOUD_REQUIREMENTS_TIMEOUT,
         );
         let _ = prime_service.fetch().await;
@@ -1584,7 +1591,7 @@ enabled = false
         let service = CloudRequirementsService::new(
             auth_manager_with_plan_and_identity("business", None, Some("account-12345")),
             fetcher.clone(),
-            codex_home.path().to_path_buf(),
+            orbit_code_home.path().to_path_buf(),
             CLOUD_REQUIREMENTS_TIMEOUT,
         );
 
@@ -1608,7 +1615,7 @@ enabled = false
 
     #[tokio::test]
     async fn fetch_cloud_requirements_ignores_cache_for_different_auth_identity() {
-        let codex_home = tempdir().expect("tempdir");
+        let orbit_code_home = tempdir().expect("tempdir");
         let prime_service = CloudRequirementsService::new(
             auth_manager_with_plan_and_identity(
                 "business",
@@ -1618,7 +1625,7 @@ enabled = false
             Arc::new(StaticFetcher {
                 contents: Some("allowed_approval_policies = [\"never\"]".to_string()),
             }),
-            codex_home.path().to_path_buf(),
+            orbit_code_home.path().to_path_buf(),
             CLOUD_REQUIREMENTS_TIMEOUT,
         );
         let _ = prime_service.fetch().await;
@@ -1633,7 +1640,7 @@ enabled = false
                 Some("account-12345"),
             ),
             fetcher.clone(),
-            codex_home.path().to_path_buf(),
+            orbit_code_home.path().to_path_buf(),
             CLOUD_REQUIREMENTS_TIMEOUT,
         );
 
@@ -1657,18 +1664,20 @@ enabled = false
 
     #[tokio::test]
     async fn fetch_cloud_requirements_ignores_tampered_cache() {
-        let codex_home = tempdir().expect("tempdir");
+        let orbit_code_home = tempdir().expect("tempdir");
         let prime_service = CloudRequirementsService::new(
             auth_manager_with_plan("business"),
             Arc::new(StaticFetcher {
                 contents: Some("allowed_approval_policies = [\"never\"]".to_string()),
             }),
-            codex_home.path().to_path_buf(),
+            orbit_code_home.path().to_path_buf(),
             CLOUD_REQUIREMENTS_TIMEOUT,
         );
         let _ = prime_service.fetch().await;
 
-        let path = codex_home.path().join(CLOUD_REQUIREMENTS_CACHE_FILENAME);
+        let path = orbit_code_home
+            .path()
+            .join(CLOUD_REQUIREMENTS_CACHE_FILENAME);
         let mut cache_file: CloudRequirementsCacheFile =
             serde_json::from_str(&std::fs::read_to_string(&path).expect("read cache"))
                 .expect("parse cache");
@@ -1686,7 +1695,7 @@ enabled = false
         let service = CloudRequirementsService::new(
             auth_manager_with_plan("enterprise"),
             fetcher.clone(),
-            codex_home.path().to_path_buf(),
+            orbit_code_home.path().to_path_buf(),
             CLOUD_REQUIREMENTS_TIMEOUT,
         );
 
@@ -1710,8 +1719,10 @@ enabled = false
 
     #[tokio::test]
     async fn fetch_cloud_requirements_ignores_expired_cache() {
-        let codex_home = tempdir().expect("tempdir");
-        let path = codex_home.path().join(CLOUD_REQUIREMENTS_CACHE_FILENAME);
+        let orbit_code_home = tempdir().expect("tempdir");
+        let path = orbit_code_home
+            .path()
+            .join(CLOUD_REQUIREMENTS_CACHE_FILENAME);
         let cache_file = CloudRequirementsCacheFile {
             signed_payload: CloudRequirementsCacheSignedPayload {
                 cached_at: Utc::now(),
@@ -1740,7 +1751,7 @@ enabled = false
         let service = CloudRequirementsService::new(
             auth_manager_with_plan("enterprise"),
             fetcher.clone(),
-            codex_home.path().to_path_buf(),
+            orbit_code_home.path().to_path_buf(),
             CLOUD_REQUIREMENTS_TIMEOUT,
         );
 
@@ -1764,19 +1775,21 @@ enabled = false
 
     #[tokio::test]
     async fn fetch_cloud_requirements_writes_signed_cache() {
-        let codex_home = tempdir().expect("tempdir");
+        let orbit_code_home = tempdir().expect("tempdir");
         let service = CloudRequirementsService::new(
             auth_manager_with_plan("business"),
             Arc::new(StaticFetcher {
                 contents: Some("allowed_approval_policies = [\"never\"]".to_string()),
             }),
-            codex_home.path().to_path_buf(),
+            orbit_code_home.path().to_path_buf(),
             CLOUD_REQUIREMENTS_TIMEOUT,
         );
 
         let _ = service.fetch().await;
 
-        let path = codex_home.path().join(CLOUD_REQUIREMENTS_CACHE_FILENAME);
+        let path = orbit_code_home
+            .path()
+            .join(CLOUD_REQUIREMENTS_CACHE_FILENAME);
         let cache_file: CloudRequirementsCacheFile =
             serde_json::from_str(&std::fs::read_to_string(path).expect("read cache"))
                 .expect("parse cache");
@@ -1823,11 +1836,11 @@ enabled = false
     #[tokio::test]
     async fn fetch_cloud_requirements_none_is_success_without_retry() {
         let fetcher = Arc::new(SequenceFetcher::new(vec![Ok(None), Err(request_error())]));
-        let codex_home = tempdir().expect("tempdir");
+        let orbit_code_home = tempdir().expect("tempdir");
         let service = CloudRequirementsService::new(
             auth_manager_with_plan("enterprise"),
             fetcher.clone(),
-            codex_home.path().to_path_buf(),
+            orbit_code_home.path().to_path_buf(),
             CLOUD_REQUIREMENTS_TIMEOUT,
         );
 
@@ -1841,11 +1854,11 @@ enabled = false
             Err(request_error());
             CLOUD_REQUIREMENTS_MAX_ATTEMPTS
         ]));
-        let codex_home = tempdir().expect("tempdir");
+        let orbit_code_home = tempdir().expect("tempdir");
         let service = CloudRequirementsService::new(
             auth_manager_with_plan("enterprise"),
             fetcher.clone(),
-            codex_home.path().to_path_buf(),
+            orbit_code_home.path().to_path_buf(),
             CLOUD_REQUIREMENTS_TIMEOUT,
         );
 
@@ -1871,7 +1884,7 @@ enabled = false
 
     #[tokio::test]
     async fn refresh_from_remote_updates_cached_cloud_requirements() {
-        let codex_home = tempdir().expect("tempdir");
+        let orbit_code_home = tempdir().expect("tempdir");
         let fetcher = Arc::new(SequenceFetcher::new(vec![
             Ok(Some("allowed_approval_policies = [\"never\"]".to_string())),
             Ok(Some(
@@ -1881,7 +1894,7 @@ enabled = false
         let service = CloudRequirementsService::new(
             auth_manager_with_plan("business"),
             fetcher,
-            codex_home.path().to_path_buf(),
+            orbit_code_home.path().to_path_buf(),
             CLOUD_REQUIREMENTS_TIMEOUT,
         );
 
@@ -1903,7 +1916,9 @@ enabled = false
 
         assert!(service.refresh_cache().await);
 
-        let path = codex_home.path().join(CLOUD_REQUIREMENTS_CACHE_FILENAME);
+        let path = orbit_code_home
+            .path()
+            .join(CLOUD_REQUIREMENTS_CACHE_FILENAME);
         let cache_file: CloudRequirementsCacheFile =
             serde_json::from_str(&std::fs::read_to_string(path).expect("read cache"))
                 .expect("parse cache");

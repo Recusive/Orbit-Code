@@ -1,9 +1,9 @@
 load("@rules_cc//cc:defs.bzl", "cc_library")
-load("//:defs.bzl", "codex_rust_crate")
+load("//:defs.bzl", "orbit_code_rust_crate")
 
-codex_rust_crate(
+orbit_code_rust_crate(
     name = "linux-sandbox",
-    crate_name = "codex_linux_sandbox",
+    crate_name = "orbit_code_linux_sandbox",
     # Bazel wires vendored bubblewrap + libcap via :vendored-bwrap-ffi below
     # and sets vendored_bwrap_available explicitly, so we skip Cargo's
     # build.rs in Bazel builds.
@@ -20,10 +20,10 @@ codex_rust_crate(
 
 cc_library(
     name = "vendored-bwrap-ffi",
-    srcs = ["//codex-rs/vendor:bubblewrap_c_sources"],
+    srcs = ["//orbit-code-rs/vendor:bubblewrap_c_sources"],
     hdrs = [
         "config.h",
-        "//codex-rs/vendor:bubblewrap_headers",
+        "//orbit-code-rs/vendor:bubblewrap_headers",
     ],
     copts = [
         "-D_GNU_SOURCE",

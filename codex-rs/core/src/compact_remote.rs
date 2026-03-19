@@ -10,17 +10,17 @@ use crate::compact::insert_initial_context_before_last_real_user_or_summary;
 use crate::context_manager::ContextManager;
 use crate::context_manager::TotalTokenUsageBreakdown;
 use crate::context_manager::estimate_response_item_model_visible_bytes;
-use crate::context_manager::is_codex_generated_item;
+use crate::context_manager::is_orbit_code_generated_item;
 use crate::error::CodexErr;
 use crate::error::Result as CodexResult;
 use crate::protocol::CompactedItem;
 use crate::protocol::EventMsg;
 use crate::protocol::TurnStartedEvent;
-use codex_protocol::items::ContextCompactionItem;
-use codex_protocol::items::TurnItem;
-use codex_protocol::models::BaseInstructions;
-use codex_protocol::models::ResponseItem;
 use futures::TryFutureExt;
+use orbit_code_protocol::items::ContextCompactionItem;
+use orbit_code_protocol::items::TurnItem;
+use orbit_code_protocol::models::BaseInstructions;
+use orbit_code_protocol::models::ResponseItem;
 use tokio_util::sync::CancellationToken;
 use tracing::error;
 use tracing::info;
@@ -287,7 +287,7 @@ fn trim_function_call_history_to_fit_context_window(
         let Some(last_item) = history.raw_items().last() else {
             break;
         };
-        if !is_codex_generated_item(last_item) {
+        if !is_orbit_code_generated_item(last_item) {
             break;
         }
         if !history.remove_last_item() {

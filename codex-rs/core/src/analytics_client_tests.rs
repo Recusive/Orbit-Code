@@ -7,10 +7,10 @@ use super::CodexPluginUsedEventRequest;
 use super::InvocationType;
 use super::TrackEventRequest;
 use super::TrackEventsContext;
-use super::codex_app_metadata;
-use super::codex_plugin_metadata;
-use super::codex_plugin_used_metadata;
 use super::normalize_path_for_skill_id;
+use super::orbit_code_app_metadata;
+use super::orbit_code_plugin_metadata;
+use super::orbit_code_plugin_used_metadata;
 use crate::plugins::AppConnectorId;
 use crate::plugins::PluginCapabilitySummary;
 use crate::plugins::PluginId;
@@ -87,8 +87,8 @@ fn app_mentioned_event_serializes_expected_shape() {
         turn_id: "turn-1".to_string(),
     };
     let event = TrackEventRequest::AppMentioned(CodexAppMentionedEventRequest {
-        event_type: "codex_app_mentioned",
-        event_params: codex_app_metadata(
+        event_type: "orbit_code_app_mentioned",
+        event_params: orbit_code_app_metadata(
             &tracking,
             AppInvocation {
                 connector_id: Some("calendar".to_string()),
@@ -103,7 +103,7 @@ fn app_mentioned_event_serializes_expected_shape() {
     assert_eq!(
         payload,
         json!({
-            "event_type": "codex_app_mentioned",
+            "event_type": "orbit_code_app_mentioned",
             "event_params": {
                 "connector_id": "calendar",
                 "thread_id": "thread-1",
@@ -125,8 +125,8 @@ fn app_used_event_serializes_expected_shape() {
         turn_id: "turn-2".to_string(),
     };
     let event = TrackEventRequest::AppUsed(CodexAppUsedEventRequest {
-        event_type: "codex_app_used",
-        event_params: codex_app_metadata(
+        event_type: "orbit_code_app_used",
+        event_params: orbit_code_app_metadata(
             &tracking,
             AppInvocation {
                 connector_id: Some("drive".to_string()),
@@ -141,7 +141,7 @@ fn app_used_event_serializes_expected_shape() {
     assert_eq!(
         payload,
         json!({
-            "event_type": "codex_app_used",
+            "event_type": "orbit_code_app_used",
             "event_params": {
                 "connector_id": "drive",
                 "thread_id": "thread-2",
@@ -193,8 +193,8 @@ fn plugin_used_event_serializes_expected_shape() {
         turn_id: "turn-3".to_string(),
     };
     let event = TrackEventRequest::PluginUsed(CodexPluginUsedEventRequest {
-        event_type: "codex_plugin_used",
-        event_params: codex_plugin_used_metadata(&tracking, sample_plugin_metadata()),
+        event_type: "orbit_code_plugin_used",
+        event_params: orbit_code_plugin_used_metadata(&tracking, sample_plugin_metadata()),
     });
 
     let payload = serde_json::to_value(&event).expect("serialize plugin used event");
@@ -202,7 +202,7 @@ fn plugin_used_event_serializes_expected_shape() {
     assert_eq!(
         payload,
         json!({
-            "event_type": "codex_plugin_used",
+            "event_type": "orbit_code_plugin_used",
             "event_params": {
                 "plugin_id": "sample@test",
                 "plugin_name": "sample",
@@ -222,8 +222,8 @@ fn plugin_used_event_serializes_expected_shape() {
 #[test]
 fn plugin_management_event_serializes_expected_shape() {
     let event = TrackEventRequest::PluginInstalled(CodexPluginEventRequest {
-        event_type: "codex_plugin_installed",
-        event_params: codex_plugin_metadata(sample_plugin_metadata()),
+        event_type: "orbit_code_plugin_installed",
+        event_params: orbit_code_plugin_metadata(sample_plugin_metadata()),
     });
 
     let payload = serde_json::to_value(&event).expect("serialize plugin installed event");
@@ -231,7 +231,7 @@ fn plugin_management_event_serializes_expected_shape() {
     assert_eq!(
         payload,
         json!({
-            "event_type": "codex_plugin_installed",
+            "event_type": "orbit_code_plugin_installed",
             "event_params": {
                 "plugin_id": "sample@test",
                 "plugin_name": "sample",

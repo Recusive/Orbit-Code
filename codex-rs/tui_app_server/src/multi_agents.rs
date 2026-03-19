@@ -7,24 +7,24 @@
 use crate::history_cell::PlainHistoryCell;
 use crate::render::line_utils::prefix_lines;
 use crate::text_formatting::truncate_text;
-use codex_protocol::ThreadId;
-use codex_protocol::openai_models::ReasoningEffort as ReasoningEffortConfig;
-use codex_protocol::protocol::AgentStatus;
-use codex_protocol::protocol::CollabAgentInteractionEndEvent;
-use codex_protocol::protocol::CollabAgentRef;
-use codex_protocol::protocol::CollabAgentSpawnEndEvent;
-use codex_protocol::protocol::CollabAgentStatusEntry;
-use codex_protocol::protocol::CollabCloseEndEvent;
-use codex_protocol::protocol::CollabResumeBeginEvent;
-use codex_protocol::protocol::CollabResumeEndEvent;
-use codex_protocol::protocol::CollabWaitingBeginEvent;
-use codex_protocol::protocol::CollabWaitingEndEvent;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 #[cfg(target_os = "macos")]
 use crossterm::event::KeyEventKind;
 #[cfg(target_os = "macos")]
 use crossterm::event::KeyModifiers;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::openai_models::ReasoningEffort as ReasoningEffortConfig;
+use orbit_code_protocol::protocol::AgentStatus;
+use orbit_code_protocol::protocol::CollabAgentInteractionEndEvent;
+use orbit_code_protocol::protocol::CollabAgentRef;
+use orbit_code_protocol::protocol::CollabAgentSpawnEndEvent;
+use orbit_code_protocol::protocol::CollabAgentStatusEntry;
+use orbit_code_protocol::protocol::CollabCloseEndEvent;
+use orbit_code_protocol::protocol::CollabResumeBeginEvent;
+use orbit_code_protocol::protocol::CollabResumeEndEvent;
+use orbit_code_protocol::protocol::CollabWaitingBeginEvent;
+use orbit_code_protocol::protocol::CollabWaitingEndEvent;
 use ratatui::style::Stylize;
 use ratatui::text::Line;
 use ratatui::text::Span;

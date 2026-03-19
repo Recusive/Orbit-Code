@@ -523,8 +523,8 @@ mod tests {
 
     #[tokio::test]
     async fn insert_logs_use_dedicated_log_database() {
-        let codex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(codex_home.clone(), "test-provider".to_string())
+        let orbit_code_home = unique_temp_dir();
+        let runtime = StateRuntime::init(orbit_code_home.clone(), "test-provider".to_string())
             .await
             .expect("initialize runtime");
 
@@ -545,22 +545,22 @@ mod tests {
             .await
             .expect("insert test logs");
 
-        let state_count = log_row_count(state_db_path(codex_home.as_path()).as_path()).await;
-        let logs_count = log_row_count(logs_db_path(codex_home.as_path()).as_path()).await;
+        let state_count = log_row_count(state_db_path(orbit_code_home.as_path()).as_path()).await;
+        let logs_count = log_row_count(logs_db_path(orbit_code_home.as_path()).as_path()).await;
 
         assert_eq!(state_count, 0);
         assert_eq!(logs_count, 1);
 
-        let _ = tokio::fs::remove_dir_all(codex_home).await;
+        let _ = tokio::fs::remove_dir_all(orbit_code_home).await;
     }
 
     #[tokio::test]
     async fn init_migrates_message_only_logs_db_to_feedback_log_body_schema() {
-        let codex_home = unique_temp_dir();
-        tokio::fs::create_dir_all(&codex_home)
+        let orbit_code_home = unique_temp_dir();
+        tokio::fs::create_dir_all(&orbit_code_home)
             .await
             .expect("create codex home");
-        let logs_path = logs_db_path(codex_home.as_path());
+        let logs_path = logs_db_path(orbit_code_home.as_path());
         let old_logs_migrator = Migrator {
             migrations: Cow::Owned(vec![LOGS_MIGRATOR.migrations[0].clone()]),
             ignore_missing: false,
@@ -597,7 +597,7 @@ mod tests {
         .expect("insert legacy log row");
         pool.close().await;
 
-        let runtime = StateRuntime::init(codex_home.clone(), "test-provider".to_string())
+        let runtime = StateRuntime::init(orbit_code_home.clone(), "test-provider".to_string())
             .await
             .expect("initialize runtime");
 
@@ -647,7 +647,7 @@ mod tests {
         );
         migrated_pool.close().await;
 
-        let _ = tokio::fs::remove_dir_all(codex_home).await;
+        let _ = tokio::fs::remove_dir_all(orbit_code_home).await;
     }
 
     #[test]
@@ -668,8 +668,8 @@ mod tests {
 
     #[tokio::test]
     async fn query_logs_with_search_matches_rendered_body_substring() {
-        let codex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(codex_home.clone(), "test-provider".to_string())
+        let orbit_code_home = unique_temp_dir();
+        let runtime = StateRuntime::init(orbit_code_home.clone(), "test-provider".to_string())
             .await
             .expect("initialize runtime");
 
@@ -716,13 +716,13 @@ mod tests {
         assert_eq!(rows.len(), 1);
         assert_eq!(rows[0].message.as_deref(), Some("foo=2 alphabet"));
 
-        let _ = tokio::fs::remove_dir_all(codex_home).await;
+        let _ = tokio::fs::remove_dir_all(orbit_code_home).await;
     }
 
     #[tokio::test]
     async fn insert_logs_prunes_old_rows_when_thread_exceeds_size_limit() {
-        let codex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(codex_home.clone(), "test-provider".to_string())
+        let orbit_code_home = unique_temp_dir();
+        let runtime = StateRuntime::init(orbit_code_home.clone(), "test-provider".to_string())
             .await
             .expect("initialize runtime");
 
@@ -770,13 +770,13 @@ mod tests {
         assert_eq!(rows.len(), 1);
         assert_eq!(rows[0].ts, 2);
 
-        let _ = tokio::fs::remove_dir_all(codex_home).await;
+        let _ = tokio::fs::remove_dir_all(orbit_code_home).await;
     }
 
     #[tokio::test]
     async fn insert_logs_prunes_single_thread_row_when_it_exceeds_size_limit() {
-        let codex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(codex_home.clone(), "test-provider".to_string())
+        let orbit_code_home = unique_temp_dir();
+        let runtime = StateRuntime::init(orbit_code_home.clone(), "test-provider".to_string())
             .await
             .expect("initialize runtime");
 
@@ -808,13 +808,13 @@ mod tests {
 
         assert!(rows.is_empty());
 
-        let _ = tokio::fs::remove_dir_all(codex_home).await;
+        let _ = tokio::fs::remove_dir_all(orbit_code_home).await;
     }
 
     #[tokio::test]
     async fn insert_logs_prunes_threadless_rows_per_process_uuid_only() {
-        let codex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(codex_home.clone(), "test-provider".to_string())
+        let orbit_code_home = unique_temp_dir();
+        let runtime = StateRuntime::init(orbit_code_home.clone(), "test-provider".to_string())
             .await
             .expect("initialize runtime");
 
@@ -877,13 +877,13 @@ mod tests {
         timestamps.sort_unstable();
         assert_eq!(timestamps, vec![2, 3]);
 
-        let _ = tokio::fs::remove_dir_all(codex_home).await;
+        let _ = tokio::fs::remove_dir_all(orbit_code_home).await;
     }
 
     #[tokio::test]
     async fn insert_logs_prunes_single_threadless_process_row_when_it_exceeds_size_limit() {
-        let codex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(codex_home.clone(), "test-provider".to_string())
+        let orbit_code_home = unique_temp_dir();
+        let runtime = StateRuntime::init(orbit_code_home.clone(), "test-provider".to_string())
             .await
             .expect("initialize runtime");
 
@@ -915,13 +915,13 @@ mod tests {
 
         assert!(rows.is_empty());
 
-        let _ = tokio::fs::remove_dir_all(codex_home).await;
+        let _ = tokio::fs::remove_dir_all(orbit_code_home).await;
     }
 
     #[tokio::test]
     async fn insert_logs_prunes_threadless_rows_with_null_process_uuid() {
-        let codex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(codex_home.clone(), "test-provider".to_string())
+        let orbit_code_home = unique_temp_dir();
+        let runtime = StateRuntime::init(orbit_code_home.clone(), "test-provider".to_string())
             .await
             .expect("initialize runtime");
 
@@ -983,13 +983,13 @@ mod tests {
         timestamps.sort_unstable();
         assert_eq!(timestamps, vec![2, 3]);
 
-        let _ = tokio::fs::remove_dir_all(codex_home).await;
+        let _ = tokio::fs::remove_dir_all(orbit_code_home).await;
     }
 
     #[tokio::test]
     async fn insert_logs_prunes_single_threadless_null_process_row_when_it_exceeds_limit() {
-        let codex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(codex_home.clone(), "test-provider".to_string())
+        let orbit_code_home = unique_temp_dir();
+        let runtime = StateRuntime::init(orbit_code_home.clone(), "test-provider".to_string())
             .await
             .expect("initialize runtime");
 
@@ -1021,13 +1021,13 @@ mod tests {
 
         assert!(rows.is_empty());
 
-        let _ = tokio::fs::remove_dir_all(codex_home).await;
+        let _ = tokio::fs::remove_dir_all(orbit_code_home).await;
     }
 
     #[tokio::test]
     async fn insert_logs_prunes_old_rows_when_thread_exceeds_row_limit() {
-        let codex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(codex_home.clone(), "test-provider".to_string())
+        let orbit_code_home = unique_temp_dir();
+        let runtime = StateRuntime::init(orbit_code_home.clone(), "test-provider".to_string())
             .await
             .expect("initialize runtime");
 
@@ -1064,13 +1064,13 @@ mod tests {
         assert_eq!(timestamps.first().copied(), Some(2));
         assert_eq!(timestamps.last().copied(), Some(1_001));
 
-        let _ = tokio::fs::remove_dir_all(codex_home).await;
+        let _ = tokio::fs::remove_dir_all(orbit_code_home).await;
     }
 
     #[tokio::test]
     async fn insert_logs_prunes_old_threadless_rows_when_process_exceeds_row_limit() {
-        let codex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(codex_home.clone(), "test-provider".to_string())
+        let orbit_code_home = unique_temp_dir();
+        let runtime = StateRuntime::init(orbit_code_home.clone(), "test-provider".to_string())
             .await
             .expect("initialize runtime");
 
@@ -1111,13 +1111,13 @@ mod tests {
         assert_eq!(timestamps.first().copied(), Some(2));
         assert_eq!(timestamps.last().copied(), Some(1_001));
 
-        let _ = tokio::fs::remove_dir_all(codex_home).await;
+        let _ = tokio::fs::remove_dir_all(orbit_code_home).await;
     }
 
     #[tokio::test]
     async fn insert_logs_prunes_old_threadless_null_process_rows_when_row_limit_exceeded() {
-        let codex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(codex_home.clone(), "test-provider".to_string())
+        let orbit_code_home = unique_temp_dir();
+        let runtime = StateRuntime::init(orbit_code_home.clone(), "test-provider".to_string())
             .await
             .expect("initialize runtime");
 
@@ -1158,13 +1158,13 @@ mod tests {
         assert_eq!(timestamps.first().copied(), Some(2));
         assert_eq!(timestamps.last().copied(), Some(1_001));
 
-        let _ = tokio::fs::remove_dir_all(codex_home).await;
+        let _ = tokio::fs::remove_dir_all(orbit_code_home).await;
     }
 
     #[tokio::test]
     async fn query_feedback_logs_returns_newest_lines_within_limit_in_order() {
-        let codex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(codex_home.clone(), "test-provider".to_string())
+        let orbit_code_home = unique_temp_dir();
+        let runtime = StateRuntime::init(orbit_code_home.clone(), "test-provider".to_string())
             .await
             .expect("initialize runtime");
 
@@ -1228,13 +1228,13 @@ mod tests {
             .concat()
         );
 
-        let _ = tokio::fs::remove_dir_all(codex_home).await;
+        let _ = tokio::fs::remove_dir_all(orbit_code_home).await;
     }
 
     #[tokio::test]
     async fn query_feedback_logs_excludes_oversized_newest_row() {
-        let codex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(codex_home.clone(), "test-provider".to_string())
+        let orbit_code_home = unique_temp_dir();
+        let runtime = StateRuntime::init(orbit_code_home.clone(), "test-provider".to_string())
             .await
             .expect("initialize runtime");
         let eleven_mebibytes = "z".repeat(11 * 1024 * 1024);
@@ -1278,13 +1278,13 @@ mod tests {
 
         assert_eq!(bytes, Vec::<u8>::new());
 
-        let _ = tokio::fs::remove_dir_all(codex_home).await;
+        let _ = tokio::fs::remove_dir_all(orbit_code_home).await;
     }
 
     #[tokio::test]
     async fn query_feedback_logs_includes_threadless_rows_from_same_process() {
-        let codex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(codex_home.clone(), "test-provider".to_string())
+        let orbit_code_home = unique_temp_dir();
+        let runtime = StateRuntime::init(orbit_code_home.clone(), "test-provider".to_string())
             .await
             .expect("initialize runtime");
 
@@ -1361,13 +1361,13 @@ mod tests {
             .concat()
         );
 
-        let _ = tokio::fs::remove_dir_all(codex_home).await;
+        let _ = tokio::fs::remove_dir_all(orbit_code_home).await;
     }
 
     #[tokio::test]
     async fn query_feedback_logs_excludes_threadless_rows_from_prior_processes() {
-        let codex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(codex_home.clone(), "test-provider".to_string())
+        let orbit_code_home = unique_temp_dir();
+        let runtime = StateRuntime::init(orbit_code_home.clone(), "test-provider".to_string())
             .await
             .expect("initialize runtime");
 
@@ -1444,13 +1444,13 @@ mod tests {
             .concat()
         );
 
-        let _ = tokio::fs::remove_dir_all(codex_home).await;
+        let _ = tokio::fs::remove_dir_all(orbit_code_home).await;
     }
 
     #[tokio::test]
     async fn query_feedback_logs_keeps_newest_suffix_across_thread_and_threadless_logs() {
-        let codex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(codex_home.clone(), "test-provider".to_string())
+        let orbit_code_home = unique_temp_dir();
+        let runtime = StateRuntime::init(orbit_code_home.clone(), "test-provider".to_string())
             .await
             .expect("initialize runtime");
         let thread_marker = "thread-scoped-oldest";
@@ -1519,6 +1519,6 @@ mod tests {
         assert!(logs.contains(threadless_newer_marker));
         assert_eq!(logs.matches('\n').count(), 2);
 
-        let _ = tokio::fs::remove_dir_all(codex_home).await;
+        let _ = tokio::fs::remove_dir_all(orbit_code_home).await;
     }
 }

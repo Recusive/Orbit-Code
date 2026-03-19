@@ -1,5 +1,5 @@
 use super::*;
-use codex_git::LargeUntrackedDir;
+use orbit_code_git::LargeUntrackedDir;
 use pretty_assertions::assert_eq;
 use std::path::PathBuf;
 

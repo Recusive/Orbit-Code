@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use codex_protocol::models::ShellCommandToolCallParams;
+use orbit_code_protocol::models::ShellCommandToolCallParams;
 use pretty_assertions::assert_eq;
 
 use crate::codex::make_session_and_context;

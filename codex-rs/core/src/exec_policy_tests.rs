@@ -9,16 +9,16 @@ use crate::config_loader::ConfigRequirementsToml;
 use crate::config_loader::LoaderOverrides;
 use crate::config_loader::RequirementSource;
 use crate::config_loader::Sourced;
-use codex_app_server_protocol::ConfigLayerSource;
-use codex_config::RequirementsExecPolicy;
-use codex_protocol::permissions::FileSystemAccessMode;
-use codex_protocol::permissions::FileSystemPath;
-use codex_protocol::permissions::FileSystemSandboxEntry;
-use codex_protocol::permissions::FileSystemSpecialPath;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::GranularApprovalConfig;
-use codex_protocol::protocol::SandboxPolicy;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use orbit_code_app_server_protocol::ConfigLayerSource;
+use orbit_code_config::RequirementsExecPolicy;
+use orbit_code_protocol::permissions::FileSystemAccessMode;
+use orbit_code_protocol::permissions::FileSystemPath;
+use orbit_code_protocol::permissions::FileSystemSandboxEntry;
+use orbit_code_protocol::permissions::FileSystemSpecialPath;
+use orbit_code_protocol::protocol::AskForApproval;
+use orbit_code_protocol::protocol::GranularApprovalConfig;
+use orbit_code_protocol::protocol::SandboxPolicy;
+use orbit_code_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use std::fs;
 use std::path::Path;
@@ -28,11 +28,13 @@ use tempfile::TempDir;
 use tempfile::tempdir;
 use toml::Value as TomlValue;
 
-fn config_stack_for_dot_codex_folder(dot_codex_folder: &Path) -> ConfigLayerStack {
-    let dot_codex_folder =
-        AbsolutePathBuf::from_absolute_path(dot_codex_folder).expect("absolute dot_codex_folder");
+fn config_stack_for_dot_orbit_code_folder(dot_orbit_code_folder: &Path) -> ConfigLayerStack {
+    let dot_orbit_code_folder = AbsolutePathBuf::from_absolute_path(dot_orbit_code_folder)
+        .expect("absolute dot_orbit_code_folder");
     let layer = ConfigLayerEntry::new(
-        ConfigLayerSource::Project { dot_codex_folder },
+        ConfigLayerSource::Project {
+            dot_orbit_code_folder,
+        },
         TomlValue::Table(Default::default()),
     );
     ConfigLayerStack::new(
@@ -84,7 +86,7 @@ fn unrestricted_file_system_sandbox_policy() -> FileSystemSandboxPolicy {
 async fn test_config() -> (TempDir, Config) {
     let home = TempDir::new().expect("create temp dir");
     let config = ConfigBuilder::default()
-        .codex_home(home.path().to_path_buf())
+        .orbit_code_home(home.path().to_path_buf())
         .loader_overrides(LoaderOverrides {
             #[cfg(target_os = "macos")]
             managed_preferences_base64: Some(String::new()),
@@ -170,7 +172,7 @@ async fn child_does_not_use_parent_exec_policy_when_requirements_exec_policy_dif
 #[tokio::test]
 async fn returns_empty_policy_when_no_policy_files_exist() {
     let temp_dir = tempdir().expect("create temp dir");
-    let config_stack = config_stack_for_dot_codex_folder(temp_dir.path());
+    let config_stack = config_stack_for_dot_orbit_code_folder(temp_dir.path());
 
     let manager = ExecPolicyManager::load(&config_stack)
         .await
@@ -206,7 +208,7 @@ async fn collect_policy_files_returns_empty_when_dir_missing() {
 #[tokio::test]
 async fn format_exec_policy_error_with_source_renders_range() {
     let temp_dir = tempdir().expect("create temp dir");
-    let config_stack = config_stack_for_dot_codex_folder(temp_dir.path());
+    let config_stack = config_stack_for_dot_orbit_code_folder(temp_dir.path());
     let policy_dir = temp_dir.path().join(RULES_DIR_NAME);
     fs::create_dir_all(&policy_dir).expect("create policy dir");
     let broken_path = policy_dir.join("broken.rules");
@@ -251,7 +253,7 @@ fn parse_starlark_line_from_message_rejects_zero_line() {
 #[tokio::test]
 async fn loads_policies_from_policy_subdirectory() {
     let temp_dir = tempdir().expect("create temp dir");
-    let config_stack = config_stack_for_dot_codex_folder(temp_dir.path());
+    let config_stack = config_stack_for_dot_orbit_code_folder(temp_dir.path());
     let policy_dir = temp_dir.path().join(RULES_DIR_NAME);
     fs::create_dir_all(&policy_dir).expect("create policy dir");
     fs::write(
@@ -285,21 +287,23 @@ async fn merges_requirements_exec_policy_network_rules() -> anyhow::Result<()> {
     let mut requirements_exec_policy = Policy::empty();
     requirements_exec_policy.add_network_rule(
         "blocked.example.com",
-        codex_execpolicy::NetworkRuleProtocol::Https,
+        orbit_code_execpolicy::NetworkRuleProtocol::Https,
         Decision::Forbidden,
         None,
     )?;
 
     let requirements = ConfigRequirements {
-        exec_policy: Some(codex_config::Sourced::new(
-            codex_config::RequirementsExecPolicy::new(requirements_exec_policy),
-            codex_config::RequirementSource::Unknown,
+        exec_policy: Some(orbit_code_config::Sourced::new(
+            orbit_code_config::RequirementsExecPolicy::new(requirements_exec_policy),
+            orbit_code_config::RequirementSource::Unknown,
         )),
         ..ConfigRequirements::default()
     };
-    let dot_codex_folder = AbsolutePathBuf::from_absolute_path(temp_dir.path())?;
+    let dot_orbit_code_folder = AbsolutePathBuf::from_absolute_path(temp_dir.path())?;
     let layer = ConfigLayerEntry::new(
-        ConfigLayerSource::Project { dot_codex_folder },
+        ConfigLayerSource::Project {
+            dot_orbit_code_folder,
+        },
         TomlValue::Table(Default::default()),
     );
     let config_stack =
@@ -332,21 +336,23 @@ host_executable(name = "git", paths = ["{git_path_literal}"])
     let mut requirements_exec_policy = Policy::empty();
     requirements_exec_policy.add_network_rule(
         "blocked.example.com",
-        codex_execpolicy::NetworkRuleProtocol::Https,
+        orbit_code_execpolicy::NetworkRuleProtocol::Https,
         Decision::Forbidden,
         None,
     )?;
 
     let requirements = ConfigRequirements {
-        exec_policy: Some(codex_config::Sourced::new(
-            codex_config::RequirementsExecPolicy::new(requirements_exec_policy),
-            codex_config::RequirementSource::Unknown,
+        exec_policy: Some(orbit_code_config::Sourced::new(
+            orbit_code_config::RequirementsExecPolicy::new(requirements_exec_policy),
+            orbit_code_config::RequirementSource::Unknown,
         )),
         ..ConfigRequirements::default()
     };
-    let dot_codex_folder = AbsolutePathBuf::from_absolute_path(temp_dir.path())?;
+    let dot_orbit_code_folder = AbsolutePathBuf::from_absolute_path(temp_dir.path())?;
     let layer = ConfigLayerEntry::new(
-        ConfigLayerSource::Project { dot_codex_folder },
+        ConfigLayerSource::Project {
+            dot_orbit_code_folder,
+        },
         TomlValue::Table(Default::default()),
     );
     let config_stack =
@@ -368,7 +374,7 @@ host_executable(name = "git", paths = ["{git_path_literal}"])
 #[tokio::test]
 async fn ignores_policies_outside_policy_dir() {
     let temp_dir = tempdir().expect("create temp dir");
-    let config_stack = config_stack_for_dot_codex_folder(temp_dir.path());
+    let config_stack = config_stack_for_dot_orbit_code_folder(temp_dir.path());
     fs::write(
         temp_dir.path().join("root.rules"),
         r#"prefix_rule(pattern=["ls"], decision="prompt")"#,
@@ -401,10 +407,10 @@ async fn ignores_rules_from_untrusted_project_layers() -> anyhow::Result<()> {
         r#"prefix_rule(pattern=["ls"], decision="forbidden")"#,
     )?;
 
-    let project_dot_codex_folder = AbsolutePathBuf::from_absolute_path(project_dir.path())?;
+    let project_dot_orbit_code_folder = AbsolutePathBuf::from_absolute_path(project_dir.path())?;
     let layers = vec![ConfigLayerEntry::new_disabled(
         ConfigLayerSource::Project {
-            dot_codex_folder: project_dot_codex_folder,
+            dot_orbit_code_folder: project_dot_orbit_code_folder,
         },
         TomlValue::Table(Default::default()),
         "marked untrusted",
@@ -451,7 +457,7 @@ async fn loads_policies_from_multiple_config_layers() -> anyhow::Result<()> {
 
     let user_config_toml =
         AbsolutePathBuf::from_absolute_path(user_dir.path().join("config.toml"))?;
-    let project_dot_codex_folder = AbsolutePathBuf::from_absolute_path(project_dir.path())?;
+    let project_dot_orbit_code_folder = AbsolutePathBuf::from_absolute_path(project_dir.path())?;
     let layers = vec![
         ConfigLayerEntry::new(
             ConfigLayerSource::User {
@@ -461,7 +467,7 @@ async fn loads_policies_from_multiple_config_layers() -> anyhow::Result<()> {
         ),
         ConfigLayerEntry::new(
             ConfigLayerSource::Project {
-                dot_codex_folder: project_dot_codex_folder,
+                dot_orbit_code_folder: project_dot_orbit_code_folder,
             },
             TomlValue::Table(Default::default()),
         ),
@@ -1186,12 +1192,12 @@ async fn heuristics_apply_when_other_commands_match_policy() {
 
 #[tokio::test]
 async fn append_execpolicy_amendment_updates_policy_and_file() {
-    let codex_home = tempdir().expect("create temp dir");
+    let orbit_code_home = tempdir().expect("create temp dir");
     let prefix = vec!["echo".to_string(), "hello".to_string()];
     let manager = ExecPolicyManager::default();
 
     manager
-        .append_amendment_and_update(codex_home.path(), &ExecPolicyAmendment::from(prefix))
+        .append_amendment_and_update(orbit_code_home.path(), &ExecPolicyAmendment::from(prefix))
         .await
         .expect("update policy");
     let updated_policy = manager.current();
@@ -1208,7 +1214,7 @@ async fn append_execpolicy_amendment_updates_policy_and_file() {
         }
     ));
 
-    let contents = fs::read_to_string(default_policy_path(codex_home.path()))
+    let contents = fs::read_to_string(default_policy_path(orbit_code_home.path()))
         .expect("policy file should have been created");
     assert_eq!(
         contents,
@@ -1219,11 +1225,11 @@ async fn append_execpolicy_amendment_updates_policy_and_file() {
 
 #[tokio::test]
 async fn append_execpolicy_amendment_rejects_empty_prefix() {
-    let codex_home = tempdir().expect("create temp dir");
+    let orbit_code_home = tempdir().expect("create temp dir");
     let manager = ExecPolicyManager::default();
 
     let result = manager
-        .append_amendment_and_update(codex_home.path(), &ExecPolicyAmendment::from(vec![]))
+        .append_amendment_and_update(orbit_code_home.path(), &ExecPolicyAmendment::from(vec![]))
         .await;
 
     assert!(matches!(

@@ -36,48 +36,48 @@ use crate::api_bridge::map_api_error;
 use crate::auth::UnauthorizedRecovery;
 use crate::auth_env_telemetry::AuthEnvTelemetry;
 use crate::auth_env_telemetry::collect_auth_env_telemetry;
-use codex_api::CompactClient as ApiCompactClient;
-use codex_api::CompactionInput as ApiCompactionInput;
-use codex_api::MemoriesClient as ApiMemoriesClient;
-use codex_api::MemorySummarizeInput as ApiMemorySummarizeInput;
-use codex_api::MemorySummarizeOutput as ApiMemorySummarizeOutput;
-use codex_api::RawMemory as ApiRawMemory;
-use codex_api::RequestTelemetry;
-use codex_api::ReqwestTransport;
-use codex_api::ResponseCreateWsRequest;
-use codex_api::ResponsesApiRequest;
-use codex_api::ResponsesClient as ApiResponsesClient;
-use codex_api::ResponsesOptions as ApiResponsesOptions;
-use codex_api::ResponsesWebsocketClient as ApiWebSocketResponsesClient;
-use codex_api::ResponsesWebsocketConnection as ApiWebSocketConnection;
-use codex_api::SseTelemetry;
-use codex_api::TransportError;
-use codex_api::WebsocketTelemetry;
-use codex_api::build_conversation_headers;
-use codex_api::common::Reasoning;
-use codex_api::common::ResponsesWsRequest;
-use codex_api::create_text_param_for_request;
-use codex_api::error::ApiError;
-use codex_api::requests::responses::Compression;
-use codex_api::response_create_client_metadata;
-use codex_otel::SessionTelemetry;
-use codex_otel::current_span_w3c_trace_context;
+use orbit_code_api::CompactClient as ApiCompactClient;
+use orbit_code_api::CompactionInput as ApiCompactionInput;
+use orbit_code_api::MemoriesClient as ApiMemoriesClient;
+use orbit_code_api::MemorySummarizeInput as ApiMemorySummarizeInput;
+use orbit_code_api::MemorySummarizeOutput as ApiMemorySummarizeOutput;
+use orbit_code_api::RawMemory as ApiRawMemory;
+use orbit_code_api::RequestTelemetry;
+use orbit_code_api::ReqwestTransport;
+use orbit_code_api::ResponseCreateWsRequest;
+use orbit_code_api::ResponsesApiRequest;
+use orbit_code_api::ResponsesClient as ApiResponsesClient;
+use orbit_code_api::ResponsesOptions as ApiResponsesOptions;
+use orbit_code_api::ResponsesWebsocketClient as ApiWebSocketResponsesClient;
+use orbit_code_api::ResponsesWebsocketConnection as ApiWebSocketConnection;
+use orbit_code_api::SseTelemetry;
+use orbit_code_api::TransportError;
+use orbit_code_api::WebsocketTelemetry;
+use orbit_code_api::build_conversation_headers;
+use orbit_code_api::common::Reasoning;
+use orbit_code_api::common::ResponsesWsRequest;
+use orbit_code_api::create_text_param_for_request;
+use orbit_code_api::error::ApiError;
+use orbit_code_api::requests::responses::Compression;
+use orbit_code_api::response_create_client_metadata;
+use orbit_code_otel::SessionTelemetry;
+use orbit_code_otel::current_span_w3c_trace_context;
 
-use codex_protocol::ThreadId;
-use codex_protocol::config_types::ReasoningSummary as ReasoningSummaryConfig;
-use codex_protocol::config_types::ServiceTier;
-use codex_protocol::config_types::Verbosity as VerbosityConfig;
-use codex_protocol::models::ResponseItem;
-use codex_protocol::openai_models::ModelInfo;
-use codex_protocol::openai_models::ReasoningEffort as ReasoningEffortConfig;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::W3cTraceContext;
 use eventsource_stream::Event;
 use eventsource_stream::EventStreamError;
 use futures::StreamExt;
 use http::HeaderMap as ApiHeaderMap;
 use http::HeaderValue;
 use http::StatusCode as HttpStatusCode;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::config_types::ReasoningSummary as ReasoningSummaryConfig;
+use orbit_code_protocol::config_types::ServiceTier;
+use orbit_code_protocol::config_types::Verbosity as VerbosityConfig;
+use orbit_code_protocol::models::ResponseItem;
+use orbit_code_protocol::openai_models::ModelInfo;
+use orbit_code_protocol::openai_models::ReasoningEffort as ReasoningEffortConfig;
+use orbit_code_protocol::protocol::SessionSource;
+use orbit_code_protocol::protocol::W3cTraceContext;
 use reqwest::StatusCode;
 use std::time::Duration;
 use std::time::Instant;
@@ -100,7 +100,7 @@ use crate::client_common::ResponseStream;
 use crate::default_client::build_reqwest_client;
 use crate::error::CodexErr;
 use crate::error::Result;
-use crate::flags::CODEX_RS_SSE_FIXTURE;
+use crate::flags::ORBIT_RS_SSE_FIXTURE;
 use crate::model_provider_info::ModelProviderInfo;
 use crate::model_provider_info::WireApi;
 use crate::response_debug_context::extract_response_debug_context;
@@ -113,8 +113,8 @@ use crate::util::emit_feedback_auth_recovery_tags;
 use crate::util::emit_feedback_request_tags_with_auth_env;
 
 pub const OPENAI_BETA_HEADER: &str = "OpenAI-Beta";
-pub const X_CODEX_TURN_STATE_HEADER: &str = "x-codex-turn-state";
-pub const X_CODEX_TURN_METADATA_HEADER: &str = "x-codex-turn-metadata";
+pub const X_ORBIT_TURN_STATE_HEADER: &str = "x-codex-turn-state";
+pub const X_ORBIT_TURN_METADATA_HEADER: &str = "x-codex-turn-metadata";
 pub const X_RESPONSESAPI_INCLUDE_TIMING_METRICS_HEADER: &str =
     "x-responsesapi-include-timing-metrics";
 const RESPONSES_WEBSOCKETS_V2_BETA_HEADER_VALUE: &str = "responses_websockets=2026-02-06";
@@ -150,7 +150,7 @@ struct ModelClientState {
 /// share the same auth/provider setup flow.
 struct CurrentClientSetup {
     auth: Option<CodexAuth>,
-    api_provider: codex_api::Provider,
+    api_provider: orbit_code_api::Provider,
     api_auth: CoreAuthProvider,
 }
 
@@ -261,10 +261,11 @@ impl ModelClient {
         include_timing_metrics: bool,
         beta_features_header: Option<String>,
     ) -> Self {
-        let codex_api_key_env_enabled = auth_manager
+        let orbit_code_api_key_env_enabled = auth_manager
             .as_ref()
-            .is_some_and(|manager| manager.codex_api_key_env_enabled());
-        let auth_env_telemetry = collect_auth_env_telemetry(&provider, codex_api_key_env_enabled);
+            .is_some_and(|manager| manager.orbit_code_api_key_env_enabled());
+        let auth_env_telemetry =
+            collect_auth_env_telemetry(&provider, orbit_code_api_key_env_enabled);
         Self {
             state: Arc::new(ModelClientState {
                 auth_manager,
@@ -511,7 +512,7 @@ impl ModelClient {
     pub fn responses_websocket_enabled(&self) -> bool {
         if !self.state.provider.supports_websockets
             || self.state.disable_websockets.load(Ordering::Relaxed)
-            || (*CODEX_RS_SSE_FIXTURE).is_some()
+            || (*ORBIT_RS_SSE_FIXTURE).is_some()
         {
             return false;
         }
@@ -548,7 +549,7 @@ impl ModelClient {
     async fn connect_websocket(
         &self,
         session_telemetry: &SessionTelemetry,
-        api_provider: codex_api::Provider,
+        api_provider: orbit_code_api::Provider,
         api_auth: CoreAuthProvider,
         turn_state: Option<Arc<OnceLock<String>>>,
         turn_metadata_header: Option<&str>,
@@ -681,7 +682,7 @@ impl ModelClientSession {
 
     fn build_responses_request(
         &self,
-        provider: &codex_api::Provider,
+        provider: &orbit_code_api::Provider,
         prompt: &Prompt,
         model_info: &ModelInfo,
         effort: Option<ReasoningEffortConfig>,
@@ -1005,9 +1006,9 @@ impl ModelClientSession {
         service_tier: Option<ServiceTier>,
         turn_metadata_header: Option<&str>,
     ) -> Result<ResponseStream> {
-        if let Some(path) = &*CODEX_RS_SSE_FIXTURE {
+        if let Some(path) = &*ORBIT_RS_SSE_FIXTURE {
             warn!(path, "Streaming from fixture");
-            let stream = codex_api::stream_from_fixture(
+            let stream = orbit_code_api::stream_from_fixture(
                 path,
                 self.client.state.provider.stream_idle_timeout(),
             )
@@ -1367,7 +1368,7 @@ fn build_ws_client_metadata(turn_metadata_header: Option<&str>) -> Option<HashMa
     let turn_metadata_header = parse_turn_metadata_header(turn_metadata_header)?;
     let turn_metadata = turn_metadata_header.to_str().ok()?.to_string();
     let mut client_metadata = HashMap::new();
-    client_metadata.insert(X_CODEX_TURN_METADATA_HEADER.to_string(), turn_metadata);
+    client_metadata.insert(X_ORBIT_TURN_METADATA_HEADER.to_string(), turn_metadata);
     Some(client_metadata)
 }
 
@@ -1394,10 +1395,10 @@ fn build_responses_headers(
         && let Some(state) = turn_state.get()
         && let Ok(header_value) = HeaderValue::from_str(state)
     {
-        headers.insert(X_CODEX_TURN_STATE_HEADER, header_value);
+        headers.insert(X_ORBIT_TURN_STATE_HEADER, header_value);
     }
     if let Some(header_value) = turn_metadata_header {
-        headers.insert(X_CODEX_TURN_METADATA_HEADER, header_value.clone());
+        headers.insert(X_ORBIT_TURN_METADATA_HEADER, header_value.clone());
     }
     headers
 }
@@ -1543,7 +1544,7 @@ impl AuthRequestTelemetryContext {
 
 struct WebsocketConnectParams<'a> {
     session_telemetry: &'a SessionTelemetry,
-    api_provider: codex_api::Provider,
+    api_provider: orbit_code_api::Provider,
     api_auth: CoreAuthProvider,
     turn_metadata_header: Option<&'a str>,
     options: &'a ApiResponsesOptions,

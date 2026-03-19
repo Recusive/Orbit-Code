@@ -82,27 +82,30 @@ pub(crate) fn write_openai_curated_marketplace(root: &Path, plugin_names: &[&str
     }
 }
 
-pub(crate) fn write_curated_plugin_sha(codex_home: &Path) {
-    write_curated_plugin_sha_with(codex_home, TEST_CURATED_PLUGIN_SHA);
+pub(crate) fn write_curated_plugin_sha(orbit_code_home: &Path) {
+    write_curated_plugin_sha_with(orbit_code_home, TEST_CURATED_PLUGIN_SHA);
 }
 
-pub(crate) fn write_curated_plugin_sha_with(codex_home: &Path, sha: &str) {
-    write_file(&codex_home.join(".tmp/plugins.sha"), &format!("{sha}\n"));
-}
-
-pub(crate) fn write_plugins_feature_config(codex_home: &Path) {
+pub(crate) fn write_curated_plugin_sha_with(orbit_code_home: &Path, sha: &str) {
     write_file(
-        &codex_home.join(CONFIG_TOML_FILE),
+        &orbit_code_home.join(".tmp/plugins.sha"),
+        &format!("{sha}\n"),
+    );
+}
+
+pub(crate) fn write_plugins_feature_config(orbit_code_home: &Path) {
+    write_file(
+        &orbit_code_home.join(CONFIG_TOML_FILE),
         r#"[features]
 plugins = true
 "#,
     );
 }
 
-pub(crate) async fn load_plugins_config(codex_home: &Path) -> crate::config::Config {
+pub(crate) async fn load_plugins_config(orbit_code_home: &Path) -> crate::config::Config {
     ConfigBuilder::default()
-        .codex_home(codex_home.to_path_buf())
-        .fallback_cwd(Some(codex_home.to_path_buf()))
+        .orbit_code_home(orbit_code_home.to_path_buf())
+        .fallback_cwd(Some(orbit_code_home.to_path_buf()))
         .build()
         .await
         .expect("config should load")

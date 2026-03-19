@@ -5,7 +5,7 @@ use crate::client_common::tools::ToolSpec;
 use crate::config::AgentRoleConfig;
 use crate::features::Feature;
 use crate::features::Features;
-use crate::mcp::CODEX_APPS_MCP_SERVER_NAME;
+use crate::mcp::ORBIT_APPS_MCP_SERVER_NAME;
 use crate::mcp_connection_manager::ToolInfo;
 use crate::models_manager::collaboration_mode_presets::CollaborationModesConfig;
 use crate::original_image_detail::can_request_original_image_detail;
@@ -35,21 +35,21 @@ use crate::tools::handlers::request_permissions_tool_description;
 use crate::tools::handlers::request_user_input_tool_description;
 use crate::tools::registry::ToolRegistryBuilder;
 use crate::tools::registry::tool_handler_key;
-use codex_protocol::config_types::WebSearchConfig;
-use codex_protocol::config_types::WebSearchMode;
-use codex_protocol::config_types::WindowsSandboxLevel;
-use codex_protocol::dynamic_tools::DynamicToolSpec;
-use codex_protocol::models::VIEW_IMAGE_TOOL_NAME;
-use codex_protocol::openai_models::ApplyPatchToolType;
-use codex_protocol::openai_models::ConfigShellToolType;
-use codex_protocol::openai_models::InputModality;
-use codex_protocol::openai_models::ModelInfo;
-use codex_protocol::openai_models::ModelPreset;
-use codex_protocol::openai_models::WebSearchToolType;
-use codex_protocol::protocol::SandboxPolicy;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::SubAgentSource;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use orbit_code_protocol::config_types::WebSearchConfig;
+use orbit_code_protocol::config_types::WebSearchMode;
+use orbit_code_protocol::config_types::WindowsSandboxLevel;
+use orbit_code_protocol::dynamic_tools::DynamicToolSpec;
+use orbit_code_protocol::models::VIEW_IMAGE_TOOL_NAME;
+use orbit_code_protocol::openai_models::ApplyPatchToolType;
+use orbit_code_protocol::openai_models::ConfigShellToolType;
+use orbit_code_protocol::openai_models::InputModality;
+use orbit_code_protocol::openai_models::ModelInfo;
+use orbit_code_protocol::openai_models::ModelPreset;
+use orbit_code_protocol::openai_models::WebSearchToolType;
+use orbit_code_protocol::protocol::SandboxPolicy;
+use orbit_code_protocol::protocol::SessionSource;
+use orbit_code_protocol::protocol::SubAgentSource;
+use orbit_code_utils_absolute_path::AbsolutePathBuf;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::Value as JsonValue;
@@ -332,8 +332,8 @@ impl ToolsConfig {
         let include_search_tool = model_info.supports_search_tool;
         let include_tool_suggest = include_search_tool && features.enabled(Feature::ToolSuggest);
         let include_original_image_detail = can_request_original_image_detail(features, model_info);
-        let include_artifact_tools =
-            features.enabled(Feature::Artifact) && codex_artifacts::can_manage_artifact_runtime();
+        let include_artifact_tools = features.enabled(Feature::Artifact)
+            && orbit_code_artifacts::can_manage_artifact_runtime();
         let include_image_gen_tool =
             features.enabled(Feature::ImageGeneration) && supports_image_generation(model_info);
         let exec_permission_approvals_enabled = features.enabled(Feature::ExecPermissionApprovals);
@@ -355,7 +355,7 @@ impl ToolsConfig {
             ConfigShellToolType::ShellCommand
         } else if features.enabled(Feature::UnifiedExec) && unified_exec_allowed {
             // If ConPTY not supported (for old Windows versions), fallback on ShellCommand.
-            if codex_utils_pty::conpty_supported() {
+            if orbit_code_utils_pty::conpty_supported() {
                 ConfigShellToolType::UnifiedExec
             } else {
                 ConfigShellToolType::ShellCommand
@@ -1693,7 +1693,7 @@ fn create_tool_search_tool(app_tools: &HashMap<String, ToolInfo>) -> ToolSpec {
     ]);
     let mut app_descriptions = BTreeMap::new();
     for tool in app_tools.values() {
-        if tool.server_name != CODEX_APPS_MCP_SERVER_NAME {
+        if tool.server_name != ORBIT_APPS_MCP_SERVER_NAME {
             continue;
         }
 

@@ -1,5 +1,5 @@
-use codex_protocol::config_types::CollaborationModeMask;
-use codex_protocol::config_types::ModeKind;
+use orbit_code_protocol::config_types::CollaborationModeMask;
+use orbit_code_protocol::config_types::ModeKind;
 
 use crate::model_catalog::ModelCatalog;
 

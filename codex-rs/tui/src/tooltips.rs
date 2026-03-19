@@ -1,6 +1,6 @@
-use codex_core::features::FEATURES;
-use codex_protocol::account::PlanType;
 use lazy_static::lazy_static;
+use orbit_code_core::features::FEATURES;
+use orbit_code_protocol::account::PlanType;
 use rand::Rng;
 
 const ANNOUNCEMENT_TIP_URL: &str =
@@ -118,7 +118,7 @@ fn pick_tooltip<R: Rng + ?Sized>(rng: &mut R) -> Option<&'static str> {
 
 pub(crate) mod announcement {
     use crate::tooltips::ANNOUNCEMENT_TIP_URL;
-    use crate::version::CODEX_CLI_VERSION;
+    use crate::version::ORBIT_CLI_VERSION;
     use chrono::NaiveDate;
     use chrono::Utc;
     use regex_lite::Regex;
@@ -199,7 +199,7 @@ pub(crate) mod announcement {
             let Some(tip) = AnnouncementTip::from_raw(raw) else {
                 continue;
             };
-            if tip.version_matches(CODEX_CLI_VERSION)
+            if tip.version_matches(ORBIT_CLI_VERSION)
                 && tip.date_matches(today)
                 && tip.target_app == "cli"
             {

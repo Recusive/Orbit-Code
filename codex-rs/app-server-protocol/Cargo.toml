@@ -1,11 +1,11 @@
 [package]
-name = "codex-app-server-protocol"
+name = "orbit-code-app-server-protocol"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [lib]
-name = "codex_app_server_protocol"
+name = "orbit_code_app_server_protocol"
 path = "src/lib.rs"
 
 [lints]
@@ -14,9 +14,9 @@ workspace = true
 [dependencies]
 anyhow = { workspace = true }
 clap = { workspace = true, features = ["derive"] }
-codex-protocol = { workspace = true }
-codex-experimental-api-macros = { workspace = true }
-codex-utils-absolute-path = { workspace = true }
+orbit-code-protocol = { workspace = true }
+orbit-code-experimental-api-macros = { workspace = true }
+orbit-code-utils-absolute-path = { workspace = true }
 schemars = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
@@ -37,7 +37,7 @@ uuid = { workspace = true, features = ["serde", "v7"] }
 
 [dev-dependencies]
 anyhow = { workspace = true }
-codex-utils-cargo-bin = { workspace = true }
+orbit-code-utils-cargo-bin = { workspace = true }
 pretty_assertions = { workspace = true }
 similar = { workspace = true }
 tempfile = { workspace = true }

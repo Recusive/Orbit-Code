@@ -10,26 +10,26 @@
 
 use std::path::PathBuf;
 
-use codex_chatgpt::connectors::AppInfo;
-use codex_file_search::FileMatch;
-use codex_protocol::ThreadId;
-use codex_protocol::openai_models::ModelPreset;
-use codex_protocol::protocol::Event;
-use codex_protocol::protocol::RateLimitSnapshot;
-use codex_utils_approval_presets::ApprovalPreset;
+use orbit_code_chatgpt::connectors::AppInfo;
+use orbit_code_file_search::FileMatch;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::openai_models::ModelPreset;
+use orbit_code_protocol::protocol::Event;
+use orbit_code_protocol::protocol::RateLimitSnapshot;
+use orbit_code_utils_approval_presets::ApprovalPreset;
 
 use crate::bottom_pane::ApprovalRequest;
 use crate::bottom_pane::StatusLineItem;
 use crate::history_cell::HistoryCell;
 
-use codex_core::config::types::ApprovalsReviewer;
-use codex_core::features::Feature;
-use codex_protocol::config_types::CollaborationModeMask;
-use codex_protocol::config_types::Personality;
-use codex_protocol::config_types::ServiceTier;
-use codex_protocol::openai_models::ReasoningEffort;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::SandboxPolicy;
+use orbit_code_core::config::types::ApprovalsReviewer;
+use orbit_code_core::features::Feature;
+use orbit_code_protocol::config_types::CollaborationModeMask;
+use orbit_code_protocol::config_types::Personality;
+use orbit_code_protocol::config_types::ServiceTier;
+use orbit_code_protocol::openai_models::ReasoningEffort;
+use orbit_code_protocol::protocol::AskForApproval;
+use orbit_code_protocol::protocol::SandboxPolicy;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum RealtimeAudioDeviceKind {
@@ -78,7 +78,7 @@ pub(crate) enum AppEvent {
     /// Submit an op to the specified thread, regardless of current focus.
     SubmitThreadOp {
         thread_id: ThreadId,
-        op: codex_protocol::protocol::Op,
+        op: orbit_code_protocol::protocol::Op,
     },
 
     /// Forward an event from a non-primary thread into the app-level thread router.
@@ -113,7 +113,7 @@ pub(crate) enum AppEvent {
 
     /// Forward an `Op` to the Agent. Using an `AppEvent` for this avoids
     /// bubbling channels through layers of widgets.
-    CodexOp(codex_protocol::protocol::Op),
+    CodexOp(orbit_code_protocol::protocol::Op),
 
     /// Kick off an asynchronous file search for the given query (text after
     /// the `@`). Previous searches may be cancelled by the app layer so there

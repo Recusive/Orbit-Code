@@ -3,26 +3,26 @@ use std::sync::Arc;
 
 use async_channel::Receiver;
 use async_channel::Sender;
-use codex_async_utils::OrCancelExt;
-use codex_protocol::protocol::ApplyPatchApprovalRequestEvent;
-use codex_protocol::protocol::Event;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::ExecApprovalRequestEvent;
-use codex_protocol::protocol::McpInvocation;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::RequestUserInputEvent;
-use codex_protocol::protocol::ReviewDecision;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::SubAgentSource;
-use codex_protocol::protocol::Submission;
-use codex_protocol::request_permissions::PermissionGrantScope;
-use codex_protocol::request_permissions::RequestPermissionsArgs;
-use codex_protocol::request_permissions::RequestPermissionsEvent;
-use codex_protocol::request_permissions::RequestPermissionsResponse;
-use codex_protocol::request_user_input::RequestUserInputArgs;
-use codex_protocol::request_user_input::RequestUserInputResponse;
-use codex_protocol::user_input::UserInput;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use orbit_code_async_utils::OrCancelExt;
+use orbit_code_protocol::protocol::ApplyPatchApprovalRequestEvent;
+use orbit_code_protocol::protocol::Event;
+use orbit_code_protocol::protocol::EventMsg;
+use orbit_code_protocol::protocol::ExecApprovalRequestEvent;
+use orbit_code_protocol::protocol::McpInvocation;
+use orbit_code_protocol::protocol::Op;
+use orbit_code_protocol::protocol::RequestUserInputEvent;
+use orbit_code_protocol::protocol::ReviewDecision;
+use orbit_code_protocol::protocol::SessionSource;
+use orbit_code_protocol::protocol::SubAgentSource;
+use orbit_code_protocol::protocol::Submission;
+use orbit_code_protocol::request_permissions::PermissionGrantScope;
+use orbit_code_protocol::request_permissions::RequestPermissionsArgs;
+use orbit_code_protocol::request_permissions::RequestPermissionsEvent;
+use orbit_code_protocol::request_permissions::RequestPermissionsResponse;
+use orbit_code_protocol::request_user_input::RequestUserInputArgs;
+use orbit_code_protocol::request_user_input::RequestUserInputResponse;
+use orbit_code_protocol::user_input::UserInput;
+use orbit_code_utils_absolute_path::AbsolutePathBuf;
 use serde_json::Value;
 use std::time::Duration;
 use tokio::sync::Mutex;
@@ -49,7 +49,7 @@ use crate::mcp_tool_call::build_guardian_mcp_tool_review_request;
 use crate::mcp_tool_call::is_mcp_tool_approval_question_id;
 use crate::mcp_tool_call::lookup_mcp_tool_metadata;
 use crate::models_manager::manager::ModelsManager;
-use codex_protocol::protocol::InitialHistory;
+use orbit_code_protocol::protocol::InitialHistory;
 
 #[cfg(test)]
 use crate::codex::completed_session_loop_termination;
@@ -60,7 +60,7 @@ use crate::codex::completed_session_loop_termination;
 /// Approval requests are handled via `parent_session` and are not surfaced.
 /// The returned `ops_tx` allows the caller to submit additional `Op`s to the sub-agent.
 #[allow(clippy::too_many_arguments)]
-pub(crate) async fn run_codex_thread_interactive(
+pub(crate) async fn run_orbit_code_thread_interactive(
     config: Config,
     auth_manager: Arc<AuthManager>,
     models_manager: Arc<ModelsManager>,
@@ -103,14 +103,14 @@ pub(crate) async fn run_codex_thread_interactive(
     // routing them to the parent session for decisions.
     let parent_session_clone = Arc::clone(&parent_session);
     let parent_ctx_clone = Arc::clone(&parent_ctx);
-    let codex_for_events = Arc::clone(&codex);
+    let orbit_code_for_events = Arc::clone(&codex);
     // Cache delegated MCP invocations so guardian can recover the full tool call
     // context when the later legacy RequestUserInput approval event only carries
     // a call_id plus approval question metadata.
     let pending_mcp_invocations = Arc::new(Mutex::new(HashMap::<String, McpInvocation>::new()));
     tokio::spawn(async move {
         forward_events(
-            codex_for_events,
+            orbit_code_for_events,
             tx_sub,
             parent_session_clone,
             parent_ctx_clone,
@@ -121,9 +121,9 @@ pub(crate) async fn run_codex_thread_interactive(
     });
 
     // Forward ops from the caller to the sub-agent.
-    let codex_for_ops = Arc::clone(&codex);
+    let orbit_code_for_ops = Arc::clone(&codex);
     tokio::spawn(async move {
-        forward_ops(codex_for_ops, rx_ops, cancel_token_ops).await;
+        forward_ops(orbit_code_for_ops, rx_ops, cancel_token_ops).await;
     });
 
     Ok(Codex {
@@ -139,7 +139,7 @@ pub(crate) async fn run_codex_thread_interactive(
 ///
 /// Internally calls the interactive variant, then immediately submits the provided input.
 #[allow(clippy::too_many_arguments)]
-pub(crate) async fn run_codex_thread_one_shot(
+pub(crate) async fn run_orbit_code_thread_one_shot(
     config: Config,
     auth_manager: Arc<AuthManager>,
     models_manager: Arc<ModelsManager>,
@@ -154,7 +154,7 @@ pub(crate) async fn run_codex_thread_one_shot(
     // Use a child token so we can stop the delegate after completion without
     // requiring the caller to cancel the parent token.
     let child_cancel = cancel_token.child_token();
-    let io = run_codex_thread_interactive(
+    let io = run_orbit_code_thread_interactive(
         config,
         auth_manager,
         models_manager,
@@ -525,13 +525,13 @@ async fn handle_patch_approval(
             let patch = changes
                 .iter()
                 .map(|(path, change)| match change {
-                    codex_protocol::protocol::FileChange::Add { content } => {
+                    orbit_code_protocol::protocol::FileChange::Add { content } => {
                         format!("*** Add File: {}\n{}", path.display(), content)
                     }
-                    codex_protocol::protocol::FileChange::Delete { content } => {
+                    orbit_code_protocol::protocol::FileChange::Delete { content } => {
                         format!("*** Delete File: {}\n{}", path.display(), content)
                     }
-                    codex_protocol::protocol::FileChange::Update {
+                    orbit_code_protocol::protocol::FileChange::Update {
                         unified_diff,
                         move_path,
                     } => {
@@ -709,7 +709,7 @@ async fn maybe_auto_review_mcp_request_user_input(
     Some(RequestUserInputResponse {
         answers: HashMap::from([(
             question.id.clone(),
-            codex_protocol::request_user_input::RequestUserInputAnswer {
+            orbit_code_protocol::request_user_input::RequestUserInputAnswer {
                 answers: vec![selected_label],
             },
         )]),
@@ -829,9 +829,9 @@ async fn await_approval_with_cancel<F>(
     approval_id: &str,
     cancel_token: &CancellationToken,
     review_cancel_token: Option<&CancellationToken>,
-) -> codex_protocol::protocol::ReviewDecision
+) -> orbit_code_protocol::protocol::ReviewDecision
 where
-    F: core::future::Future<Output = codex_protocol::protocol::ReviewDecision>,
+    F: core::future::Future<Output = orbit_code_protocol::protocol::ReviewDecision>,
 {
     tokio::select! {
         biased;
@@ -840,9 +840,9 @@ where
                 review_cancel_token.cancel();
             }
             parent_session
-                .notify_approval(approval_id, codex_protocol::protocol::ReviewDecision::Abort)
+                .notify_approval(approval_id, orbit_code_protocol::protocol::ReviewDecision::Abort)
                 .await;
-            codex_protocol::protocol::ReviewDecision::Abort
+            orbit_code_protocol::protocol::ReviewDecision::Abort
         }
         decision = fut => {
             decision
@@ -851,5 +851,5 @@ where
 }
 
 #[cfg(test)]
-#[path = "codex_delegate_tests.rs"]
+#[path = "orbit_code_delegate_tests.rs"]
 mod tests;

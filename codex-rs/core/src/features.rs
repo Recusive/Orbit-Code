@@ -13,8 +13,8 @@ use crate::config::profile::ConfigProfile;
 use crate::protocol::Event;
 use crate::protocol::EventMsg;
 use crate::protocol::WarningEvent;
-use codex_config::CONFIG_TOML_FILE;
-use codex_otel::SessionTelemetry;
+use orbit_code_config::CONFIG_TOML_FILE;
+use orbit_code_otel::SessionTelemetry;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;
@@ -601,7 +601,7 @@ pub const FEATURES: &[FeatureSpec] = &[
     // Experimental program. Rendered in the `/experimental` menu for users.
     FeatureSpec {
         id: Feature::CodexGitCommit,
-        key: "codex_git_commit",
+        key: "orbit_code_git_commit",
         stage: Stage::UnderDevelopment,
         default_enabled: false,
     },
@@ -649,7 +649,7 @@ pub const FEATURES: &[FeatureSpec] = &[
     },
     FeatureSpec {
         id: Feature::CodexHooks,
-        key: "codex_hooks",
+        key: "orbit_code_hooks",
         stage: Stage::UnderDevelopment,
         default_enabled: false,
     },
@@ -909,7 +909,7 @@ pub fn maybe_push_unstable_features_warning(
 
     let under_development_feature_keys = under_development_feature_keys.join(", ");
     let config_path = config
-        .codex_home
+        .orbit_code_home
         .join(CONFIG_TOML_FILE)
         .display()
         .to_string();

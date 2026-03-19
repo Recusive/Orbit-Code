@@ -1,4 +1,4 @@
-use codex_package_manager::PackageManagerError;
+use orbit_code_package_manager::PackageManagerError;
 use std::path::PathBuf;
 use thiserror::Error;
 

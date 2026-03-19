@@ -5,7 +5,7 @@ use std::path::Path;
 use std::path::PathBuf;
 use which::which;
 
-const CODEX_APP_PRODUCT_NAMES: [&str; 6] = [
+const ORBIT_APP_PRODUCT_NAMES: [&str; 6] = [
     "Codex",
     "Codex (Dev)",
     "Codex (Agent)",
@@ -55,12 +55,15 @@ impl JsRuntime {
 }
 
 /// Returns `true` when artifact execution can find both runtime assets and a JS executable.
-pub fn is_js_runtime_available(codex_home: &Path, runtime_version: &str) -> bool {
-    load_cached_runtime(&default_cached_runtime_root(codex_home), runtime_version)
-        .ok()
-        .and_then(|runtime| runtime.resolve_js_runtime().ok())
-        .or_else(resolve_machine_js_runtime)
-        .is_some()
+pub fn is_js_runtime_available(orbit_code_home: &Path, runtime_version: &str) -> bool {
+    load_cached_runtime(
+        &default_cached_runtime_root(orbit_code_home),
+        runtime_version,
+    )
+    .ok()
+    .and_then(|runtime| runtime.resolve_js_runtime().ok())
+    .or_else(resolve_machine_js_runtime)
+    .is_some()
 }
 
 /// Returns `true` when this machine can use the managed artifact runtime flow.
@@ -76,17 +79,17 @@ pub(crate) fn resolve_machine_js_runtime() -> Option<JsRuntime> {
     resolve_js_runtime_from_candidates(
         system_node_runtime(),
         system_electron_runtime(),
-        codex_app_runtime_candidates(),
+        orbit_code_app_runtime_candidates(),
     )
 }
 
 pub(crate) fn resolve_js_runtime_from_candidates(
     node_runtime: Option<JsRuntime>,
     electron_runtime: Option<JsRuntime>,
-    codex_app_candidates: Vec<PathBuf>,
+    orbit_code_app_candidates: Vec<PathBuf>,
 ) -> Option<JsRuntime> {
     node_runtime.or(electron_runtime).or_else(|| {
-        codex_app_candidates
+        orbit_code_app_candidates
             .into_iter()
             .find_map(|candidate| electron_runtime_from_path(&candidate))
     })
@@ -113,7 +116,7 @@ pub(crate) fn electron_runtime_from_path(path: &Path) -> Option<JsRuntime> {
         .then(|| JsRuntime::electron(path.to_path_buf()))
 }
 
-pub(crate) fn codex_app_runtime_candidates() -> Vec<PathBuf> {
+pub(crate) fn orbit_code_app_runtime_candidates() -> Vec<PathBuf> {
     match std::env::consts::OS {
         "macos" => {
             let mut roots = vec![PathBuf::from("/Applications")];
@@ -124,7 +127,7 @@ pub(crate) fn codex_app_runtime_candidates() -> Vec<PathBuf> {
             roots
                 .into_iter()
                 .flat_map(|root| {
-                    CODEX_APP_PRODUCT_NAMES
+                    ORBIT_APP_PRODUCT_NAMES
                         .into_iter()
                         .map(move |product_name| {
                             root.join(format!("{product_name}.app"))
@@ -150,7 +153,7 @@ pub(crate) fn codex_app_runtime_candidates() -> Vec<PathBuf> {
             roots
                 .into_iter()
                 .flat_map(|root| {
-                    CODEX_APP_PRODUCT_NAMES
+                    ORBIT_APP_PRODUCT_NAMES
                         .into_iter()
                         .map(move |product_name| {
                             root.join(product_name).join(format!("{product_name}.exe"))
@@ -161,7 +164,7 @@ pub(crate) fn codex_app_runtime_candidates() -> Vec<PathBuf> {
         "linux" => [PathBuf::from("/opt"), PathBuf::from("/usr/lib")]
             .into_iter()
             .flat_map(|root| {
-                CODEX_APP_PRODUCT_NAMES
+                ORBIT_APP_PRODUCT_NAMES
                     .into_iter()
                     .map(move |product_name| root.join(product_name).join(product_name))
             })

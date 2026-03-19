@@ -2,16 +2,6 @@
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 
 use anyhow::Result;
-use codex_core::CodexAuth;
-use codex_core::config::Config;
-use codex_core::features::Feature;
-use codex_protocol::openai_models::ModelsResponse;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::McpInvocation;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::SandboxPolicy;
-use codex_protocol::user_input::UserInput;
 use core_test_support::apps_test_server::AppsTestServer;
 use core_test_support::apps_test_server::CALENDAR_CREATE_EVENT_RESOURCE_URI;
 use core_test_support::responses::ResponsesRequest;
@@ -27,6 +17,16 @@ use core_test_support::skip_if_no_network;
 use core_test_support::test_codex::TestCodexBuilder;
 use core_test_support::test_codex::test_codex;
 use core_test_support::wait_for_event;
+use orbit_code_core::CodexAuth;
+use orbit_code_core::config::Config;
+use orbit_code_core::features::Feature;
+use orbit_code_protocol::openai_models::ModelsResponse;
+use orbit_code_protocol::protocol::AskForApproval;
+use orbit_code_protocol::protocol::EventMsg;
+use orbit_code_protocol::protocol::McpInvocation;
+use orbit_code_protocol::protocol::Op;
+use orbit_code_protocol::protocol::SandboxPolicy;
+use orbit_code_protocol::user_input::UserInput;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 use serde_json::json;
@@ -36,9 +36,9 @@ const SEARCH_TOOL_DESCRIPTION_SNIPPETS: [&str; 2] = [
     "- Calendar: Plan events and manage your calendar.",
 ];
 const TOOL_SEARCH_TOOL_NAME: &str = "tool_search";
-const CALENDAR_CREATE_TOOL: &str = "mcp__codex_apps__calendar_create_event";
-const CALENDAR_LIST_TOOL: &str = "mcp__codex_apps__calendar_list_events";
-const SEARCH_CALENDAR_NAMESPACE: &str = "mcp__codex_apps__calendar";
+const CALENDAR_CREATE_TOOL: &str = "mcp__orbit_code_apps__calendar_create_event";
+const CALENDAR_LIST_TOOL: &str = "mcp__orbit_code_apps__calendar_list_events";
+const SEARCH_CALENDAR_NAMESPACE: &str = "mcp__orbit_code_apps__calendar";
 const SEARCH_CALENDAR_CREATE_TOOL: &str = "_create_event";
 
 fn tool_names(body: &Value) -> Vec<String> {
@@ -394,7 +394,7 @@ async fn tool_search_returns_deferred_tools_without_follow_up_tool_injection() -
     assert_eq!(
         end.invocation,
         McpInvocation {
-            server: "codex_apps".to_string(),
+            server: "orbit_code_apps".to_string(),
             tool: "calendar_create_event".to_string(),
             arguments: Some(json!({
                 "title": "Lunch",
@@ -408,7 +408,7 @@ async fn tool_search_returns_deferred_tools_without_follow_up_tool_injection() -
             .expect("tool call should succeed")
             .structured_content,
         Some(json!({
-            "_codex_apps": {
+            "_orbit_code_apps": {
                 "resource_uri": CALENDAR_CREATE_EVENT_RESOURCE_URI,
                 "contains_mcp_source": true,
                 "connector_id": "calendar",

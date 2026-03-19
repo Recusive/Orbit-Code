@@ -1,8 +1,8 @@
 use std::path::Path;
 
-use codex_core::config::Config;
-use codex_protocol::protocol::Event;
-use codex_protocol::protocol::SessionConfiguredEvent;
+use orbit_code_core::config::Config;
+use orbit_code_protocol::protocol::Event;
+use orbit_code_protocol::protocol::SessionConfiguredEvent;
 
 pub(crate) enum CodexStatus {
     Running,

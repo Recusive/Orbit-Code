@@ -1,11 +1,11 @@
 [package]
-name = "codex-ollama"
+name = "orbit-code-ollama"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [lib]
-name = "codex_ollama"
+name = "orbit_code_ollama"
 path = "src/lib.rs"
 
 [lints]
@@ -14,7 +14,7 @@ workspace = true
 [dependencies]
 async-stream = { workspace = true }
 bytes = { workspace = true }
-codex-core = { workspace = true }
+orbit-code-core = { workspace = true }
 futures = { workspace = true }
 reqwest = { workspace = true, features = ["json", "stream"] }
 semver = { workspace = true }

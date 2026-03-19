@@ -5,7 +5,7 @@ use super::SessionTaskContext;
 use crate::codex::TurnContext;
 use crate::state::TaskKind;
 use async_trait::async_trait;
-use codex_protocol::user_input::UserInput;
+use orbit_code_protocol::user_input::UserInput;
 use tokio_util::sync::CancellationToken;
 
 #[derive(Clone, Copy, Default)]

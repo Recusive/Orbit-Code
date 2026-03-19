@@ -3,13 +3,13 @@ use app_test_support::McpProcess;
 use app_test_support::create_fake_rollout;
 use app_test_support::rollout_path;
 use app_test_support::to_response;
-use codex_app_server_protocol::ConversationSummary;
-use codex_app_server_protocol::GetConversationSummaryParams;
-use codex_app_server_protocol::GetConversationSummaryResponse;
-use codex_app_server_protocol::JSONRPCResponse;
-use codex_app_server_protocol::RequestId;
-use codex_protocol::ThreadId;
-use codex_protocol::protocol::SessionSource;
+use orbit_code_app_server_protocol::ConversationSummary;
+use orbit_code_app_server_protocol::GetConversationSummaryParams;
+use orbit_code_app_server_protocol::GetConversationSummaryResponse;
+use orbit_code_app_server_protocol::JSONRPCResponse;
+use orbit_code_app_server_protocol::RequestId;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::protocol::SessionSource;
 use pretty_assertions::assert_eq;
 use std::path::PathBuf;
 use tempfile::TempDir;
@@ -38,9 +38,9 @@ fn expected_summary(conversation_id: ThreadId, path: PathBuf) -> ConversationSum
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn get_conversation_summary_by_thread_id_reads_rollout() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let conversation_id = create_fake_rollout(
-        codex_home.path(),
+        orbit_code_home.path(),
         FILENAME_TS,
         META_RFC3339,
         PREVIEW,
@@ -51,13 +51,13 @@ async fn get_conversation_summary_by_thread_id_reads_rollout() -> Result<()> {
     let expected = expected_summary(
         thread_id,
         std::fs::canonicalize(rollout_path(
-            codex_home.path(),
+            orbit_code_home.path(),
             FILENAME_TS,
             &conversation_id,
         ))?,
     );
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     let request_id = mcp
@@ -77,11 +77,11 @@ async fn get_conversation_summary_by_thread_id_reads_rollout() -> Result<()> {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn get_conversation_summary_by_relative_rollout_path_resolves_from_codex_home() -> Result<()>
-{
-    let codex_home = TempDir::new()?;
+async fn get_conversation_summary_by_relative_rollout_path_resolves_from_orbit_code_home()
+-> Result<()> {
+    let orbit_code_home = TempDir::new()?;
     let conversation_id = create_fake_rollout(
-        codex_home.path(),
+        orbit_code_home.path(),
         FILENAME_TS,
         META_RFC3339,
         PREVIEW,
@@ -89,11 +89,13 @@ async fn get_conversation_summary_by_relative_rollout_path_resolves_from_codex_h
         None,
     )?;
     let thread_id = ThreadId::from_string(&conversation_id)?;
-    let rollout_path = rollout_path(codex_home.path(), FILENAME_TS, &conversation_id);
-    let relative_path = rollout_path.strip_prefix(codex_home.path())?.to_path_buf();
+    let rollout_path = rollout_path(orbit_code_home.path(), FILENAME_TS, &conversation_id);
+    let relative_path = rollout_path
+        .strip_prefix(orbit_code_home.path())?
+        .to_path_buf();
     let expected = expected_summary(thread_id, std::fs::canonicalize(rollout_path)?);
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     let request_id = mcp

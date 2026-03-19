@@ -3,9 +3,9 @@ use std::collections::HashSet;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use codex_protocol::models::PermissionProfile;
-use codex_protocol::protocol::Product;
-use codex_protocol::protocol::SkillScope;
+use orbit_code_protocol::models::PermissionProfile;
+use orbit_code_protocol::protocol::Product;
+use orbit_code_protocol::protocol::SkillScope;
 use serde::Deserialize;
 
 #[derive(Debug, Clone, Default, Deserialize, PartialEq, Eq)]

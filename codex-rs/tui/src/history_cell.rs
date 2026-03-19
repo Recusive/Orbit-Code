@@ -32,37 +32,37 @@ use crate::text_formatting::truncate_text;
 use crate::tooltips;
 use crate::ui_consts::LIVE_PREFIX_COLS;
 use crate::update_action::UpdateAction;
-use crate::version::CODEX_CLI_VERSION;
+use crate::version::ORBIT_CLI_VERSION;
 use crate::wrapping::RtOptions;
 use crate::wrapping::adaptive_wrap_line;
 use crate::wrapping::adaptive_wrap_lines;
 use base64::Engine;
-use codex_core::config::Config;
-use codex_core::config::types::McpServerTransportConfig;
-use codex_core::mcp::McpManager;
-use codex_core::plugins::PluginsManager;
-use codex_core::web_search::web_search_detail;
-use codex_otel::RuntimeMetricsSummary;
-use codex_protocol::account::PlanType;
-use codex_protocol::config_types::ServiceTier;
-use codex_protocol::mcp::Resource;
-use codex_protocol::mcp::ResourceTemplate;
-use codex_protocol::models::WebSearchAction;
-use codex_protocol::models::local_image_label_text;
-use codex_protocol::openai_models::ReasoningEffort as ReasoningEffortConfig;
-use codex_protocol::plan_tool::PlanItemArg;
-use codex_protocol::plan_tool::StepStatus;
-use codex_protocol::plan_tool::UpdatePlanArgs;
-use codex_protocol::protocol::FileChange;
-use codex_protocol::protocol::McpAuthStatus;
-use codex_protocol::protocol::McpInvocation;
-use codex_protocol::protocol::SessionConfiguredEvent;
-use codex_protocol::request_user_input::RequestUserInputAnswer;
-use codex_protocol::request_user_input::RequestUserInputQuestion;
-use codex_protocol::user_input::TextElement;
-use codex_utils_cli::format_env_display::format_env_display;
 use image::DynamicImage;
 use image::ImageReader;
+use orbit_code_core::config::Config;
+use orbit_code_core::config::types::McpServerTransportConfig;
+use orbit_code_core::mcp::McpManager;
+use orbit_code_core::plugins::PluginsManager;
+use orbit_code_core::web_search::web_search_detail;
+use orbit_code_otel::RuntimeMetricsSummary;
+use orbit_code_protocol::account::PlanType;
+use orbit_code_protocol::config_types::ServiceTier;
+use orbit_code_protocol::mcp::Resource;
+use orbit_code_protocol::mcp::ResourceTemplate;
+use orbit_code_protocol::models::WebSearchAction;
+use orbit_code_protocol::models::local_image_label_text;
+use orbit_code_protocol::openai_models::ReasoningEffort as ReasoningEffortConfig;
+use orbit_code_protocol::plan_tool::PlanItemArg;
+use orbit_code_protocol::plan_tool::StepStatus;
+use orbit_code_protocol::plan_tool::UpdatePlanArgs;
+use orbit_code_protocol::protocol::FileChange;
+use orbit_code_protocol::protocol::McpAuthStatus;
+use orbit_code_protocol::protocol::McpInvocation;
+use orbit_code_protocol::protocol::SessionConfiguredEvent;
+use orbit_code_protocol::request_user_input::RequestUserInputAnswer;
+use orbit_code_protocol::request_user_input::RequestUserInputQuestion;
+use orbit_code_protocol::user_input::TextElement;
+use orbit_code_utils_cli::format_env_display::format_env_display;
 use ratatui::prelude::*;
 use ratatui::style::Color;
 use ratatui::style::Modifier;
@@ -523,7 +523,7 @@ impl HistoryCell for UpdateAvailableHistoryCell {
                 padded_emoji("✨").bold().cyan(),
                 "Update available!".bold().cyan(),
                 " ",
-                format!("{CODEX_CLI_VERSION} -> {}", self.latest_version).bold(),
+                format!("{ORBIT_CLI_VERSION} -> {}", self.latest_version).bold(),
             ],
             update_instruction,
             "",
@@ -793,11 +793,11 @@ fn exec_snippet(command: &[String]) -> String {
 
 pub fn new_approval_decision_cell(
     command: Vec<String>,
-    decision: codex_protocol::protocol::ReviewDecision,
+    decision: orbit_code_protocol::protocol::ReviewDecision,
     actor: ApprovalDecisionActor,
 ) -> Box<dyn HistoryCell> {
-    use codex_protocol::protocol::NetworkPolicyRuleAction;
-    use codex_protocol::protocol::ReviewDecision::*;
+    use orbit_code_protocol::protocol::NetworkPolicyRuleAction;
+    use orbit_code_protocol::protocol::ReviewDecision::*;
 
     let (symbol, summary): (Span<'static>, Vec<Span<'static>>) = match decision {
         Approved => {
@@ -1138,7 +1138,7 @@ pub(crate) fn new_session_info(
         reasoning_effort,
         show_fast_status,
         config.cwd.clone(),
-        CODEX_CLI_VERSION,
+        ORBIT_CLI_VERSION,
     );
     let mut parts: Vec<Box<dyn HistoryCell>> = vec![Box::new(header)];
 
@@ -1310,10 +1310,10 @@ impl HistoryCell for SessionHeaderHistoryCell {
 
         let make_row = |spans: Vec<Span<'static>>| Line::from(spans);
 
-        // Title line rendered inside the box: ">_ OpenAI Codex (vX)"
+        // Title line rendered inside the box: ">_ Orbit Code (vX)"
         let title_spans: Vec<Span<'static>> = vec![
             Span::from(">_ ").dim(),
-            Span::from("OpenAI Codex").bold(),
+            Span::from("Orbit Code").bold(),
             Span::from(" ").dim(),
             Span::from(format!("(v{})", self.version)).dim(),
         ];
@@ -1401,7 +1401,7 @@ pub(crate) struct McpToolCallCell {
     invocation: McpInvocation,
     start_time: Instant,
     duration: Option<Duration>,
-    result: Option<Result<codex_protocol::mcp::CallToolResult, String>>,
+    result: Option<Result<orbit_code_protocol::mcp::CallToolResult, String>>,
     animations_enabled: bool,
 }
 
@@ -1428,7 +1428,7 @@ impl McpToolCallCell {
     pub(crate) fn complete(
         &mut self,
         duration: Duration,
-        result: Result<codex_protocol::mcp::CallToolResult, String>,
+        result: Result<orbit_code_protocol::mcp::CallToolResult, String>,
     ) -> Option<Box<dyn HistoryCell>> {
         let image_cell = try_new_completed_mcp_tool_call_with_image_output(&result)
             .map(|cell| Box::new(cell) as Box<dyn HistoryCell>);
@@ -1525,7 +1525,7 @@ impl HistoryCell for McpToolCallCell {
 
         if let Some(result) = &self.result {
             match result {
-                Ok(codex_protocol::mcp::CallToolResult { content, .. }) => {
+                Ok(orbit_code_protocol::mcp::CallToolResult { content, .. }) => {
                     if !content.is_empty() {
                         for block in content {
                             let text = Self::render_content_block(block, detail_wrap_width);
@@ -1691,7 +1691,7 @@ pub(crate) fn new_web_search_call(
 ///   `invalid_base64_then_image`, or `invalid_image_bytes_then_image` to ensure this path triggers
 ///   even when the first block is not a valid image.
 fn try_new_completed_mcp_tool_call_with_image_output(
-    result: &Result<codex_protocol::mcp::CallToolResult, String>,
+    result: &Result<orbit_code_protocol::mcp::CallToolResult, String>,
 ) -> Option<CompletedMcpToolCallWithImageOutput> {
     let image = result
         .as_ref()
@@ -1799,7 +1799,7 @@ pub(crate) fn empty_mcp_output() -> PlainHistoryCell {
 /// Render MCP tools grouped by connection using the fully-qualified tool names.
 pub(crate) fn new_mcp_tools_output(
     config: &Config,
-    tools: HashMap<String, codex_protocol::mcp::Tool>,
+    tools: HashMap<String, orbit_code_protocol::mcp::Tool>,
     resources: HashMap<String, Vec<Resource>>,
     resource_templates: HashMap<String, Vec<ResourceTemplate>>,
     auth_statuses: &HashMap<String, McpAuthStatus>,
@@ -1816,7 +1816,9 @@ pub(crate) fn new_mcp_tools_output(
         lines.push("".into());
     }
 
-    let mcp_manager = McpManager::new(Arc::new(PluginsManager::new(config.codex_home.clone())));
+    let mcp_manager = McpManager::new(Arc::new(PluginsManager::new(
+        config.orbit_code_home.clone(),
+    )));
     let effective_servers = mcp_manager.effective_servers(config, /*auth*/ None);
     let mut servers: Vec<_> = effective_servers.iter().collect();
     servers.sort_by(|(a, _), (b, _)| a.cmp(b));
@@ -2539,36 +2541,36 @@ mod tests {
     use crate::exec_cell::CommandOutput;
     use crate::exec_cell::ExecCall;
     use crate::exec_cell::ExecCell;
-    use codex_core::config::Config;
-    use codex_core::config::ConfigBuilder;
-    use codex_core::config::types::McpServerConfig;
-    use codex_core::config::types::McpServerTransportConfig;
-    use codex_otel::RuntimeMetricTotals;
-    use codex_otel::RuntimeMetricsSummary;
-    use codex_protocol::ThreadId;
-    use codex_protocol::account::PlanType;
-    use codex_protocol::models::WebSearchAction;
-    use codex_protocol::parse_command::ParsedCommand;
-    use codex_protocol::protocol::AskForApproval;
-    use codex_protocol::protocol::McpAuthStatus;
-    use codex_protocol::protocol::SandboxPolicy;
-    use codex_protocol::protocol::SessionConfiguredEvent;
     use dirs::home_dir;
+    use orbit_code_core::config::Config;
+    use orbit_code_core::config::ConfigBuilder;
+    use orbit_code_core::config::types::McpServerConfig;
+    use orbit_code_core::config::types::McpServerTransportConfig;
+    use orbit_code_otel::RuntimeMetricTotals;
+    use orbit_code_otel::RuntimeMetricsSummary;
+    use orbit_code_protocol::ThreadId;
+    use orbit_code_protocol::account::PlanType;
+    use orbit_code_protocol::models::WebSearchAction;
+    use orbit_code_protocol::parse_command::ParsedCommand;
+    use orbit_code_protocol::protocol::AskForApproval;
+    use orbit_code_protocol::protocol::McpAuthStatus;
+    use orbit_code_protocol::protocol::SandboxPolicy;
+    use orbit_code_protocol::protocol::SessionConfiguredEvent;
     use pretty_assertions::assert_eq;
     use serde_json::json;
     use std::collections::HashMap;
     use std::path::PathBuf;
 
-    use codex_protocol::mcp::CallToolResult;
-    use codex_protocol::mcp::Tool;
-    use codex_protocol::protocol::ExecCommandSource;
+    use orbit_code_protocol::mcp::CallToolResult;
+    use orbit_code_protocol::mcp::Tool;
+    use orbit_code_protocol::protocol::ExecCommandSource;
     use rmcp::model::Content;
 
     const SMALL_PNG_BASE64: &str = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==";
     async fn test_config() -> Config {
-        let codex_home = std::env::temp_dir();
+        let orbit_code_home = std::env::temp_dir();
         ConfigBuilder::default()
-            .codex_home(codex_home.clone())
+            .orbit_code_home(orbit_code_home.clone())
             .build()
             .await
             .expect("config")
@@ -2633,7 +2635,7 @@ mod tests {
             model_provider_id: "test-provider".to_string(),
             service_tier: None,
             approval_policy: AskForApproval::Never,
-            approvals_reviewer: codex_protocol::config_types::ApprovalsReviewer::User,
+            approvals_reviewer: orbit_code_protocol::config_types::ApprovalsReviewer::User,
             sandbox_policy: SandboxPolicy::new_read_only_policy(),
             cwd: PathBuf::from("/tmp/project"),
             reasoning_effort: None,

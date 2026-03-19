@@ -15,13 +15,13 @@ use crate::config::types::ToolSuggestDiscoverableType;
 use crate::config_loader::RequirementSource;
 use crate::features::Feature;
 use assert_matches::assert_matches;
-use codex_config::CONFIG_TOML_FILE;
-use codex_protocol::permissions::FileSystemAccessMode;
-use codex_protocol::permissions::FileSystemPath;
-use codex_protocol::permissions::FileSystemSandboxEntry;
-use codex_protocol::permissions::FileSystemSandboxPolicy;
-use codex_protocol::permissions::FileSystemSpecialPath;
-use codex_protocol::permissions::NetworkSandboxPolicy;
+use orbit_code_config::CONFIG_TOML_FILE;
+use orbit_code_protocol::permissions::FileSystemAccessMode;
+use orbit_code_protocol::permissions::FileSystemPath;
+use orbit_code_protocol::permissions::FileSystemSandboxEntry;
+use orbit_code_protocol::permissions::FileSystemSandboxPolicy;
+use orbit_code_protocol::permissions::FileSystemSpecialPath;
+use orbit_code_protocol::permissions::NetworkSandboxPolicy;
 use serde::Deserialize;
 use tempfile::tempdir;
 
@@ -330,7 +330,7 @@ allowed_domains = ["openai.com"]
 
 #[test]
 fn permissions_profiles_network_populates_runtime_network_proxy_spec() -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let cwd = TempDir::new()?;
     std::fs::write(cwd.path().join(".git"), "gitdir: nowhere")?;
 
@@ -362,7 +362,7 @@ fn permissions_profiles_network_populates_runtime_network_proxy_spec() -> std::i
             cwd: Some(cwd.path().to_path_buf()),
             ..Default::default()
         },
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
     )?;
     let network = config
         .permissions
@@ -377,7 +377,7 @@ fn permissions_profiles_network_populates_runtime_network_proxy_spec() -> std::i
 
 #[test]
 fn permissions_profiles_network_disabled_by_default_does_not_start_proxy() -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let cwd = TempDir::new()?;
     std::fs::write(cwd.path().join(".git"), "gitdir: nowhere")?;
 
@@ -407,7 +407,7 @@ fn permissions_profiles_network_disabled_by_default_does_not_start_proxy() -> st
             cwd: Some(cwd.path().to_path_buf()),
             ..Default::default()
         },
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
     )?;
 
     assert!(config.permissions.network.is_none());
@@ -416,7 +416,7 @@ fn permissions_profiles_network_disabled_by_default_does_not_start_proxy() -> st
 
 #[test]
 fn default_permissions_profile_populates_runtime_sandbox_policy() -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let cwd = TempDir::new()?;
     std::fs::create_dir_all(cwd.path().join("docs"))?;
     std::fs::write(cwd.path().join(".git"), "gitdir: nowhere")?;
@@ -455,10 +455,10 @@ fn default_permissions_profile_populates_runtime_sandbox_policy() -> std::io::Re
             cwd: Some(cwd.path().to_path_buf()),
             ..Default::default()
         },
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
     )?;
 
-    let memories_root = AbsolutePathBuf::try_from(codex_home.path().join("memories")).unwrap();
+    let memories_root = AbsolutePathBuf::try_from(orbit_code_home.path().join("memories")).unwrap();
     assert_eq!(
         config.permissions.file_system_sandbox_policy,
         FileSystemSandboxPolicy::restricted(vec![
@@ -512,7 +512,7 @@ fn default_permissions_profile_populates_runtime_sandbox_policy() -> std::io::Re
 
 #[test]
 fn permissions_profiles_require_default_permissions() -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let cwd = TempDir::new()?;
     std::fs::write(cwd.path().join(".git"), "gitdir: nowhere")?;
 
@@ -538,7 +538,7 @@ fn permissions_profiles_require_default_permissions() -> std::io::Result<()> {
             cwd: Some(cwd.path().to_path_buf()),
             ..Default::default()
         },
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
     )
     .expect_err("missing default_permissions should be rejected");
 
@@ -552,7 +552,7 @@ fn permissions_profiles_require_default_permissions() -> std::io::Result<()> {
 
 #[test]
 fn permissions_profiles_reject_writes_outside_workspace_root() -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let cwd = TempDir::new()?;
     std::fs::write(cwd.path().join(".git"), "gitdir: nowhere")?;
     let external_write_path = if cfg!(windows) { r"C:\temp" } else { "/tmp" };
@@ -580,7 +580,7 @@ fn permissions_profiles_reject_writes_outside_workspace_root() -> std::io::Resul
             cwd: Some(cwd.path().to_path_buf()),
             ..Default::default()
         },
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
     )
     .expect_err("writes outside the workspace root should be rejected");
 
@@ -595,7 +595,7 @@ fn permissions_profiles_reject_writes_outside_workspace_root() -> std::io::Resul
 
 #[test]
 fn permissions_profiles_reject_nested_entries_for_non_project_roots() -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let cwd = TempDir::new()?;
     std::fs::write(cwd.path().join(".git"), "gitdir: nowhere")?;
 
@@ -625,7 +625,7 @@ fn permissions_profiles_reject_nested_entries_for_non_project_roots() -> std::io
             cwd: Some(cwd.path().to_path_buf()),
             ..Default::default()
         },
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
     )
     .expect_err("nested entries outside :project_roots should be rejected");
 
@@ -638,7 +638,7 @@ fn permissions_profiles_reject_nested_entries_for_non_project_roots() -> std::io
 }
 
 fn load_workspace_permission_profile(profile: PermissionProfileToml) -> std::io::Result<Config> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let cwd = TempDir::new()?;
     std::fs::write(cwd.path().join(".git"), "gitdir: nowhere")?;
 
@@ -654,7 +654,7 @@ fn load_workspace_permission_profile(profile: PermissionProfileToml) -> std::io:
             cwd: Some(cwd.path().to_path_buf()),
             ..Default::default()
         },
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
     )
 }
 
@@ -789,7 +789,7 @@ fn permissions_profiles_allow_empty_filesystem_with_warning() -> std::io::Result
 
 #[test]
 fn permissions_profiles_reject_project_root_parent_traversal() -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let cwd = TempDir::new()?;
     std::fs::write(cwd.path().join(".git"), "gitdir: nowhere")?;
 
@@ -819,7 +819,7 @@ fn permissions_profiles_reject_project_root_parent_traversal() -> std::io::Resul
             cwd: Some(cwd.path().to_path_buf()),
             ..Default::default()
         },
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
     )
     .expect_err("parent traversal should be rejected for project root subpaths");
 
@@ -833,7 +833,7 @@ fn permissions_profiles_reject_project_root_parent_traversal() -> std::io::Resul
 
 #[test]
 fn permissions_profiles_allow_network_enablement() -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let cwd = TempDir::new()?;
     std::fs::write(cwd.path().join(".git"), "gitdir: nowhere")?;
 
@@ -863,7 +863,7 @@ fn permissions_profiles_allow_network_enablement() -> std::io::Result<()> {
             cwd: Some(cwd.path().to_path_buf()),
             ..Default::default()
         },
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
     )?;
 
     assert!(
@@ -1051,7 +1051,7 @@ trust_level = "trusted"
 
 #[test]
 fn legacy_sandbox_mode_config_builds_split_policies_without_drift() -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let cwd = TempDir::new()?;
     let extra_root = test_absolute_path("/tmp/legacy-extra-root");
     let cases = vec![
@@ -1091,7 +1091,7 @@ exclude_slash_tmp = true
                 cwd: Some(cwd.path().to_path_buf()),
                 ..Default::default()
             },
-            codex_home.path().to_path_buf(),
+            orbit_code_home.path().to_path_buf(),
         )?;
 
         let sandbox_policy = config.permissions.sandbox_policy.get();
@@ -1301,26 +1301,26 @@ fn add_dir_override_extends_workspace_writable_roots() -> std::io::Result<()> {
 }
 
 #[test]
-fn sqlite_home_defaults_to_codex_home_for_workspace_write() -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
+fn sqlite_home_defaults_to_orbit_code_home_for_workspace_write() -> std::io::Result<()> {
+    let orbit_code_home = TempDir::new()?;
     let config = Config::load_from_base_config_with_overrides(
         ConfigToml::default(),
         ConfigOverrides {
             sandbox_mode: Some(SandboxMode::WorkspaceWrite),
             ..Default::default()
         },
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
     )?;
 
-    assert_eq!(config.sqlite_home, codex_home.path().to_path_buf());
+    assert_eq!(config.sqlite_home, orbit_code_home.path().to_path_buf());
 
     Ok(())
 }
 
 #[test]
 fn workspace_write_always_includes_memories_root_once() -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
-    let memories_root = codex_home.path().join("memories");
+    let orbit_code_home = TempDir::new()?;
+    let memories_root = orbit_code_home.path().join("memories");
     let config = Config::load_from_base_config_with_overrides(
         ConfigToml {
             sandbox_workspace_write: Some(SandboxWorkspaceWrite {
@@ -1333,7 +1333,7 @@ fn workspace_write_always_includes_memories_root_once() -> std::io::Result<()> {
             sandbox_mode: Some(SandboxMode::WorkspaceWrite),
             ..Default::default()
         },
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
     )?;
 
     if cfg!(target_os = "windows") {
@@ -1369,13 +1369,13 @@ fn workspace_write_always_includes_memories_root_once() -> std::io::Result<()> {
 
 #[test]
 fn config_defaults_to_file_cli_auth_store_mode() -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let cfg = ConfigToml::default();
 
     let config = Config::load_from_base_config_with_overrides(
         cfg,
         ConfigOverrides::default(),
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
     )?;
 
     assert_eq!(
@@ -1388,7 +1388,7 @@ fn config_defaults_to_file_cli_auth_store_mode() -> std::io::Result<()> {
 
 #[test]
 fn config_honors_explicit_keyring_auth_store_mode() -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let cfg = ConfigToml {
         cli_auth_credentials_store: Some(AuthCredentialsStoreMode::Keyring),
         ..Default::default()
@@ -1397,7 +1397,7 @@ fn config_honors_explicit_keyring_auth_store_mode() -> std::io::Result<()> {
     let config = Config::load_from_base_config_with_overrides(
         cfg,
         ConfigOverrides::default(),
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
     )?;
 
     assert_eq!(
@@ -1410,13 +1410,13 @@ fn config_honors_explicit_keyring_auth_store_mode() -> std::io::Result<()> {
 
 #[test]
 fn config_defaults_to_auto_oauth_store_mode() -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let cfg = ConfigToml::default();
 
     let config = Config::load_from_base_config_with_overrides(
         cfg,
         ConfigOverrides::default(),
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
     )?;
 
     assert_eq!(
@@ -1429,7 +1429,7 @@ fn config_defaults_to_auto_oauth_store_mode() -> std::io::Result<()> {
 
 #[test]
 fn feedback_enabled_defaults_to_true() -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let cfg = ConfigToml {
         feedback: Some(FeedbackConfigToml::default()),
         ..Default::default()
@@ -1438,7 +1438,7 @@ fn feedback_enabled_defaults_to_true() -> std::io::Result<()> {
     let config = Config::load_from_base_config_with_overrides(
         cfg,
         ConfigOverrides::default(),
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
     )?;
 
     assert_eq!(config.feedback_enabled, true);
@@ -1535,11 +1535,11 @@ fn web_search_mode_for_turn_falls_back_when_live_is_disallowed() -> anyhow::Resu
 
 #[tokio::test]
 async fn project_profile_overrides_user_profile() -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let workspace = TempDir::new()?;
     let workspace_key = workspace.path().to_string_lossy().replace('\\', "\\\\");
     std::fs::write(
-        codex_home.path().join(CONFIG_TOML_FILE),
+        orbit_code_home.path().join(CONFIG_TOML_FILE),
         format!(
             r#"
 profile = "global"
@@ -1565,7 +1565,7 @@ profile = "project"
     )?;
 
     let config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
+        .orbit_code_home(orbit_code_home.path().to_path_buf())
         .harness_overrides(ConfigOverrides {
             cwd: Some(workspace.path().to_path_buf()),
             ..Default::default()
@@ -1581,7 +1581,7 @@ profile = "project"
 
 #[test]
 fn profile_sandbox_mode_overrides_base() -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let mut profiles = HashMap::new();
     profiles.insert(
         "work".to_string(),
@@ -1600,7 +1600,7 @@ fn profile_sandbox_mode_overrides_base() -> std::io::Result<()> {
     let config = Config::load_from_base_config_with_overrides(
         cfg,
         ConfigOverrides::default(),
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
     )?;
 
     assert!(matches!(
@@ -1613,7 +1613,7 @@ fn profile_sandbox_mode_overrides_base() -> std::io::Result<()> {
 
 #[test]
 fn cli_override_takes_precedence_over_profile_sandbox_mode() -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let mut profiles = HashMap::new();
     profiles.insert(
         "work".to_string(),
@@ -1636,7 +1636,7 @@ fn cli_override_takes_precedence_over_profile_sandbox_mode() -> std::io::Result<
     let config = Config::load_from_base_config_with_overrides(
         cfg,
         overrides,
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
     )?;
 
     if cfg!(target_os = "windows") {
@@ -1656,7 +1656,7 @@ fn cli_override_takes_precedence_over_profile_sandbox_mode() -> std::io::Result<
 
 #[test]
 fn feature_table_overrides_legacy_flags() -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let mut entries = BTreeMap::new();
     entries.insert("apply_patch_freeform".to_string(), false);
     let cfg = ConfigToml {
@@ -1667,7 +1667,7 @@ fn feature_table_overrides_legacy_flags() -> std::io::Result<()> {
     let config = Config::load_from_base_config_with_overrides(
         cfg,
         ConfigOverrides::default(),
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
     )?;
 
     assert!(!config.features.enabled(Feature::ApplyPatchFreeform));
@@ -1678,7 +1678,7 @@ fn feature_table_overrides_legacy_flags() -> std::io::Result<()> {
 
 #[test]
 fn legacy_toggles_map_to_features() -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let cfg = ConfigToml {
         experimental_use_unified_exec_tool: Some(true),
         experimental_use_freeform_apply_patch: Some(true),
@@ -1688,7 +1688,7 @@ fn legacy_toggles_map_to_features() -> std::io::Result<()> {
     let config = Config::load_from_base_config_with_overrides(
         cfg,
         ConfigOverrides::default(),
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
     )?;
 
     assert!(config.features.enabled(Feature::ApplyPatchFreeform));
@@ -1704,7 +1704,7 @@ fn legacy_toggles_map_to_features() -> std::io::Result<()> {
 #[test]
 fn responses_websocket_features_do_not_change_wire_api() -> std::io::Result<()> {
     for feature_key in ["responses_websockets", "responses_websockets_v2"] {
-        let codex_home = TempDir::new()?;
+        let orbit_code_home = TempDir::new()?;
         let mut entries = BTreeMap::new();
         entries.insert(feature_key.to_string(), true);
         let cfg = ConfigToml {
@@ -1715,7 +1715,7 @@ fn responses_websocket_features_do_not_change_wire_api() -> std::io::Result<()> 
         let config = Config::load_from_base_config_with_overrides(
             cfg,
             ConfigOverrides::default(),
-            codex_home.path().to_path_buf(),
+            orbit_code_home.path().to_path_buf(),
         )?;
 
         assert_eq!(
@@ -1729,7 +1729,7 @@ fn responses_websocket_features_do_not_change_wire_api() -> std::io::Result<()> 
 
 #[test]
 fn config_honors_explicit_file_oauth_store_mode() -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let cfg = ConfigToml {
         mcp_oauth_credentials_store: Some(OAuthCredentialsStoreMode::File),
         ..Default::default()
@@ -1738,7 +1738,7 @@ fn config_honors_explicit_file_oauth_store_mode() -> std::io::Result<()> {
     let config = Config::load_from_base_config_with_overrides(
         cfg,
         ConfigOverrides::default(),
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
     )?;
 
     assert_eq!(
@@ -1751,9 +1751,9 @@ fn config_honors_explicit_file_oauth_store_mode() -> std::io::Result<()> {
 
 #[tokio::test]
 async fn managed_config_overrides_oauth_store_mode() -> anyhow::Result<()> {
-    let codex_home = TempDir::new()?;
-    let managed_path = codex_home.path().join("managed_config.toml");
-    let config_path = codex_home.path().join(CONFIG_TOML_FILE);
+    let orbit_code_home = TempDir::new()?;
+    let managed_path = orbit_code_home.path().join("managed_config.toml");
+    let config_path = orbit_code_home.path().join(CONFIG_TOML_FILE);
 
     std::fs::write(&config_path, "mcp_oauth_credentials_store = \"file\"\n")?;
     std::fs::write(&managed_path, "mcp_oauth_credentials_store = \"keyring\"\n")?;
@@ -1765,21 +1765,23 @@ async fn managed_config_overrides_oauth_store_mode() -> anyhow::Result<()> {
         macos_managed_config_requirements_base64: None,
     };
 
-    let cwd = AbsolutePathBuf::try_from(codex_home.path())?;
+    let cwd = AbsolutePathBuf::try_from(orbit_code_home.path())?;
     let config_layer_stack = load_config_layers_state(
-        codex_home.path(),
+        orbit_code_home.path(),
         Some(cwd),
         &Vec::new(),
         overrides,
         CloudRequirementsLoader::default(),
     )
     .await?;
-    let cfg =
-        deserialize_config_toml_with_base(config_layer_stack.effective_config(), codex_home.path())
-            .map_err(|e| {
-                tracing::error!("Failed to deserialize overridden config: {e}");
-                e
-            })?;
+    let cfg = deserialize_config_toml_with_base(
+        config_layer_stack.effective_config(),
+        orbit_code_home.path(),
+    )
+    .map_err(|e| {
+        tracing::error!("Failed to deserialize overridden config: {e}");
+        e
+    })?;
     assert_eq!(
         cfg.mcp_oauth_credentials_store,
         Some(OAuthCredentialsStoreMode::Keyring),
@@ -1788,7 +1790,7 @@ async fn managed_config_overrides_oauth_store_mode() -> anyhow::Result<()> {
     let final_config = Config::load_from_base_config_with_overrides(
         cfg,
         ConfigOverrides::default(),
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
     )?;
     assert_eq!(
         final_config.mcp_oauth_credentials_store_mode,
@@ -1800,9 +1802,9 @@ async fn managed_config_overrides_oauth_store_mode() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn load_global_mcp_servers_returns_empty_if_missing() -> anyhow::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
 
-    let servers = load_global_mcp_servers(codex_home.path()).await?;
+    let servers = load_global_mcp_servers(orbit_code_home.path()).await?;
     assert!(servers.is_empty());
 
     Ok(())
@@ -1810,7 +1812,7 @@ async fn load_global_mcp_servers_returns_empty_if_missing() -> anyhow::Result<()
 
 #[tokio::test]
 async fn replace_mcp_servers_round_trips_entries() -> anyhow::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
 
     let mut servers = BTreeMap::new();
     servers.insert(
@@ -1836,12 +1838,12 @@ async fn replace_mcp_servers_round_trips_entries() -> anyhow::Result<()> {
     );
 
     apply_blocking(
-        codex_home.path(),
+        orbit_code_home.path(),
         None,
         &[ConfigEdit::ReplaceMcpServers(servers.clone())],
     )?;
 
-    let loaded = load_global_mcp_servers(codex_home.path()).await?;
+    let loaded = load_global_mcp_servers(orbit_code_home.path()).await?;
     assert_eq!(loaded.len(), 1);
     let docs = loaded.get("docs").expect("docs entry");
     match &docs.transport {
@@ -1866,11 +1868,11 @@ async fn replace_mcp_servers_round_trips_entries() -> anyhow::Result<()> {
 
     let empty = BTreeMap::new();
     apply_blocking(
-        codex_home.path(),
+        orbit_code_home.path(),
         None,
         &[ConfigEdit::ReplaceMcpServers(empty.clone())],
     )?;
-    let loaded = load_global_mcp_servers(codex_home.path()).await?;
+    let loaded = load_global_mcp_servers(orbit_code_home.path()).await?;
     assert!(loaded.is_empty());
 
     Ok(())
@@ -1878,11 +1880,11 @@ async fn replace_mcp_servers_round_trips_entries() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn managed_config_wins_over_cli_overrides() -> anyhow::Result<()> {
-    let codex_home = TempDir::new()?;
-    let managed_path = codex_home.path().join("managed_config.toml");
+    let orbit_code_home = TempDir::new()?;
+    let managed_path = orbit_code_home.path().join("managed_config.toml");
 
     std::fs::write(
-        codex_home.path().join(CONFIG_TOML_FILE),
+        orbit_code_home.path().join(CONFIG_TOML_FILE),
         "model = \"base\"\n",
     )?;
     std::fs::write(&managed_path, "model = \"managed_config\"\n")?;
@@ -1894,9 +1896,9 @@ async fn managed_config_wins_over_cli_overrides() -> anyhow::Result<()> {
         macos_managed_config_requirements_base64: None,
     };
 
-    let cwd = AbsolutePathBuf::try_from(codex_home.path())?;
+    let cwd = AbsolutePathBuf::try_from(orbit_code_home.path())?;
     let config_layer_stack = load_config_layers_state(
-        codex_home.path(),
+        orbit_code_home.path(),
         Some(cwd),
         &[("model".to_string(), TomlValue::String("cli".to_string()))],
         overrides,
@@ -1904,12 +1906,14 @@ async fn managed_config_wins_over_cli_overrides() -> anyhow::Result<()> {
     )
     .await?;
 
-    let cfg =
-        deserialize_config_toml_with_base(config_layer_stack.effective_config(), codex_home.path())
-            .map_err(|e| {
-                tracing::error!("Failed to deserialize overridden config: {e}");
-                e
-            })?;
+    let cfg = deserialize_config_toml_with_base(
+        config_layer_stack.effective_config(),
+        orbit_code_home.path(),
+    )
+    .map_err(|e| {
+        tracing::error!("Failed to deserialize overridden config: {e}");
+        e
+    })?;
 
     assert_eq!(cfg.model.as_deref(), Some("managed_config"));
     Ok(())
@@ -1917,8 +1921,8 @@ async fn managed_config_wins_over_cli_overrides() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn load_global_mcp_servers_accepts_legacy_ms_field() -> anyhow::Result<()> {
-    let codex_home = TempDir::new()?;
-    let config_path = codex_home.path().join(CONFIG_TOML_FILE);
+    let orbit_code_home = TempDir::new()?;
+    let config_path = orbit_code_home.path().join(CONFIG_TOML_FILE);
 
     std::fs::write(
         &config_path,
@@ -1930,7 +1934,7 @@ startup_timeout_ms = 2500
 "#,
     )?;
 
-    let servers = load_global_mcp_servers(codex_home.path()).await?;
+    let servers = load_global_mcp_servers(orbit_code_home.path()).await?;
     let docs = servers.get("docs").expect("docs entry");
     assert_eq!(docs.startup_timeout_sec, Some(Duration::from_millis(2500)));
 
@@ -1939,8 +1943,8 @@ startup_timeout_ms = 2500
 
 #[tokio::test]
 async fn load_global_mcp_servers_rejects_inline_bearer_token() -> anyhow::Result<()> {
-    let codex_home = TempDir::new()?;
-    let config_path = codex_home.path().join(CONFIG_TOML_FILE);
+    let orbit_code_home = TempDir::new()?;
+    let config_path = orbit_code_home.path().join(CONFIG_TOML_FILE);
 
     std::fs::write(
         &config_path,
@@ -1951,7 +1955,7 @@ bearer_token = "secret"
 "#,
     )?;
 
-    let err = load_global_mcp_servers(codex_home.path())
+    let err = load_global_mcp_servers(orbit_code_home.path())
         .await
         .expect_err("bearer_token entries should be rejected");
 
@@ -1964,7 +1968,7 @@ bearer_token = "secret"
 
 #[tokio::test]
 async fn replace_mcp_servers_serializes_env_sorted() -> anyhow::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
 
     let servers = BTreeMap::from([(
         "docs".to_string(),
@@ -1992,12 +1996,12 @@ async fn replace_mcp_servers_serializes_env_sorted() -> anyhow::Result<()> {
     )]);
 
     apply_blocking(
-        codex_home.path(),
+        orbit_code_home.path(),
         None,
         &[ConfigEdit::ReplaceMcpServers(servers.clone())],
     )?;
 
-    let config_path = codex_home.path().join(CONFIG_TOML_FILE);
+    let config_path = orbit_code_home.path().join(CONFIG_TOML_FILE);
     let serialized = std::fs::read_to_string(&config_path)?;
     assert_eq!(
         serialized,
@@ -2011,7 +2015,7 @@ ZIG_VAR = "3"
 "#
     );
 
-    let loaded = load_global_mcp_servers(codex_home.path()).await?;
+    let loaded = load_global_mcp_servers(orbit_code_home.path()).await?;
     let docs = loaded.get("docs").expect("docs entry");
     match &docs.transport {
         McpServerTransportConfig::Stdio {
@@ -2039,7 +2043,7 @@ ZIG_VAR = "3"
 
 #[tokio::test]
 async fn replace_mcp_servers_serializes_env_vars() -> anyhow::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
 
     let servers = BTreeMap::from([(
         "docs".to_string(),
@@ -2064,19 +2068,19 @@ async fn replace_mcp_servers_serializes_env_vars() -> anyhow::Result<()> {
     )]);
 
     apply_blocking(
-        codex_home.path(),
+        orbit_code_home.path(),
         None,
         &[ConfigEdit::ReplaceMcpServers(servers.clone())],
     )?;
 
-    let config_path = codex_home.path().join(CONFIG_TOML_FILE);
+    let config_path = orbit_code_home.path().join(CONFIG_TOML_FILE);
     let serialized = std::fs::read_to_string(&config_path)?;
     assert!(
         serialized.contains(r#"env_vars = ["ALPHA", "BETA"]"#),
         "serialized config missing env_vars field:\n{serialized}"
     );
 
-    let loaded = load_global_mcp_servers(codex_home.path()).await?;
+    let loaded = load_global_mcp_servers(orbit_code_home.path()).await?;
     let docs = loaded.get("docs").expect("docs entry");
     match &docs.transport {
         McpServerTransportConfig::Stdio { env_vars, .. } => {
@@ -2090,7 +2094,7 @@ async fn replace_mcp_servers_serializes_env_vars() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn replace_mcp_servers_serializes_cwd() -> anyhow::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
 
     let cwd_path = PathBuf::from("/tmp/codex-mcp");
     let servers = BTreeMap::from([(
@@ -2116,19 +2120,19 @@ async fn replace_mcp_servers_serializes_cwd() -> anyhow::Result<()> {
     )]);
 
     apply_blocking(
-        codex_home.path(),
+        orbit_code_home.path(),
         None,
         &[ConfigEdit::ReplaceMcpServers(servers.clone())],
     )?;
 
-    let config_path = codex_home.path().join(CONFIG_TOML_FILE);
+    let config_path = orbit_code_home.path().join(CONFIG_TOML_FILE);
     let serialized = std::fs::read_to_string(&config_path)?;
     assert!(
         serialized.contains(r#"cwd = "/tmp/codex-mcp""#),
         "serialized config missing cwd field:\n{serialized}"
     );
 
-    let loaded = load_global_mcp_servers(codex_home.path()).await?;
+    let loaded = load_global_mcp_servers(orbit_code_home.path()).await?;
     let docs = loaded.get("docs").expect("docs entry");
     match &docs.transport {
         McpServerTransportConfig::Stdio { cwd, .. } => {
@@ -2142,7 +2146,7 @@ async fn replace_mcp_servers_serializes_cwd() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn replace_mcp_servers_streamable_http_serializes_bearer_token() -> anyhow::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
 
     let servers = BTreeMap::from([(
         "docs".to_string(),
@@ -2166,12 +2170,12 @@ async fn replace_mcp_servers_streamable_http_serializes_bearer_token() -> anyhow
     )]);
 
     apply_blocking(
-        codex_home.path(),
+        orbit_code_home.path(),
         None,
         &[ConfigEdit::ReplaceMcpServers(servers.clone())],
     )?;
 
-    let config_path = codex_home.path().join(CONFIG_TOML_FILE);
+    let config_path = orbit_code_home.path().join(CONFIG_TOML_FILE);
     let serialized = std::fs::read_to_string(&config_path)?;
     assert_eq!(
         serialized,
@@ -2182,7 +2186,7 @@ startup_timeout_sec = 2.0
 "#
     );
 
-    let loaded = load_global_mcp_servers(codex_home.path()).await?;
+    let loaded = load_global_mcp_servers(orbit_code_home.path()).await?;
     let docs = loaded.get("docs").expect("docs entry");
     match &docs.transport {
         McpServerTransportConfig::StreamableHttp {
@@ -2205,7 +2209,7 @@ startup_timeout_sec = 2.0
 
 #[tokio::test]
 async fn replace_mcp_servers_streamable_http_serializes_custom_headers() -> anyhow::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
 
     let servers = BTreeMap::from([(
         "docs".to_string(),
@@ -2231,12 +2235,12 @@ async fn replace_mcp_servers_streamable_http_serializes_custom_headers() -> anyh
         },
     )]);
     apply_blocking(
-        codex_home.path(),
+        orbit_code_home.path(),
         None,
         &[ConfigEdit::ReplaceMcpServers(servers.clone())],
     )?;
 
-    let config_path = codex_home.path().join(CONFIG_TOML_FILE);
+    let config_path = orbit_code_home.path().join(CONFIG_TOML_FILE);
     let serialized = std::fs::read_to_string(&config_path)?;
     assert_eq!(
         serialized,
@@ -2253,7 +2257,7 @@ X-Auth = "DOCS_AUTH"
 "#
     );
 
-    let loaded = load_global_mcp_servers(codex_home.path()).await?;
+    let loaded = load_global_mcp_servers(orbit_code_home.path()).await?;
     let docs = loaded.get("docs").expect("docs entry");
     match &docs.transport {
         McpServerTransportConfig::StreamableHttp {
@@ -2281,9 +2285,9 @@ X-Auth = "DOCS_AUTH"
 
 #[tokio::test]
 async fn replace_mcp_servers_streamable_http_removes_optional_sections() -> anyhow::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
 
-    let config_path = codex_home.path().join(CONFIG_TOML_FILE);
+    let config_path = orbit_code_home.path().join(CONFIG_TOML_FILE);
 
     let mut servers = BTreeMap::from([(
         "docs".to_string(),
@@ -2310,7 +2314,7 @@ async fn replace_mcp_servers_streamable_http_removes_optional_sections() -> anyh
     )]);
 
     apply_blocking(
-        codex_home.path(),
+        orbit_code_home.path(),
         None,
         &[ConfigEdit::ReplaceMcpServers(servers.clone())],
     )?;
@@ -2340,7 +2344,7 @@ async fn replace_mcp_servers_streamable_http_removes_optional_sections() -> anyh
         },
     );
     apply_blocking(
-        codex_home.path(),
+        orbit_code_home.path(),
         None,
         &[ConfigEdit::ReplaceMcpServers(servers.clone())],
     )?;
@@ -2353,7 +2357,7 @@ url = "https://example.com/mcp"
 "#
     );
 
-    let loaded = load_global_mcp_servers(codex_home.path()).await?;
+    let loaded = load_global_mcp_servers(orbit_code_home.path()).await?;
     let docs = loaded.get("docs").expect("docs entry");
     match &docs.transport {
         McpServerTransportConfig::StreamableHttp {
@@ -2378,8 +2382,8 @@ url = "https://example.com/mcp"
 #[tokio::test]
 async fn replace_mcp_servers_streamable_http_isolates_headers_between_servers() -> anyhow::Result<()>
 {
-    let codex_home = TempDir::new()?;
-    let config_path = codex_home.path().join(CONFIG_TOML_FILE);
+    let orbit_code_home = TempDir::new()?;
+    let config_path = orbit_code_home.path().join(CONFIG_TOML_FILE);
 
     let servers = BTreeMap::from([
         (
@@ -2429,7 +2433,7 @@ async fn replace_mcp_servers_streamable_http_isolates_headers_between_servers() 
     ]);
 
     apply_blocking(
-        codex_home.path(),
+        orbit_code_home.path(),
         None,
         &[ConfigEdit::ReplaceMcpServers(servers.clone())],
     )?;
@@ -2452,7 +2456,7 @@ async fn replace_mcp_servers_streamable_http_isolates_headers_between_servers() 
         "serialized config should not add bearer token to logs:\n{serialized}"
     );
 
-    let loaded = load_global_mcp_servers(codex_home.path()).await?;
+    let loaded = load_global_mcp_servers(orbit_code_home.path()).await?;
     let docs = loaded.get("docs").expect("docs entry");
     match &docs.transport {
         McpServerTransportConfig::StreamableHttp {
@@ -2487,7 +2491,7 @@ async fn replace_mcp_servers_streamable_http_isolates_headers_between_servers() 
 
 #[tokio::test]
 async fn replace_mcp_servers_serializes_disabled_flag() -> anyhow::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
 
     let servers = BTreeMap::from([(
         "docs".to_string(),
@@ -2512,19 +2516,19 @@ async fn replace_mcp_servers_serializes_disabled_flag() -> anyhow::Result<()> {
     )]);
 
     apply_blocking(
-        codex_home.path(),
+        orbit_code_home.path(),
         None,
         &[ConfigEdit::ReplaceMcpServers(servers.clone())],
     )?;
 
-    let config_path = codex_home.path().join(CONFIG_TOML_FILE);
+    let config_path = orbit_code_home.path().join(CONFIG_TOML_FILE);
     let serialized = std::fs::read_to_string(&config_path)?;
     assert!(
         serialized.contains("enabled = false"),
         "serialized config missing disabled flag:\n{serialized}"
     );
 
-    let loaded = load_global_mcp_servers(codex_home.path()).await?;
+    let loaded = load_global_mcp_servers(orbit_code_home.path()).await?;
     let docs = loaded.get("docs").expect("docs entry");
     assert!(!docs.enabled);
 
@@ -2533,7 +2537,7 @@ async fn replace_mcp_servers_serializes_disabled_flag() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn replace_mcp_servers_serializes_required_flag() -> anyhow::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
 
     let servers = BTreeMap::from([(
         "docs".to_string(),
@@ -2558,19 +2562,19 @@ async fn replace_mcp_servers_serializes_required_flag() -> anyhow::Result<()> {
     )]);
 
     apply_blocking(
-        codex_home.path(),
+        orbit_code_home.path(),
         None,
         &[ConfigEdit::ReplaceMcpServers(servers.clone())],
     )?;
 
-    let config_path = codex_home.path().join(CONFIG_TOML_FILE);
+    let config_path = orbit_code_home.path().join(CONFIG_TOML_FILE);
     let serialized = std::fs::read_to_string(&config_path)?;
     assert!(
         serialized.contains("required = true"),
         "serialized config missing required flag:\n{serialized}"
     );
 
-    let loaded = load_global_mcp_servers(codex_home.path()).await?;
+    let loaded = load_global_mcp_servers(orbit_code_home.path()).await?;
     let docs = loaded.get("docs").expect("docs entry");
     assert!(docs.required);
 
@@ -2579,7 +2583,7 @@ async fn replace_mcp_servers_serializes_required_flag() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn replace_mcp_servers_serializes_tool_filters() -> anyhow::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
 
     let servers = BTreeMap::from([(
         "docs".to_string(),
@@ -2604,17 +2608,17 @@ async fn replace_mcp_servers_serializes_tool_filters() -> anyhow::Result<()> {
     )]);
 
     apply_blocking(
-        codex_home.path(),
+        orbit_code_home.path(),
         None,
         &[ConfigEdit::ReplaceMcpServers(servers.clone())],
     )?;
 
-    let config_path = codex_home.path().join(CONFIG_TOML_FILE);
+    let config_path = orbit_code_home.path().join(CONFIG_TOML_FILE);
     let serialized = std::fs::read_to_string(&config_path)?;
     assert!(serialized.contains(r#"enabled_tools = ["allowed"]"#));
     assert!(serialized.contains(r#"disabled_tools = ["blocked"]"#));
 
-    let loaded = load_global_mcp_servers(codex_home.path()).await?;
+    let loaded = load_global_mcp_servers(orbit_code_home.path()).await?;
     let docs = loaded.get("docs").expect("docs entry");
     assert_eq!(
         docs.enabled_tools.as_ref(),
@@ -2630,7 +2634,7 @@ async fn replace_mcp_servers_serializes_tool_filters() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn replace_mcp_servers_streamable_http_serializes_oauth_resource() -> anyhow::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
 
     let servers = BTreeMap::from([(
         "docs".to_string(),
@@ -2654,16 +2658,16 @@ async fn replace_mcp_servers_streamable_http_serializes_oauth_resource() -> anyh
     )]);
 
     apply_blocking(
-        codex_home.path(),
+        orbit_code_home.path(),
         None,
         &[ConfigEdit::ReplaceMcpServers(servers.clone())],
     )?;
 
-    let config_path = codex_home.path().join(CONFIG_TOML_FILE);
+    let config_path = orbit_code_home.path().join(CONFIG_TOML_FILE);
     let serialized = std::fs::read_to_string(&config_path)?;
     assert!(serialized.contains(r#"oauth_resource = "https://resource.example.com""#));
 
-    let loaded = load_global_mcp_servers(codex_home.path()).await?;
+    let loaded = load_global_mcp_servers(orbit_code_home.path()).await?;
     let docs = loaded.get("docs").expect("docs entry");
     assert_eq!(
         docs.oauth_resource.as_deref(),
@@ -2675,14 +2679,15 @@ async fn replace_mcp_servers_streamable_http_serializes_oauth_resource() -> anyh
 
 #[tokio::test]
 async fn set_model_updates_defaults() -> anyhow::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
 
-    ConfigEditsBuilder::new(codex_home.path())
+    ConfigEditsBuilder::new(orbit_code_home.path())
         .set_model(Some("gpt-5.1-codex"), Some(ReasoningEffort::High))
         .apply()
         .await?;
 
-    let serialized = tokio::fs::read_to_string(codex_home.path().join(CONFIG_TOML_FILE)).await?;
+    let serialized =
+        tokio::fs::read_to_string(orbit_code_home.path().join(CONFIG_TOML_FILE)).await?;
     let parsed: ConfigToml = toml::from_str(&serialized)?;
 
     assert_eq!(parsed.model.as_deref(), Some("gpt-5.1-codex"));
@@ -2693,8 +2698,8 @@ async fn set_model_updates_defaults() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn set_model_overwrites_existing_model() -> anyhow::Result<()> {
-    let codex_home = TempDir::new()?;
-    let config_path = codex_home.path().join(CONFIG_TOML_FILE);
+    let orbit_code_home = TempDir::new()?;
+    let config_path = orbit_code_home.path().join(CONFIG_TOML_FILE);
 
     tokio::fs::write(
         &config_path,
@@ -2708,7 +2713,7 @@ model = "gpt-4.1"
     )
     .await?;
 
-    ConfigEditsBuilder::new(codex_home.path())
+    ConfigEditsBuilder::new(orbit_code_home.path())
         .set_model(Some("o4-mini"), Some(ReasoningEffort::High))
         .apply()
         .await?;
@@ -2731,15 +2736,16 @@ model = "gpt-4.1"
 
 #[tokio::test]
 async fn set_model_updates_profile() -> anyhow::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
 
-    ConfigEditsBuilder::new(codex_home.path())
+    ConfigEditsBuilder::new(orbit_code_home.path())
         .with_profile(Some("dev"))
         .set_model(Some("gpt-5.1-codex"), Some(ReasoningEffort::Medium))
         .apply()
         .await?;
 
-    let serialized = tokio::fs::read_to_string(codex_home.path().join(CONFIG_TOML_FILE)).await?;
+    let serialized =
+        tokio::fs::read_to_string(orbit_code_home.path().join(CONFIG_TOML_FILE)).await?;
     let parsed: ConfigToml = toml::from_str(&serialized)?;
     let profile = parsed
         .profiles
@@ -2757,8 +2763,8 @@ async fn set_model_updates_profile() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn set_model_updates_existing_profile() -> anyhow::Result<()> {
-    let codex_home = TempDir::new()?;
-    let config_path = codex_home.path().join(CONFIG_TOML_FILE);
+    let orbit_code_home = TempDir::new()?;
+    let config_path = orbit_code_home.path().join(CONFIG_TOML_FILE);
 
     tokio::fs::write(
         &config_path,
@@ -2773,7 +2779,7 @@ model = "gpt-5.1-codex"
     )
     .await?;
 
-    ConfigEditsBuilder::new(codex_home.path())
+    ConfigEditsBuilder::new(orbit_code_home.path())
         .with_profile(Some("dev"))
         .set_model(Some("o4-high"), Some(ReasoningEffort::Medium))
         .apply()
@@ -2805,15 +2811,16 @@ model = "gpt-5.1-codex"
 
 #[tokio::test]
 async fn set_feature_enabled_updates_profile() -> anyhow::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
 
-    ConfigEditsBuilder::new(codex_home.path())
+    ConfigEditsBuilder::new(orbit_code_home.path())
         .with_profile(Some("dev"))
         .set_feature_enabled("guardian_approval", true)
         .apply()
         .await?;
 
-    let serialized = tokio::fs::read_to_string(codex_home.path().join(CONFIG_TOML_FILE)).await?;
+    let serialized =
+        tokio::fs::read_to_string(orbit_code_home.path().join(CONFIG_TOML_FILE)).await?;
     let parsed: ConfigToml = toml::from_str(&serialized)?;
     let profile = parsed
         .profiles
@@ -2841,21 +2848,22 @@ async fn set_feature_enabled_updates_profile() -> anyhow::Result<()> {
 #[tokio::test]
 async fn set_feature_enabled_persists_default_false_feature_disable_in_profile()
 -> anyhow::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
 
-    ConfigEditsBuilder::new(codex_home.path())
+    ConfigEditsBuilder::new(orbit_code_home.path())
         .with_profile(Some("dev"))
         .set_feature_enabled("guardian_approval", true)
         .apply()
         .await?;
 
-    ConfigEditsBuilder::new(codex_home.path())
+    ConfigEditsBuilder::new(orbit_code_home.path())
         .with_profile(Some("dev"))
         .set_feature_enabled("guardian_approval", false)
         .apply()
         .await?;
 
-    let serialized = tokio::fs::read_to_string(codex_home.path().join(CONFIG_TOML_FILE)).await?;
+    let serialized =
+        tokio::fs::read_to_string(orbit_code_home.path().join(CONFIG_TOML_FILE)).await?;
     let parsed: ConfigToml = toml::from_str(&serialized)?;
     let profile = parsed
         .profiles
@@ -2882,20 +2890,21 @@ async fn set_feature_enabled_persists_default_false_feature_disable_in_profile()
 
 #[tokio::test]
 async fn set_feature_enabled_profile_disable_overrides_root_enable() -> anyhow::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
 
-    ConfigEditsBuilder::new(codex_home.path())
+    ConfigEditsBuilder::new(orbit_code_home.path())
         .set_feature_enabled("guardian_approval", true)
         .apply()
         .await?;
 
-    ConfigEditsBuilder::new(codex_home.path())
+    ConfigEditsBuilder::new(orbit_code_home.path())
         .with_profile(Some("dev"))
         .set_feature_enabled("guardian_approval", false)
         .apply()
         .await?;
 
-    let serialized = tokio::fs::read_to_string(codex_home.path().join(CONFIG_TOML_FILE)).await?;
+    let serialized =
+        tokio::fs::read_to_string(orbit_code_home.path().join(CONFIG_TOML_FILE)).await?;
     let parsed: ConfigToml = toml::from_str(&serialized)?;
     let profile = parsed
         .profiles
@@ -2922,7 +2931,7 @@ async fn set_feature_enabled_profile_disable_overrides_root_enable() -> anyhow::
 
 struct PrecedenceTestFixture {
     cwd: TempDir,
-    codex_home: TempDir,
+    orbit_code_home: TempDir,
     cfg: ConfigToml,
     model_provider_map: HashMap<String, ModelProviderInfo>,
     openai_provider: ModelProviderInfo,
@@ -2934,14 +2943,14 @@ impl PrecedenceTestFixture {
         self.cwd.path().to_path_buf()
     }
 
-    fn codex_home(&self) -> PathBuf {
-        self.codex_home.path().to_path_buf()
+    fn orbit_code_home(&self) -> PathBuf {
+        self.orbit_code_home.path().to_path_buf()
     }
 }
 
 #[test]
 fn cli_override_sets_compact_prompt() -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let overrides = ConfigOverrides {
         compact_prompt: Some("Use the compact override".to_string()),
         ..Default::default()
@@ -2950,7 +2959,7 @@ fn cli_override_sets_compact_prompt() -> std::io::Result<()> {
     let config = Config::load_from_base_config_with_overrides(
         ConfigToml::default(),
         overrides,
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
     )?;
 
     assert_eq!(
@@ -2963,8 +2972,8 @@ fn cli_override_sets_compact_prompt() -> std::io::Result<()> {
 
 #[test]
 fn loads_compact_prompt_from_file() -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
-    let workspace = codex_home.path().join("workspace");
+    let orbit_code_home = TempDir::new()?;
+    let workspace = orbit_code_home.path().join("workspace");
     std::fs::create_dir_all(&workspace)?;
 
     let prompt_path = workspace.join("compact_prompt.txt");
@@ -2983,7 +2992,7 @@ fn loads_compact_prompt_from_file() -> std::io::Result<()> {
     let config = Config::load_from_base_config_with_overrides(
         cfg,
         overrides,
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
     )?;
 
     assert_eq!(
@@ -2996,7 +3005,7 @@ fn loads_compact_prompt_from_file() -> std::io::Result<()> {
 
 #[test]
 fn load_config_uses_requirements_guardian_developer_instructions() -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let config_layer_stack = ConfigLayerStack::new(
         Vec::new(),
         Default::default(),
@@ -3012,10 +3021,10 @@ fn load_config_uses_requirements_guardian_developer_instructions() -> std::io::R
     let config = Config::load_config_with_layer_stack(
         ConfigToml::default(),
         ConfigOverrides {
-            cwd: Some(codex_home.path().to_path_buf()),
+            cwd: Some(orbit_code_home.path().to_path_buf()),
             ..Default::default()
         },
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
         config_layer_stack,
     )?;
 
@@ -3029,7 +3038,7 @@ fn load_config_uses_requirements_guardian_developer_instructions() -> std::io::R
 
 #[test]
 fn load_config_ignores_empty_requirements_guardian_developer_instructions() -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let config_layer_stack = ConfigLayerStack::new(
         Vec::new(),
         Default::default(),
@@ -3043,10 +3052,10 @@ fn load_config_ignores_empty_requirements_guardian_developer_instructions() -> s
     let config = Config::load_config_with_layer_stack(
         ConfigToml::default(),
         ConfigOverrides {
-            cwd: Some(codex_home.path().to_path_buf()),
+            cwd: Some(orbit_code_home.path().to_path_buf()),
             ..Default::default()
         },
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
         config_layer_stack,
     )?;
 
@@ -3057,8 +3066,11 @@ fn load_config_ignores_empty_requirements_guardian_developer_instructions() -> s
 
 #[test]
 fn load_config_rejects_missing_agent_role_config_file() -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
-    let missing_path = codex_home.path().join("agents").join("researcher.toml");
+    let orbit_code_home = TempDir::new()?;
+    let missing_path = orbit_code_home
+        .path()
+        .join("agents")
+        .join("researcher.toml");
     let cfg = ConfigToml {
         agents: Some(AgentsToml {
             max_threads: None,
@@ -3079,7 +3091,7 @@ fn load_config_rejects_missing_agent_role_config_file() -> std::io::Result<()> {
     let result = Config::load_from_base_config_with_overrides(
         cfg,
         ConfigOverrides::default(),
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
     );
     let err = result.expect_err("missing role config file should be rejected");
     assert_eq!(err.kind(), std::io::ErrorKind::InvalidInput);
@@ -3092,8 +3104,11 @@ fn load_config_rejects_missing_agent_role_config_file() -> std::io::Result<()> {
 
 #[tokio::test]
 async fn agent_role_relative_config_file_resolves_against_config_toml() -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
-    let role_config_path = codex_home.path().join("agents").join("researcher.toml");
+    let orbit_code_home = TempDir::new()?;
+    let role_config_path = orbit_code_home
+        .path()
+        .join("agents")
+        .join("researcher.toml");
     tokio::fs::create_dir_all(
         role_config_path
             .parent()
@@ -3106,7 +3121,7 @@ async fn agent_role_relative_config_file_resolves_against_config_toml() -> std::
     )
     .await?;
     tokio::fs::write(
-        codex_home.path().join(CONFIG_TOML_FILE),
+        orbit_code_home.path().join(CONFIG_TOML_FILE),
         r#"[agents.researcher]
 description = "Research role"
 config_file = "./agents/researcher.toml"
@@ -3116,8 +3131,8 @@ nickname_candidates = ["Hypatia", "Noether"]
     .await?;
 
     let config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
-        .fallback_cwd(Some(codex_home.path().to_path_buf()))
+        .orbit_code_home(orbit_code_home.path().to_path_buf())
+        .fallback_cwd(Some(orbit_code_home.path().to_path_buf()))
         .build()
         .await?;
     assert_eq!(
@@ -3141,8 +3156,11 @@ nickname_candidates = ["Hypatia", "Noether"]
 
 #[tokio::test]
 async fn agent_role_file_metadata_overrides_config_toml_metadata() -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
-    let role_config_path = codex_home.path().join("agents").join("researcher.toml");
+    let orbit_code_home = TempDir::new()?;
+    let role_config_path = orbit_code_home
+        .path()
+        .join("agents")
+        .join("researcher.toml");
     tokio::fs::create_dir_all(
         role_config_path
             .parent()
@@ -3160,7 +3178,7 @@ model = "gpt-5"
     )
     .await?;
     tokio::fs::write(
-        codex_home.path().join(CONFIG_TOML_FILE),
+        orbit_code_home.path().join(CONFIG_TOML_FILE),
         r#"[agents.researcher]
 description = "Research role from config"
 config_file = "./agents/researcher.toml"
@@ -3170,8 +3188,8 @@ nickname_candidates = ["Noether"]
     .await?;
 
     let config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
-        .fallback_cwd(Some(codex_home.path().to_path_buf()))
+        .orbit_code_home(orbit_code_home.path().to_path_buf())
+        .fallback_cwd(Some(orbit_code_home.path().to_path_buf()))
         .build()
         .await?;
     let role = config
@@ -3193,7 +3211,7 @@ nickname_candidates = ["Noether"]
 #[tokio::test]
 async fn agent_role_file_without_developer_instructions_is_dropped_with_warning()
 -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let repo_root = TempDir::new()?;
     let nested_cwd = repo_root.path().join("packages").join("app");
     std::fs::create_dir_all(repo_root.path().join(".git"))?;
@@ -3201,7 +3219,7 @@ async fn agent_role_file_without_developer_instructions_is_dropped_with_warning(
 
     let workspace_key = repo_root.path().to_string_lossy().replace('\\', "\\\\");
     tokio::fs::write(
-        codex_home.path().join(CONFIG_TOML_FILE),
+        orbit_code_home.path().join(CONFIG_TOML_FILE),
         format!(
             r#"[projects."{workspace_key}"]
 trust_level = "trusted"
@@ -3233,7 +3251,7 @@ model = "gpt-5"
     .await?;
 
     let config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
+        .orbit_code_home(orbit_code_home.path().to_path_buf())
         .harness_overrides(ConfigOverrides {
             cwd: Some(nested_cwd),
             ..Default::default()
@@ -3261,8 +3279,11 @@ model = "gpt-5"
 #[tokio::test]
 async fn legacy_agent_role_config_file_allows_missing_developer_instructions() -> std::io::Result<()>
 {
-    let codex_home = TempDir::new()?;
-    let role_config_path = codex_home.path().join("agents").join("researcher.toml");
+    let orbit_code_home = TempDir::new()?;
+    let role_config_path = orbit_code_home
+        .path()
+        .join("agents")
+        .join("researcher.toml");
     tokio::fs::create_dir_all(
         role_config_path
             .parent()
@@ -3278,7 +3299,7 @@ model_reasoning_effort = "high"
     )
     .await?;
     tokio::fs::write(
-        codex_home.path().join(CONFIG_TOML_FILE),
+        orbit_code_home.path().join(CONFIG_TOML_FILE),
         r#"[agents.researcher]
 description = "Research role from config"
 config_file = "./agents/researcher.toml"
@@ -3287,8 +3308,8 @@ config_file = "./agents/researcher.toml"
     .await?;
 
     let config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
-        .fallback_cwd(Some(codex_home.path().to_path_buf()))
+        .orbit_code_home(orbit_code_home.path().to_path_buf())
+        .fallback_cwd(Some(orbit_code_home.path().to_path_buf()))
         .build()
         .await?;
     assert_eq!(
@@ -3312,8 +3333,11 @@ config_file = "./agents/researcher.toml"
 #[tokio::test]
 async fn agent_role_without_description_after_merge_is_dropped_with_warning() -> std::io::Result<()>
 {
-    let codex_home = TempDir::new()?;
-    let role_config_path = codex_home.path().join("agents").join("researcher.toml");
+    let orbit_code_home = TempDir::new()?;
+    let role_config_path = orbit_code_home
+        .path()
+        .join("agents")
+        .join("researcher.toml");
     tokio::fs::create_dir_all(
         role_config_path
             .parent()
@@ -3329,7 +3353,7 @@ model = "gpt-5"
     )
     .await?;
     tokio::fs::write(
-        codex_home.path().join(CONFIG_TOML_FILE),
+        orbit_code_home.path().join(CONFIG_TOML_FILE),
         r#"[agents.researcher]
 config_file = "./agents/researcher.toml"
 
@@ -3340,8 +3364,8 @@ description = "Review role"
     .await?;
 
     let config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
-        .fallback_cwd(Some(codex_home.path().to_path_buf()))
+        .orbit_code_home(orbit_code_home.path().to_path_buf())
+        .fallback_cwd(Some(orbit_code_home.path().to_path_buf()))
         .build()
         .await?;
     assert!(!config.agent_roles.contains_key("researcher"));
@@ -3364,7 +3388,7 @@ description = "Review role"
 
 #[tokio::test]
 async fn discovered_agent_role_file_without_name_is_dropped_with_warning() -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let repo_root = TempDir::new()?;
     let nested_cwd = repo_root.path().join("packages").join("app");
     std::fs::create_dir_all(repo_root.path().join(".git"))?;
@@ -3372,7 +3396,7 @@ async fn discovered_agent_role_file_without_name_is_dropped_with_warning() -> st
 
     let workspace_key = repo_root.path().to_string_lossy().replace('\\', "\\\\");
     tokio::fs::write(
-        codex_home.path().join(CONFIG_TOML_FILE),
+        orbit_code_home.path().join(CONFIG_TOML_FILE),
         format!(
             r#"[projects."{workspace_key}"]
 trust_level = "trusted"
@@ -3402,7 +3426,7 @@ developer_instructions = "Review carefully"
     .await?;
 
     let config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
+        .orbit_code_home(orbit_code_home.path().to_path_buf())
         .harness_overrides(ConfigOverrides {
             cwd: Some(nested_cwd),
             ..Default::default()
@@ -3429,8 +3453,11 @@ developer_instructions = "Review carefully"
 
 #[tokio::test]
 async fn agent_role_file_name_takes_precedence_over_config_key() -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
-    let role_config_path = codex_home.path().join("agents").join("researcher.toml");
+    let orbit_code_home = TempDir::new()?;
+    let role_config_path = orbit_code_home
+        .path()
+        .join("agents")
+        .join("researcher.toml");
     tokio::fs::create_dir_all(
         role_config_path
             .parent()
@@ -3448,7 +3475,7 @@ model = "gpt-5"
     )
     .await?;
     tokio::fs::write(
-        codex_home.path().join(CONFIG_TOML_FILE),
+        orbit_code_home.path().join(CONFIG_TOML_FILE),
         r#"[agents.researcher]
 description = "Research role from config"
 config_file = "./agents/researcher.toml"
@@ -3457,8 +3484,8 @@ config_file = "./agents/researcher.toml"
     .await?;
 
     let config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
-        .fallback_cwd(Some(codex_home.path().to_path_buf()))
+        .orbit_code_home(orbit_code_home.path().to_path_buf())
+        .fallback_cwd(Some(orbit_code_home.path().to_path_buf()))
         .build()
         .await?;
     assert_eq!(config.agent_roles.contains_key("researcher"), false);
@@ -3474,9 +3501,12 @@ config_file = "./agents/researcher.toml"
 
 #[tokio::test]
 async fn loads_legacy_split_agent_roles_from_config_toml() -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
-    let researcher_path = codex_home.path().join("agents").join("researcher.toml");
-    let reviewer_path = codex_home.path().join("agents").join("reviewer.toml");
+    let orbit_code_home = TempDir::new()?;
+    let researcher_path = orbit_code_home
+        .path()
+        .join("agents")
+        .join("researcher.toml");
+    let reviewer_path = orbit_code_home.path().join("agents").join("reviewer.toml");
     tokio::fs::create_dir_all(
         researcher_path
             .parent()
@@ -3494,7 +3524,7 @@ async fn loads_legacy_split_agent_roles_from_config_toml() -> std::io::Result<()
     )
     .await?;
     tokio::fs::write(
-        codex_home.path().join(CONFIG_TOML_FILE),
+        orbit_code_home.path().join(CONFIG_TOML_FILE),
         r#"[agents.researcher]
 description = "Research role"
 config_file = "./agents/researcher.toml"
@@ -3509,8 +3539,8 @@ nickname_candidates = ["Atlas"]
     .await?;
 
     let config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
-        .fallback_cwd(Some(codex_home.path().to_path_buf()))
+        .orbit_code_home(orbit_code_home.path().to_path_buf())
+        .fallback_cwd(Some(orbit_code_home.path().to_path_buf()))
         .build()
         .await?;
 
@@ -3564,7 +3594,7 @@ nickname_candidates = ["Atlas"]
 
 #[tokio::test]
 async fn discovers_multiple_standalone_agent_role_files() -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let repo_root = TempDir::new()?;
     let nested_cwd = repo_root.path().join("packages").join("app");
     std::fs::create_dir_all(repo_root.path().join(".git"))?;
@@ -3572,7 +3602,7 @@ async fn discovers_multiple_standalone_agent_role_files() -> std::io::Result<()>
 
     let workspace_key = repo_root.path().to_string_lossy().replace('\\', "\\\\");
     std::fs::write(
-        codex_home.path().join(CONFIG_TOML_FILE),
+        orbit_code_home.path().join(CONFIG_TOML_FILE),
         format!(
             r#"[projects."{workspace_key}"]
 trust_level = "trusted"
@@ -3643,7 +3673,7 @@ developer_instructions = "Write carefully"
     )?;
 
     let config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
+        .orbit_code_home(orbit_code_home.path().to_path_buf())
         .harness_overrides(ConfigOverrides {
             cwd: Some(nested_cwd),
             ..Default::default()
@@ -3695,7 +3725,7 @@ developer_instructions = "Write carefully"
 #[tokio::test]
 async fn mixed_legacy_and_standalone_agent_role_sources_merge_with_precedence()
 -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let repo_root = TempDir::new()?;
     let nested_cwd = repo_root.path().join("packages").join("app");
     std::fs::create_dir_all(repo_root.path().join(".git"))?;
@@ -3703,7 +3733,7 @@ async fn mixed_legacy_and_standalone_agent_role_sources_merge_with_precedence()
 
     let workspace_key = repo_root.path().to_string_lossy().replace('\\', "\\\\");
     tokio::fs::write(
-        codex_home.path().join(CONFIG_TOML_FILE),
+        orbit_code_home.path().join(CONFIG_TOML_FILE),
         format!(
             r#"[projects."{workspace_key}"]
 trust_level = "trusted"
@@ -3722,7 +3752,7 @@ nickname_candidates = ["Ada"]
     )
     .await?;
 
-    let home_agents_dir = codex_home.path().join("agents");
+    let home_agents_dir = orbit_code_home.path().join("agents");
     tokio::fs::create_dir_all(&home_agents_dir).await?;
     tokio::fs::write(
         home_agents_dir.join("researcher.toml"),
@@ -3767,7 +3797,7 @@ model = "gpt-5"
     .await?;
 
     let config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
+        .orbit_code_home(orbit_code_home.path().to_path_buf())
         .harness_overrides(ConfigOverrides {
             cwd: Some(nested_cwd),
             ..Default::default()
@@ -3841,7 +3871,7 @@ model = "gpt-5"
 #[tokio::test]
 async fn higher_precedence_agent_role_can_inherit_description_from_lower_layer()
 -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let repo_root = TempDir::new()?;
     let nested_cwd = repo_root.path().join("packages").join("app");
     std::fs::create_dir_all(repo_root.path().join(".git"))?;
@@ -3849,7 +3879,7 @@ async fn higher_precedence_agent_role_can_inherit_description_from_lower_layer()
 
     let workspace_key = repo_root.path().to_string_lossy().replace('\\', "\\\\");
     tokio::fs::write(
-        codex_home.path().join(CONFIG_TOML_FILE),
+        orbit_code_home.path().join(CONFIG_TOML_FILE),
         format!(
             r#"[projects."{workspace_key}"]
 trust_level = "trusted"
@@ -3862,7 +3892,7 @@ config_file = "./agents/researcher.toml"
     )
     .await?;
 
-    let home_agents_dir = codex_home.path().join("agents");
+    let home_agents_dir = orbit_code_home.path().join("agents");
     tokio::fs::create_dir_all(&home_agents_dir).await?;
     tokio::fs::write(
         home_agents_dir.join("researcher.toml"),
@@ -3887,7 +3917,7 @@ model = "gpt-5-mini"
     .await?;
 
     let config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
+        .orbit_code_home(orbit_code_home.path().to_path_buf())
         .harness_overrides(ConfigOverrides {
             cwd: Some(nested_cwd),
             ..Default::default()
@@ -3923,7 +3953,7 @@ model = "gpt-5-mini"
 
 #[test]
 fn load_config_normalizes_agent_role_nickname_candidates() -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let cfg = ConfigToml {
         agents: Some(AgentsToml {
             max_threads: None,
@@ -3947,7 +3977,7 @@ fn load_config_normalizes_agent_role_nickname_candidates() -> std::io::Result<()
     let config = Config::load_from_base_config_with_overrides(
         cfg,
         ConfigOverrides::default(),
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
     )?;
 
     assert_eq!(
@@ -3964,7 +3994,7 @@ fn load_config_normalizes_agent_role_nickname_candidates() -> std::io::Result<()
 
 #[test]
 fn load_config_rejects_empty_agent_role_nickname_candidates() -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let cfg = ConfigToml {
         agents: Some(AgentsToml {
             max_threads: None,
@@ -3985,7 +4015,7 @@ fn load_config_rejects_empty_agent_role_nickname_candidates() -> std::io::Result
     let result = Config::load_from_base_config_with_overrides(
         cfg,
         ConfigOverrides::default(),
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
     );
     let err = result.expect_err("empty nickname candidates should be rejected");
     assert_eq!(err.kind(), std::io::ErrorKind::InvalidInput);
@@ -3999,7 +4029,7 @@ fn load_config_rejects_empty_agent_role_nickname_candidates() -> std::io::Result
 
 #[test]
 fn load_config_rejects_duplicate_agent_role_nickname_candidates() -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let cfg = ConfigToml {
         agents: Some(AgentsToml {
             max_threads: None,
@@ -4020,7 +4050,7 @@ fn load_config_rejects_duplicate_agent_role_nickname_candidates() -> std::io::Re
     let result = Config::load_from_base_config_with_overrides(
         cfg,
         ConfigOverrides::default(),
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
     );
     let err = result.expect_err("duplicate nickname candidates should be rejected");
     assert_eq!(err.kind(), std::io::ErrorKind::InvalidInput);
@@ -4034,7 +4064,7 @@ fn load_config_rejects_duplicate_agent_role_nickname_candidates() -> std::io::Re
 
 #[test]
 fn load_config_rejects_unsafe_agent_role_nickname_candidates() -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let cfg = ConfigToml {
         agents: Some(AgentsToml {
             max_threads: None,
@@ -4055,7 +4085,7 @@ fn load_config_rejects_unsafe_agent_role_nickname_candidates() -> std::io::Resul
     let result = Config::load_from_base_config_with_overrides(
         cfg,
         ConfigOverrides::default(),
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
     );
     let err = result.expect_err("unsafe nickname candidates should be rejected");
     assert_eq!(err.kind(), std::io::ErrorKind::InvalidInput);
@@ -4068,8 +4098,8 @@ fn load_config_rejects_unsafe_agent_role_nickname_candidates() -> std::io::Resul
 
 #[test]
 fn model_catalog_json_loads_from_path() -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
-    let catalog_path = codex_home.path().join("catalog.json");
+    let orbit_code_home = TempDir::new()?;
+    let catalog_path = orbit_code_home.path().join("catalog.json");
     let mut catalog: ModelsResponse =
         serde_json::from_str(include_str!("../../models.json")).expect("valid models.json");
     catalog.models = catalog.models.into_iter().take(1).collect();
@@ -4086,7 +4116,7 @@ fn model_catalog_json_loads_from_path() -> std::io::Result<()> {
     let config = Config::load_from_base_config_with_overrides(
         cfg,
         ConfigOverrides::default(),
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
     )?;
 
     assert_eq!(config.model_catalog, Some(catalog));
@@ -4095,8 +4125,8 @@ fn model_catalog_json_loads_from_path() -> std::io::Result<()> {
 
 #[test]
 fn model_catalog_json_rejects_empty_catalog() -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
-    let catalog_path = codex_home.path().join("catalog.json");
+    let orbit_code_home = TempDir::new()?;
+    let catalog_path = orbit_code_home.path().join("catalog.json");
     std::fs::write(&catalog_path, r#"{"models":[]}"#)?;
 
     let cfg = ConfigToml {
@@ -4107,7 +4137,7 @@ fn model_catalog_json_rejects_empty_catalog() -> std::io::Result<()> {
     let err = Config::load_from_base_config_with_overrides(
         cfg,
         ConfigOverrides::default(),
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
     )
     .expect_err("empty custom catalog should fail config load");
 
@@ -4179,7 +4209,7 @@ model_verbosity = "high"
     // a parent folder, either.
     std::fs::write(cwd.join(".git"), "gitdir: nowhere")?;
 
-    let codex_home_temp_dir = TempDir::new().unwrap();
+    let orbit_code_home_temp_dir = TempDir::new().unwrap();
 
     let openai_custom_provider = ModelProviderInfo {
         name: "OpenAI custom".to_string(),
@@ -4211,7 +4241,7 @@ model_verbosity = "high"
 
     Ok(PrecedenceTestFixture {
         cwd: cwd_temp_dir,
-        codex_home: codex_home_temp_dir,
+        orbit_code_home: orbit_code_home_temp_dir,
         cfg,
         model_provider_map,
         openai_provider,
@@ -4243,7 +4273,7 @@ fn test_precedence_fixture_with_o3_profile() -> std::io::Result<()> {
     let o3_profile_config: Config = Config::load_from_base_config_with_overrides(
         fixture.cfg.clone(),
         o3_profile_overrides,
-        fixture.codex_home(),
+        fixture.orbit_code_home(),
     )?;
     assert_eq!(
         Config {
@@ -4287,15 +4317,15 @@ fn test_precedence_fixture_with_o3_profile() -> std::io::Result<()> {
             agent_roles: BTreeMap::new(),
             memories: MemoriesConfig::default(),
             agent_job_max_runtime_seconds: DEFAULT_AGENT_JOB_MAX_RUNTIME_SECONDS,
-            codex_home: fixture.codex_home(),
-            sqlite_home: fixture.codex_home(),
-            log_dir: fixture.codex_home().join("log"),
+            orbit_code_home: fixture.orbit_code_home(),
+            sqlite_home: fixture.orbit_code_home(),
+            log_dir: fixture.orbit_code_home().join("log"),
             config_layer_stack: Default::default(),
             startup_warnings: Vec::new(),
             history: History::default(),
             ephemeral: false,
             file_opener: UriBasedFileOpener::VsCode,
-            codex_linux_sandbox_exe: None,
+            orbit_code_linux_sandbox_exe: None,
             main_execve_wrapper_exe: None,
             js_repl_node_path: None,
             js_repl_node_module_dirs: Vec::new(),
@@ -4366,7 +4396,7 @@ fn metrics_exporter_defaults_to_statsig_when_missing() -> std::io::Result<()> {
             cwd: Some(fixture.cwd()),
             ..Default::default()
         },
-        fixture.codex_home(),
+        fixture.orbit_code_home(),
     )?;
 
     assert_eq!(config.otel.metrics_exporter, OtelExporterKind::Statsig);
@@ -4385,7 +4415,7 @@ fn test_precedence_fixture_with_gpt3_profile() -> std::io::Result<()> {
     let gpt3_profile_config = Config::load_from_base_config_with_overrides(
         fixture.cfg.clone(),
         gpt3_profile_overrides,
-        fixture.codex_home(),
+        fixture.orbit_code_home(),
     )?;
     let expected_gpt3_profile_config = Config {
         model: Some("gpt-3.5-turbo".to_string()),
@@ -4428,15 +4458,15 @@ fn test_precedence_fixture_with_gpt3_profile() -> std::io::Result<()> {
         agent_roles: BTreeMap::new(),
         memories: MemoriesConfig::default(),
         agent_job_max_runtime_seconds: DEFAULT_AGENT_JOB_MAX_RUNTIME_SECONDS,
-        codex_home: fixture.codex_home(),
-        sqlite_home: fixture.codex_home(),
-        log_dir: fixture.codex_home().join("log"),
+        orbit_code_home: fixture.orbit_code_home(),
+        sqlite_home: fixture.orbit_code_home(),
+        log_dir: fixture.orbit_code_home().join("log"),
         config_layer_stack: Default::default(),
         startup_warnings: Vec::new(),
         history: History::default(),
         ephemeral: false,
         file_opener: UriBasedFileOpener::VsCode,
-        codex_linux_sandbox_exe: None,
+        orbit_code_linux_sandbox_exe: None,
         main_execve_wrapper_exe: None,
         js_repl_node_path: None,
         js_repl_node_module_dirs: Vec::new(),
@@ -4505,7 +4535,7 @@ fn test_precedence_fixture_with_gpt3_profile() -> std::io::Result<()> {
     let default_profile_config = Config::load_from_base_config_with_overrides(
         fixture.cfg.clone(),
         default_profile_overrides,
-        fixture.codex_home(),
+        fixture.orbit_code_home(),
     )?;
 
     assert_eq!(expected_gpt3_profile_config, default_profile_config);
@@ -4524,7 +4554,7 @@ fn test_precedence_fixture_with_zdr_profile() -> std::io::Result<()> {
     let zdr_profile_config = Config::load_from_base_config_with_overrides(
         fixture.cfg.clone(),
         zdr_profile_overrides,
-        fixture.codex_home(),
+        fixture.orbit_code_home(),
     )?;
     let expected_zdr_profile_config = Config {
         model: Some("o3".to_string()),
@@ -4567,15 +4597,15 @@ fn test_precedence_fixture_with_zdr_profile() -> std::io::Result<()> {
         agent_roles: BTreeMap::new(),
         memories: MemoriesConfig::default(),
         agent_job_max_runtime_seconds: DEFAULT_AGENT_JOB_MAX_RUNTIME_SECONDS,
-        codex_home: fixture.codex_home(),
-        sqlite_home: fixture.codex_home(),
-        log_dir: fixture.codex_home().join("log"),
+        orbit_code_home: fixture.orbit_code_home(),
+        sqlite_home: fixture.orbit_code_home(),
+        log_dir: fixture.orbit_code_home().join("log"),
         config_layer_stack: Default::default(),
         startup_warnings: Vec::new(),
         history: History::default(),
         ephemeral: false,
         file_opener: UriBasedFileOpener::VsCode,
-        codex_linux_sandbox_exe: None,
+        orbit_code_linux_sandbox_exe: None,
         main_execve_wrapper_exe: None,
         js_repl_node_path: None,
         js_repl_node_module_dirs: Vec::new(),
@@ -4649,7 +4679,7 @@ fn test_precedence_fixture_with_gpt5_profile() -> std::io::Result<()> {
     let gpt5_profile_config = Config::load_from_base_config_with_overrides(
         fixture.cfg.clone(),
         gpt5_profile_overrides,
-        fixture.codex_home(),
+        fixture.orbit_code_home(),
     )?;
     let expected_gpt5_profile_config = Config {
         model: Some("gpt-5.1".to_string()),
@@ -4692,15 +4722,15 @@ fn test_precedence_fixture_with_gpt5_profile() -> std::io::Result<()> {
         agent_roles: BTreeMap::new(),
         memories: MemoriesConfig::default(),
         agent_job_max_runtime_seconds: DEFAULT_AGENT_JOB_MAX_RUNTIME_SECONDS,
-        codex_home: fixture.codex_home(),
-        sqlite_home: fixture.codex_home(),
-        log_dir: fixture.codex_home().join("log"),
+        orbit_code_home: fixture.orbit_code_home(),
+        sqlite_home: fixture.orbit_code_home(),
+        log_dir: fixture.orbit_code_home().join("log"),
         config_layer_stack: Default::default(),
         startup_warnings: Vec::new(),
         history: History::default(),
         ephemeral: false,
         file_opener: UriBasedFileOpener::VsCode,
-        codex_linux_sandbox_exe: None,
+        orbit_code_linux_sandbox_exe: None,
         main_execve_wrapper_exe: None,
         js_repl_node_path: None,
         js_repl_node_module_dirs: Vec::new(),
@@ -4812,7 +4842,7 @@ fn test_requirements_web_search_mode_allowlist_does_not_warn_when_unset() -> any
             cwd: Some(fixture.cwd()),
             ..Default::default()
         },
-        fixture.codex_home(),
+        fixture.orbit_code_home(),
         config_layer_stack,
     )?;
 
@@ -4927,29 +4957,29 @@ trust_level = "trusted"
 #[test]
 fn test_set_default_oss_provider() -> std::io::Result<()> {
     let temp_dir = TempDir::new()?;
-    let codex_home = temp_dir.path();
-    let config_path = codex_home.join(CONFIG_TOML_FILE);
+    let orbit_code_home = temp_dir.path();
+    let config_path = orbit_code_home.join(CONFIG_TOML_FILE);
 
     // Test setting valid provider on empty config
-    set_default_oss_provider(codex_home, OLLAMA_OSS_PROVIDER_ID)?;
+    set_default_oss_provider(orbit_code_home, OLLAMA_OSS_PROVIDER_ID)?;
     let content = std::fs::read_to_string(&config_path)?;
     assert!(content.contains("oss_provider = \"ollama\""));
 
     // Test updating existing config
     std::fs::write(&config_path, "model = \"gpt-4\"\n")?;
-    set_default_oss_provider(codex_home, LMSTUDIO_OSS_PROVIDER_ID)?;
+    set_default_oss_provider(orbit_code_home, LMSTUDIO_OSS_PROVIDER_ID)?;
     let content = std::fs::read_to_string(&config_path)?;
     assert!(content.contains("oss_provider = \"lmstudio\""));
     assert!(content.contains("model = \"gpt-4\""));
 
     // Test overwriting existing oss_provider
-    set_default_oss_provider(codex_home, OLLAMA_OSS_PROVIDER_ID)?;
+    set_default_oss_provider(orbit_code_home, OLLAMA_OSS_PROVIDER_ID)?;
     let content = std::fs::read_to_string(&config_path)?;
     assert!(content.contains("oss_provider = \"ollama\""));
     assert!(!content.contains("oss_provider = \"lmstudio\""));
 
     // Test invalid provider
-    let result = set_default_oss_provider(codex_home, "invalid_provider");
+    let result = set_default_oss_provider(orbit_code_home, "invalid_provider");
     assert!(result.is_err());
     let error = result.unwrap_err();
     assert_eq!(error.kind(), std::io::ErrorKind::InvalidInput);
@@ -4962,9 +4992,9 @@ fn test_set_default_oss_provider() -> std::io::Result<()> {
 #[test]
 fn test_set_default_oss_provider_rejects_legacy_ollama_chat_provider() -> std::io::Result<()> {
     let temp_dir = TempDir::new()?;
-    let codex_home = temp_dir.path();
+    let orbit_code_home = temp_dir.path();
 
-    let result = set_default_oss_provider(codex_home, LEGACY_OLLAMA_CHAT_PROVIDER_ID);
+    let result = set_default_oss_provider(orbit_code_home, LEGACY_OLLAMA_CHAT_PROVIDER_ID);
     assert!(result.is_err());
     let error = result.unwrap_err();
     assert_eq!(error.kind(), std::io::ErrorKind::InvalidInput);
@@ -4980,7 +5010,7 @@ fn test_set_default_oss_provider_rejects_legacy_ollama_chat_provider() -> std::i
 #[test]
 fn test_load_config_rejects_legacy_ollama_chat_provider_with_helpful_error() -> std::io::Result<()>
 {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let cfg = ConfigToml {
         model_provider: Some(LEGACY_OLLAMA_CHAT_PROVIDER_ID.to_string()),
         ..Default::default()
@@ -4989,7 +5019,7 @@ fn test_load_config_rejects_legacy_ollama_chat_provider_with_helpful_error() -> 
     let result = Config::load_from_base_config_with_overrides(
         cfg,
         ConfigOverrides::default(),
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
     );
     assert!(result.is_err());
     let error = result.unwrap_err();
@@ -5221,7 +5251,7 @@ fn config_toml_deserializes_mcp_oauth_callback_url() {
 
 #[test]
 fn config_loads_mcp_oauth_callback_port_from_toml() -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let toml = r#"
 model = "gpt-5.1"
 mcp_oauth_callback_port = 5678
@@ -5232,7 +5262,7 @@ mcp_oauth_callback_port = 5678
     let config = Config::load_from_base_config_with_overrides(
         cfg,
         ConfigOverrides::default(),
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
     )?;
 
     assert_eq!(config.mcp_oauth_callback_port, Some(5678));
@@ -5241,7 +5271,7 @@ mcp_oauth_callback_port = 5678
 
 #[test]
 fn config_loads_allow_login_shell_from_toml() -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let cfg: ConfigToml = toml::from_str(
         r#"
 model = "gpt-5.1"
@@ -5253,7 +5283,7 @@ allow_login_shell = false
     let config = Config::load_from_base_config_with_overrides(
         cfg,
         ConfigOverrides::default(),
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
     )?;
 
     assert!(!config.permissions.allow_login_shell);
@@ -5262,7 +5292,7 @@ allow_login_shell = false
 
 #[test]
 fn config_loads_mcp_oauth_callback_url_from_toml() -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let toml = r#"
 model = "gpt-5.1"
 mcp_oauth_callback_url = "https://example.com/callback"
@@ -5273,7 +5303,7 @@ mcp_oauth_callback_url = "https://example.com/callback"
     let config = Config::load_from_base_config_with_overrides(
         cfg,
         ConfigOverrides::default(),
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
     )?;
 
     assert_eq!(
@@ -5285,7 +5315,7 @@ mcp_oauth_callback_url = "https://example.com/callback"
 
 #[test]
 fn test_untrusted_project_gets_unless_trusted_approval_policy() -> anyhow::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let test_project_dir = TempDir::new()?;
     let test_path = test_project_dir.path();
 
@@ -5303,7 +5333,7 @@ fn test_untrusted_project_gets_unless_trusted_approval_policy() -> anyhow::Resul
             cwd: Some(test_path.to_path_buf()),
             ..Default::default()
         },
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
     )?;
 
     // Verify that untrusted projects get UnlessTrusted approval policy
@@ -5338,10 +5368,10 @@ fn test_untrusted_project_gets_unless_trusted_approval_policy() -> anyhow::Resul
 #[tokio::test]
 async fn requirements_disallowing_default_sandbox_falls_back_to_required_default()
 -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
 
     let config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
+        .orbit_code_home(orbit_code_home.path().to_path_buf())
         .cloud_requirements(CloudRequirementsLoader::new(async {
             Ok(Some(crate::config_loader::ConfigRequirementsToml {
                 allowed_sandbox_modes: Some(vec![
@@ -5361,9 +5391,9 @@ async fn requirements_disallowing_default_sandbox_falls_back_to_required_default
 
 #[tokio::test]
 async fn explicit_sandbox_mode_falls_back_when_disallowed_by_requirements() -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     std::fs::write(
-        codex_home.path().join(CONFIG_TOML_FILE),
+        orbit_code_home.path().join(CONFIG_TOML_FILE),
         r#"sandbox_mode = "danger-full-access"
 "#,
     )?;
@@ -5382,8 +5412,8 @@ async fn explicit_sandbox_mode_falls_back_when_disallowed_by_requirements() -> s
     };
 
     let config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
-        .fallback_cwd(Some(codex_home.path().to_path_buf()))
+        .orbit_code_home(orbit_code_home.path().to_path_buf())
+        .fallback_cwd(Some(orbit_code_home.path().to_path_buf()))
         .cloud_requirements(CloudRequirementsLoader::new(async move {
             Ok(Some(requirements))
         }))
@@ -5399,16 +5429,16 @@ async fn explicit_sandbox_mode_falls_back_when_disallowed_by_requirements() -> s
 #[tokio::test]
 async fn requirements_web_search_mode_overrides_danger_full_access_default() -> std::io::Result<()>
 {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     std::fs::write(
-        codex_home.path().join(CONFIG_TOML_FILE),
+        orbit_code_home.path().join(CONFIG_TOML_FILE),
         r#"sandbox_mode = "danger-full-access"
 "#,
     )?;
 
     let config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
-        .fallback_cwd(Some(codex_home.path().to_path_buf()))
+        .orbit_code_home(orbit_code_home.path().to_path_buf())
+        .fallback_cwd(Some(orbit_code_home.path().to_path_buf()))
         .cloud_requirements(CloudRequirementsLoader::new(async {
             Ok(Some(crate::config_loader::ConfigRequirementsToml {
                 allowed_web_search_modes: Some(vec![
@@ -5434,11 +5464,11 @@ async fn requirements_web_search_mode_overrides_danger_full_access_default() -> 
 #[tokio::test]
 async fn requirements_disallowing_default_approval_falls_back_to_required_default()
 -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let workspace = TempDir::new()?;
     let workspace_key = workspace.path().to_string_lossy().replace('\\', "\\\\");
     std::fs::write(
-        codex_home.path().join(CONFIG_TOML_FILE),
+        orbit_code_home.path().join(CONFIG_TOML_FILE),
         format!(
             r#"
 [projects."{workspace_key}"]
@@ -5448,7 +5478,7 @@ trust_level = "untrusted"
     )?;
 
     let config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
+        .orbit_code_home(orbit_code_home.path().to_path_buf())
         .fallback_cwd(Some(workspace.path().to_path_buf()))
         .cloud_requirements(CloudRequirementsLoader::new(async {
             Ok(Some(crate::config_loader::ConfigRequirementsToml {
@@ -5469,16 +5499,16 @@ trust_level = "untrusted"
 #[tokio::test]
 async fn explicit_approval_policy_falls_back_when_disallowed_by_requirements() -> std::io::Result<()>
 {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     std::fs::write(
-        codex_home.path().join(CONFIG_TOML_FILE),
+        orbit_code_home.path().join(CONFIG_TOML_FILE),
         r#"approval_policy = "untrusted"
 "#,
     )?;
 
     let config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
-        .fallback_cwd(Some(codex_home.path().to_path_buf()))
+        .orbit_code_home(orbit_code_home.path().to_path_buf())
+        .fallback_cwd(Some(orbit_code_home.path().to_path_buf()))
         .cloud_requirements(CloudRequirementsLoader::new(async {
             Ok(Some(crate::config_loader::ConfigRequirementsToml {
                 allowed_approval_policies: Some(vec![AskForApproval::OnRequest]),
@@ -5496,10 +5526,10 @@ async fn explicit_approval_policy_falls_back_when_disallowed_by_requirements() -
 
 #[tokio::test]
 async fn feature_requirements_normalize_effective_feature_values() -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
 
     let config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
+        .orbit_code_home(orbit_code_home.path().to_path_buf())
         .cloud_requirements(CloudRequirementsLoader::new(async {
             Ok(Some(crate::config_loader::ConfigRequirementsToml {
                 feature_requirements: Some(crate::config_loader::FeatureRequirementsToml {
@@ -5530,9 +5560,9 @@ async fn feature_requirements_normalize_effective_feature_values() -> std::io::R
 
 #[tokio::test]
 async fn explicit_feature_config_is_normalized_by_requirements() -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     std::fs::write(
-        codex_home.path().join(CONFIG_TOML_FILE),
+        orbit_code_home.path().join(CONFIG_TOML_FILE),
         r#"
 [features]
 personality = false
@@ -5541,8 +5571,8 @@ shell_tool = true
     )?;
 
     let config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
-        .fallback_cwd(Some(codex_home.path().to_path_buf()))
+        .orbit_code_home(orbit_code_home.path().to_path_buf())
+        .fallback_cwd(Some(orbit_code_home.path().to_path_buf()))
         .cloud_requirements(CloudRequirementsLoader::new(async {
             Ok(Some(crate::config_loader::ConfigRequirementsToml {
                 feature_requirements: Some(crate::config_loader::FeatureRequirementsToml {
@@ -5586,11 +5616,11 @@ fn missing_system_bwrap_warning_matches_system_bwrap_presence() {
 #[tokio::test]
 async fn approvals_reviewer_defaults_to_manual_only_without_guardian_feature() -> std::io::Result<()>
 {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
 
     let config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
-        .fallback_cwd(Some(codex_home.path().to_path_buf()))
+        .orbit_code_home(orbit_code_home.path().to_path_buf())
+        .fallback_cwd(Some(orbit_code_home.path().to_path_buf()))
         .build()
         .await?;
 
@@ -5601,17 +5631,17 @@ async fn approvals_reviewer_defaults_to_manual_only_without_guardian_feature() -
 #[tokio::test]
 async fn approvals_reviewer_stays_manual_only_when_guardian_feature_is_enabled()
 -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     std::fs::write(
-        codex_home.path().join(CONFIG_TOML_FILE),
+        orbit_code_home.path().join(CONFIG_TOML_FILE),
         r#"[features]
 guardian_approval = true
 "#,
     )?;
 
     let config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
-        .fallback_cwd(Some(codex_home.path().to_path_buf()))
+        .orbit_code_home(orbit_code_home.path().to_path_buf())
+        .fallback_cwd(Some(orbit_code_home.path().to_path_buf()))
         .build()
         .await?;
 
@@ -5622,16 +5652,16 @@ guardian_approval = true
 #[tokio::test]
 async fn approvals_reviewer_can_be_set_in_config_without_guardian_approval() -> std::io::Result<()>
 {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     std::fs::write(
-        codex_home.path().join(CONFIG_TOML_FILE),
+        orbit_code_home.path().join(CONFIG_TOML_FILE),
         r#"approvals_reviewer = "user"
 "#,
     )?;
 
     let config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
-        .fallback_cwd(Some(codex_home.path().to_path_buf()))
+        .orbit_code_home(orbit_code_home.path().to_path_buf())
+        .fallback_cwd(Some(orbit_code_home.path().to_path_buf()))
         .build()
         .await?;
 
@@ -5642,9 +5672,9 @@ async fn approvals_reviewer_can_be_set_in_config_without_guardian_approval() -> 
 #[tokio::test]
 async fn approvals_reviewer_can_be_set_in_profile_without_guardian_approval() -> std::io::Result<()>
 {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     std::fs::write(
-        codex_home.path().join(CONFIG_TOML_FILE),
+        orbit_code_home.path().join(CONFIG_TOML_FILE),
         r#"profile = "guardian"
 
 [profiles.guardian]
@@ -5653,8 +5683,8 @@ approvals_reviewer = "guardian_subagent"
     )?;
 
     let config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
-        .fallback_cwd(Some(codex_home.path().to_path_buf()))
+        .orbit_code_home(orbit_code_home.path().to_path_buf())
+        .fallback_cwd(Some(orbit_code_home.path().to_path_buf()))
         .build()
         .await?;
 
@@ -5667,17 +5697,17 @@ approvals_reviewer = "guardian_subagent"
 
 #[tokio::test]
 async fn smart_approvals_alias_is_migrated_to_guardian_approval() -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     std::fs::write(
-        codex_home.path().join(CONFIG_TOML_FILE),
+        orbit_code_home.path().join(CONFIG_TOML_FILE),
         r#"[features]
 smart_approvals = true
 "#,
     )?;
 
     let config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
-        .fallback_cwd(Some(codex_home.path().to_path_buf()))
+        .orbit_code_home(orbit_code_home.path().to_path_buf())
+        .fallback_cwd(Some(orbit_code_home.path().to_path_buf()))
         .build()
         .await?;
 
@@ -5688,7 +5718,8 @@ smart_approvals = true
         ApprovalsReviewer::GuardianSubagent
     );
 
-    let serialized = tokio::fs::read_to_string(codex_home.path().join(CONFIG_TOML_FILE)).await?;
+    let serialized =
+        tokio::fs::read_to_string(orbit_code_home.path().join(CONFIG_TOML_FILE)).await?;
     assert!(serialized.contains("guardian_approval = true"));
     assert!(serialized.contains("approvals_reviewer = \"guardian_subagent\""));
     assert!(!serialized.contains("smart_approvals"));
@@ -5698,9 +5729,9 @@ smart_approvals = true
 
 #[tokio::test]
 async fn smart_approvals_alias_is_migrated_in_profiles() -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     std::fs::write(
-        codex_home.path().join(CONFIG_TOML_FILE),
+        orbit_code_home.path().join(CONFIG_TOML_FILE),
         r#"profile = "guardian"
 
 [profiles.guardian.features]
@@ -5709,8 +5740,8 @@ smart_approvals = true
     )?;
 
     let config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
-        .fallback_cwd(Some(codex_home.path().to_path_buf()))
+        .orbit_code_home(orbit_code_home.path().to_path_buf())
+        .fallback_cwd(Some(orbit_code_home.path().to_path_buf()))
         .build()
         .await?;
 
@@ -5721,7 +5752,8 @@ smart_approvals = true
         ApprovalsReviewer::GuardianSubagent
     );
 
-    let serialized = tokio::fs::read_to_string(codex_home.path().join(CONFIG_TOML_FILE)).await?;
+    let serialized =
+        tokio::fs::read_to_string(orbit_code_home.path().join(CONFIG_TOML_FILE)).await?;
     assert!(serialized.contains("[profiles.guardian.features]"));
     assert!(serialized.contains("guardian_approval = true"));
     assert!(serialized.contains("approvals_reviewer = \"guardian_subagent\""));
@@ -5733,9 +5765,9 @@ smart_approvals = true
 #[tokio::test]
 async fn smart_approvals_alias_migration_preserves_disabled_profile_override() -> std::io::Result<()>
 {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     std::fs::write(
-        codex_home.path().join(CONFIG_TOML_FILE),
+        orbit_code_home.path().join(CONFIG_TOML_FILE),
         r#"[features]
 guardian_approval = true
 
@@ -5745,8 +5777,8 @@ smart_approvals = false
     )?;
 
     let config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
-        .fallback_cwd(Some(codex_home.path().to_path_buf()))
+        .orbit_code_home(orbit_code_home.path().to_path_buf())
+        .fallback_cwd(Some(orbit_code_home.path().to_path_buf()))
         .harness_overrides(ConfigOverrides {
             config_profile: Some("guardian".to_string()),
             ..Default::default()
@@ -5758,7 +5790,8 @@ smart_approvals = false
     assert_eq!(config.features.legacy_feature_usages().count(), 0);
     assert_eq!(config.approvals_reviewer, ApprovalsReviewer::User);
 
-    let serialized = tokio::fs::read_to_string(codex_home.path().join(CONFIG_TOML_FILE)).await?;
+    let serialized =
+        tokio::fs::read_to_string(orbit_code_home.path().join(CONFIG_TOML_FILE)).await?;
     assert!(serialized.contains("[profiles.guardian.features]"));
     assert!(serialized.contains("guardian_approval = false"));
     assert!(!serialized.contains("smart_approvals"));
@@ -5769,9 +5802,9 @@ smart_approvals = false
 #[tokio::test]
 async fn smart_approvals_alias_migration_preserves_existing_approvals_reviewer()
 -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     std::fs::write(
-        codex_home.path().join(CONFIG_TOML_FILE),
+        orbit_code_home.path().join(CONFIG_TOML_FILE),
         r#"approvals_reviewer = "user"
 
 [features]
@@ -5780,15 +5813,16 @@ smart_approvals = true
     )?;
 
     let config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
-        .fallback_cwd(Some(codex_home.path().to_path_buf()))
+        .orbit_code_home(orbit_code_home.path().to_path_buf())
+        .fallback_cwd(Some(orbit_code_home.path().to_path_buf()))
         .build()
         .await?;
 
     assert!(config.features.enabled(Feature::GuardianApproval));
     assert_eq!(config.approvals_reviewer, ApprovalsReviewer::User);
 
-    let serialized = tokio::fs::read_to_string(codex_home.path().join(CONFIG_TOML_FILE)).await?;
+    let serialized =
+        tokio::fs::read_to_string(orbit_code_home.path().join(CONFIG_TOML_FILE)).await?;
     assert!(serialized.contains("guardian_approval = true"));
     assert!(serialized.contains("approvals_reviewer = \"user\""));
     assert!(!serialized.contains("smart_approvals"));
@@ -5799,9 +5833,9 @@ smart_approvals = true
 #[tokio::test]
 async fn smart_approvals_alias_migration_does_not_override_canonical_disabled_flag()
 -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     std::fs::write(
-        codex_home.path().join(CONFIG_TOML_FILE),
+        orbit_code_home.path().join(CONFIG_TOML_FILE),
         r#"[features]
 guardian_approval = false
 smart_approvals = true
@@ -5809,15 +5843,16 @@ smart_approvals = true
     )?;
 
     let config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
-        .fallback_cwd(Some(codex_home.path().to_path_buf()))
+        .orbit_code_home(orbit_code_home.path().to_path_buf())
+        .fallback_cwd(Some(orbit_code_home.path().to_path_buf()))
         .build()
         .await?;
 
     assert!(!config.features.enabled(Feature::GuardianApproval));
     assert_eq!(config.approvals_reviewer, ApprovalsReviewer::User);
 
-    let serialized = tokio::fs::read_to_string(codex_home.path().join(CONFIG_TOML_FILE)).await?;
+    let serialized =
+        tokio::fs::read_to_string(orbit_code_home.path().join(CONFIG_TOML_FILE)).await?;
     assert!(serialized.contains("guardian_approval = false"));
     assert!(!serialized.contains("approvals_reviewer = \"guardian_subagent\""));
     assert!(!serialized.contains("smart_approvals"));
@@ -5827,10 +5862,10 @@ smart_approvals = true
 
 #[tokio::test]
 async fn feature_requirements_normalize_runtime_feature_mutations() -> std::io::Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
 
     let mut config = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
+        .orbit_code_home(orbit_code_home.path().to_path_buf())
         .cloud_requirements(CloudRequirementsLoader::new(async {
             Ok(Some(crate::config_loader::ConfigRequirementsToml {
                 feature_requirements: Some(crate::config_loader::FeatureRequirementsToml {
@@ -5863,10 +5898,10 @@ async fn feature_requirements_normalize_runtime_feature_mutations() -> std::io::
 
 #[tokio::test]
 async fn feature_requirements_reject_collab_legacy_alias() {
-    let codex_home = TempDir::new().expect("tempdir");
+    let orbit_code_home = TempDir::new().expect("tempdir");
 
     let err = ConfigBuilder::default()
-        .codex_home(codex_home.path().to_path_buf())
+        .orbit_code_home(orbit_code_home.path().to_path_buf())
         .cloud_requirements(CloudRequirementsLoader::new(async {
             Ok(Some(crate::config_loader::ConfigRequirementsToml {
                 feature_requirements: Some(crate::config_loader::FeatureRequirementsToml {
@@ -5921,11 +5956,11 @@ discoverables = [
         })
     );
 
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let config = Config::load_from_base_config_with_overrides(
         cfg,
         ConfigOverrides::default(),
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
     )?;
 
     assert_eq!(
@@ -5960,11 +5995,11 @@ experimental_realtime_start_instructions = "start instructions from config"
         Some("start instructions from config")
     );
 
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let config = Config::load_from_base_config_with_overrides(
         cfg,
         ConfigOverrides::default(),
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
     )?;
 
     assert_eq!(
@@ -5988,11 +6023,11 @@ experimental_realtime_ws_base_url = "http://127.0.0.1:8011"
         Some("http://127.0.0.1:8011")
     );
 
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let config = Config::load_from_base_config_with_overrides(
         cfg,
         ConfigOverrides::default(),
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
     )?;
 
     assert_eq!(
@@ -6016,11 +6051,11 @@ experimental_realtime_ws_backend_prompt = "prompt from config"
         Some("prompt from config")
     );
 
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let config = Config::load_from_base_config_with_overrides(
         cfg,
         ConfigOverrides::default(),
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
     )?;
 
     assert_eq!(
@@ -6044,11 +6079,11 @@ experimental_realtime_ws_startup_context = "startup context from config"
         Some("startup context from config")
     );
 
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let config = Config::load_from_base_config_with_overrides(
         cfg,
         ConfigOverrides::default(),
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
     )?;
 
     assert_eq!(
@@ -6072,11 +6107,11 @@ experimental_realtime_ws_model = "realtime-test-model"
         Some("realtime-test-model")
     );
 
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let config = Config::load_from_base_config_with_overrides(
         cfg,
         ConfigOverrides::default(),
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
     )?;
 
     assert_eq!(
@@ -6105,11 +6140,11 @@ type = "transcription"
         })
     );
 
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let config = Config::load_from_base_config_with_overrides(
         cfg,
         ConfigOverrides::default(),
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
     )?;
 
     assert_eq!(
@@ -6140,11 +6175,11 @@ speaker = "Desk Speakers"
     assert_eq!(realtime_audio.microphone.as_deref(), Some("USB Mic"));
     assert_eq!(realtime_audio.speaker.as_deref(), Some("Desk Speakers"));
 
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let config = Config::load_from_base_config_with_overrides(
         cfg,
         ConfigOverrides::default(),
-        codex_home.path().to_path_buf(),
+        orbit_code_home.path().to_path_buf(),
     )?;
 
     assert_eq!(config.realtime_audio.microphone.as_deref(), Some("USB Mic"));

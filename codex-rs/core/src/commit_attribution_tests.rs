@@ -9,7 +9,7 @@ fn blank_attribution_disables_trailer_prompt() {
 }
 
 #[test]
-fn default_attribution_uses_codex_trailer() {
+fn default_attribution_uses_orbit_code_trailer() {
     assert_eq!(
         build_commit_message_trailer(None).as_deref(),
         Some("Co-authored-by: Codex <noreply@openai.com>")

@@ -1,6 +1,6 @@
 use crate::protocol::EventMsg;
 use crate::protocol::RolloutItem;
-use codex_protocol::models::ResponseItem;
+use orbit_code_protocol::models::ResponseItem;
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub enum EventPersistenceMode {
@@ -110,7 +110,7 @@ fn event_msg_persistence_mode(ev: &EventMsg) -> Option<EventPersistenceMode> {
             // Plan items are derived from streaming tags and are not part of the
             // raw ResponseItem history, so we persist their completion to replay
             // them on resume without bloating rollouts with every item lifecycle.
-            if matches!(event.item, codex_protocol::items::TurnItem::Plan(_)) {
+            if matches!(event.item, orbit_code_protocol::items::TurnItem::Plan(_)) {
                 Some(EventPersistenceMode::Limited)
             } else {
                 None

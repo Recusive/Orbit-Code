@@ -4,11 +4,11 @@ use std::path::Path;
 use crate::error::CodexErr;
 use crate::rollout::SESSIONS_SUBDIR;
 
-pub(crate) fn map_session_init_error(err: &anyhow::Error, codex_home: &Path) -> CodexErr {
+pub(crate) fn map_session_init_error(err: &anyhow::Error, orbit_code_home: &Path) -> CodexErr {
     if let Some(mapped) = err
         .chain()
         .filter_map(|cause| cause.downcast_ref::<std::io::Error>())
-        .find_map(|io_err| map_rollout_io_error(io_err, codex_home))
+        .find_map(|io_err| map_rollout_io_error(io_err, orbit_code_home))
     {
         return mapped;
     }
@@ -16,13 +16,13 @@ pub(crate) fn map_session_init_error(err: &anyhow::Error, codex_home: &Path) -> 
     CodexErr::Fatal(format!("Failed to initialize session: {err:#}"))
 }
 
-fn map_rollout_io_error(io_err: &std::io::Error, codex_home: &Path) -> Option<CodexErr> {
-    let sessions_dir = codex_home.join(SESSIONS_SUBDIR);
+fn map_rollout_io_error(io_err: &std::io::Error, orbit_code_home: &Path) -> Option<CodexErr> {
+    let sessions_dir = orbit_code_home.join(SESSIONS_SUBDIR);
     let hint = match io_err.kind() {
         ErrorKind::PermissionDenied => format!(
             "Codex cannot access session files at {} (permission denied). If sessions were created using sudo, fix ownership: sudo chown -R $(whoami) {}",
             sessions_dir.display(),
-            codex_home.display()
+            orbit_code_home.display()
         ),
         ErrorKind::NotFound => format!(
             "Session storage missing at {}. Create the directory or choose a different Codex home.",

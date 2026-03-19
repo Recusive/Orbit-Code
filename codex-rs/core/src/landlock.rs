@@ -2,9 +2,9 @@ use crate::protocol::SandboxPolicy;
 use crate::spawn::SpawnChildRequest;
 use crate::spawn::StdioPolicy;
 use crate::spawn::spawn_child_async;
-use codex_network_proxy::NetworkProxy;
-use codex_protocol::permissions::FileSystemSandboxPolicy;
-use codex_protocol::permissions::NetworkSandboxPolicy;
+use orbit_code_network_proxy::NetworkProxy;
+use orbit_code_protocol::permissions::FileSystemSandboxPolicy;
+use orbit_code_protocol::permissions::NetworkSandboxPolicy;
 use std::collections::HashMap;
 use std::path::Path;
 use std::path::PathBuf;
@@ -20,7 +20,7 @@ use tokio::process::Child;
 /// incrementally without breaking older call sites.
 #[allow(clippy::too_many_arguments)]
 pub async fn spawn_command_under_linux_sandbox<P>(
-    codex_linux_sandbox_exe: P,
+    orbit_code_linux_sandbox_exe: P,
     command: Vec<String>,
     command_cwd: PathBuf,
     sandbox_policy: &SandboxPolicy,
@@ -48,7 +48,7 @@ where
     );
     let arg0 = Some("codex-linux-sandbox");
     spawn_child_async(SpawnChildRequest {
-        program: codex_linux_sandbox_exe.as_ref().to_path_buf(),
+        program: orbit_code_linux_sandbox_exe.as_ref().to_path_buf(),
         args,
         arg0,
         cwd: command_cwd,

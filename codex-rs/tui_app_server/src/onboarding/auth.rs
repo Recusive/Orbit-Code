@@ -1,20 +1,20 @@
 #![allow(clippy::unwrap_used)]
 
-use codex_app_server_client::AppServerRequestHandle;
-use codex_app_server_protocol::AccountLoginCompletedNotification;
-use codex_app_server_protocol::AccountUpdatedNotification;
-use codex_app_server_protocol::AuthMode as AppServerAuthMode;
-use codex_app_server_protocol::CancelLoginAccountParams;
-use codex_app_server_protocol::ClientRequest;
-use codex_app_server_protocol::LoginAccountParams;
-use codex_app_server_protocol::LoginAccountResponse;
-use codex_core::auth::AuthCredentialsStoreMode;
-use codex_core::auth::read_openai_api_key_from_env;
-use codex_login::DeviceCode;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyEventKind;
 use crossterm::event::KeyModifiers;
+use orbit_code_app_server_client::AppServerRequestHandle;
+use orbit_code_app_server_protocol::AccountLoginCompletedNotification;
+use orbit_code_app_server_protocol::AccountUpdatedNotification;
+use orbit_code_app_server_protocol::AuthMode as AppServerAuthMode;
+use orbit_code_app_server_protocol::CancelLoginAccountParams;
+use orbit_code_app_server_protocol::ClientRequest;
+use orbit_code_app_server_protocol::LoginAccountParams;
+use orbit_code_app_server_protocol::LoginAccountResponse;
+use orbit_code_core::auth::AuthCredentialsStoreMode;
+use orbit_code_core::auth::read_openai_api_key_from_env;
+use orbit_code_login::DeviceCode;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Constraint;
 use ratatui::layout::Layout;
@@ -32,7 +32,7 @@ use ratatui::widgets::Paragraph;
 use ratatui::widgets::WidgetRef;
 use ratatui::widgets::Wrap;
 
-use codex_protocol::config_types::ForcedLoginMethod;
+use orbit_code_protocol::config_types::ForcedLoginMethod;
 use std::sync::Arc;
 use std::sync::RwLock;
 use uuid::Uuid;
@@ -104,8 +104,8 @@ pub(crate) enum SignInOption {
 }
 
 const API_KEY_DISABLED_MESSAGE: &str = "API key login is disabled.";
-fn onboarding_request_id() -> codex_app_server_protocol::RequestId {
-    codex_app_server_protocol::RequestId::String(Uuid::new_v4().to_string())
+fn onboarding_request_id() -> orbit_code_app_server_protocol::RequestId {
+    orbit_code_app_server_protocol::RequestId::String(Uuid::new_v4().to_string())
 }
 
 #[derive(Clone, Default)]
@@ -170,7 +170,7 @@ impl KeyboardHandler for AuthModeWidget {
                         let login_id = state.login_id.clone();
                         tokio::spawn(async move {
                             let _ = request_handle
-                                .request_typed::<codex_app_server_protocol::CancelLoginAccountResponse>(
+                                .request_typed::<orbit_code_app_server_protocol::CancelLoginAccountResponse>(
                                     ClientRequest::CancelLoginAccount {
                                         request_id: onboarding_request_id(),
                                         params: CancelLoginAccountParams { login_id },
@@ -211,7 +211,7 @@ pub(crate) struct AuthModeWidget {
     pub highlighted_mode: SignInOption,
     pub error: Arc<RwLock<Option<String>>>,
     pub sign_in_state: Arc<RwLock<SignInState>>,
-    pub codex_home: PathBuf,
+    pub orbit_code_home: PathBuf,
     pub cli_auth_credentials_store_mode: AuthCredentialsStoreMode,
     pub login_status: LoginStatus,
     pub app_server_request_handle: AppServerRequestHandle,
@@ -883,24 +883,24 @@ impl WidgetRef for AuthModeWidget {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use codex_app_server_client::AppServerRequestHandle;
-    use codex_app_server_client::DEFAULT_IN_PROCESS_CHANNEL_CAPACITY;
-    use codex_app_server_client::InProcessAppServerClient;
-    use codex_app_server_client::InProcessClientStartArgs;
-    use codex_arg0::Arg0DispatchPaths;
-    use codex_cloud_requirements::cloud_requirements_loader_for_storage;
-    use codex_core::config::ConfigBuilder;
+    use orbit_code_app_server_client::AppServerRequestHandle;
+    use orbit_code_app_server_client::DEFAULT_IN_PROCESS_CHANNEL_CAPACITY;
+    use orbit_code_app_server_client::InProcessAppServerClient;
+    use orbit_code_app_server_client::InProcessClientStartArgs;
+    use orbit_code_arg0::Arg0DispatchPaths;
+    use orbit_code_cloud_requirements::cloud_requirements_loader_for_storage;
+    use orbit_code_core::config::ConfigBuilder;
 
-    use codex_protocol::protocol::SessionSource;
+    use orbit_code_protocol::protocol::SessionSource;
     use pretty_assertions::assert_eq;
     use std::sync::Arc;
     use tempfile::TempDir;
 
     async fn widget_forced_chatgpt() -> (AuthModeWidget, TempDir) {
-        let codex_home = TempDir::new().unwrap();
-        let codex_home_path = codex_home.path().to_path_buf();
+        let orbit_code_home = TempDir::new().unwrap();
+        let orbit_code_home_path = orbit_code_home.path().to_path_buf();
         let config = ConfigBuilder::default()
-            .codex_home(codex_home_path.clone())
+            .orbit_code_home(orbit_code_home_path.clone())
             .build()
             .await
             .unwrap();
@@ -910,15 +910,15 @@ mod tests {
             cli_overrides: Vec::new(),
             loader_overrides: Default::default(),
             cloud_requirements: cloud_requirements_loader_for_storage(
-                codex_home_path.clone(),
+                orbit_code_home_path.clone(),
                 false,
                 AuthCredentialsStoreMode::File,
                 "https://chatgpt.com/backend-api/".to_string(),
             ),
-            feedback: codex_feedback::CodexFeedback::new(),
+            feedback: orbit_code_feedback::CodexFeedback::new(),
             config_warnings: Vec::new(),
             session_source: SessionSource::Cli,
-            enable_codex_api_key_env: false,
+            enable_orbit_code_api_key_env: false,
             client_name: "test".to_string(),
             client_version: "test".to_string(),
             experimental_api: true,
@@ -932,7 +932,7 @@ mod tests {
             highlighted_mode: SignInOption::ChatGpt,
             error: Arc::new(RwLock::new(None)),
             sign_in_state: Arc::new(RwLock::new(SignInState::PickMode)),
-            codex_home: codex_home_path.clone(),
+            orbit_code_home: orbit_code_home_path.clone(),
             cli_auth_credentials_store_mode: AuthCredentialsStoreMode::File,
             login_status: LoginStatus::NotAuthenticated,
             app_server_request_handle: AppServerRequestHandle::InProcess(client.request_handle()),
@@ -940,7 +940,7 @@ mod tests {
             forced_login_method: Some(ForcedLoginMethod::Chatgpt),
             animations_enabled: true,
         };
-        (widget, codex_home)
+        (widget, orbit_code_home)
     }
 
     #[tokio::test]

@@ -1,4 +1,4 @@
-use codex_utils_absolute_path::AbsolutePathBuf;
+use orbit_code_utils_absolute_path::AbsolutePathBuf;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde::Serialize;
@@ -8,12 +8,12 @@ use crate::config::types::ApprovalsReviewer;
 use crate::config::types::Personality;
 use crate::config::types::WindowsToml;
 use crate::protocol::AskForApproval;
-use codex_protocol::config_types::ReasoningSummary;
-use codex_protocol::config_types::SandboxMode;
-use codex_protocol::config_types::ServiceTier;
-use codex_protocol::config_types::Verbosity;
-use codex_protocol::config_types::WebSearchMode;
-use codex_protocol::openai_models::ReasoningEffort;
+use orbit_code_protocol::config_types::ReasoningSummary;
+use orbit_code_protocol::config_types::SandboxMode;
+use orbit_code_protocol::config_types::ServiceTier;
+use orbit_code_protocol::config_types::Verbosity;
+use orbit_code_protocol::config_types::WebSearchMode;
+use orbit_code_protocol::openai_models::ReasoningEffort;
 
 /// Collection of common configuration options that a user can define as a unit
 /// in `config.toml`.
@@ -64,7 +64,7 @@ pub struct ConfigProfile {
     pub oss_provider: Option<String>,
 }
 
-impl From<ConfigProfile> for codex_app_server_protocol::Profile {
+impl From<ConfigProfile> for orbit_code_app_server_protocol::Profile {
     fn from(config_profile: ConfigProfile) -> Self {
         Self {
             model: config_profile.model,

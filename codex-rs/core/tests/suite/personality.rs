@@ -1,23 +1,3 @@
-use codex_core::config::types::Personality;
-use codex_core::features::Feature;
-use codex_core::models_manager::manager::ModelsManager;
-use codex_core::models_manager::manager::RefreshStrategy;
-use codex_protocol::config_types::ReasoningSummary;
-use codex_protocol::openai_models::ConfigShellToolType;
-use codex_protocol::openai_models::ModelInfo;
-use codex_protocol::openai_models::ModelInstructionsVariables;
-use codex_protocol::openai_models::ModelMessages;
-use codex_protocol::openai_models::ModelVisibility;
-use codex_protocol::openai_models::ModelsResponse;
-use codex_protocol::openai_models::ReasoningEffort;
-use codex_protocol::openai_models::ReasoningEffortPreset;
-use codex_protocol::openai_models::TruncationPolicyConfig;
-use codex_protocol::openai_models::default_input_modalities;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::Op;
-use codex_protocol::protocol::SandboxPolicy;
-use codex_protocol::user_input::UserInput;
 use core_test_support::load_default_config_for_test;
 use core_test_support::responses::mount_models_once;
 use core_test_support::responses::mount_sse_once;
@@ -27,6 +7,26 @@ use core_test_support::responses::start_mock_server;
 use core_test_support::skip_if_no_network;
 use core_test_support::test_codex::test_codex;
 use core_test_support::wait_for_event;
+use orbit_code_core::config::types::Personality;
+use orbit_code_core::features::Feature;
+use orbit_code_core::models_manager::manager::ModelsManager;
+use orbit_code_core::models_manager::manager::RefreshStrategy;
+use orbit_code_protocol::config_types::ReasoningSummary;
+use orbit_code_protocol::openai_models::ConfigShellToolType;
+use orbit_code_protocol::openai_models::ModelInfo;
+use orbit_code_protocol::openai_models::ModelInstructionsVariables;
+use orbit_code_protocol::openai_models::ModelMessages;
+use orbit_code_protocol::openai_models::ModelVisibility;
+use orbit_code_protocol::openai_models::ModelsResponse;
+use orbit_code_protocol::openai_models::ReasoningEffort;
+use orbit_code_protocol::openai_models::ReasoningEffortPreset;
+use orbit_code_protocol::openai_models::TruncationPolicyConfig;
+use orbit_code_protocol::openai_models::default_input_modalities;
+use orbit_code_protocol::protocol::AskForApproval;
+use orbit_code_protocol::protocol::EventMsg;
+use orbit_code_protocol::protocol::Op;
+use orbit_code_protocol::protocol::SandboxPolicy;
+use orbit_code_protocol::user_input::UserInput;
 use pretty_assertions::assert_eq;
 use std::sync::Arc;
 use tempfile::TempDir;
@@ -42,15 +42,16 @@ const LOCAL_PRAGMATIC_TEMPLATE: &str = "You are a deeply pragmatic, effective so
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn personality_does_not_mutate_base_instructions_without_template() {
-    let codex_home = TempDir::new().expect("create temp dir");
-    let mut config = load_default_config_for_test(&codex_home).await;
+    let orbit_code_home = TempDir::new().expect("create temp dir");
+    let mut config = load_default_config_for_test(&orbit_code_home).await;
     config
         .features
         .enable(Feature::Personality)
         .expect("test config should allow feature update");
     config.personality = Some(Personality::Friendly);
 
-    let model_info = codex_core::test_support::construct_model_info_offline("gpt-5.1", &config);
+    let model_info =
+        orbit_code_core::test_support::construct_model_info_offline("gpt-5.1", &config);
     assert_eq!(
         model_info.get_model_instructions(config.personality),
         model_info.base_instructions
@@ -59,8 +60,8 @@ async fn personality_does_not_mutate_base_instructions_without_template() {
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn base_instructions_override_disables_personality_template() {
-    let codex_home = TempDir::new().expect("create temp dir");
-    let mut config = load_default_config_for_test(&codex_home).await;
+    let orbit_code_home = TempDir::new().expect("create temp dir");
+    let mut config = load_default_config_for_test(&orbit_code_home).await;
     config
         .features
         .enable(Feature::Personality)
@@ -69,7 +70,7 @@ async fn base_instructions_override_disables_personality_template() {
     config.base_instructions = Some("override instructions".to_string());
 
     let model_info =
-        codex_core::test_support::construct_model_info_offline("gpt-5.2-codex", &config);
+        orbit_code_core::test_support::construct_model_info_offline("gpt-5.2-codex", &config);
 
     assert_eq!(model_info.base_instructions, "override instructions");
     assert_eq!(
@@ -496,8 +497,8 @@ async fn user_turn_personality_same_value_does_not_add_update_message() -> anyho
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn instructions_uses_base_if_feature_disabled() -> anyhow::Result<()> {
-    let codex_home = TempDir::new().expect("create temp dir");
-    let mut config = load_default_config_for_test(&codex_home).await;
+    let orbit_code_home = TempDir::new().expect("create temp dir");
+    let mut config = load_default_config_for_test(&orbit_code_home).await;
     config
         .features
         .disable(Feature::Personality)
@@ -505,7 +506,7 @@ async fn instructions_uses_base_if_feature_disabled() -> anyhow::Result<()> {
     config.personality = Some(Personality::Friendly);
 
     let model_info =
-        codex_core::test_support::construct_model_info_offline("gpt-5.2-codex", &config);
+        orbit_code_core::test_support::construct_model_info_offline("gpt-5.2-codex", &config);
     assert_eq!(
         model_info.get_model_instructions(config.personality),
         model_info.base_instructions
@@ -674,7 +675,7 @@ async fn remote_model_friendly_personality_instructions_with_feature() -> anyhow
     let resp_mock = mount_sse_once(&server, sse_completed("resp-1")).await;
 
     let mut builder = test_codex()
-        .with_auth(codex_core::CodexAuth::create_dummy_chatgpt_auth_for_testing())
+        .with_auth(orbit_code_core::CodexAuth::create_dummy_chatgpt_auth_for_testing())
         .with_config(|config| {
             config
                 .features
@@ -793,7 +794,7 @@ async fn user_turn_personality_remote_model_template_includes_update_message() -
     .await;
 
     let mut builder = test_codex()
-        .with_auth(codex_core::CodexAuth::create_dummy_chatgpt_auth_for_testing())
+        .with_auth(orbit_code_core::CodexAuth::create_dummy_chatgpt_auth_for_testing())
         .with_config(|config| {
             config
                 .features

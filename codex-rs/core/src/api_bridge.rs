@@ -1,12 +1,12 @@
 use base64::Engine;
 use chrono::DateTime;
 use chrono::Utc;
-use codex_api::AuthProvider as ApiAuthProvider;
-use codex_api::TransportError;
-use codex_api::error::ApiError;
-use codex_api::rate_limits::parse_promo_message;
-use codex_api::rate_limits::parse_rate_limit_for_limit;
 use http::HeaderMap;
+use orbit_code_api::AuthProvider as ApiAuthProvider;
+use orbit_code_api::TransportError;
+use orbit_code_api::error::ApiError;
+use orbit_code_api::rate_limits::parse_promo_message;
+use orbit_code_api::rate_limits::parse_rate_limit_for_limit;
 use serde::Deserialize;
 use serde_json::Value;
 

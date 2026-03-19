@@ -7,8 +7,8 @@ use crate::rollout::list::ThreadListLayout;
 use crate::rollout::list::ThreadSortKey;
 use crate::rollout::list::get_threads_in_root;
 use crate::state_db;
-use codex_protocol::config_types::Personality;
-use codex_protocol::protocol::SessionSource;
+use orbit_code_protocol::config_types::Personality;
+use orbit_code_protocol::protocol::SessionSource;
 use std::io;
 use std::path::Path;
 use tokio::fs::OpenOptions;
@@ -25,10 +25,10 @@ pub enum PersonalityMigrationStatus {
 }
 
 pub async fn maybe_migrate_personality(
-    codex_home: &Path,
+    orbit_code_home: &Path,
     config_toml: &ConfigToml,
 ) -> io::Result<PersonalityMigrationStatus> {
-    let marker_path = codex_home.join(PERSONALITY_MIGRATION_FILENAME);
+    let marker_path = orbit_code_home.join(PERSONALITY_MIGRATION_FILENAME);
     if tokio::fs::try_exists(&marker_path).await? {
         return Ok(PersonalityMigrationStatus::SkippedMarker);
     }
@@ -46,12 +46,12 @@ pub async fn maybe_migrate_personality(
         .or_else(|| config_toml.model_provider.clone())
         .unwrap_or_else(|| "openai".to_string());
 
-    if !has_recorded_sessions(codex_home, model_provider_id.as_str()).await? {
+    if !has_recorded_sessions(orbit_code_home, model_provider_id.as_str()).await? {
         create_marker(&marker_path).await?;
         return Ok(PersonalityMigrationStatus::SkippedNoSessions);
     }
 
-    ConfigEditsBuilder::new(codex_home)
+    ConfigEditsBuilder::new(orbit_code_home)
         .set_personality(Some(Personality::Pragmatic))
         .apply()
         .await
@@ -63,13 +63,13 @@ pub async fn maybe_migrate_personality(
     Ok(PersonalityMigrationStatus::Applied)
 }
 
-async fn has_recorded_sessions(codex_home: &Path, default_provider: &str) -> io::Result<bool> {
+async fn has_recorded_sessions(orbit_code_home: &Path, default_provider: &str) -> io::Result<bool> {
     let allowed_sources: &[SessionSource] = &[];
 
-    if let Some(state_db_ctx) = state_db::open_if_present(codex_home, default_provider).await
+    if let Some(state_db_ctx) = state_db::open_if_present(orbit_code_home, default_provider).await
         && let Some(ids) = state_db::list_thread_ids_db(
             Some(state_db_ctx.as_ref()),
-            codex_home,
+            orbit_code_home,
             /*page_size*/ 1,
             /*cursor*/ None,
             ThreadSortKey::CreatedAt,
@@ -85,7 +85,7 @@ async fn has_recorded_sessions(codex_home: &Path, default_provider: &str) -> io:
     }
 
     let sessions = get_threads_in_root(
-        codex_home.join(SESSIONS_SUBDIR),
+        orbit_code_home.join(SESSIONS_SUBDIR),
         /*page_size*/ 1,
         /*cursor*/ None,
         ThreadSortKey::CreatedAt,
@@ -102,7 +102,7 @@ async fn has_recorded_sessions(codex_home: &Path, default_provider: &str) -> io:
     }
 
     let archived_sessions = get_threads_in_root(
-        codex_home.join(ARCHIVED_SESSIONS_SUBDIR),
+        orbit_code_home.join(ARCHIVED_SESSIONS_SUBDIR),
         /*page_size*/ 1,
         /*cursor*/ None,
         ThreadSortKey::CreatedAt,

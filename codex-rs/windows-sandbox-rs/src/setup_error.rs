@@ -1,6 +1,6 @@
 use anyhow::Context;
 use anyhow::Result;
-use codex_utils_string::sanitize_metric_tag_value;
+use orbit_code_utils_string::sanitize_metric_tag_value;
 use serde::Deserialize;
 use serde::Serialize;
 use std::fs;
@@ -15,7 +15,7 @@ use std::path::PathBuf;
 #[serde(rename_all = "snake_case")]
 pub enum SetupErrorCode {
     // Orchestrator (run in CLI) failures.
-    /// Failed to create `codex_home/.sandbox` in the orchestrator.
+    /// Failed to create `orbit_code_home/.sandbox` in the orchestrator.
     OrchestratorSandboxDirCreateFailed,
     /// Failed to determine whether the current process is elevated.
     OrchestratorElevationCheckFailed,
@@ -32,7 +32,7 @@ pub enum SetupErrorCode {
     // Helper (elevated process) failures.
     /// Helper failed while validating or decoding the request payload.
     HelperRequestArgsFailed,
-    /// Helper failed to create `codex_home/.sandbox`.
+    /// Helper failed to create `orbit_code_home/.sandbox`.
     HelperSandboxDirCreateFailed,
     /// Helper failed to open or write the setup log.
     HelperLogFailed,
@@ -147,12 +147,12 @@ pub fn extract_failure(err: &anyhow::Error) -> Option<&SetupFailure> {
     err.downcast_ref::<SetupFailure>()
 }
 
-pub fn setup_error_path(codex_home: &Path) -> PathBuf {
-    codex_home.join(".sandbox").join("setup_error.json")
+pub fn setup_error_path(orbit_code_home: &Path) -> PathBuf {
+    orbit_code_home.join(".sandbox").join("setup_error.json")
 }
 
-pub fn clear_setup_error_report(codex_home: &Path) -> Result<()> {
-    let path = setup_error_path(codex_home);
+pub fn clear_setup_error_report(orbit_code_home: &Path) -> Result<()> {
+    let path = setup_error_path(orbit_code_home);
     match fs::remove_file(&path) {
         Ok(()) => Ok(()),
         Err(err) if err.kind() == ErrorKind::NotFound => Ok(()),
@@ -160,18 +160,18 @@ pub fn clear_setup_error_report(codex_home: &Path) -> Result<()> {
     }
 }
 
-pub fn write_setup_error_report(codex_home: &Path, report: &SetupErrorReport) -> Result<()> {
-    let sandbox_dir = codex_home.join(".sandbox");
+pub fn write_setup_error_report(orbit_code_home: &Path, report: &SetupErrorReport) -> Result<()> {
+    let sandbox_dir = orbit_code_home.join(".sandbox");
     fs::create_dir_all(&sandbox_dir)
         .with_context(|| format!("create sandbox dir {}", sandbox_dir.display()))?;
-    let path = setup_error_path(codex_home);
+    let path = setup_error_path(orbit_code_home);
     let json = serde_json::to_vec_pretty(report)?;
     fs::write(&path, json).with_context(|| format!("write {}", path.display()))?;
     Ok(())
 }
 
-pub fn read_setup_error_report(codex_home: &Path) -> Result<Option<SetupErrorReport>> {
-    let path = setup_error_path(codex_home);
+pub fn read_setup_error_report(orbit_code_home: &Path) -> Result<Option<SetupErrorReport>> {
+    let path = setup_error_path(orbit_code_home);
     let bytes = match fs::read(&path) {
         Ok(bytes) => bytes,
         Err(err) if err.kind() == ErrorKind::NotFound => return Ok(None),

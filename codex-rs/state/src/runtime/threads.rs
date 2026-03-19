@@ -682,23 +682,24 @@ mod tests {
     use super::*;
     use crate::runtime::test_support::test_thread_metadata;
     use crate::runtime::test_support::unique_temp_dir;
-    use codex_protocol::protocol::EventMsg;
-    use codex_protocol::protocol::GitInfo;
-    use codex_protocol::protocol::SessionMeta;
-    use codex_protocol::protocol::SessionMetaLine;
-    use codex_protocol::protocol::SessionSource;
+    use orbit_code_protocol::protocol::EventMsg;
+    use orbit_code_protocol::protocol::GitInfo;
+    use orbit_code_protocol::protocol::SessionMeta;
+    use orbit_code_protocol::protocol::SessionMetaLine;
+    use orbit_code_protocol::protocol::SessionSource;
     use pretty_assertions::assert_eq;
     use std::path::PathBuf;
 
     #[tokio::test]
     async fn upsert_thread_keeps_creation_memory_mode_for_existing_rows() {
-        let codex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(codex_home.clone(), "test-provider".to_string())
+        let orbit_code_home = unique_temp_dir();
+        let runtime = StateRuntime::init(orbit_code_home.clone(), "test-provider".to_string())
             .await
             .expect("state db should initialize");
         let thread_id =
             ThreadId::from_string("00000000-0000-0000-0000-000000000123").expect("valid thread id");
-        let mut metadata = test_thread_metadata(&codex_home, thread_id, codex_home.clone());
+        let mut metadata =
+            test_thread_metadata(&orbit_code_home, thread_id, orbit_code_home.clone());
 
         runtime
             .upsert_thread_with_creation_memory_mode(&metadata, Some("disabled"))
@@ -730,13 +731,13 @@ mod tests {
 
     #[tokio::test]
     async fn apply_rollout_items_restores_memory_mode_from_session_meta() {
-        let codex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(codex_home.clone(), "test-provider".to_string())
+        let orbit_code_home = unique_temp_dir();
+        let runtime = StateRuntime::init(orbit_code_home.clone(), "test-provider".to_string())
             .await
             .expect("state db should initialize");
         let thread_id =
             ThreadId::from_string("00000000-0000-0000-0000-000000000456").expect("valid thread id");
-        let metadata = test_thread_metadata(&codex_home, thread_id, codex_home.clone());
+        let metadata = test_thread_metadata(&orbit_code_home, thread_id, orbit_code_home.clone());
 
         runtime
             .upsert_thread(&metadata)
@@ -782,13 +783,14 @@ mod tests {
 
     #[tokio::test]
     async fn apply_rollout_items_preserves_existing_git_branch_and_fills_missing_git_fields() {
-        let codex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(codex_home.clone(), "test-provider".to_string())
+        let orbit_code_home = unique_temp_dir();
+        let runtime = StateRuntime::init(orbit_code_home.clone(), "test-provider".to_string())
             .await
             .expect("state db should initialize");
         let thread_id =
             ThreadId::from_string("00000000-0000-0000-0000-000000000457").expect("valid thread id");
-        let mut metadata = test_thread_metadata(&codex_home, thread_id, codex_home.clone());
+        let mut metadata =
+            test_thread_metadata(&orbit_code_home, thread_id, orbit_code_home.clone());
         metadata.git_branch = Some("sqlite-branch".to_string());
 
         runtime
@@ -846,13 +848,13 @@ mod tests {
 
     #[tokio::test]
     async fn update_thread_git_info_preserves_newer_non_git_metadata() {
-        let codex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(codex_home.clone(), "test-provider".to_string())
+        let orbit_code_home = unique_temp_dir();
+        let runtime = StateRuntime::init(orbit_code_home.clone(), "test-provider".to_string())
             .await
             .expect("state db should initialize");
         let thread_id =
             ThreadId::from_string("00000000-0000-0000-0000-000000000789").expect("valid thread id");
-        let metadata = test_thread_metadata(&codex_home, thread_id, codex_home.clone());
+        let metadata = test_thread_metadata(&orbit_code_home, thread_id, orbit_code_home.clone());
 
         runtime
             .upsert_thread(&metadata)
@@ -905,14 +907,15 @@ mod tests {
 
     #[tokio::test]
     async fn insert_thread_if_absent_preserves_existing_metadata() {
-        let codex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(codex_home.clone(), "test-provider".to_string())
+        let orbit_code_home = unique_temp_dir();
+        let runtime = StateRuntime::init(orbit_code_home.clone(), "test-provider".to_string())
             .await
             .expect("state db should initialize");
         let thread_id =
             ThreadId::from_string("00000000-0000-0000-0000-000000000791").expect("valid thread id");
 
-        let mut existing = test_thread_metadata(&codex_home, thread_id, codex_home.clone());
+        let mut existing =
+            test_thread_metadata(&orbit_code_home, thread_id, orbit_code_home.clone());
         existing.tokens_used = 123;
         existing.first_user_message = Some("newer preview".to_string());
         existing.updated_at = DateTime::<Utc>::from_timestamp(1_700_000_100, 0).expect("timestamp");
@@ -921,7 +924,8 @@ mod tests {
             .await
             .expect("initial upsert should succeed");
 
-        let mut fallback = test_thread_metadata(&codex_home, thread_id, codex_home.clone());
+        let mut fallback =
+            test_thread_metadata(&orbit_code_home, thread_id, orbit_code_home.clone());
         fallback.tokens_used = 0;
         fallback.first_user_message = None;
         fallback.updated_at = DateTime::<Utc>::from_timestamp(1_700_000_000, 0).expect("timestamp");
@@ -950,13 +954,14 @@ mod tests {
 
     #[tokio::test]
     async fn update_thread_git_info_can_clear_fields() {
-        let codex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(codex_home.clone(), "test-provider".to_string())
+        let orbit_code_home = unique_temp_dir();
+        let runtime = StateRuntime::init(orbit_code_home.clone(), "test-provider".to_string())
             .await
             .expect("state db should initialize");
         let thread_id =
             ThreadId::from_string("00000000-0000-0000-0000-000000000790").expect("valid thread id");
-        let mut metadata = test_thread_metadata(&codex_home, thread_id, codex_home.clone());
+        let mut metadata =
+            test_thread_metadata(&orbit_code_home, thread_id, orbit_code_home.clone());
         metadata.git_sha = Some("abc123".to_string());
         metadata.git_branch = Some("feature/branch".to_string());
         metadata.git_origin_url = Some("git@example.com:openai/codex.git".to_string());
@@ -984,13 +989,14 @@ mod tests {
 
     #[tokio::test]
     async fn touch_thread_updated_at_updates_only_updated_at() {
-        let codex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(codex_home.clone(), "test-provider".to_string())
+        let orbit_code_home = unique_temp_dir();
+        let runtime = StateRuntime::init(orbit_code_home.clone(), "test-provider".to_string())
             .await
             .expect("state db should initialize");
         let thread_id =
             ThreadId::from_string("00000000-0000-0000-0000-000000000791").expect("valid thread id");
-        let mut metadata = test_thread_metadata(&codex_home, thread_id, codex_home.clone());
+        let mut metadata =
+            test_thread_metadata(&orbit_code_home, thread_id, orbit_code_home.clone());
         metadata.title = "original title".to_string();
         metadata.first_user_message = Some("first-user-message".to_string());
 
@@ -1021,13 +1027,13 @@ mod tests {
 
     #[tokio::test]
     async fn apply_rollout_items_uses_override_updated_at_when_provided() {
-        let codex_home = unique_temp_dir();
-        let runtime = StateRuntime::init(codex_home.clone(), "test-provider".to_string())
+        let orbit_code_home = unique_temp_dir();
+        let runtime = StateRuntime::init(orbit_code_home.clone(), "test-provider".to_string())
             .await
             .expect("state db should initialize");
         let thread_id =
             ThreadId::from_string("00000000-0000-0000-0000-000000000792").expect("valid thread id");
-        let metadata = test_thread_metadata(&codex_home, thread_id, codex_home.clone());
+        let metadata = test_thread_metadata(&orbit_code_home, thread_id, orbit_code_home.clone());
 
         runtime
             .upsert_thread(&metadata)
@@ -1041,16 +1047,16 @@ mod tests {
             SessionSource::Cli,
         );
         let items = vec![RolloutItem::EventMsg(EventMsg::TokenCount(
-            codex_protocol::protocol::TokenCountEvent {
-                info: Some(codex_protocol::protocol::TokenUsageInfo {
-                    total_token_usage: codex_protocol::protocol::TokenUsage {
+            orbit_code_protocol::protocol::TokenCountEvent {
+                info: Some(orbit_code_protocol::protocol::TokenUsageInfo {
+                    total_token_usage: orbit_code_protocol::protocol::TokenUsage {
                         input_tokens: 0,
                         cached_input_tokens: 0,
                         output_tokens: 0,
                         reasoning_output_tokens: 0,
                         total_tokens: 321,
                     },
-                    last_token_usage: codex_protocol::protocol::TokenUsage::default(),
+                    last_token_usage: orbit_code_protocol::protocol::TokenUsage::default(),
                     model_context_window: None,
                 }),
                 rate_limits: None,

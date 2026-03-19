@@ -21,7 +21,7 @@ use crate::tools::registry::AnyToolResult;
 use crate::tools::router::ToolCall;
 use crate::tools::router::ToolCallSource;
 use crate::tools::router::ToolRouter;
-use codex_protocol::models::ResponseInputItem;
+use orbit_code_protocol::models::ResponseInputItem;
 
 #[derive(Clone)]
 pub(crate) struct ToolCallRuntime {
@@ -145,15 +145,15 @@ impl ToolCallRuntime {
             ToolPayload::Custom { .. } => ResponseInputItem::CustomToolCallOutput {
                 call_id: call.call_id,
                 name: None,
-                output: codex_protocol::models::FunctionCallOutputPayload {
-                    body: codex_protocol::models::FunctionCallOutputBody::Text(message),
+                output: orbit_code_protocol::models::FunctionCallOutputPayload {
+                    body: orbit_code_protocol::models::FunctionCallOutputBody::Text(message),
                     success: Some(false),
                 },
             },
             _ => ResponseInputItem::FunctionCallOutput {
                 call_id: call.call_id,
-                output: codex_protocol::models::FunctionCallOutputPayload {
-                    body: codex_protocol::models::FunctionCallOutputBody::Text(message),
+                output: orbit_code_protocol::models::FunctionCallOutputPayload {
+                    body: orbit_code_protocol::models::FunctionCallOutputBody::Text(message),
                     success: Some(false),
                 },
             },

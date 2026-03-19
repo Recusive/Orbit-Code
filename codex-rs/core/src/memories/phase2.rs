@@ -10,17 +10,17 @@ use crate::memories::prompts::build_consolidation_prompt;
 use crate::memories::storage::rebuild_raw_memories_file_from_memories;
 use crate::memories::storage::rollout_summary_file_stem;
 use crate::memories::storage::sync_rollout_summaries_from_memories;
-use codex_config::Constrained;
-use codex_protocol::ThreadId;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::SandboxPolicy;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::SubAgentSource;
-use codex_protocol::protocol::TokenUsage;
-use codex_protocol::user_input::UserInput;
-use codex_state::Stage1Output;
-use codex_state::StateRuntime;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use orbit_code_config::Constrained;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::protocol::AskForApproval;
+use orbit_code_protocol::protocol::SandboxPolicy;
+use orbit_code_protocol::protocol::SessionSource;
+use orbit_code_protocol::protocol::SubAgentSource;
+use orbit_code_protocol::protocol::TokenUsage;
+use orbit_code_protocol::user_input::UserInput;
+use orbit_code_state::Stage1Output;
+use orbit_code_state::StateRuntime;
+use orbit_code_utils_absolute_path::AbsolutePathBuf;
 use std::collections::HashSet;
 use std::sync::Arc;
 use std::time::Duration;
@@ -51,7 +51,7 @@ pub(super) async fn run(session: &Arc<Session>, config: Arc<Config>) {
         // This should not happen.
         return;
     };
-    let root = memory_root(&config.codex_home);
+    let root = memory_root(&config.orbit_code_home);
     let max_raw_memories = config.memories.max_raw_memories_for_consolidation;
     let max_unused_days = config.memories.max_unused_days;
 
@@ -161,7 +161,7 @@ pub(super) async fn run(session: &Arc<Session>, config: Arc<Config>) {
 }
 
 fn artifact_memories_for_phase2(
-    selection: &codex_state::Phase2InputSelection,
+    selection: &orbit_code_state::Phase2InputSelection,
 ) -> Vec<Stage1Output> {
     let mut seen = HashSet::new();
     let mut memories = selection.selected.clone();
@@ -192,7 +192,7 @@ mod job {
                 "failed_claim"
             })?;
         let (token, watermark) = match claim {
-            codex_state::Phase2JobClaimOutcome::Claimed {
+            orbit_code_state::Phase2JobClaimOutcome::Claimed {
                 ownership_token,
                 input_watermark,
             } => {
@@ -203,8 +203,12 @@ mod job {
                 );
                 (ownership_token, input_watermark)
             }
-            codex_state::Phase2JobClaimOutcome::SkippedNotDirty => return Err("skipped_not_dirty"),
-            codex_state::Phase2JobClaimOutcome::SkippedRunning => return Err("skipped_running"),
+            orbit_code_state::Phase2JobClaimOutcome::SkippedNotDirty => {
+                return Err("skipped_not_dirty");
+            }
+            orbit_code_state::Phase2JobClaimOutcome::SkippedRunning => {
+                return Err("skipped_running");
+            }
         };
 
         Ok(Claim { token, watermark })
@@ -245,7 +249,7 @@ mod job {
         db: &StateRuntime,
         claim: &Claim,
         completion_watermark: i64,
-        selected_outputs: &[codex_state::Stage1Output],
+        selected_outputs: &[orbit_code_state::Stage1Output],
         reason: &'static str,
     ) {
         session.services.session_telemetry.counter(
@@ -263,7 +267,7 @@ mod agent {
     use super::*;
 
     pub(super) fn get_config(config: Arc<Config>) -> Option<Config> {
-        let root = memory_root(&config.codex_home);
+        let root = memory_root(&config.orbit_code_home);
         let mut agent_config = config.as_ref().clone();
 
         agent_config.cwd = root;
@@ -276,14 +280,14 @@ mod agent {
 
         // Sandbox policy
         let mut writable_roots = Vec::new();
-        match AbsolutePathBuf::from_absolute_path(agent_config.codex_home.clone()) {
-            Ok(codex_home) => writable_roots.push(codex_home),
+        match AbsolutePathBuf::from_absolute_path(agent_config.orbit_code_home.clone()) {
+            Ok(orbit_code_home) => writable_roots.push(orbit_code_home),
             Err(err) => warn!(
-                "memory phase-2 consolidation could not add codex_home writable root {}: {err}",
-                agent_config.codex_home.display()
+                "memory phase-2 consolidation could not add orbit_code_home writable root {}: {err}",
+                agent_config.orbit_code_home.display()
             ),
         }
-        // The consolidation agent only needs local codex_home write access and no network.
+        // The consolidation agent only needs local orbit_code_home write access and no network.
         let consolidation_sandbox_policy = SandboxPolicy::WorkspaceWrite {
             writable_roots,
             read_only_access: Default::default(),
@@ -311,9 +315,9 @@ mod agent {
 
     pub(super) fn get_prompt(
         config: Arc<Config>,
-        selection: &codex_state::Phase2InputSelection,
+        selection: &orbit_code_state::Phase2InputSelection,
     ) -> Vec<UserInput> {
-        let root = memory_root(&config.codex_home);
+        let root = memory_root(&config.orbit_code_home);
         let prompt = build_consolidation_prompt(&root, selection);
         vec![UserInput::Text {
             text: prompt,
@@ -326,9 +330,9 @@ mod agent {
         session: &Arc<Session>,
         claim: Claim,
         new_watermark: i64,
-        selected_outputs: Vec<codex_state::Stage1Output>,
+        selected_outputs: Vec<orbit_code_state::Stage1Output>,
         thread_id: ThreadId,
-        phase_two_e2e_timer: Option<codex_otel::Timer>,
+        phase_two_e2e_timer: Option<orbit_code_otel::Timer>,
     ) {
         let Some(db) = session.services.state_db.clone() else {
             return;
@@ -445,7 +449,7 @@ mod agent {
 
 pub(super) fn get_watermark(
     claimed_watermark: i64,
-    latest_memories: &[codex_state::Stage1Output],
+    latest_memories: &[orbit_code_state::Stage1Output],
 ) -> i64 {
     latest_memories
         .iter()

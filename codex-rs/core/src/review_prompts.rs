@@ -1,6 +1,6 @@
-use codex_git::merge_base_with_head;
-use codex_protocol::protocol::ReviewRequest;
-use codex_protocol::protocol::ReviewTarget;
+use orbit_code_git::merge_base_with_head;
+use orbit_code_protocol::protocol::ReviewRequest;
+use orbit_code_protocol::protocol::ReviewTarget;
 use std::path::Path;
 
 #[derive(Clone, Debug, PartialEq)]

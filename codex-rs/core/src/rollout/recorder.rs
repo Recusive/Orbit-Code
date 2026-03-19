@@ -8,9 +8,9 @@ use std::path::PathBuf;
 
 use chrono::SecondsFormat;
 use chrono::Utc;
-use codex_protocol::ThreadId;
-use codex_protocol::dynamic_tools::DynamicToolSpec;
-use codex_protocol::models::BaseInstructions;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::dynamic_tools::DynamicToolSpec;
+use orbit_code_protocol::models::BaseInstructions;
 use serde_json::Value;
 use time::OffsetDateTime;
 use time::format_description::FormatItem;
@@ -47,16 +47,16 @@ use crate::state_db;
 use crate::state_db::StateDbHandle;
 use crate::truncate::TruncationPolicy;
 use crate::truncate::truncate_text;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::InitialHistory;
-use codex_protocol::protocol::ResumedHistory;
-use codex_protocol::protocol::RolloutItem;
-use codex_protocol::protocol::RolloutLine;
-use codex_protocol::protocol::SessionMeta;
-use codex_protocol::protocol::SessionMetaLine;
-use codex_protocol::protocol::SessionSource;
-use codex_state::StateRuntime;
-use codex_state::ThreadMetadataBuilder;
+use orbit_code_protocol::protocol::EventMsg;
+use orbit_code_protocol::protocol::InitialHistory;
+use orbit_code_protocol::protocol::ResumedHistory;
+use orbit_code_protocol::protocol::RolloutItem;
+use orbit_code_protocol::protocol::RolloutLine;
+use orbit_code_protocol::protocol::SessionMeta;
+use orbit_code_protocol::protocol::SessionMetaLine;
+use orbit_code_protocol::protocol::SessionSource;
+use orbit_code_state::StateRuntime;
+use orbit_code_state::ThreadMetadataBuilder;
 
 /// Records all [`ResponseItem`]s for a session and flushes them to disk after
 /// every update.
@@ -224,12 +224,12 @@ impl RolloutRecorder {
         archived: bool,
         search_term: Option<&str>,
     ) -> std::io::Result<ThreadsPage> {
-        let codex_home = config.codex_home.as_path();
+        let orbit_code_home = config.orbit_code_home.as_path();
         // Filesystem-first listing intentionally overfetches so we can repair stale/missing
         // SQLite rollout paths before the final DB-backed page is returned.
         let fs_page_size = page_size.saturating_mul(2).max(page_size);
         let fs_page = if archived {
-            let root = codex_home.join(ARCHIVED_SESSIONS_SUBDIR);
+            let root = orbit_code_home.join(ARCHIVED_SESSIONS_SUBDIR);
             get_threads_in_root(
                 root,
                 fs_page_size,
@@ -245,7 +245,7 @@ impl RolloutRecorder {
             .await?
         } else {
             get_threads(
-                codex_home,
+                orbit_code_home,
                 fs_page_size,
                 cursor,
                 sort_key,
@@ -276,7 +276,7 @@ impl RolloutRecorder {
 
         if let Some(db_page) = state_db::list_threads_db(
             state_db_ctx.as_deref(),
-            codex_home,
+            orbit_code_home,
             page_size,
             cursor,
             sort_key,
@@ -307,14 +307,14 @@ impl RolloutRecorder {
         default_provider: &str,
         filter_cwd: Option<&Path>,
     ) -> std::io::Result<Option<PathBuf>> {
-        let codex_home = config.codex_home.as_path();
+        let orbit_code_home = config.orbit_code_home.as_path();
         let state_db_ctx = state_db::get_state_db(config).await;
         if state_db_ctx.is_some() {
             let mut db_cursor = cursor.cloned();
             loop {
                 let Some(db_page) = state_db::list_threads_db(
                     state_db_ctx.as_deref(),
-                    codex_home,
+                    orbit_code_home,
                     page_size,
                     db_cursor.as_ref(),
                     sort_key,
@@ -342,7 +342,7 @@ impl RolloutRecorder {
         let mut cursor = cursor.cloned();
         loop {
             let page = get_threads(
-                codex_home,
+                orbit_code_home,
                 page_size,
                 cursor.as_ref(),
                 sort_key,
@@ -665,7 +665,7 @@ fn precompute_log_file_info(
     // Resolve ~/.codex/sessions/YYYY/MM/DD path.
     let timestamp = OffsetDateTime::now_local()
         .map_err(|e| IoError::other(format!("failed to get local time: {e}")))?;
-    let mut dir = config.codex_home.clone();
+    let mut dir = config.orbit_code_home.clone();
     dir.push(SESSIONS_SUBDIR);
     dir.push(timestamp.year().to_string());
     dir.push(format!("{:02}", u8::from(timestamp.month())));
@@ -907,7 +907,7 @@ async fn sync_thread_state_after_write(
     if new_thread_memory_mode.is_some()
         || items
             .iter()
-            .any(codex_state::rollout_item_affects_thread_metadata)
+            .any(orbit_code_state::rollout_item_affects_thread_metadata)
     {
         state_db::apply_rollout_items(
             state_db_ctx,
@@ -979,8 +979,8 @@ impl JsonlWriter {
     }
 }
 
-impl From<codex_state::ThreadsPage> for ThreadsPage {
-    fn from(db_page: codex_state::ThreadsPage) -> Self {
+impl From<orbit_code_state::ThreadsPage> for ThreadsPage {
+    fn from(db_page: orbit_code_state::ThreadsPage) -> Self {
         let items = db_page
             .items
             .into_iter()
@@ -1067,7 +1067,7 @@ async fn resume_candidate_matches_cwd(
 }
 
 async fn select_resume_path_from_db_page(
-    page: &codex_state::ThreadsPage,
+    page: &orbit_code_state::ThreadsPage,
     filter_cwd: Option<&Path>,
     default_provider: &str,
 ) -> Option<PathBuf> {

@@ -7,18 +7,18 @@
 //! into a one-shot CLI command while still producing a durable `codex-login.log` artifact that
 //! support can request from users.
 
-use codex_core::CodexAuth;
-use codex_core::auth::AuthCredentialsStoreMode;
-use codex_core::auth::AuthMode;
-use codex_core::auth::CLIENT_ID;
-use codex_core::auth::login_with_api_key;
-use codex_core::auth::logout;
-use codex_core::config::Config;
-use codex_login::ServerOptions;
-use codex_login::run_device_code_login;
-use codex_login::run_login_server;
-use codex_protocol::config_types::ForcedLoginMethod;
-use codex_utils_cli::CliConfigOverrides;
+use orbit_code_core::CodexAuth;
+use orbit_code_core::auth::AuthCredentialsStoreMode;
+use orbit_code_core::auth::AuthMode;
+use orbit_code_core::auth::CLIENT_ID;
+use orbit_code_core::auth::login_with_api_key;
+use orbit_code_core::auth::logout;
+use orbit_code_core::config::Config;
+use orbit_code_login::ServerOptions;
+use orbit_code_login::run_device_code_login;
+use orbit_code_login::run_login_server;
+use orbit_code_protocol::config_types::ForcedLoginMethod;
+use orbit_code_utils_cli::CliConfigOverrides;
 use std::fs::OpenOptions;
 use std::io::IsTerminal;
 use std::io::Read;
@@ -44,7 +44,7 @@ const LOGIN_SUCCESS_MESSAGE: &str = "Successfully logged in";
 /// command produce a durable `codex-login.log` artifact without coupling it to the TUI's broader
 /// telemetry and feedback initialization.
 fn init_login_file_logging(config: &Config) -> Option<WorkerGuard> {
-    let log_dir = match codex_core::config::log_dir(config) {
+    let log_dir = match orbit_code_core::config::log_dir(config) {
         Ok(log_dir) => log_dir,
         Err(err) => {
             eprintln!("Warning: failed to resolve login log directory: {err}");
@@ -82,8 +82,9 @@ fn init_login_file_logging(config: &Config) -> Option<WorkerGuard> {
     };
 
     let (non_blocking, guard) = non_blocking(log_file);
-    let env_filter = EnvFilter::try_from_default_env()
-        .unwrap_or_else(|_| EnvFilter::new("codex_cli=info,codex_core=info,codex_login=info"));
+    let env_filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| {
+        EnvFilter::new("orbit_code_cli=info,orbit_code_core=info,orbit_code_login=info")
+    });
     let file_layer = tracing_subscriber::fmt::layer()
         .with_writer(non_blocking)
         .with_target(true)
@@ -111,12 +112,12 @@ fn print_login_server_start(actual_port: u16, auth_url: &str) {
 }
 
 pub async fn login_with_chatgpt(
-    codex_home: PathBuf,
+    orbit_code_home: PathBuf,
     forced_chatgpt_workspace_id: Option<String>,
     cli_auth_credentials_store_mode: AuthCredentialsStoreMode,
 ) -> std::io::Result<()> {
     let opts = ServerOptions::new(
-        codex_home,
+        orbit_code_home,
         CLIENT_ID.to_string(),
         forced_chatgpt_workspace_id,
         cli_auth_credentials_store_mode,
@@ -141,7 +142,7 @@ pub async fn run_login_with_chatgpt(cli_config_overrides: CliConfigOverrides) ->
     let forced_chatgpt_workspace_id = config.forced_chatgpt_workspace_id.clone();
 
     match login_with_chatgpt(
-        config.codex_home,
+        config.orbit_code_home,
         forced_chatgpt_workspace_id,
         config.cli_auth_credentials_store_mode,
     )
@@ -172,7 +173,7 @@ pub async fn run_login_with_api_key(
     }
 
     match login_with_api_key(
-        &config.codex_home,
+        &config.orbit_code_home,
         &api_key,
         config.cli_auth_credentials_store_mode,
     ) {
@@ -229,7 +230,7 @@ pub async fn run_login_with_device_code(
     }
     let forced_chatgpt_workspace_id = config.forced_chatgpt_workspace_id.clone();
     let mut opts = ServerOptions::new(
-        config.codex_home,
+        config.orbit_code_home,
         client_id.unwrap_or(CLIENT_ID.to_string()),
         forced_chatgpt_workspace_id,
         config.cli_auth_credentials_store_mode,
@@ -268,7 +269,7 @@ pub async fn run_login_with_device_code_fallback_to_browser(
 
     let forced_chatgpt_workspace_id = config.forced_chatgpt_workspace_id.clone();
     let mut opts = ServerOptions::new(
-        config.codex_home,
+        config.orbit_code_home,
         client_id.unwrap_or(CLIENT_ID.to_string()),
         forced_chatgpt_workspace_id,
         config.cli_auth_credentials_store_mode,
@@ -316,7 +317,10 @@ pub async fn run_login_with_device_code_fallback_to_browser(
 pub async fn run_login_status(cli_config_overrides: CliConfigOverrides) -> ! {
     let config = load_config_or_exit(cli_config_overrides).await;
 
-    match CodexAuth::from_auth_storage(&config.codex_home, config.cli_auth_credentials_store_mode) {
+    match CodexAuth::from_auth_storage(
+        &config.orbit_code_home,
+        config.cli_auth_credentials_store_mode,
+    ) {
         Ok(Some(auth)) => match auth.auth_mode() {
             AuthMode::ApiKey => match auth.get_token() {
                 Ok(api_key) => {
@@ -347,7 +351,10 @@ pub async fn run_login_status(cli_config_overrides: CliConfigOverrides) -> ! {
 pub async fn run_logout(cli_config_overrides: CliConfigOverrides) -> ! {
     let config = load_config_or_exit(cli_config_overrides).await;
 
-    match logout(&config.codex_home, config.cli_auth_credentials_store_mode) {
+    match logout(
+        &config.orbit_code_home,
+        config.cli_auth_credentials_store_mode,
+    ) {
         Ok(true) => {
             eprintln!("Successfully logged out");
             std::process::exit(0);

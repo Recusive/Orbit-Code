@@ -6,9 +6,9 @@ use crate::tools::handlers::parse_arguments;
 use crate::tools::registry::ToolHandler;
 use crate::tools::registry::ToolKind;
 use async_trait::async_trait;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::config_types::TUI_VISIBLE_COLLABORATION_MODES;
-use codex_protocol::request_user_input::RequestUserInputArgs;
+use orbit_code_protocol::config_types::ModeKind;
+use orbit_code_protocol::config_types::TUI_VISIBLE_COLLABORATION_MODES;
+use orbit_code_protocol::request_user_input::RequestUserInputArgs;
 
 fn request_user_input_is_available(mode: ModeKind, default_mode_request_user_input: bool) -> bool {
     mode.allows_request_user_input()

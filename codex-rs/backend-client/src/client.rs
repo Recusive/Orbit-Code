@@ -4,13 +4,13 @@ use crate::types::PaginatedListTaskListItem;
 use crate::types::RateLimitStatusPayload;
 use crate::types::TurnAttemptsSiblingTurnsResponse;
 use anyhow::Result;
-use codex_client::build_reqwest_client_with_custom_ca;
-use codex_core::auth::CodexAuth;
-use codex_core::default_client::get_codex_user_agent;
-use codex_protocol::account::PlanType as AccountPlanType;
-use codex_protocol::protocol::CreditsSnapshot;
-use codex_protocol::protocol::RateLimitSnapshot;
-use codex_protocol::protocol::RateLimitWindow;
+use orbit_code_client::build_reqwest_client_with_custom_ca;
+use orbit_code_core::auth::CodexAuth;
+use orbit_code_core::default_client::get_orbit_code_user_agent;
+use orbit_code_protocol::account::PlanType as AccountPlanType;
+use orbit_code_protocol::protocol::CreditsSnapshot;
+use orbit_code_protocol::protocol::RateLimitSnapshot;
+use orbit_code_protocol::protocol::RateLimitWindow;
 use reqwest::StatusCode;
 use reqwest::header::AUTHORIZATION;
 use reqwest::header::CONTENT_TYPE;
@@ -136,7 +136,7 @@ impl Client {
     pub fn from_auth(base_url: impl Into<String>, auth: &CodexAuth) -> Result<Self> {
         let token = auth.get_token().map_err(anyhow::Error::from)?;
         let mut client = Self::new(base_url)?
-            .with_user_agent(get_codex_user_agent())
+            .with_user_agent(get_orbit_code_user_agent())
             .with_bearer_token(token);
         if let Some(account_id) = auth.get_account_id() {
             client = client.with_chatgpt_account_id(account_id);
@@ -519,8 +519,8 @@ mod tests {
                 ..Default::default()
             }))),
             additional_rate_limits: Some(Some(vec![crate::types::AdditionalRateLimitDetails {
-                limit_name: "codex_other".to_string(),
-                metered_feature: "codex_other".to_string(),
+                limit_name: "orbit_code_other".to_string(),
+                metered_feature: "orbit_code_other".to_string(),
                 rate_limit: Some(Some(Box::new(crate::types::RateLimitStatusDetails {
                     primary_window: Some(Some(Box::new(crate::types::RateLimitWindowSnapshot {
                         used_percent: 70,
@@ -563,8 +563,8 @@ mod tests {
         );
         assert_eq!(snapshots[0].plan_type, Some(AccountPlanType::Pro));
 
-        assert_eq!(snapshots[1].limit_id.as_deref(), Some("codex_other"));
-        assert_eq!(snapshots[1].limit_name.as_deref(), Some("codex_other"));
+        assert_eq!(snapshots[1].limit_id.as_deref(), Some("orbit_code_other"));
+        assert_eq!(snapshots[1].limit_name.as_deref(), Some("orbit_code_other"));
         assert_eq!(
             snapshots[1].primary.as_ref().map(|w| w.used_percent),
             Some(70.0)
@@ -579,8 +579,8 @@ mod tests {
             plan_type: crate::types::PlanType::Plus,
             rate_limit: None,
             additional_rate_limits: Some(Some(vec![crate::types::AdditionalRateLimitDetails {
-                limit_name: "codex_other".to_string(),
-                metered_feature: "codex_other".to_string(),
+                limit_name: "orbit_code_other".to_string(),
+                metered_feature: "orbit_code_other".to_string(),
                 rate_limit: None,
             }])),
             credits: None,
@@ -591,16 +591,16 @@ mod tests {
         assert_eq!(snapshots[0].limit_id.as_deref(), Some("codex"));
         assert_eq!(snapshots[0].limit_name, None);
         assert_eq!(snapshots[0].primary, None);
-        assert_eq!(snapshots[1].limit_id.as_deref(), Some("codex_other"));
-        assert_eq!(snapshots[1].limit_name.as_deref(), Some("codex_other"));
+        assert_eq!(snapshots[1].limit_id.as_deref(), Some("orbit_code_other"));
+        assert_eq!(snapshots[1].limit_name.as_deref(), Some("orbit_code_other"));
     }
 
     #[test]
     fn preferred_snapshot_selection_matches_get_rate_limits_behavior() {
         let snapshots = [
             RateLimitSnapshot {
-                limit_id: Some("codex_other".to_string()),
-                limit_name: Some("codex_other".to_string()),
+                limit_id: Some("orbit_code_other".to_string()),
+                limit_name: Some("orbit_code_other".to_string()),
                 primary: Some(RateLimitWindow {
                     used_percent: 90.0,
                     window_minutes: Some(60),

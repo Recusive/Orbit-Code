@@ -1,8 +1,8 @@
 use std::path::PathBuf;
 
-use codex_protocol::approvals::NetworkApprovalProtocol;
-use codex_protocol::models::PermissionProfile;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use orbit_code_protocol::approvals::NetworkApprovalProtocol;
+use orbit_code_protocol::models::PermissionProfile;
+use orbit_code_utils_absolute_path::AbsolutePathBuf;
 use serde::Serialize;
 use serde_json::Value;
 
@@ -149,7 +149,7 @@ fn serialize_command_guardian_action(
 fn command_assessment_action_value(tool: &'static str, command: &[String], cwd: &PathBuf) -> Value {
     serde_json::json!({
         "tool": tool,
-        "command": codex_shell_command::parse_command::shlex_join(command),
+        "command": orbit_code_shell_command::parse_command::shlex_join(command),
         "cwd": cwd,
     })
 }

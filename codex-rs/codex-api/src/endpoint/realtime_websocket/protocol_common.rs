@@ -1,5 +1,5 @@
-use codex_protocol::protocol::RealtimeEvent;
-use codex_protocol::protocol::RealtimeTranscriptDelta;
+use orbit_code_protocol::protocol::RealtimeEvent;
+use orbit_code_protocol::protocol::RealtimeTranscriptDelta;
 use serde_json::Value;
 use tracing::debug;
 

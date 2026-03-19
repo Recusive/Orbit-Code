@@ -1,7 +1,7 @@
 use super::*;
 use crate::codex::make_session_and_context;
 use crate::exec::StreamOutput;
-use codex_protocol::models::ContentItem;
+use orbit_code_protocol::models::ContentItem;
 use pretty_assertions::assert_eq;
 
 #[test]

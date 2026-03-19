@@ -1,10 +1,10 @@
 use super::*;
-use codex_protocol::protocol::ConversationStartParams;
-use codex_protocol::protocol::RealtimeAudioFrame;
-use codex_protocol::protocol::RealtimeConversationClosedEvent;
-use codex_protocol::protocol::RealtimeConversationRealtimeEvent;
-use codex_protocol::protocol::RealtimeConversationStartedEvent;
-use codex_protocol::protocol::RealtimeEvent;
+use orbit_code_protocol::protocol::ConversationStartParams;
+use orbit_code_protocol::protocol::RealtimeAudioFrame;
+use orbit_code_protocol::protocol::RealtimeConversationClosedEvent;
+use orbit_code_protocol::protocol::RealtimeConversationRealtimeEvent;
+use orbit_code_protocol::protocol::RealtimeConversationStartedEvent;
+use orbit_code_protocol::protocol::RealtimeEvent;
 #[cfg(not(target_os = "linux"))]
 use std::time::Duration;
 
@@ -119,7 +119,7 @@ impl ChatWidget {
 
     #[cfg(test)]
     pub(super) fn pending_steer_compare_key_from_item(
-        item: &codex_protocol::items::UserMessageItem,
+        item: &orbit_code_protocol::items::UserMessageItem,
     ) -> PendingSteerCompareKey {
         Self::pending_steer_compare_key_from_items(&item.content)
     }

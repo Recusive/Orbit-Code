@@ -5,70 +5,70 @@ use std::sync::RwLock;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 
-use crate::codex_message_processor::CodexMessageProcessor;
-use crate::codex_message_processor::CodexMessageProcessorArgs;
 use crate::config_api::ConfigApi;
 use crate::error_code::INVALID_REQUEST_ERROR_CODE;
 use crate::external_agent_config_api::ExternalAgentConfigApi;
 use crate::fs_api::FsApi;
+use crate::orbit_code_message_processor::CodexMessageProcessor;
+use crate::orbit_code_message_processor::CodexMessageProcessorArgs;
 use crate::outgoing_message::ConnectionId;
 use crate::outgoing_message::ConnectionRequestId;
 use crate::outgoing_message::OutgoingMessageSender;
 use crate::outgoing_message::RequestContext;
 use crate::transport::AppServerTransport;
 use async_trait::async_trait;
-use codex_app_server_protocol::ChatgptAuthTokensRefreshParams;
-use codex_app_server_protocol::ChatgptAuthTokensRefreshReason;
-use codex_app_server_protocol::ChatgptAuthTokensRefreshResponse;
-use codex_app_server_protocol::ClientInfo;
-use codex_app_server_protocol::ClientNotification;
-use codex_app_server_protocol::ClientRequest;
-use codex_app_server_protocol::ConfigBatchWriteParams;
-use codex_app_server_protocol::ConfigReadParams;
-use codex_app_server_protocol::ConfigValueWriteParams;
-use codex_app_server_protocol::ConfigWarningNotification;
-use codex_app_server_protocol::ExperimentalApi;
-use codex_app_server_protocol::ExternalAgentConfigDetectParams;
-use codex_app_server_protocol::ExternalAgentConfigImportParams;
-use codex_app_server_protocol::FsCopyParams;
-use codex_app_server_protocol::FsCreateDirectoryParams;
-use codex_app_server_protocol::FsGetMetadataParams;
-use codex_app_server_protocol::FsReadDirectoryParams;
-use codex_app_server_protocol::FsReadFileParams;
-use codex_app_server_protocol::FsRemoveParams;
-use codex_app_server_protocol::FsWriteFileParams;
-use codex_app_server_protocol::InitializeResponse;
-use codex_app_server_protocol::JSONRPCError;
-use codex_app_server_protocol::JSONRPCErrorError;
-use codex_app_server_protocol::JSONRPCNotification;
-use codex_app_server_protocol::JSONRPCRequest;
-use codex_app_server_protocol::JSONRPCResponse;
-use codex_app_server_protocol::ServerNotification;
-use codex_app_server_protocol::ServerRequestPayload;
-use codex_app_server_protocol::experimental_required_message;
-use codex_arg0::Arg0DispatchPaths;
-use codex_core::AnalyticsEventsClient;
-use codex_core::AuthManager;
-use codex_core::ThreadManager;
-use codex_core::auth::ExternalAuthRefreshContext;
-use codex_core::auth::ExternalAuthRefreshReason;
-use codex_core::auth::ExternalAuthRefresher;
-use codex_core::auth::ExternalAuthTokens;
-use codex_core::config::Config;
-use codex_core::config_loader::CloudRequirementsLoader;
-use codex_core::config_loader::LoaderOverrides;
-use codex_core::default_client::SetOriginatorError;
-use codex_core::default_client::USER_AGENT_SUFFIX;
-use codex_core::default_client::get_codex_user_agent;
-use codex_core::default_client::set_default_client_residency_requirement;
-use codex_core::default_client::set_default_originator;
-use codex_core::models_manager::collaboration_mode_presets::CollaborationModesConfig;
-use codex_feedback::CodexFeedback;
-use codex_protocol::ThreadId;
-use codex_protocol::protocol::SessionSource;
-use codex_protocol::protocol::W3cTraceContext;
-use codex_state::log_db::LogDbLayer;
 use futures::FutureExt;
+use orbit_code_app_server_protocol::ChatgptAuthTokensRefreshParams;
+use orbit_code_app_server_protocol::ChatgptAuthTokensRefreshReason;
+use orbit_code_app_server_protocol::ChatgptAuthTokensRefreshResponse;
+use orbit_code_app_server_protocol::ClientInfo;
+use orbit_code_app_server_protocol::ClientNotification;
+use orbit_code_app_server_protocol::ClientRequest;
+use orbit_code_app_server_protocol::ConfigBatchWriteParams;
+use orbit_code_app_server_protocol::ConfigReadParams;
+use orbit_code_app_server_protocol::ConfigValueWriteParams;
+use orbit_code_app_server_protocol::ConfigWarningNotification;
+use orbit_code_app_server_protocol::ExperimentalApi;
+use orbit_code_app_server_protocol::ExternalAgentConfigDetectParams;
+use orbit_code_app_server_protocol::ExternalAgentConfigImportParams;
+use orbit_code_app_server_protocol::FsCopyParams;
+use orbit_code_app_server_protocol::FsCreateDirectoryParams;
+use orbit_code_app_server_protocol::FsGetMetadataParams;
+use orbit_code_app_server_protocol::FsReadDirectoryParams;
+use orbit_code_app_server_protocol::FsReadFileParams;
+use orbit_code_app_server_protocol::FsRemoveParams;
+use orbit_code_app_server_protocol::FsWriteFileParams;
+use orbit_code_app_server_protocol::InitializeResponse;
+use orbit_code_app_server_protocol::JSONRPCError;
+use orbit_code_app_server_protocol::JSONRPCErrorError;
+use orbit_code_app_server_protocol::JSONRPCNotification;
+use orbit_code_app_server_protocol::JSONRPCRequest;
+use orbit_code_app_server_protocol::JSONRPCResponse;
+use orbit_code_app_server_protocol::ServerNotification;
+use orbit_code_app_server_protocol::ServerRequestPayload;
+use orbit_code_app_server_protocol::experimental_required_message;
+use orbit_code_arg0::Arg0DispatchPaths;
+use orbit_code_core::AnalyticsEventsClient;
+use orbit_code_core::AuthManager;
+use orbit_code_core::ThreadManager;
+use orbit_code_core::auth::ExternalAuthRefreshContext;
+use orbit_code_core::auth::ExternalAuthRefreshReason;
+use orbit_code_core::auth::ExternalAuthRefresher;
+use orbit_code_core::auth::ExternalAuthTokens;
+use orbit_code_core::config::Config;
+use orbit_code_core::config_loader::CloudRequirementsLoader;
+use orbit_code_core::config_loader::LoaderOverrides;
+use orbit_code_core::default_client::SetOriginatorError;
+use orbit_code_core::default_client::USER_AGENT_SUFFIX;
+use orbit_code_core::default_client::get_orbit_code_user_agent;
+use orbit_code_core::default_client::set_default_client_residency_requirement;
+use orbit_code_core::default_client::set_default_originator;
+use orbit_code_core::models_manager::collaboration_mode_presets::CollaborationModesConfig;
+use orbit_code_feedback::CodexFeedback;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::protocol::SessionSource;
+use orbit_code_protocol::protocol::W3cTraceContext;
+use orbit_code_state::log_db::LogDbLayer;
 use tokio::sync::broadcast;
 use tokio::sync::watch;
 use tokio::time::Duration;
@@ -144,7 +144,7 @@ impl ExternalAuthRefresher for ExternalAuthRefreshBridge {
 
 pub(crate) struct MessageProcessor {
     outgoing: Arc<OutgoingMessageSender>,
-    codex_message_processor: CodexMessageProcessor,
+    orbit_code_message_processor: CodexMessageProcessor,
     config_api: ConfigApi,
     external_agent_config_api: ExternalAgentConfigApi,
     fs_api: FsApi,
@@ -175,7 +175,7 @@ pub(crate) struct MessageProcessorArgs {
     pub(crate) log_db: Option<LogDbLayer>,
     pub(crate) config_warnings: Vec<ConfigWarningNotification>,
     pub(crate) session_source: SessionSource,
-    pub(crate) enable_codex_api_key_env: bool,
+    pub(crate) enable_orbit_code_api_key_env: bool,
 }
 
 impl MessageProcessor {
@@ -195,14 +195,14 @@ impl MessageProcessor {
             log_db,
             config_warnings,
             session_source,
-            enable_codex_api_key_env,
+            enable_orbit_code_api_key_env,
         } = args;
         let (auth_manager, thread_manager) = match (auth_manager, thread_manager) {
             (Some(auth_manager), Some(thread_manager)) => (auth_manager, thread_manager),
             (None, None) => {
                 let auth_manager = AuthManager::shared(
-                    config.codex_home.clone(),
-                    enable_codex_api_key_env,
+                    config.orbit_code_home.clone(),
+                    enable_orbit_code_api_key_env,
                     config.cli_auth_credentials_store_mode,
                 );
                 let thread_manager = Arc::new(ThreadManager::new(
@@ -210,9 +210,9 @@ impl MessageProcessor {
                     auth_manager.clone(),
                     session_source,
                     CollaborationModesConfig {
-                        default_mode_request_user_input: config
-                            .features
-                            .enabled(codex_core::features::Feature::DefaultModeRequestUserInput),
+                        default_mode_request_user_input: config.features.enabled(
+                            orbit_code_core::features::Feature::DefaultModeRequestUserInput,
+                        ),
                     },
                 ));
                 (auth_manager, thread_manager)
@@ -230,7 +230,7 @@ impl MessageProcessor {
             .set_analytics_events_client(analytics_events_client.clone());
 
         let cloud_requirements = Arc::new(RwLock::new(cloud_requirements));
-        let codex_message_processor = CodexMessageProcessor::new(CodexMessageProcessorArgs {
+        let orbit_code_message_processor = CodexMessageProcessor::new(CodexMessageProcessorArgs {
             auth_manager: auth_manager.clone(),
             thread_manager: Arc::clone(&thread_manager),
             outgoing: outgoing.clone(),
@@ -247,19 +247,19 @@ impl MessageProcessor {
             .plugins_manager()
             .maybe_start_curated_repo_sync_for_config(&config, auth_manager.clone());
         let config_api = ConfigApi::new(
-            config.codex_home.clone(),
+            config.orbit_code_home.clone(),
             cli_overrides,
             loader_overrides,
             cloud_requirements,
             thread_manager,
             analytics_events_client,
         );
-        let external_agent_config_api = ExternalAgentConfigApi::new(config.codex_home.clone());
+        let external_agent_config_api = ExternalAgentConfigApi::new(config.orbit_code_home.clone());
         let fs_api = FsApi::default();
 
         Self {
             outgoing,
-            codex_message_processor,
+            orbit_code_message_processor,
             config_api,
             external_agent_config_api,
             fs_api,
@@ -314,8 +314,9 @@ impl MessageProcessor {
                     }
                 };
 
-                let codex_request = match serde_json::from_value::<ClientRequest>(request_json) {
-                    Ok(codex_request) => codex_request,
+                let orbit_code_request = match serde_json::from_value::<ClientRequest>(request_json)
+                {
+                    Ok(orbit_code_request) => orbit_code_request,
                     Err(err) => {
                         let error = JSONRPCErrorError {
                             code: INVALID_REQUEST_ERROR_CODE,
@@ -332,7 +333,7 @@ impl MessageProcessor {
                 // ready too early from inside the shared request handler.
                 self.handle_client_request(
                     request_id.clone(),
-                    codex_request,
+                    orbit_code_request,
                     session,
                     /*outbound_initialized*/ None,
                     request_context.clone(),
@@ -414,7 +415,7 @@ impl MessageProcessor {
     }
 
     pub(crate) fn thread_created_receiver(&self) -> broadcast::Receiver<ThreadId> {
-        self.codex_message_processor.thread_created_receiver()
+        self.orbit_code_message_processor.thread_created_receiver()
     }
 
     pub(crate) async fn send_initialize_notifications_to_connection(
@@ -432,7 +433,7 @@ impl MessageProcessor {
     }
 
     pub(crate) async fn connection_initialized(&self, connection_id: ConnectionId) {
-        self.codex_message_processor
+        self.orbit_code_message_processor
             .connection_initialized(connection_id)
             .await;
     }
@@ -450,34 +451,36 @@ impl MessageProcessor {
         thread_id: ThreadId,
         connection_ids: Vec<ConnectionId>,
     ) {
-        self.codex_message_processor
+        self.orbit_code_message_processor
             .try_attach_thread_listener(thread_id, connection_ids)
             .await;
     }
 
     pub(crate) async fn drain_background_tasks(&self) {
-        self.codex_message_processor.drain_background_tasks().await;
+        self.orbit_code_message_processor
+            .drain_background_tasks()
+            .await;
     }
 
     pub(crate) async fn clear_all_thread_listeners(&self) {
-        self.codex_message_processor
+        self.orbit_code_message_processor
             .clear_all_thread_listeners()
             .await;
     }
 
     pub(crate) async fn shutdown_threads(&self) {
-        self.codex_message_processor.shutdown_threads().await;
+        self.orbit_code_message_processor.shutdown_threads().await;
     }
 
     pub(crate) async fn connection_closed(&mut self, connection_id: ConnectionId) {
         self.outgoing.connection_closed(connection_id).await;
-        self.codex_message_processor
+        self.orbit_code_message_processor
             .connection_closed(connection_id)
             .await;
     }
 
     pub(crate) fn subscribe_running_assistant_turn_count(&self) -> watch::Receiver<usize> {
-        self.codex_message_processor
+        self.orbit_code_message_processor
             .subscribe_running_assistant_turn_count()
     }
 
@@ -497,7 +500,7 @@ impl MessageProcessor {
     async fn handle_client_request(
         &mut self,
         connection_request_id: ConnectionRequestId,
-        codex_request: ClientRequest,
+        orbit_code_request: ClientRequest,
         session: &mut ConnectionSessionState,
         // `Some(...)` means the caller wants initialize to immediately mark the
         // connection outbound-ready. Websocket JSON-RPC calls pass `None` so
@@ -506,7 +509,7 @@ impl MessageProcessor {
         request_context: RequestContext,
     ) {
         let connection_id = connection_request_id.connection_id;
-        match codex_request {
+        match orbit_code_request {
             // Handle Initialize internally so CodexMessageProcessor does not have to concern
             // itself with the `initialized` bool.
             ClientRequest::Initialize { request_id, params } => {
@@ -567,7 +570,7 @@ impl MessageProcessor {
                         }
                         SetOriginatorError::AlreadyInitialized => {
                             // No-op. This is expected to happen if the originator is already set via env var.
-                            // TODO(owen): Once we remove support for CODEX_INTERNAL_ORIGINATOR_OVERRIDE,
+                            // TODO(owen): Once we remove support for ORBIT_INTERNAL_ORIGINATOR_OVERRIDE,
                             // this will be an unexpected state and we can return a JSON-RPC error indicating
                             // internal server error.
                         }
@@ -579,7 +582,7 @@ impl MessageProcessor {
                     *suffix = Some(user_agent_suffix);
                 }
 
-                let user_agent = get_codex_user_agent();
+                let user_agent = get_orbit_code_user_agent();
                 let response = InitializeResponse {
                     user_agent,
                     platform_family: std::env::consts::FAMILY.to_string(),
@@ -595,7 +598,7 @@ impl MessageProcessor {
                     // websocket path defers this until lib.rs finishes transport-layer
                     // initialize handling for the specific connection.
                     outbound_initialized.store(true, Ordering::Release);
-                    self.codex_message_processor
+                    self.orbit_code_message_processor
                         .connection_initialized(connection_id)
                         .await;
                 }
@@ -613,7 +616,7 @@ impl MessageProcessor {
                 }
             }
         }
-        if let Some(reason) = codex_request.experimental_reason()
+        if let Some(reason) = orbit_code_request.experimental_reason()
             && !session.experimental_api_enabled
         {
             let error = JSONRPCErrorError {
@@ -625,7 +628,7 @@ impl MessageProcessor {
             return;
         }
 
-        match codex_request {
+        match orbit_code_request {
             ClientRequest::ConfigRead { request_id, params } => {
                 self.handle_config_read(
                     ConnectionRequestId {
@@ -760,7 +763,7 @@ impl MessageProcessor {
                 // Box the delegated future so this wrapper's async state machine does not
                 // inline the full `CodexMessageProcessor::process_request` future, which
                 // can otherwise push worker-thread stack usage over the edge.
-                self.codex_message_processor
+                self.orbit_code_message_processor
                     .process_request(
                         connection_id,
                         other,
@@ -787,8 +790,9 @@ impl MessageProcessor {
     ) {
         match self.config_api.write_value(params).await {
             Ok(response) => {
-                self.codex_message_processor.clear_plugin_related_caches();
-                self.codex_message_processor
+                self.orbit_code_message_processor
+                    .clear_plugin_related_caches();
+                self.orbit_code_message_processor
                     .maybe_start_curated_repo_sync_for_latest_config()
                     .await;
                 self.outgoing.send_response(request_id, response).await;
@@ -804,8 +808,9 @@ impl MessageProcessor {
     ) {
         match self.config_api.batch_write(params).await {
             Ok(response) => {
-                self.codex_message_processor.clear_plugin_related_caches();
-                self.codex_message_processor
+                self.orbit_code_message_processor
+                    .clear_plugin_related_caches();
+                self.orbit_code_message_processor
                     .maybe_start_curated_repo_sync_for_latest_config()
                     .await;
                 self.outgoing.send_response(request_id, response).await;

@@ -3,31 +3,31 @@ use app_test_support::McpProcess;
 use app_test_support::test_path_buf_with_windows;
 use app_test_support::test_tmp_path_buf;
 use app_test_support::to_response;
-use codex_app_server_protocol::AppConfig;
-use codex_app_server_protocol::AppToolApproval;
-use codex_app_server_protocol::AppsConfig;
-use codex_app_server_protocol::AskForApproval;
-use codex_app_server_protocol::ConfigBatchWriteParams;
-use codex_app_server_protocol::ConfigEdit;
-use codex_app_server_protocol::ConfigLayerSource;
-use codex_app_server_protocol::ConfigReadParams;
-use codex_app_server_protocol::ConfigReadResponse;
-use codex_app_server_protocol::ConfigValueWriteParams;
-use codex_app_server_protocol::ConfigWriteResponse;
-use codex_app_server_protocol::JSONRPCError;
-use codex_app_server_protocol::JSONRPCResponse;
-use codex_app_server_protocol::MergeStrategy;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::SandboxMode;
-use codex_app_server_protocol::ToolsV2;
-use codex_app_server_protocol::WriteStatus;
-use codex_core::config::set_project_trust_level;
-use codex_protocol::config_types::TrustLevel;
-use codex_protocol::config_types::WebSearchContextSize;
-use codex_protocol::config_types::WebSearchLocation;
-use codex_protocol::config_types::WebSearchToolConfig;
-use codex_protocol::openai_models::ReasoningEffort;
-use codex_utils_absolute_path::AbsolutePathBuf;
+use orbit_code_app_server_protocol::AppConfig;
+use orbit_code_app_server_protocol::AppToolApproval;
+use orbit_code_app_server_protocol::AppsConfig;
+use orbit_code_app_server_protocol::AskForApproval;
+use orbit_code_app_server_protocol::ConfigBatchWriteParams;
+use orbit_code_app_server_protocol::ConfigEdit;
+use orbit_code_app_server_protocol::ConfigLayerSource;
+use orbit_code_app_server_protocol::ConfigReadParams;
+use orbit_code_app_server_protocol::ConfigReadResponse;
+use orbit_code_app_server_protocol::ConfigValueWriteParams;
+use orbit_code_app_server_protocol::ConfigWriteResponse;
+use orbit_code_app_server_protocol::JSONRPCError;
+use orbit_code_app_server_protocol::JSONRPCResponse;
+use orbit_code_app_server_protocol::MergeStrategy;
+use orbit_code_app_server_protocol::RequestId;
+use orbit_code_app_server_protocol::SandboxMode;
+use orbit_code_app_server_protocol::ToolsV2;
+use orbit_code_app_server_protocol::WriteStatus;
+use orbit_code_core::config::set_project_trust_level;
+use orbit_code_protocol::config_types::TrustLevel;
+use orbit_code_protocol::config_types::WebSearchContextSize;
+use orbit_code_protocol::config_types::WebSearchLocation;
+use orbit_code_protocol::config_types::WebSearchToolConfig;
+use orbit_code_protocol::openai_models::ReasoningEffort;
+use orbit_code_utils_absolute_path::AbsolutePathBuf;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use tempfile::TempDir;
@@ -35,27 +35,27 @@ use tokio::time::timeout;
 
 const DEFAULT_READ_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(10);
 
-fn write_config(codex_home: &TempDir, contents: &str) -> Result<()> {
+fn write_config(orbit_code_home: &TempDir, contents: &str) -> Result<()> {
     Ok(std::fs::write(
-        codex_home.path().join("config.toml"),
+        orbit_code_home.path().join("config.toml"),
         contents,
     )?)
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn config_read_returns_effective_and_layers() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     write_config(
-        &codex_home,
+        &orbit_code_home,
         r#"
 model = "gpt-user"
 sandbox_mode = "workspace-write"
 "#,
     )?;
-    let codex_home_path = codex_home.path().canonicalize()?;
-    let user_file = AbsolutePathBuf::try_from(codex_home_path.join("config.toml"))?;
+    let orbit_code_home_path = orbit_code_home.path().canonicalize()?;
+    let user_file = AbsolutePathBuf::try_from(orbit_code_home_path.join("config.toml"))?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     let request_id = mcp
@@ -90,9 +90,9 @@ sandbox_mode = "workspace-write"
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn config_read_includes_tools() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     write_config(
-        &codex_home,
+        &orbit_code_home,
         r#"
 model = "gpt-user"
 
@@ -104,10 +104,10 @@ allowed_domains = ["example.com"]
 view_image = false
 "#,
     )?;
-    let codex_home_path = codex_home.path().canonicalize()?;
-    let user_file = AbsolutePathBuf::try_from(codex_home_path.join("config.toml"))?;
+    let orbit_code_home_path = orbit_code_home.path().canonicalize()?;
+    let user_file = AbsolutePathBuf::try_from(orbit_code_home_path.join("config.toml"))?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     let request_id = mcp
@@ -172,9 +172,9 @@ view_image = false
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn config_read_includes_nested_web_search_tool_config() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     write_config(
-        &codex_home,
+        &orbit_code_home,
         r#"
 web_search = "live"
 
@@ -185,7 +185,7 @@ location = { country = "US", city = "New York", timezone = "America/New_York" }
 "#,
     )?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     let request_id = mcp
@@ -220,16 +220,16 @@ location = { country = "US", city = "New York", timezone = "America/New_York" }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn config_read_ignores_bool_web_search_tool_config() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     write_config(
-        &codex_home,
+        &orbit_code_home,
         r#"
 [tools]
 web_search = true
 "#,
     )?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     let request_id = mcp
@@ -252,9 +252,9 @@ web_search = true
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn config_read_includes_apps() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     write_config(
-        &codex_home,
+        &orbit_code_home,
         r#"
 [apps.app1]
 enabled = false
@@ -262,10 +262,10 @@ destructive_enabled = false
 default_tools_approval_mode = "prompt"
 "#,
     )?;
-    let codex_home_path = codex_home.path().canonicalize()?;
-    let user_file = AbsolutePathBuf::try_from(codex_home_path.join("config.toml"))?;
+    let orbit_code_home_path = orbit_code_home.path().canonicalize()?;
+    let user_file = AbsolutePathBuf::try_from(orbit_code_home_path.join("config.toml"))?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     let request_id = mcp
@@ -335,8 +335,8 @@ default_tools_approval_mode = "prompt"
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn config_read_includes_project_layers_for_cwd() -> Result<()> {
-    let codex_home = TempDir::new()?;
-    write_config(&codex_home, r#"model = "gpt-user""#)?;
+    let orbit_code_home = TempDir::new()?;
+    write_config(&orbit_code_home, r#"model = "gpt-user""#)?;
 
     let workspace = TempDir::new()?;
     let project_config_dir = workspace.path().join(".codex");
@@ -347,10 +347,14 @@ async fn config_read_includes_project_layers_for_cwd() -> Result<()> {
 model_reasoning_effort = "high"
 "#,
     )?;
-    set_project_trust_level(codex_home.path(), workspace.path(), TrustLevel::Trusted)?;
+    set_project_trust_level(
+        orbit_code_home.path(),
+        workspace.path(),
+        TrustLevel::Trusted,
+    )?;
     let project_config = AbsolutePathBuf::try_from(project_config_dir)?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     let request_id = mcp
@@ -372,7 +376,7 @@ model_reasoning_effort = "high"
     assert_eq!(
         origins.get("model_reasoning_effort").expect("origin").name,
         ConfigLayerSource::Project {
-            dot_codex_folder: project_config
+            dot_orbit_code_folder: project_config
         }
     );
 
@@ -381,11 +385,11 @@ model_reasoning_effort = "high"
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn config_read_includes_system_layer_and_overrides() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     let user_dir = test_path_buf_with_windows("/user", Some(r"C:\Users\user"));
     let system_dir = test_path_buf_with_windows("/system", Some(r"C:\System"));
     write_config(
-        &codex_home,
+        &orbit_code_home,
         &format!(
             r#"
 model = "gpt-user"
@@ -399,10 +403,10 @@ network_access = true
             serde_json::json!(user_dir)
         ),
     )?;
-    let codex_home_path = codex_home.path().canonicalize()?;
-    let user_file = AbsolutePathBuf::try_from(codex_home_path.join("config.toml"))?;
+    let orbit_code_home_path = orbit_code_home.path().canonicalize()?;
+    let user_file = AbsolutePathBuf::try_from(orbit_code_home_path.join("config.toml"))?;
 
-    let managed_path = codex_home.path().join("managed_config.toml");
+    let managed_path = orbit_code_home.path().join("managed_config.toml");
     let managed_file = AbsolutePathBuf::try_from(managed_path.clone())?;
     std::fs::write(
         &managed_path,
@@ -421,9 +425,9 @@ writable_roots = [{}]
     let managed_path_str = managed_path.display().to_string();
 
     let mut mcp = McpProcess::new_with_env(
-        codex_home.path(),
+        orbit_code_home.path(),
         &[(
-            "CODEX_APP_SERVER_MANAGED_CONFIG_PATH",
+            "ORBIT_APP_SERVER_MANAGED_CONFIG_PATH",
             Some(&managed_path_str),
         )],
     )
@@ -506,7 +510,7 @@ writable_roots = [{}]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn config_value_write_replaces_value() -> Result<()> {
     let temp_dir = TempDir::new()?;
-    let codex_home = temp_dir.path().canonicalize()?;
+    let orbit_code_home = temp_dir.path().canonicalize()?;
     write_config(
         &temp_dir,
         r#"
@@ -514,7 +518,7 @@ model = "gpt-old"
 "#,
     )?;
 
-    let mut mcp = McpProcess::new(&codex_home).await?;
+    let mut mcp = McpProcess::new(&orbit_code_home).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     let read_id = mcp
@@ -546,7 +550,8 @@ model = "gpt-old"
     )
     .await??;
     let write: ConfigWriteResponse = to_response(write_resp)?;
-    let expected_file_path = AbsolutePathBuf::resolve_path_against_base("config.toml", codex_home)?;
+    let expected_file_path =
+        AbsolutePathBuf::resolve_path_against_base("config.toml", orbit_code_home)?;
 
     assert_eq!(write.status, WriteStatus::Ok);
     assert_eq!(write.file_path, expected_file_path);
@@ -571,20 +576,26 @@ model = "gpt-old"
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn config_value_write_rejects_version_conflict() -> Result<()> {
-    let codex_home = TempDir::new()?;
+    let orbit_code_home = TempDir::new()?;
     write_config(
-        &codex_home,
+        &orbit_code_home,
         r#"
 model = "gpt-old"
 "#,
     )?;
 
-    let mut mcp = McpProcess::new(codex_home.path()).await?;
+    let mut mcp = McpProcess::new(orbit_code_home.path()).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     let write_id = mcp
         .send_config_value_write_request(ConfigValueWriteParams {
-            file_path: Some(codex_home.path().join("config.toml").display().to_string()),
+            file_path: Some(
+                orbit_code_home
+                    .path()
+                    .join("config.toml")
+                    .display()
+                    .to_string(),
+            ),
             key_path: "model".to_string(),
             value: json!("gpt-new"),
             merge_strategy: MergeStrategy::Replace,
@@ -611,16 +622,16 @@ model = "gpt-old"
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn config_batch_write_applies_multiple_edits() -> Result<()> {
     let tmp_dir = TempDir::new()?;
-    let codex_home = tmp_dir.path().canonicalize()?;
+    let orbit_code_home = tmp_dir.path().canonicalize()?;
     write_config(&tmp_dir, "")?;
 
-    let mut mcp = McpProcess::new(&codex_home).await?;
+    let mut mcp = McpProcess::new(&orbit_code_home).await?;
     timeout(DEFAULT_READ_TIMEOUT, mcp.initialize()).await??;
 
     let writable_root = test_tmp_path_buf();
     let batch_id = mcp
         .send_config_batch_write_request(ConfigBatchWriteParams {
-            file_path: Some(codex_home.join("config.toml").display().to_string()),
+            file_path: Some(orbit_code_home.join("config.toml").display().to_string()),
             edits: vec![
                 ConfigEdit {
                     key_path: "sandbox_mode".to_string(),
@@ -647,7 +658,8 @@ async fn config_batch_write_applies_multiple_edits() -> Result<()> {
     .await??;
     let batch_write: ConfigWriteResponse = to_response(batch_resp)?;
     assert_eq!(batch_write.status, WriteStatus::Ok);
-    let expected_file_path = AbsolutePathBuf::resolve_path_against_base("config.toml", codex_home)?;
+    let expected_file_path =
+        AbsolutePathBuf::resolve_path_against_base("config.toml", orbit_code_home)?;
     assert_eq!(batch_write.file_path, expected_file_path);
 
     let read_id = mcp
@@ -675,7 +687,7 @@ async fn config_batch_write_applies_multiple_edits() -> Result<()> {
 }
 
 fn assert_layers_user_then_optional_system(
-    layers: &[codex_app_server_protocol::ConfigLayer],
+    layers: &[orbit_code_app_server_protocol::ConfigLayer],
     user_file: AbsolutePathBuf,
 ) -> Result<()> {
     let mut first_index = 0;
@@ -698,7 +710,7 @@ fn assert_layers_user_then_optional_system(
 }
 
 fn assert_layers_managed_user_then_optional_system(
-    layers: &[codex_app_server_protocol::ConfigLayer],
+    layers: &[orbit_code_app_server_protocol::ConfigLayer],
     managed_file: AbsolutePathBuf,
     user_file: AbsolutePathBuf,
 ) -> Result<()> {

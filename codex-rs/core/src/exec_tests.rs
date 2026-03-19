@@ -1,5 +1,5 @@
 use super::*;
-use codex_protocol::config_types::WindowsSandboxLevel;
+use orbit_code_protocol::config_types::WindowsSandboxLevel;
 use pretty_assertions::assert_eq;
 use std::time::Duration;
 use tokio::io::AsyncWriteExt;
@@ -56,7 +56,7 @@ fn sandbox_detection_ignores_network_policy_text_in_non_sandbox_mode() {
         0,
         "",
         "",
-        r#"CODEX_NETWORK_POLICY_DECISION {"decision":"ask","reason":"not_allowed","source":"decider","protocol":"http","host":"google.com","port":80}"#,
+        r#"ORBIT_NETWORK_POLICY_DECISION {"decision":"ask","reason":"not_allowed","source":"decider","protocol":"http","host":"google.com","port":80}"#,
     );
     assert!(!is_likely_sandbox_denied(SandboxType::None, &output));
 }
@@ -81,7 +81,7 @@ fn sandbox_detection_ignores_network_policy_text_with_zero_exit_code() {
         0,
         "",
         "",
-        r#"CODEX_NETWORK_POLICY_DECISION {"decision":"ask","source":"decider","protocol":"http","host":"google.com","port":80}"#,
+        r#"ORBIT_NETWORK_POLICY_DECISION {"decision":"ask","source":"decider","protocol":"http","host":"google.com","port":80}"#,
     );
 
     assert!(!is_likely_sandbox_denied(
@@ -184,7 +184,7 @@ fn aggregate_output_keeps_stdout_then_stderr_when_under_cap() {
 #[test]
 fn windows_restricted_token_skips_external_sandbox_policies() {
     let policy = SandboxPolicy::ExternalSandbox {
-        network_access: codex_protocol::protocol::NetworkAccess::Restricted,
+        network_access: orbit_code_protocol::protocol::NetworkAccess::Restricted,
     };
     let file_system_policy = FileSystemSandboxPolicy::restricted(vec![]);
 
@@ -228,7 +228,7 @@ fn windows_restricted_token_runs_for_legacy_restricted_policies() {
 #[test]
 fn windows_restricted_token_rejects_network_only_restrictions() {
     let policy = SandboxPolicy::ExternalSandbox {
-        network_access: codex_protocol::protocol::NetworkAccess::Restricted,
+        network_access: orbit_code_protocol::protocol::NetworkAccess::Restricted,
     };
     let file_system_policy = FileSystemSandboxPolicy::unrestricted();
 
@@ -272,7 +272,7 @@ fn windows_restricted_token_allows_legacy_restricted_policies() {
 #[test]
 fn windows_restricted_token_rejects_restricted_read_only_policies() {
     let policy = SandboxPolicy::ReadOnly {
-        access: codex_protocol::protocol::ReadOnlyAccess::Restricted {
+        access: orbit_code_protocol::protocol::ReadOnlyAccess::Restricted {
             include_platform_defaults: true,
             readable_roots: vec![],
         },
@@ -302,7 +302,7 @@ fn windows_restricted_token_rejects_restricted_read_only_policies() {
 fn windows_restricted_token_allows_legacy_workspace_write_policies() {
     let policy = SandboxPolicy::WorkspaceWrite {
         writable_roots: vec![],
-        read_only_access: codex_protocol::protocol::ReadOnlyAccess::FullAccess,
+        read_only_access: orbit_code_protocol::protocol::ReadOnlyAccess::FullAccess,
         network_access: false,
         exclude_tmpdir_env_var: false,
         exclude_slash_tmp: false,
@@ -327,7 +327,7 @@ fn windows_restricted_token_allows_legacy_workspace_write_policies() {
 #[test]
 fn windows_elevated_sandbox_allows_restricted_read_only_policies() {
     let policy = SandboxPolicy::ReadOnly {
-        access: codex_protocol::protocol::ReadOnlyAccess::Restricted {
+        access: orbit_code_protocol::protocol::ReadOnlyAccess::Restricted {
             include_platform_defaults: true,
             readable_roots: vec![],
         },

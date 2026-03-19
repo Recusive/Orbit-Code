@@ -20,11 +20,11 @@ use axum::response::IntoResponse;
 use axum::response::Response;
 use axum::routing::any;
 use axum::routing::get;
-use codex_app_server_protocol::JSONRPCErrorError;
-use codex_app_server_protocol::JSONRPCMessage;
-use codex_app_server_protocol::ServerRequest;
 use futures::SinkExt;
 use futures::StreamExt;
+use orbit_code_app_server_protocol::JSONRPCErrorError;
+use orbit_code_app_server_protocol::JSONRPCMessage;
+use orbit_code_app_server_protocol::ServerRequest;
 use owo_colors::OwoColorize;
 use owo_colors::Stream;
 use owo_colors::Style;
@@ -718,8 +718,8 @@ pub(crate) async fn route_outgoing_envelope(
 mod tests {
     use super::*;
     use crate::error_code::OVERLOADED_ERROR_CODE;
-    use codex_app_server_protocol::CommandExecutionRequestApprovalSkillMetadata;
-    use codex_utils_absolute_path::AbsolutePathBuf;
+    use orbit_code_app_server_protocol::CommandExecutionRequestApprovalSkillMetadata;
+    use orbit_code_utils_absolute_path::AbsolutePathBuf;
     use pretty_assertions::assert_eq;
     use serde_json::json;
     use std::path::PathBuf;
@@ -776,7 +776,7 @@ mod tests {
         let (writer_tx, mut writer_rx) = mpsc::channel(1);
 
         let first_message =
-            JSONRPCMessage::Notification(codex_app_server_protocol::JSONRPCNotification {
+            JSONRPCMessage::Notification(orbit_code_app_server_protocol::JSONRPCNotification {
                 method: "initialized".to_string(),
                 params: None,
             });
@@ -788,8 +788,8 @@ mod tests {
             .await
             .expect("queue should accept first message");
 
-        let request = JSONRPCMessage::Request(codex_app_server_protocol::JSONRPCRequest {
-            id: codex_app_server_protocol::RequestId::Integer(7),
+        let request = JSONRPCMessage::Request(orbit_code_app_server_protocol::JSONRPCRequest {
+            id: orbit_code_app_server_protocol::RequestId::Integer(7),
             method: "config/read".to_string(),
             params: Some(json!({ "includeLayers": false })),
             trace: None,
@@ -837,7 +837,7 @@ mod tests {
         let (writer_tx, _writer_rx) = mpsc::channel(1);
 
         let first_message =
-            JSONRPCMessage::Notification(codex_app_server_protocol::JSONRPCNotification {
+            JSONRPCMessage::Notification(orbit_code_app_server_protocol::JSONRPCNotification {
                 method: "initialized".to_string(),
                 params: None,
             });
@@ -849,8 +849,8 @@ mod tests {
             .await
             .expect("queue should accept first message");
 
-        let response = JSONRPCMessage::Response(codex_app_server_protocol::JSONRPCResponse {
-            id: codex_app_server_protocol::RequestId::Integer(7),
+        let response = JSONRPCMessage::Response(orbit_code_app_server_protocol::JSONRPCResponse {
+            id: orbit_code_app_server_protocol::RequestId::Integer(7),
             result: json!({"ok": true}),
         });
         let transport_event_tx_for_enqueue = transport_event_tx.clone();
@@ -891,10 +891,13 @@ mod tests {
             TransportEvent::IncomingMessage {
                 connection_id: queued_connection_id,
                 message:
-                    JSONRPCMessage::Response(codex_app_server_protocol::JSONRPCResponse { id, result }),
+                    JSONRPCMessage::Response(orbit_code_app_server_protocol::JSONRPCResponse {
+                        id,
+                        result,
+                    }),
             } => {
                 assert_eq!(queued_connection_id, connection_id);
-                assert_eq!(id, codex_app_server_protocol::RequestId::Integer(7));
+                assert_eq!(id, orbit_code_app_server_protocol::RequestId::Integer(7));
                 assert_eq!(result, json!({"ok": true}));
             }
             _ => panic!("expected forwarded response message"),
@@ -911,7 +914,7 @@ mod tests {
             .send(TransportEvent::IncomingMessage {
                 connection_id,
                 message: JSONRPCMessage::Notification(
-                    codex_app_server_protocol::JSONRPCNotification {
+                    orbit_code_app_server_protocol::JSONRPCNotification {
                         method: "initialized".to_string(),
                         params: None,
                     },
@@ -930,8 +933,8 @@ mod tests {
             .await
             .expect("writer queue should accept first message");
 
-        let request = JSONRPCMessage::Request(codex_app_server_protocol::JSONRPCRequest {
-            id: codex_app_server_protocol::RequestId::Integer(7),
+        let request = JSONRPCMessage::Request(orbit_code_app_server_protocol::JSONRPCRequest {
+            id: orbit_code_app_server_protocol::RequestId::Integer(7),
             method: "config/read".to_string(),
             params: Some(json!({ "includeLayers": false })),
             trace: None,
@@ -1101,8 +1104,8 @@ mod tests {
             OutgoingEnvelope::ToConnection {
                 connection_id,
                 message: OutgoingMessage::Request(ServerRequest::CommandExecutionRequestApproval {
-                    request_id: codex_app_server_protocol::RequestId::Integer(1),
-                    params: codex_app_server_protocol::CommandExecutionRequestApprovalParams {
+                    request_id: orbit_code_app_server_protocol::RequestId::Integer(1),
+                    params: orbit_code_app_server_protocol::CommandExecutionRequestApprovalParams {
                         thread_id: "thr_123".to_string(),
                         turn_id: "turn_123".to_string(),
                         item_id: "call_123".to_string(),
@@ -1113,10 +1116,10 @@ mod tests {
                         cwd: Some(PathBuf::from("/tmp")),
                         command_actions: None,
                         additional_permissions: Some(
-                            codex_app_server_protocol::AdditionalPermissionProfile {
+                            orbit_code_app_server_protocol::AdditionalPermissionProfile {
                                 network: None,
                                 file_system: Some(
-                                    codex_app_server_protocol::AdditionalFileSystemPermissions {
+                                    orbit_code_app_server_protocol::AdditionalFileSystemPermissions {
                                         read: Some(vec![absolute_path("/tmp/allowed")]),
                                         write: None,
                                     },
@@ -1168,8 +1171,8 @@ mod tests {
             OutgoingEnvelope::ToConnection {
                 connection_id,
                 message: OutgoingMessage::Request(ServerRequest::CommandExecutionRequestApproval {
-                    request_id: codex_app_server_protocol::RequestId::Integer(1),
-                    params: codex_app_server_protocol::CommandExecutionRequestApprovalParams {
+                    request_id: orbit_code_app_server_protocol::RequestId::Integer(1),
+                    params: orbit_code_app_server_protocol::CommandExecutionRequestApprovalParams {
                         thread_id: "thr_123".to_string(),
                         turn_id: "turn_123".to_string(),
                         item_id: "call_123".to_string(),
@@ -1180,10 +1183,10 @@ mod tests {
                         cwd: Some(PathBuf::from("/tmp")),
                         command_actions: None,
                         additional_permissions: Some(
-                            codex_app_server_protocol::AdditionalPermissionProfile {
+                            orbit_code_app_server_protocol::AdditionalPermissionProfile {
                                 network: None,
                                 file_system: Some(
-                                    codex_app_server_protocol::AdditionalFileSystemPermissions {
+                                    orbit_code_app_server_protocol::AdditionalFileSystemPermissions {
                                         read: Some(vec![absolute_path("/tmp/allowed")]),
                                         write: None,
                                     },

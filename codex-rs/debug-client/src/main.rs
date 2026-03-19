@@ -12,7 +12,7 @@ use anyhow::Context;
 use anyhow::Result;
 use clap::ArgAction;
 use clap::Parser;
-use codex_app_server_protocol::AskForApproval;
+use orbit_code_app_server_protocol::AskForApproval;
 
 use crate::client::AppServerClient;
 use crate::client::build_thread_resume_params;
@@ -28,7 +28,7 @@ use crate::state::ReaderEvent;
 struct Cli {
     /// Path to the `codex` CLI binary.
     #[arg(long, default_value = "codex")]
-    codex_bin: String,
+    orbit_code_bin: String,
 
     /// Forwarded to the `codex` CLI as `--config key=value`. Repeatable.
     #[arg(short = 'c', long = "config", value_name = "key=value", action = ArgAction::Append)]
@@ -69,7 +69,7 @@ fn main() -> Result<()> {
     let approval_policy = parse_approval_policy(&cli.approval_policy)?;
 
     let mut client = AppServerClient::spawn(
-        &cli.codex_bin,
+        &cli.orbit_code_bin,
         &cli.config_overrides,
         output.clone(),
         cli.final_only,

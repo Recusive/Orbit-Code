@@ -1,12 +1,12 @@
 [package]
 edition.workspace = true
 license.workspace = true
-name = "codex-hooks"
+name = "orbit-code-hooks"
 version.workspace = true
 
 [lib]
 doctest = false
-name = "codex_hooks"
+name = "orbit_code_hooks"
 path = "src/lib.rs"
 
 [lints]
@@ -15,8 +15,8 @@ workspace = true
 [dependencies]
 anyhow = { workspace = true }
 chrono = { workspace = true, features = ["serde"] }
-codex-config = { workspace = true }
-codex-protocol = { workspace = true }
+orbit-code-config = { workspace = true }
+orbit-code-protocol = { workspace = true }
 futures = { workspace = true, features = ["alloc"] }
 regex = { workspace = true }
 schemars = { workspace = true }

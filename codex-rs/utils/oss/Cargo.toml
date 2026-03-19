@@ -1,5 +1,5 @@
 [package]
-name = "codex-utils-oss"
+name = "orbit-code-utils-oss"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -8,6 +8,6 @@ license.workspace = true
 workspace = true
 
 [dependencies]
-codex-core = { workspace = true }
-codex-lmstudio = { workspace = true }
-codex-ollama = { workspace = true }
+orbit-code-core = { workspace = true }
+orbit-code-lmstudio = { workspace = true }
+orbit-code-ollama = { workspace = true }

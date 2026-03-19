@@ -17,95 +17,95 @@ use crate::app_server_session::AppServerSession;
 use crate::app_server_session::app_server_rate_limit_snapshot_to_core;
 use crate::app_server_session::status_account_display_from_auth_mode;
 use crate::local_chatgpt_auth::load_local_chatgpt_auth;
-use codex_app_server_client::AppServerEvent;
-use codex_app_server_protocol::AuthMode;
-use codex_app_server_protocol::ChatgptAuthTokensRefreshParams;
-use codex_app_server_protocol::JSONRPCErrorError;
-use codex_app_server_protocol::JSONRPCNotification;
-use codex_app_server_protocol::RequestId;
-use codex_app_server_protocol::ServerNotification;
-use codex_app_server_protocol::ServerRequest;
+use orbit_code_app_server_client::AppServerEvent;
+use orbit_code_app_server_protocol::AuthMode;
+use orbit_code_app_server_protocol::ChatgptAuthTokensRefreshParams;
+use orbit_code_app_server_protocol::JSONRPCErrorError;
+use orbit_code_app_server_protocol::JSONRPCNotification;
+use orbit_code_app_server_protocol::RequestId;
+use orbit_code_app_server_protocol::ServerNotification;
+use orbit_code_app_server_protocol::ServerRequest;
 #[cfg(test)]
-use codex_app_server_protocol::Thread;
+use orbit_code_app_server_protocol::Thread;
 #[cfg(test)]
-use codex_app_server_protocol::ThreadItem;
+use orbit_code_app_server_protocol::ThreadItem;
 #[cfg(test)]
-use codex_app_server_protocol::Turn;
+use orbit_code_app_server_protocol::Turn;
 #[cfg(test)]
-use codex_app_server_protocol::TurnStatus;
-use codex_protocol::ThreadId;
+use orbit_code_app_server_protocol::TurnStatus;
+use orbit_code_protocol::ThreadId;
 #[cfg(test)]
-use codex_protocol::config_types::ModeKind;
+use orbit_code_protocol::config_types::ModeKind;
 #[cfg(test)]
-use codex_protocol::items::AgentMessageContent;
+use orbit_code_protocol::items::AgentMessageContent;
 #[cfg(test)]
-use codex_protocol::items::AgentMessageItem;
+use orbit_code_protocol::items::AgentMessageItem;
 #[cfg(test)]
-use codex_protocol::items::ContextCompactionItem;
+use orbit_code_protocol::items::ContextCompactionItem;
 #[cfg(test)]
-use codex_protocol::items::ImageGenerationItem;
+use orbit_code_protocol::items::ImageGenerationItem;
 #[cfg(test)]
-use codex_protocol::items::PlanItem;
+use orbit_code_protocol::items::PlanItem;
 #[cfg(test)]
-use codex_protocol::items::ReasoningItem;
+use orbit_code_protocol::items::ReasoningItem;
 #[cfg(test)]
-use codex_protocol::items::TurnItem;
+use orbit_code_protocol::items::TurnItem;
 #[cfg(test)]
-use codex_protocol::items::UserMessageItem;
+use orbit_code_protocol::items::UserMessageItem;
 #[cfg(test)]
-use codex_protocol::items::WebSearchItem;
+use orbit_code_protocol::items::WebSearchItem;
 #[cfg(test)]
-use codex_protocol::protocol::AgentMessageDeltaEvent;
+use orbit_code_protocol::protocol::AgentMessageDeltaEvent;
 #[cfg(test)]
-use codex_protocol::protocol::AgentReasoningDeltaEvent;
+use orbit_code_protocol::protocol::AgentReasoningDeltaEvent;
 #[cfg(test)]
-use codex_protocol::protocol::AgentReasoningRawContentDeltaEvent;
+use orbit_code_protocol::protocol::AgentReasoningRawContentDeltaEvent;
 #[cfg(test)]
-use codex_protocol::protocol::ErrorEvent;
+use orbit_code_protocol::protocol::ErrorEvent;
 #[cfg(test)]
-use codex_protocol::protocol::Event;
+use orbit_code_protocol::protocol::Event;
 #[cfg(test)]
-use codex_protocol::protocol::EventMsg;
+use orbit_code_protocol::protocol::EventMsg;
 #[cfg(test)]
-use codex_protocol::protocol::ExecCommandBeginEvent;
+use orbit_code_protocol::protocol::ExecCommandBeginEvent;
 #[cfg(test)]
-use codex_protocol::protocol::ExecCommandEndEvent;
+use orbit_code_protocol::protocol::ExecCommandEndEvent;
 #[cfg(test)]
-use codex_protocol::protocol::ExecCommandOutputDeltaEvent;
+use orbit_code_protocol::protocol::ExecCommandOutputDeltaEvent;
 #[cfg(test)]
-use codex_protocol::protocol::ExecCommandStatus;
+use orbit_code_protocol::protocol::ExecCommandStatus;
 #[cfg(test)]
-use codex_protocol::protocol::ExecOutputStream;
+use orbit_code_protocol::protocol::ExecOutputStream;
 #[cfg(test)]
-use codex_protocol::protocol::ItemCompletedEvent;
+use orbit_code_protocol::protocol::ItemCompletedEvent;
 #[cfg(test)]
-use codex_protocol::protocol::ItemStartedEvent;
+use orbit_code_protocol::protocol::ItemStartedEvent;
 #[cfg(test)]
-use codex_protocol::protocol::PlanDeltaEvent;
+use orbit_code_protocol::protocol::PlanDeltaEvent;
 #[cfg(test)]
-use codex_protocol::protocol::RealtimeConversationClosedEvent;
+use orbit_code_protocol::protocol::RealtimeConversationClosedEvent;
 #[cfg(test)]
-use codex_protocol::protocol::RealtimeConversationRealtimeEvent;
+use orbit_code_protocol::protocol::RealtimeConversationRealtimeEvent;
 #[cfg(test)]
-use codex_protocol::protocol::RealtimeConversationStartedEvent;
+use orbit_code_protocol::protocol::RealtimeConversationStartedEvent;
 #[cfg(test)]
-use codex_protocol::protocol::RealtimeEvent;
+use orbit_code_protocol::protocol::RealtimeEvent;
 #[cfg(test)]
-use codex_protocol::protocol::ThreadNameUpdatedEvent;
+use orbit_code_protocol::protocol::ThreadNameUpdatedEvent;
 #[cfg(test)]
-use codex_protocol::protocol::TokenCountEvent;
+use orbit_code_protocol::protocol::TokenCountEvent;
 #[cfg(test)]
-use codex_protocol::protocol::TokenUsage;
+use orbit_code_protocol::protocol::TokenUsage;
 #[cfg(test)]
-use codex_protocol::protocol::TokenUsageInfo;
+use orbit_code_protocol::protocol::TokenUsageInfo;
 #[cfg(test)]
-use codex_protocol::protocol::TurnAbortReason;
+use orbit_code_protocol::protocol::TurnAbortReason;
 #[cfg(test)]
-use codex_protocol::protocol::TurnAbortedEvent;
+use orbit_code_protocol::protocol::TurnAbortedEvent;
 #[cfg(test)]
-use codex_protocol::protocol::TurnCompleteEvent;
+use orbit_code_protocol::protocol::TurnCompleteEvent;
 #[cfg(test)]
-use codex_protocol::protocol::TurnStartedEvent;
+use orbit_code_protocol::protocol::TurnStartedEvent;
 use serde_json::Value;
 #[cfg(test)]
 use std::time::Duration;
@@ -303,7 +303,7 @@ impl App {
         let config = self.config.clone();
         let result = tokio::task::spawn_blocking(move || {
             resolve_chatgpt_auth_tokens_refresh_response(
-                &config.codex_home,
+                &config.orbit_code_home,
                 config.cli_auth_credentials_store_mode,
                 config.forced_chatgpt_workspace_id.as_deref(),
                 &params,
@@ -361,7 +361,7 @@ impl App {
     async fn reject_app_server_request(
         &self,
         app_server_client: &AppServerSession,
-        request_id: codex_app_server_protocol::RequestId,
+        request_id: orbit_code_app_server_protocol::RequestId,
         reason: String,
     ) -> std::result::Result<(), String> {
         app_server_client
@@ -516,13 +516,13 @@ fn server_notification_thread_target(
 }
 
 fn resolve_chatgpt_auth_tokens_refresh_response(
-    codex_home: &std::path::Path,
-    auth_credentials_store_mode: codex_core::auth::AuthCredentialsStoreMode,
+    orbit_code_home: &std::path::Path,
+    auth_credentials_store_mode: orbit_code_core::auth::AuthCredentialsStoreMode,
     forced_chatgpt_workspace_id: Option<&str>,
     params: &ChatgptAuthTokensRefreshParams,
-) -> Result<codex_app_server_protocol::ChatgptAuthTokensRefreshResponse, String> {
+) -> Result<orbit_code_app_server_protocol::ChatgptAuthTokensRefreshResponse, String> {
     let auth = load_local_chatgpt_auth(
-        codex_home,
+        orbit_code_home,
         auth_credentials_store_mode,
         forced_chatgpt_workspace_id,
     )?;
@@ -634,10 +634,10 @@ fn server_notification_thread_events(
                 id: String::new(),
                 msg: EventMsg::Error(ErrorEvent {
                     message: notification.error.message,
-                    codex_error_info: notification
+                    orbit_code_error_info: notification
                         .error
-                        .codex_error_info
-                        .and_then(app_server_codex_error_info_to_core),
+                        .orbit_code_error_info
+                        .and_then(app_server_orbit_code_error_info_to_core),
                 }),
             }],
         )),
@@ -804,7 +804,7 @@ fn server_notification_thread_events(
 
 #[cfg(test)]
 fn token_usage_from_app_server(
-    value: codex_app_server_protocol::TokenUsageBreakdown,
+    value: orbit_code_app_server_protocol::TokenUsageBreakdown,
 ) -> TokenUsage {
     TokenUsage {
         input_tokens: value.input_tokens,
@@ -911,10 +911,10 @@ fn append_terminal_turn_events(events: &mut Vec<Event>, turn: &Turn, include_fai
                     id: String::new(),
                     msg: EventMsg::Error(ErrorEvent {
                         message: error.message.clone(),
-                        codex_error_info: error
-                            .codex_error_info
+                        orbit_code_error_info: error
+                            .orbit_code_error_info
                             .clone()
-                            .and_then(app_server_codex_error_info_to_core),
+                            .and_then(app_server_orbit_code_error_info_to_core),
                     }),
                 });
             }
@@ -940,7 +940,7 @@ fn thread_item_to_core(item: &ThreadItem) -> Option<TurnItem> {
             content: content
                 .iter()
                 .cloned()
-                .map(codex_app_server_protocol::UserInput::into_core)
+                .map(orbit_code_app_server_protocol::UserInput::into_core)
                 .collect(),
         })),
         ThreadItem::AgentMessage {
@@ -953,12 +953,12 @@ fn thread_item_to_core(item: &ThreadItem) -> Option<TurnItem> {
             content: vec![AgentMessageContent::Text { text: text.clone() }],
             phase: phase.clone(),
             memory_citation: memory_citation.clone().map(|citation| {
-                codex_protocol::memory_citation::MemoryCitation {
+                orbit_code_protocol::memory_citation::MemoryCitation {
                     entries: citation
                         .entries
                         .into_iter()
                         .map(
-                            |entry| codex_protocol::memory_citation::MemoryCitationEntry {
+                            |entry| orbit_code_protocol::memory_citation::MemoryCitationEntry {
                                 path: entry.path,
                                 line_start: entry.line_start,
                                 line_end: entry.line_end,
@@ -1045,7 +1045,7 @@ fn command_execution_started_event(turn_id: &str, item: &ThreadItem) -> Option<V
             parsed_cmd: command_actions
                 .iter()
                 .cloned()
-                .map(codex_app_server_protocol::CommandAction::into_core)
+                .map(orbit_code_app_server_protocol::CommandAction::into_core)
                 .collect(),
             source: source.to_core(),
             interaction_input: None,
@@ -1073,18 +1073,22 @@ fn command_execution_completed_event(turn_id: &str, item: &ThreadItem) -> Option
 
     if matches!(
         status,
-        codex_app_server_protocol::CommandExecutionStatus::InProgress
+        orbit_code_app_server_protocol::CommandExecutionStatus::InProgress
     ) {
         return Some(Vec::new());
     }
 
     let status = match status {
-        codex_app_server_protocol::CommandExecutionStatus::InProgress => return Some(Vec::new()),
-        codex_app_server_protocol::CommandExecutionStatus::Completed => {
+        orbit_code_app_server_protocol::CommandExecutionStatus::InProgress => {
+            return Some(Vec::new());
+        }
+        orbit_code_app_server_protocol::CommandExecutionStatus::Completed => {
             ExecCommandStatus::Completed
         }
-        codex_app_server_protocol::CommandExecutionStatus::Failed => ExecCommandStatus::Failed,
-        codex_app_server_protocol::CommandExecutionStatus::Declined => ExecCommandStatus::Declined,
+        orbit_code_app_server_protocol::CommandExecutionStatus::Failed => ExecCommandStatus::Failed,
+        orbit_code_app_server_protocol::CommandExecutionStatus::Declined => {
+            ExecCommandStatus::Declined
+        }
     };
 
     let duration = Duration::from_millis(
@@ -1105,7 +1109,7 @@ fn command_execution_completed_event(turn_id: &str, item: &ThreadItem) -> Option
             parsed_cmd: command_actions
                 .iter()
                 .cloned()
-                .map(codex_app_server_protocol::CommandAction::into_core)
+                .map(orbit_code_app_server_protocol::CommandAction::into_core)
                 .collect(),
             source: source.to_core(),
             interaction_input: None,
@@ -1152,11 +1156,11 @@ mod refresh_tests {
 
     use base64::Engine;
     use chrono::Utc;
-    use codex_app_server_protocol::AuthMode;
-    use codex_core::auth::AuthCredentialsStoreMode;
-    use codex_core::auth::AuthDotJson;
-    use codex_core::auth::save_auth;
-    use codex_core::token_data::TokenData;
+    use orbit_code_app_server_protocol::AuthMode;
+    use orbit_code_core::auth::AuthCredentialsStoreMode;
+    use orbit_code_core::auth::AuthDotJson;
+    use orbit_code_core::auth::save_auth;
+    use orbit_code_core::token_data::TokenData;
     use pretty_assertions::assert_eq;
     use serde::Serialize;
     use serde_json::json;
@@ -1187,16 +1191,16 @@ mod refresh_tests {
         format!("{header_b64}.{payload_b64}.{signature_b64}")
     }
 
-    fn write_chatgpt_auth(codex_home: &std::path::Path) {
+    fn write_chatgpt_auth(orbit_code_home: &std::path::Path) {
         let id_token = fake_jwt("workspace-1", "business");
         let access_token = fake_jwt("workspace-1", "business");
         save_auth(
-            codex_home,
+            orbit_code_home,
             &AuthDotJson {
                 auth_mode: Some(AuthMode::Chatgpt),
                 openai_api_key: None,
                 tokens: Some(TokenData {
-                    id_token: codex_core::token_data::parse_chatgpt_jwt_claims(&id_token)
+                    id_token: orbit_code_core::token_data::parse_chatgpt_jwt_claims(&id_token)
                         .expect("id token should parse"),
                     access_token,
                     refresh_token: "refresh-token".to_string(),
@@ -1211,15 +1215,16 @@ mod refresh_tests {
 
     #[test]
     fn refresh_request_uses_local_chatgpt_auth() {
-        let codex_home = TempDir::new().expect("tempdir");
-        write_chatgpt_auth(codex_home.path());
+        let orbit_code_home = TempDir::new().expect("tempdir");
+        write_chatgpt_auth(orbit_code_home.path());
 
         let response = resolve_chatgpt_auth_tokens_refresh_response(
-            codex_home.path(),
+            orbit_code_home.path(),
             AuthCredentialsStoreMode::File,
             Some("workspace-1"),
             &ChatgptAuthTokensRefreshParams {
-                reason: codex_app_server_protocol::ChatgptAuthTokensRefreshReason::Unauthorized,
+                reason:
+                    orbit_code_app_server_protocol::ChatgptAuthTokensRefreshReason::Unauthorized,
                 previous_account_id: Some("workspace-1".to_string()),
             },
         )
@@ -1232,15 +1237,16 @@ mod refresh_tests {
 
     #[test]
     fn refresh_request_rejects_account_mismatch() {
-        let codex_home = TempDir::new().expect("tempdir");
-        write_chatgpt_auth(codex_home.path());
+        let orbit_code_home = TempDir::new().expect("tempdir");
+        write_chatgpt_auth(orbit_code_home.path());
 
         let err = resolve_chatgpt_auth_tokens_refresh_response(
-            codex_home.path(),
+            orbit_code_home.path(),
             AuthCredentialsStoreMode::File,
             Some("workspace-1"),
             &ChatgptAuthTokensRefreshParams {
-                reason: codex_app_server_protocol::ChatgptAuthTokensRefreshReason::Unauthorized,
+                reason:
+                    orbit_code_app_server_protocol::ChatgptAuthTokensRefreshReason::Unauthorized,
                 previous_account_id: Some("workspace-2".to_string()),
             },
         )
@@ -1255,28 +1261,28 @@ mod refresh_tests {
 
 #[cfg(test)]
 fn app_server_web_search_action_to_core(
-    action: codex_app_server_protocol::WebSearchAction,
-) -> Option<codex_protocol::models::WebSearchAction> {
+    action: orbit_code_app_server_protocol::WebSearchAction,
+) -> Option<orbit_code_protocol::models::WebSearchAction> {
     match action {
-        codex_app_server_protocol::WebSearchAction::Search { query, queries } => {
-            Some(codex_protocol::models::WebSearchAction::Search { query, queries })
+        orbit_code_app_server_protocol::WebSearchAction::Search { query, queries } => {
+            Some(orbit_code_protocol::models::WebSearchAction::Search { query, queries })
         }
-        codex_app_server_protocol::WebSearchAction::OpenPage { url } => {
-            Some(codex_protocol::models::WebSearchAction::OpenPage { url })
+        orbit_code_app_server_protocol::WebSearchAction::OpenPage { url } => {
+            Some(orbit_code_protocol::models::WebSearchAction::OpenPage { url })
         }
-        codex_app_server_protocol::WebSearchAction::FindInPage { url, pattern } => {
-            Some(codex_protocol::models::WebSearchAction::FindInPage { url, pattern })
+        orbit_code_app_server_protocol::WebSearchAction::FindInPage { url, pattern } => {
+            Some(orbit_code_protocol::models::WebSearchAction::FindInPage { url, pattern })
         }
-        codex_app_server_protocol::WebSearchAction::Other => {
-            Some(codex_protocol::models::WebSearchAction::Other)
+        orbit_code_app_server_protocol::WebSearchAction::Other => {
+            Some(orbit_code_protocol::models::WebSearchAction::Other)
         }
     }
 }
 
 #[cfg(test)]
-fn app_server_codex_error_info_to_core(
-    value: codex_app_server_protocol::CodexErrorInfo,
-) -> Option<codex_protocol::protocol::CodexErrorInfo> {
+fn app_server_orbit_code_error_info_to_core(
+    value: orbit_code_app_server_protocol::CodexErrorInfo,
+) -> Option<orbit_code_protocol::protocol::CodexErrorInfo> {
     serde_json::from_value(serde_json::to_value(value).ok()?).ok()
 }
 
@@ -1288,34 +1294,34 @@ mod tests {
     use super::server_notification_thread_events;
     use super::thread_snapshot_events;
     use super::turn_snapshot_events;
-    use codex_app_server_protocol::AgentMessageDeltaNotification;
-    use codex_app_server_protocol::CodexErrorInfo;
-    use codex_app_server_protocol::CommandAction;
-    use codex_app_server_protocol::CommandExecutionOutputDeltaNotification;
-    use codex_app_server_protocol::CommandExecutionSource;
-    use codex_app_server_protocol::CommandExecutionStatus;
-    use codex_app_server_protocol::ItemCompletedNotification;
-    use codex_app_server_protocol::ItemStartedNotification;
-    use codex_app_server_protocol::JSONRPCNotification;
-    use codex_app_server_protocol::ReasoningSummaryTextDeltaNotification;
-    use codex_app_server_protocol::ServerNotification;
-    use codex_app_server_protocol::Thread;
-    use codex_app_server_protocol::ThreadItem;
-    use codex_app_server_protocol::ThreadStatus;
-    use codex_app_server_protocol::Turn;
-    use codex_app_server_protocol::TurnCompletedNotification;
-    use codex_app_server_protocol::TurnError;
-    use codex_app_server_protocol::TurnStatus;
-    use codex_protocol::ThreadId;
-    use codex_protocol::items::AgentMessageContent;
-    use codex_protocol::items::AgentMessageItem;
-    use codex_protocol::items::TurnItem;
-    use codex_protocol::models::MessagePhase;
-    use codex_protocol::protocol::EventMsg;
-    use codex_protocol::protocol::ExecCommandSource;
-    use codex_protocol::protocol::SessionSource;
-    use codex_protocol::protocol::TurnAbortReason;
-    use codex_protocol::protocol::TurnAbortedEvent;
+    use orbit_code_app_server_protocol::AgentMessageDeltaNotification;
+    use orbit_code_app_server_protocol::CodexErrorInfo;
+    use orbit_code_app_server_protocol::CommandAction;
+    use orbit_code_app_server_protocol::CommandExecutionOutputDeltaNotification;
+    use orbit_code_app_server_protocol::CommandExecutionSource;
+    use orbit_code_app_server_protocol::CommandExecutionStatus;
+    use orbit_code_app_server_protocol::ItemCompletedNotification;
+    use orbit_code_app_server_protocol::ItemStartedNotification;
+    use orbit_code_app_server_protocol::JSONRPCNotification;
+    use orbit_code_app_server_protocol::ReasoningSummaryTextDeltaNotification;
+    use orbit_code_app_server_protocol::ServerNotification;
+    use orbit_code_app_server_protocol::Thread;
+    use orbit_code_app_server_protocol::ThreadItem;
+    use orbit_code_app_server_protocol::ThreadStatus;
+    use orbit_code_app_server_protocol::Turn;
+    use orbit_code_app_server_protocol::TurnCompletedNotification;
+    use orbit_code_app_server_protocol::TurnError;
+    use orbit_code_app_server_protocol::TurnStatus;
+    use orbit_code_protocol::ThreadId;
+    use orbit_code_protocol::items::AgentMessageContent;
+    use orbit_code_protocol::items::AgentMessageItem;
+    use orbit_code_protocol::items::TurnItem;
+    use orbit_code_protocol::models::MessagePhase;
+    use orbit_code_protocol::protocol::EventMsg;
+    use orbit_code_protocol::protocol::ExecCommandSource;
+    use orbit_code_protocol::protocol::SessionSource;
+    use orbit_code_protocol::protocol::TurnAbortReason;
+    use orbit_code_protocol::protocol::TurnAbortedEvent;
     use pretty_assertions::assert_eq;
     use serde_json::json;
     use std::path::PathBuf;
@@ -1676,7 +1682,7 @@ mod tests {
                     status: TurnStatus::Failed,
                     error: Some(TurnError {
                         message: "request failed".to_string(),
-                        codex_error_info: Some(CodexErrorInfo::Other),
+                        orbit_code_error_info: Some(CodexErrorInfo::Other),
                         additional_details: None,
                     }),
                 },
@@ -1766,7 +1772,7 @@ mod tests {
                         items: vec![
                             ThreadItem::UserMessage {
                                 id: "user-1".to_string(),
-                                content: vec![codex_app_server_protocol::UserInput::Text {
+                                content: vec![orbit_code_app_server_protocol::UserInput::Text {
                                     text: "hello".to_string(),
                                     text_elements: Vec::new(),
                                 }],
@@ -1793,7 +1799,7 @@ mod tests {
                         status: TurnStatus::Failed,
                         error: Some(TurnError {
                             message: "request failed".to_string(),
-                            codex_error_info: Some(CodexErrorInfo::Other),
+                            orbit_code_error_info: Some(CodexErrorInfo::Other),
                             additional_details: None,
                         }),
                     },
@@ -1819,8 +1825,8 @@ mod tests {
         };
         assert_eq!(error.message, "request failed");
         assert_eq!(
-            error.codex_error_info,
-            Some(codex_protocol::protocol::CodexErrorInfo::Other)
+            error.orbit_code_error_info,
+            Some(orbit_code_protocol::protocol::CodexErrorInfo::Other)
         );
         assert!(matches!(events[8].msg, EventMsg::TurnComplete(_)));
     }
@@ -1840,7 +1846,7 @@ mod tests {
                     ThreadItem::WebSearch {
                         id: "search-1".to_string(),
                         query: "ratatui stylize".to_string(),
-                        action: Some(codex_app_server_protocol::WebSearchAction::Other),
+                        action: Some(orbit_code_app_server_protocol::WebSearchAction::Other),
                     },
                     ThreadItem::ImageGeneration {
                         id: "image-1".to_string(),
@@ -1871,7 +1877,7 @@ mod tests {
         assert_eq!(web_search.query, "ratatui stylize");
         assert_eq!(
             web_search.action,
-            codex_protocol::models::WebSearchAction::Other
+            orbit_code_protocol::models::WebSearchAction::Other
         );
         let EventMsg::ImageGenerationEnd(image_generation) = &events[3].msg else {
             panic!("expected image generation replay");

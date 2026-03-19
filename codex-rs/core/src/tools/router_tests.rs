@@ -4,7 +4,7 @@ use crate::codex::make_session_and_context;
 use crate::function_tool::FunctionCallError;
 use crate::tools::context::ToolPayload;
 use crate::turn_diff_tracker::TurnDiffTracker;
-use codex_protocol::models::ResponseItem;
+use orbit_code_protocol::models::ResponseItem;
 
 use super::ToolCall;
 use super::ToolCallSource;
@@ -139,7 +139,7 @@ async fn build_tool_call_uses_namespace_for_registry_name() -> anyhow::Result<()
         ResponseItem::FunctionCall {
             id: None,
             name: tool_name.clone(),
-            namespace: Some("mcp__codex_apps__calendar".to_string()),
+            namespace: Some("mcp__orbit_code_apps__calendar".to_string()),
             arguments: "{}".to_string(),
             call_id: "call-namespace".to_string(),
         },
@@ -150,7 +150,7 @@ async fn build_tool_call_uses_namespace_for_registry_name() -> anyhow::Result<()
     assert_eq!(call.tool_name, tool_name);
     assert_eq!(
         call.tool_namespace,
-        Some("mcp__codex_apps__calendar".to_string())
+        Some("mcp__orbit_code_apps__calendar".to_string())
     );
     assert_eq!(call.call_id, "call-namespace");
     match call.payload {

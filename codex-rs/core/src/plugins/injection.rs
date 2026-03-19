@@ -1,11 +1,11 @@
 use std::collections::BTreeSet;
 use std::collections::HashMap;
 
-use codex_protocol::models::DeveloperInstructions;
-use codex_protocol::models::ResponseItem;
+use orbit_code_protocol::models::DeveloperInstructions;
+use orbit_code_protocol::models::ResponseItem;
 
 use crate::connectors;
-use crate::mcp::CODEX_APPS_MCP_SERVER_NAME;
+use crate::mcp::ORBIT_APPS_MCP_SERVER_NAME;
 use crate::mcp_connection_manager::ToolInfo;
 use crate::plugins::PluginCapabilitySummary;
 use crate::plugins::render_explicit_plugin_instructions;
@@ -27,7 +27,7 @@ pub(crate) fn build_plugin_injections(
             let available_mcp_servers = mcp_tools
                 .values()
                 .filter(|tool| {
-                    tool.server_name != CODEX_APPS_MCP_SERVER_NAME
+                    tool.server_name != ORBIT_APPS_MCP_SERVER_NAME
                         && tool
                             .plugin_display_names
                             .iter()

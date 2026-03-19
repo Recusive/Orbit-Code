@@ -6,7 +6,7 @@ struct ExecServerArgs {
     #[arg(
         long = "listen",
         value_name = "URL",
-        default_value = codex_exec_server::DEFAULT_LISTEN_URL
+        default_value = orbit_code_exec_server::DEFAULT_LISTEN_URL
     )]
     listen: String,
 }
@@ -14,5 +14,5 @@ struct ExecServerArgs {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let args = ExecServerArgs::parse();
-    codex_exec_server::run_main_with_listen_url(&args.listen).await
+    orbit_code_exec_server::run_main_with_listen_url(&args.listen).await
 }

@@ -6,10 +6,6 @@ use std::time::Duration;
 use std::time::Instant;
 
 use anyhow::Result;
-use codex_core::CodexAuth;
-use codex_core::features::Feature;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::Op;
 use core_test_support::apps_test_server::AppsTestServer;
 use core_test_support::responses::ev_completed;
 use core_test_support::responses::ev_response_created;
@@ -21,6 +17,10 @@ use core_test_support::stdio_server_bin;
 use core_test_support::test_codex::test_codex;
 use core_test_support::wait_for_event;
 use core_test_support::wait_for_event_with_timeout;
+use orbit_code_core::CodexAuth;
+use orbit_code_core::features::Feature;
+use orbit_code_protocol::protocol::EventMsg;
+use orbit_code_protocol::protocol::Op;
 use tempfile::TempDir;
 use wiremock::MockServer;
 
@@ -98,10 +98,10 @@ fn write_plugin_app_plugin(home: &TempDir) {
 
 async fn build_plugin_test_codex(
     server: &MockServer,
-    codex_home: Arc<TempDir>,
-) -> Result<Arc<codex_core::CodexThread>> {
+    orbit_code_home: Arc<TempDir>,
+) -> Result<Arc<orbit_code_core::CodexThread>> {
     let mut builder = test_codex()
-        .with_home(codex_home)
+        .with_home(orbit_code_home)
         .with_auth(CodexAuth::from_api_key("Test API Key"));
     Ok(builder
         .build(server)
@@ -112,11 +112,11 @@ async fn build_plugin_test_codex(
 
 async fn build_analytics_plugin_test_codex(
     server: &MockServer,
-    codex_home: Arc<TempDir>,
-) -> Result<Arc<codex_core::CodexThread>> {
+    orbit_code_home: Arc<TempDir>,
+) -> Result<Arc<orbit_code_core::CodexThread>> {
     let chatgpt_base_url = server.uri();
     let mut builder = test_codex()
-        .with_home(codex_home)
+        .with_home(orbit_code_home)
         .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
         .with_model("gpt-5")
         .with_config(move |config| {
@@ -131,11 +131,11 @@ async fn build_analytics_plugin_test_codex(
 
 async fn build_apps_enabled_plugin_test_codex(
     server: &MockServer,
-    codex_home: Arc<TempDir>,
+    orbit_code_home: Arc<TempDir>,
     chatgpt_base_url: String,
-) -> Result<Arc<codex_core::CodexThread>> {
+) -> Result<Arc<orbit_code_core::CodexThread>> {
     let mut builder = test_codex()
-        .with_home(codex_home)
+        .with_home(orbit_code_home)
         .with_auth(CodexAuth::create_dummy_chatgpt_auth_for_testing())
         .with_config(move |config| {
             config
@@ -196,19 +196,19 @@ async fn capability_sections_render_in_developer_message_in_order() -> Result<()
     )
     .await;
 
-    let codex_home = Arc::new(TempDir::new()?);
-    write_plugin_skill_plugin(codex_home.as_ref());
-    write_plugin_app_plugin(codex_home.as_ref());
+    let orbit_code_home = Arc::new(TempDir::new()?);
+    write_plugin_skill_plugin(orbit_code_home.as_ref());
+    write_plugin_app_plugin(orbit_code_home.as_ref());
     let codex = build_apps_enabled_plugin_test_codex(
         &server,
-        Arc::clone(&codex_home),
+        Arc::clone(&orbit_code_home),
         apps_server.chatgpt_base_url,
     )
     .await?;
 
     codex
         .submit(Op::UserInput {
-            items: vec![codex_protocol::user_input::UserInput::Text {
+            items: vec![orbit_code_protocol::user_input::UserInput::Text {
                 text: "hello".into(),
                 text_elements: Vec::new(),
             }],
@@ -265,7 +265,7 @@ async fn explicit_plugin_mentions_inject_plugin_guidance() -> Result<()> {
     )
     .await;
 
-    let codex_home = Arc::new(TempDir::new()?);
+    let orbit_code_home = Arc::new(TempDir::new()?);
     let rmcp_test_server_bin = match stdio_server_bin() {
         Ok(bin) => bin,
         Err(err) => {
@@ -273,17 +273,20 @@ async fn explicit_plugin_mentions_inject_plugin_guidance() -> Result<()> {
             return Ok(());
         }
     };
-    write_plugin_skill_plugin(codex_home.as_ref());
-    write_plugin_mcp_plugin(codex_home.as_ref(), &rmcp_test_server_bin);
-    write_plugin_app_plugin(codex_home.as_ref());
+    write_plugin_skill_plugin(orbit_code_home.as_ref());
+    write_plugin_mcp_plugin(orbit_code_home.as_ref(), &rmcp_test_server_bin);
+    write_plugin_app_plugin(orbit_code_home.as_ref());
 
-    let codex =
-        build_apps_enabled_plugin_test_codex(&server, codex_home, apps_server.chatgpt_base_url)
-            .await?;
+    let codex = build_apps_enabled_plugin_test_codex(
+        &server,
+        orbit_code_home,
+        apps_server.chatgpt_base_url,
+    )
+    .await?;
 
     codex
         .submit(Op::UserInput {
-            items: vec![codex_protocol::user_input::UserInput::Mention {
+            items: vec![orbit_code_protocol::user_input::UserInput::Mention {
                 name: "sample".into(),
                 path: format!("plugin://{SAMPLE_PLUGIN_CONFIG_NAME}"),
             }],
@@ -317,7 +320,7 @@ async fn explicit_plugin_mentions_inject_plugin_guidance() -> Result<()> {
     assert!(
         request_tools
             .iter()
-            .any(|name| name == "mcp__codex_apps__google_calendar_create_event"),
+            .any(|name| name == "mcp__orbit_code_apps__google_calendar_create_event"),
         "expected plugin app tools to become visible for this turn: {request_tools:?}"
     );
     let echo_description = tool_description(&request_body, "mcp__sample__echo")
@@ -328,7 +331,7 @@ async fn explicit_plugin_mentions_inject_plugin_guidance() -> Result<()> {
     );
     let calendar_description = tool_description(
         &request_body,
-        "mcp__codex_apps__google_calendar_create_event",
+        "mcp__orbit_code_apps__google_calendar_create_event",
     )
     .expect("plugin app tool description should be present");
     assert!(
@@ -349,13 +352,13 @@ async fn explicit_plugin_mentions_track_plugin_used_analytics() -> Result<()> {
     )
     .await;
 
-    let codex_home = Arc::new(TempDir::new()?);
-    write_plugin_skill_plugin(codex_home.as_ref());
-    let codex = build_analytics_plugin_test_codex(&server, codex_home).await?;
+    let orbit_code_home = Arc::new(TempDir::new()?);
+    write_plugin_skill_plugin(orbit_code_home.as_ref());
+    let codex = build_analytics_plugin_test_codex(&server, orbit_code_home).await?;
 
     codex
         .submit(Op::UserInput {
-            items: vec![codex_protocol::user_input::UserInput::Mention {
+            items: vec![orbit_code_protocol::user_input::UserInput::Mention {
                 name: "sample".into(),
                 path: format!("plugin://{SAMPLE_PLUGIN_CONFIG_NAME}"),
             }],
@@ -382,7 +385,7 @@ async fn explicit_plugin_mentions_track_plugin_used_analytics() -> Result<()> {
     let payload: serde_json::Value =
         serde_json::from_slice(&analytics_request.body).expect("analytics payload");
     let event = &payload["events"][0];
-    assert_eq!(event["event_type"], "codex_plugin_used");
+    assert_eq!(event["event_type"], "orbit_code_plugin_used");
     assert_eq!(event["event_params"]["plugin_id"], "sample@test");
     assert_eq!(event["event_params"]["plugin_name"], "sample");
     assert_eq!(event["event_params"]["marketplace_name"], "test");
@@ -394,7 +397,7 @@ async fn explicit_plugin_mentions_track_plugin_used_analytics() -> Result<()> {
     );
     assert_eq!(
         event["event_params"]["product_client_id"],
-        serde_json::json!(codex_core::default_client::originator().value)
+        serde_json::json!(orbit_code_core::default_client::originator().value)
     );
     assert_eq!(event["event_params"]["model_slug"], "gpt-5");
     assert!(event["event_params"]["thread_id"].as_str().is_some());
@@ -407,10 +410,10 @@ async fn explicit_plugin_mentions_track_plugin_used_analytics() -> Result<()> {
 async fn plugin_mcp_tools_are_listed() -> Result<()> {
     skip_if_no_network!(Ok(()));
     let server = start_mock_server().await;
-    let codex_home = Arc::new(TempDir::new()?);
+    let orbit_code_home = Arc::new(TempDir::new()?);
     let rmcp_test_server_bin = stdio_server_bin()?;
-    write_plugin_mcp_plugin(codex_home.as_ref(), &rmcp_test_server_bin);
-    let codex = build_plugin_test_codex(&server, codex_home).await?;
+    write_plugin_mcp_plugin(orbit_code_home.as_ref(), &rmcp_test_server_bin);
+    let codex = build_plugin_test_codex(&server, orbit_code_home).await?;
 
     let tools_ready_deadline = Instant::now() + Duration::from_secs(30);
     loop {

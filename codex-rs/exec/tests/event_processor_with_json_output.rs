@@ -1,72 +1,72 @@
-use codex_exec::event_processor_with_jsonl_output::EventProcessorWithJsonOutput;
-use codex_exec::exec_events::AgentMessageItem;
-use codex_exec::exec_events::CollabAgentState;
-use codex_exec::exec_events::CollabAgentStatus;
-use codex_exec::exec_events::CollabTool;
-use codex_exec::exec_events::CollabToolCallItem;
-use codex_exec::exec_events::CollabToolCallStatus;
-use codex_exec::exec_events::CommandExecutionItem;
-use codex_exec::exec_events::CommandExecutionStatus;
-use codex_exec::exec_events::ErrorItem;
-use codex_exec::exec_events::ItemCompletedEvent;
-use codex_exec::exec_events::ItemStartedEvent;
-use codex_exec::exec_events::ItemUpdatedEvent;
-use codex_exec::exec_events::McpToolCallItem;
-use codex_exec::exec_events::McpToolCallItemError;
-use codex_exec::exec_events::McpToolCallItemResult;
-use codex_exec::exec_events::McpToolCallStatus;
-use codex_exec::exec_events::PatchApplyStatus;
-use codex_exec::exec_events::PatchChangeKind;
-use codex_exec::exec_events::ReasoningItem;
-use codex_exec::exec_events::ThreadErrorEvent;
-use codex_exec::exec_events::ThreadEvent;
-use codex_exec::exec_events::ThreadItem;
-use codex_exec::exec_events::ThreadItemDetails;
-use codex_exec::exec_events::ThreadStartedEvent;
-use codex_exec::exec_events::TodoItem as ExecTodoItem;
-use codex_exec::exec_events::TodoListItem as ExecTodoListItem;
-use codex_exec::exec_events::TurnCompletedEvent;
-use codex_exec::exec_events::TurnFailedEvent;
-use codex_exec::exec_events::TurnStartedEvent;
-use codex_exec::exec_events::Usage;
-use codex_exec::exec_events::WebSearchItem;
-use codex_protocol::ThreadId;
-use codex_protocol::config_types::ModeKind;
-use codex_protocol::mcp::CallToolResult;
-use codex_protocol::models::WebSearchAction;
-use codex_protocol::openai_models::ReasoningEffort as ReasoningEffortConfig;
-use codex_protocol::plan_tool::PlanItemArg;
-use codex_protocol::plan_tool::StepStatus;
-use codex_protocol::plan_tool::UpdatePlanArgs;
-use codex_protocol::protocol::AgentMessageEvent;
-use codex_protocol::protocol::AgentReasoningEvent;
-use codex_protocol::protocol::AgentStatus;
-use codex_protocol::protocol::AskForApproval;
-use codex_protocol::protocol::CodexErrorInfo;
-use codex_protocol::protocol::CollabAgentSpawnBeginEvent;
-use codex_protocol::protocol::CollabAgentSpawnEndEvent;
-use codex_protocol::protocol::CollabWaitingEndEvent;
-use codex_protocol::protocol::ErrorEvent;
-use codex_protocol::protocol::Event;
-use codex_protocol::protocol::EventMsg;
-use codex_protocol::protocol::ExecCommandBeginEvent;
-use codex_protocol::protocol::ExecCommandEndEvent;
-use codex_protocol::protocol::ExecCommandOutputDeltaEvent;
-use codex_protocol::protocol::ExecCommandSource;
-use codex_protocol::protocol::ExecCommandStatus as CoreExecCommandStatus;
-use codex_protocol::protocol::ExecOutputStream;
-use codex_protocol::protocol::FileChange;
-use codex_protocol::protocol::McpInvocation;
-use codex_protocol::protocol::McpToolCallBeginEvent;
-use codex_protocol::protocol::McpToolCallEndEvent;
-use codex_protocol::protocol::PatchApplyBeginEvent;
-use codex_protocol::protocol::PatchApplyEndEvent;
-use codex_protocol::protocol::PatchApplyStatus as CorePatchApplyStatus;
-use codex_protocol::protocol::SandboxPolicy;
-use codex_protocol::protocol::SessionConfiguredEvent;
-use codex_protocol::protocol::WarningEvent;
-use codex_protocol::protocol::WebSearchBeginEvent;
-use codex_protocol::protocol::WebSearchEndEvent;
+use orbit_code_exec::event_processor_with_jsonl_output::EventProcessorWithJsonOutput;
+use orbit_code_exec::exec_events::AgentMessageItem;
+use orbit_code_exec::exec_events::CollabAgentState;
+use orbit_code_exec::exec_events::CollabAgentStatus;
+use orbit_code_exec::exec_events::CollabTool;
+use orbit_code_exec::exec_events::CollabToolCallItem;
+use orbit_code_exec::exec_events::CollabToolCallStatus;
+use orbit_code_exec::exec_events::CommandExecutionItem;
+use orbit_code_exec::exec_events::CommandExecutionStatus;
+use orbit_code_exec::exec_events::ErrorItem;
+use orbit_code_exec::exec_events::ItemCompletedEvent;
+use orbit_code_exec::exec_events::ItemStartedEvent;
+use orbit_code_exec::exec_events::ItemUpdatedEvent;
+use orbit_code_exec::exec_events::McpToolCallItem;
+use orbit_code_exec::exec_events::McpToolCallItemError;
+use orbit_code_exec::exec_events::McpToolCallItemResult;
+use orbit_code_exec::exec_events::McpToolCallStatus;
+use orbit_code_exec::exec_events::PatchApplyStatus;
+use orbit_code_exec::exec_events::PatchChangeKind;
+use orbit_code_exec::exec_events::ReasoningItem;
+use orbit_code_exec::exec_events::ThreadErrorEvent;
+use orbit_code_exec::exec_events::ThreadEvent;
+use orbit_code_exec::exec_events::ThreadItem;
+use orbit_code_exec::exec_events::ThreadItemDetails;
+use orbit_code_exec::exec_events::ThreadStartedEvent;
+use orbit_code_exec::exec_events::TodoItem as ExecTodoItem;
+use orbit_code_exec::exec_events::TodoListItem as ExecTodoListItem;
+use orbit_code_exec::exec_events::TurnCompletedEvent;
+use orbit_code_exec::exec_events::TurnFailedEvent;
+use orbit_code_exec::exec_events::TurnStartedEvent;
+use orbit_code_exec::exec_events::Usage;
+use orbit_code_exec::exec_events::WebSearchItem;
+use orbit_code_protocol::ThreadId;
+use orbit_code_protocol::config_types::ModeKind;
+use orbit_code_protocol::mcp::CallToolResult;
+use orbit_code_protocol::models::WebSearchAction;
+use orbit_code_protocol::openai_models::ReasoningEffort as ReasoningEffortConfig;
+use orbit_code_protocol::plan_tool::PlanItemArg;
+use orbit_code_protocol::plan_tool::StepStatus;
+use orbit_code_protocol::plan_tool::UpdatePlanArgs;
+use orbit_code_protocol::protocol::AgentMessageEvent;
+use orbit_code_protocol::protocol::AgentReasoningEvent;
+use orbit_code_protocol::protocol::AgentStatus;
+use orbit_code_protocol::protocol::AskForApproval;
+use orbit_code_protocol::protocol::CodexErrorInfo;
+use orbit_code_protocol::protocol::CollabAgentSpawnBeginEvent;
+use orbit_code_protocol::protocol::CollabAgentSpawnEndEvent;
+use orbit_code_protocol::protocol::CollabWaitingEndEvent;
+use orbit_code_protocol::protocol::ErrorEvent;
+use orbit_code_protocol::protocol::Event;
+use orbit_code_protocol::protocol::EventMsg;
+use orbit_code_protocol::protocol::ExecCommandBeginEvent;
+use orbit_code_protocol::protocol::ExecCommandEndEvent;
+use orbit_code_protocol::protocol::ExecCommandOutputDeltaEvent;
+use orbit_code_protocol::protocol::ExecCommandSource;
+use orbit_code_protocol::protocol::ExecCommandStatus as CoreExecCommandStatus;
+use orbit_code_protocol::protocol::ExecOutputStream;
+use orbit_code_protocol::protocol::FileChange;
+use orbit_code_protocol::protocol::McpInvocation;
+use orbit_code_protocol::protocol::McpToolCallBeginEvent;
+use orbit_code_protocol::protocol::McpToolCallEndEvent;
+use orbit_code_protocol::protocol::PatchApplyBeginEvent;
+use orbit_code_protocol::protocol::PatchApplyEndEvent;
+use orbit_code_protocol::protocol::PatchApplyStatus as CorePatchApplyStatus;
+use orbit_code_protocol::protocol::SandboxPolicy;
+use orbit_code_protocol::protocol::SessionConfiguredEvent;
+use orbit_code_protocol::protocol::WarningEvent;
+use orbit_code_protocol::protocol::WebSearchBeginEvent;
+use orbit_code_protocol::protocol::WebSearchEndEvent;
 use pretty_assertions::assert_eq;
 use rmcp::model::Content;
 use serde_json::json;
@@ -84,7 +84,7 @@ fn event(id: &str, msg: EventMsg) -> Event {
 fn session_configured_produces_thread_started_event() {
     let mut ep = EventProcessorWithJsonOutput::new(None);
     let session_id =
-        codex_protocol::ThreadId::from_string("67e55044-10b1-426f-9247-bb680e5fe0c8").unwrap();
+        orbit_code_protocol::ThreadId::from_string("67e55044-10b1-426f-9247-bb680e5fe0c8").unwrap();
     let rollout_path = PathBuf::from("/tmp/rollout.json");
     let ev = event(
         "e1",
@@ -96,7 +96,7 @@ fn session_configured_produces_thread_started_event() {
             model_provider_id: "test-provider".to_string(),
             service_tier: None,
             approval_policy: AskForApproval::Never,
-            approvals_reviewer: codex_protocol::config_types::ApprovalsReviewer::User,
+            approvals_reviewer: orbit_code_protocol::config_types::ApprovalsReviewer::User,
             sandbox_policy: SandboxPolicy::new_read_only_policy(),
             cwd: PathBuf::from("/home/user/project"),
             reasoning_effort: None,
@@ -121,7 +121,7 @@ fn task_started_produces_turn_started_event() {
     let mut ep = EventProcessorWithJsonOutput::new(None);
     let out = ep.collect_thread_events(&event(
         "t1",
-        EventMsg::TurnStarted(codex_protocol::protocol::TurnStartedEvent {
+        EventMsg::TurnStarted(orbit_code_protocol::protocol::TurnStartedEvent {
             turn_id: "turn-1".to_string(),
             model_context_window: Some(32_000),
             collaboration_mode_kind: ModeKind::Default,
@@ -315,7 +315,7 @@ fn plan_update_emits_todo_list_started_updated_and_completed() {
     // Task completes => item.completed (same id, latest state)
     let complete = event(
         "p3",
-        EventMsg::TurnComplete(codex_protocol::protocol::TurnCompleteEvent {
+        EventMsg::TurnComplete(orbit_code_protocol::protocol::TurnCompleteEvent {
             turn_id: "turn-1".to_string(),
             last_agent_message: None,
         }),
@@ -690,7 +690,7 @@ fn plan_update_after_complete_starts_new_todo_list_with_new_id() {
     let _ = ep.collect_thread_events(&start);
     let complete = event(
         "t2",
-        EventMsg::TurnComplete(codex_protocol::protocol::TurnCompleteEvent {
+        EventMsg::TurnComplete(orbit_code_protocol::protocol::TurnCompleteEvent {
             turn_id: "turn-1".to_string(),
             last_agent_message: None,
         }),
@@ -771,9 +771,9 @@ fn error_event_produces_error() {
     let mut ep = EventProcessorWithJsonOutput::new(None);
     let out = ep.collect_thread_events(&event(
         "e1",
-        EventMsg::Error(codex_protocol::protocol::ErrorEvent {
+        EventMsg::Error(orbit_code_protocol::protocol::ErrorEvent {
             message: "boom".to_string(),
-            codex_error_info: Some(CodexErrorInfo::Other),
+            orbit_code_error_info: Some(CodexErrorInfo::Other),
         }),
     ));
     assert_eq!(
@@ -811,9 +811,9 @@ fn stream_error_event_produces_error() {
     let mut ep = EventProcessorWithJsonOutput::new(None);
     let out = ep.collect_thread_events(&event(
         "e1",
-        EventMsg::StreamError(codex_protocol::protocol::StreamErrorEvent {
+        EventMsg::StreamError(orbit_code_protocol::protocol::StreamErrorEvent {
             message: "retrying".to_string(),
-            codex_error_info: Some(CodexErrorInfo::Other),
+            orbit_code_error_info: Some(CodexErrorInfo::Other),
             additional_details: None,
         }),
     ));
@@ -833,7 +833,7 @@ fn error_followed_by_task_complete_produces_turn_failed() {
         "e1",
         EventMsg::Error(ErrorEvent {
             message: "boom".to_string(),
-            codex_error_info: Some(CodexErrorInfo::Other),
+            orbit_code_error_info: Some(CodexErrorInfo::Other),
         }),
     );
     assert_eq!(
@@ -845,7 +845,7 @@ fn error_followed_by_task_complete_produces_turn_failed() {
 
     let complete_event = event(
         "e2",
-        EventMsg::TurnComplete(codex_protocol::protocol::TurnCompleteEvent {
+        EventMsg::TurnComplete(orbit_code_protocol::protocol::TurnCompleteEvent {
             turn_id: "turn-1".to_string(),
             last_agent_message: None,
         }),
@@ -1275,21 +1275,21 @@ fn task_complete_produces_turn_completed_with_usage() {
     let mut ep = EventProcessorWithJsonOutput::new(None);
 
     // First, feed a TokenCount event with known totals.
-    let usage = codex_protocol::protocol::TokenUsage {
+    let usage = orbit_code_protocol::protocol::TokenUsage {
         input_tokens: 1200,
         cached_input_tokens: 200,
         output_tokens: 345,
         reasoning_output_tokens: 0,
         total_tokens: 0,
     };
-    let info = codex_protocol::protocol::TokenUsageInfo {
+    let info = orbit_code_protocol::protocol::TokenUsageInfo {
         total_token_usage: usage.clone(),
         last_token_usage: usage,
         model_context_window: None,
     };
     let token_count_event = event(
         "e1",
-        EventMsg::TokenCount(codex_protocol::protocol::TokenCountEvent {
+        EventMsg::TokenCount(orbit_code_protocol::protocol::TokenCountEvent {
             info: Some(info),
             rate_limits: None,
         }),
@@ -1299,7 +1299,7 @@ fn task_complete_produces_turn_completed_with_usage() {
     // Then TurnComplete should produce turn.completed with the captured usage.
     let complete_event = event(
         "e2",
-        EventMsg::TurnComplete(codex_protocol::protocol::TurnCompleteEvent {
+        EventMsg::TurnComplete(orbit_code_protocol::protocol::TurnCompleteEvent {
             turn_id: "turn-1".to_string(),
             last_agent_message: Some("done".to_string()),
         }),

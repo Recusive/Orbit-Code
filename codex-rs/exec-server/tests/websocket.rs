@@ -2,12 +2,12 @@
 
 mod common;
 
-use codex_app_server_protocol::JSONRPCError;
-use codex_app_server_protocol::JSONRPCMessage;
-use codex_app_server_protocol::JSONRPCResponse;
-use codex_exec_server::InitializeParams;
-use codex_exec_server::InitializeResponse;
 use common::exec_server::exec_server;
+use orbit_code_app_server_protocol::JSONRPCError;
+use orbit_code_app_server_protocol::JSONRPCMessage;
+use orbit_code_app_server_protocol::JSONRPCResponse;
+use orbit_code_exec_server::InitializeParams;
+use orbit_code_exec_server::InitializeResponse;
 use pretty_assertions::assert_eq;
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
@@ -21,7 +21,7 @@ async fn exec_server_reports_malformed_websocket_json_and_keeps_running() -> any
     let JSONRPCMessage::Error(JSONRPCError { id, error }) = response else {
         panic!("expected malformed-message error response");
     };
-    assert_eq!(id, codex_app_server_protocol::RequestId::Integer(-1));
+    assert_eq!(id, orbit_code_app_server_protocol::RequestId::Integer(-1));
     assert_eq!(error.code, -32600);
     assert!(
         error

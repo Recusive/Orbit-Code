@@ -12,12 +12,12 @@ use crate::shimmer::shimmer_spans;
 use crate::wrapping::RtOptions;
 use crate::wrapping::adaptive_wrap_line;
 use crate::wrapping::adaptive_wrap_lines;
-use codex_ansi_escape::ansi_escape_line;
-use codex_protocol::parse_command::ParsedCommand;
-use codex_protocol::protocol::ExecCommandSource;
-use codex_shell_command::bash::extract_bash_command;
-use codex_utils_elapsed::format_duration;
 use itertools::Itertools;
+use orbit_code_ansi_escape::ansi_escape_line;
+use orbit_code_protocol::parse_command::ParsedCommand;
+use orbit_code_protocol::protocol::ExecCommandSource;
+use orbit_code_shell_command::bash::extract_bash_command;
+use orbit_code_utils_elapsed::format_duration;
 use ratatui::prelude::*;
 use ratatui::style::Modifier;
 use ratatui::style::Stylize;
@@ -689,7 +689,7 @@ const EXEC_DISPLAY_LAYOUT: ExecDisplayLayout = ExecDisplayLayout::new(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use codex_protocol::protocol::ExecCommandSource;
+    use orbit_code_protocol::protocol::ExecCommandSource;
     use pretty_assertions::assert_eq;
 
     #[test]
