@@ -15,7 +15,7 @@ use crate::truncate::approx_bytes_for_tokens;
 use tracing::warn;
 
 pub const BASE_INSTRUCTIONS: &str = include_str!("../../prompt.md");
-const DEFAULT_PERSONALITY_HEADER: &str = "You are Codex, a coding agent based on GPT-5. You and the user share the same workspace and collaborate to achieve the user's goals.";
+const DEFAULT_PERSONALITY_HEADER: &str = "You are Orbit Code, a terminal-based coding agent. You and the user share the same workspace and collaborate to achieve the user's goals.";
 const LOCAL_FRIENDLY_TEMPLATE: &str =
     "You optimize for team morale and being a supportive teammate as much as code quality.";
 const LOCAL_PRAGMATIC_TEMPLATE: &str = "You are a deeply pragmatic, effective software engineer.";
@@ -28,7 +28,15 @@ pub(crate) fn with_config_overrides(mut model: ModelInfo, config: &Config) -> Mo
         model.supports_reasoning_summaries = true;
     }
     if let Some(context_window) = config.model_context_window {
-        model.context_window = Some(context_window);
+        // Cap the config override to the model's actual context window.
+        // This prevents a global override (e.g. 1M for GPT-5.4) from
+        // inflating the context window of models with smaller limits
+        // (e.g. 200K for Haiku).
+        let capped = match model.context_window {
+            Some(model_max) => context_window.min(model_max),
+            None => context_window,
+        };
+        model.context_window = Some(capped);
     }
     if let Some(auto_compact_token_limit) = config.model_auto_compact_token_limit {
         model.auto_compact_token_limit = Some(auto_compact_token_limit);

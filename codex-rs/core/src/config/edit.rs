@@ -27,6 +27,7 @@ pub enum ConfigEdit {
     SetModel {
         model: Option<String>,
         effort: Option<ReasoningEffort>,
+        model_provider: Option<String>,
     },
     /// Update the service tier preference for future turns.
     SetServiceTier { service_tier: Option<ServiceTier> },
@@ -319,7 +320,11 @@ impl ConfigDocument {
 
     fn apply(&mut self, edit: &ConfigEdit) -> anyhow::Result<bool> {
         match edit {
-            ConfigEdit::SetModel { model, effort } => Ok({
+            ConfigEdit::SetModel {
+                model,
+                effort,
+                model_provider,
+            } => Ok({
                 let mut mutated = false;
                 mutated |= self.write_profile_value(
                     &["model"],
@@ -328,6 +333,12 @@ impl ConfigDocument {
                 mutated |= self.write_profile_value(
                     &["model_reasoning_effort"],
                     effort.map(|effort| value(effort.to_string())),
+                );
+                mutated |= self.write_profile_value(
+                    &["model_provider"],
+                    model_provider
+                        .as_ref()
+                        .map(|provider| value(provider.clone())),
                 );
                 mutated
             }),
@@ -774,10 +785,16 @@ impl ConfigEditsBuilder {
         self
     }
 
-    pub fn set_model(mut self, model: Option<&str>, effort: Option<ReasoningEffort>) -> Self {
+    pub fn set_model(
+        mut self,
+        model: Option<&str>,
+        effort: Option<ReasoningEffort>,
+        model_provider: Option<&str>,
+    ) -> Self {
         self.edits.push(ConfigEdit::SetModel {
             model: model.map(ToOwned::to_owned),
             effort,
+            model_provider: model_provider.map(ToOwned::to_owned),
         });
         self
     }

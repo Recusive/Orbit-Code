@@ -1728,6 +1728,103 @@ fn responses_websocket_features_do_not_change_wire_api() -> std::io::Result<()> 
 }
 
 #[test]
+fn anthropic_provider_requires_explicit_model() -> std::io::Result<()> {
+    let orbit_code_home = TempDir::new()?;
+    let cfg = ConfigToml {
+        model_provider: Some(crate::ANTHROPIC_PROVIDER_ID.to_string()),
+        ..Default::default()
+    };
+
+    let result = Config::load_from_base_config_with_overrides(
+        cfg,
+        ConfigOverrides::default(),
+        orbit_code_home.path().to_path_buf(),
+    );
+    assert!(result.is_err());
+    let error = result.expect_err("missing model should fail");
+    assert_eq!(error.kind(), std::io::ErrorKind::InvalidInput);
+    assert_eq!(
+        error.to_string(),
+        crate::anthropic_bridge::ANTHROPIC_EXPLICIT_MODEL_REQUIRED_ERROR
+    );
+
+    Ok(())
+}
+
+#[test]
+fn claude_model_requires_anthropic_provider() -> std::io::Result<()> {
+    let orbit_code_home = TempDir::new()?;
+    let cfg = ConfigToml {
+        model_provider: Some(crate::OPENAI_PROVIDER_ID.to_string()),
+        model: Some("claude-sonnet-4-6".to_string()),
+        ..Default::default()
+    };
+
+    let result = Config::load_from_base_config_with_overrides(
+        cfg,
+        ConfigOverrides::default(),
+        orbit_code_home.path().to_path_buf(),
+    );
+    assert!(result.is_err());
+    let error = result.expect_err("provider mismatch should fail");
+    assert_eq!(error.kind(), std::io::ErrorKind::InvalidInput);
+    assert_eq!(
+        error.to_string(),
+        crate::anthropic_bridge::CLAUDE_PROVIDER_MISMATCH_ERROR
+    );
+
+    Ok(())
+}
+
+#[test]
+fn claude_model_accepts_custom_anthropic_messages_provider() -> std::io::Result<()> {
+    let orbit_code_home = TempDir::new()?;
+    let mut model_providers = std::collections::HashMap::new();
+    model_providers.insert(
+        "anthropic-inline-test".to_string(),
+        crate::ModelProviderInfo {
+            name: "Anthropic Inline Test".to_string(),
+            base_url: Some("https://api.anthropic.com".to_string()),
+            env_key: None,
+            env_key_instructions: None,
+            experimental_bearer_token: None,
+            wire_api: crate::WireApi::AnthropicMessages,
+            query_params: None,
+            http_headers: Some(
+                [("x-api-key".to_string(), "test-key".to_string())]
+                    .into_iter()
+                    .collect(),
+            ),
+            env_http_headers: None,
+            request_max_retries: None,
+            stream_max_retries: None,
+            stream_idle_timeout_ms: None,
+            websocket_connect_timeout_ms: None,
+            requires_openai_auth: false,
+            supports_websockets: false,
+        },
+    );
+    let cfg = ConfigToml {
+        model_provider: Some("anthropic-inline-test".to_string()),
+        model: Some("claude-sonnet-4-6".to_string()),
+        model_providers,
+        ..Default::default()
+    };
+
+    let result = Config::load_from_base_config_with_overrides(
+        cfg,
+        ConfigOverrides::default(),
+        orbit_code_home.path().to_path_buf(),
+    );
+    assert!(
+        result.is_ok(),
+        "custom anthropic provider should be accepted"
+    );
+
+    Ok(())
+}
+
+#[test]
 fn config_honors_explicit_file_oauth_store_mode() -> std::io::Result<()> {
     let orbit_code_home = TempDir::new()?;
     let cfg = ConfigToml {
@@ -2682,7 +2779,7 @@ async fn set_model_updates_defaults() -> anyhow::Result<()> {
     let orbit_code_home = TempDir::new()?;
 
     ConfigEditsBuilder::new(orbit_code_home.path())
-        .set_model(Some("gpt-5.1-codex"), Some(ReasoningEffort::High))
+        .set_model(Some("gpt-5.1-codex"), Some(ReasoningEffort::High), None)
         .apply()
         .await?;
 
@@ -2714,7 +2811,7 @@ model = "gpt-4.1"
     .await?;
 
     ConfigEditsBuilder::new(orbit_code_home.path())
-        .set_model(Some("o4-mini"), Some(ReasoningEffort::High))
+        .set_model(Some("o4-mini"), Some(ReasoningEffort::High), None)
         .apply()
         .await?;
 
@@ -2740,7 +2837,7 @@ async fn set_model_updates_profile() -> anyhow::Result<()> {
 
     ConfigEditsBuilder::new(orbit_code_home.path())
         .with_profile(Some("dev"))
-        .set_model(Some("gpt-5.1-codex"), Some(ReasoningEffort::Medium))
+        .set_model(Some("gpt-5.1-codex"), Some(ReasoningEffort::Medium), None)
         .apply()
         .await?;
 
@@ -2781,7 +2878,7 @@ model = "gpt-5.1-codex"
 
     ConfigEditsBuilder::new(orbit_code_home.path())
         .with_profile(Some("dev"))
-        .set_model(Some("o4-high"), Some(ReasoningEffort::Medium))
+        .set_model(Some("o4-high"), Some(ReasoningEffort::Medium), None)
         .apply()
         .await?;
 

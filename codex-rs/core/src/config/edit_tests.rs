@@ -18,6 +18,7 @@ fn blocking_set_model_top_level() {
         &[ConfigEdit::SetModel {
             model: Some("gpt-5.1-codex".to_string()),
             effort: Some(ReasoningEffort::High),
+            model_provider: None,
         }],
     )
     .expect("persist");
@@ -136,6 +137,7 @@ profiles = { fast = { model = "gpt-4o", sandbox_mode = "strict" } }
         &[ConfigEdit::SetModel {
             model: Some("o4-mini".to_string()),
             effort: None,
+            model_provider: None,
         }],
     )
     .expect("persist");
@@ -181,6 +183,7 @@ fn blocking_set_model_writes_through_symlink_chain() {
         &[ConfigEdit::SetModel {
             model: Some("gpt-5.1-codex".to_string()),
             effort: Some(ReasoningEffort::High),
+            model_provider: None,
         }],
     )
     .expect("persist");
@@ -214,6 +217,7 @@ fn blocking_set_model_replaces_symlink_on_cycle() {
         &[ConfigEdit::SetModel {
             model: Some("gpt-5.1-codex".to_string()),
             effort: None,
+            model_provider: None,
         }],
     )
     .expect("persist");
@@ -309,6 +313,7 @@ profiles = { fast = { model = "gpt-4o", sandbox_mode = "strict" } }
         &[ConfigEdit::SetModel {
             model: None,
             effort: Some(ReasoningEffort::High),
+            model_provider: None,
         }],
     )
     .expect("persist");
@@ -344,6 +349,7 @@ model_reasoning_effort = "low"
         &[ConfigEdit::SetModel {
             model: Some("o5-preview".to_string()),
             effort: Some(ReasoningEffort::Minimal),
+            model_provider: None,
         }],
     )
     .expect("persist");
@@ -377,6 +383,7 @@ model = "gpt-5.1-codex"
         &[ConfigEdit::SetModel {
             model: Some("o4-mini".to_string()),
             effort: None,
+            model_provider: None,
         }],
     )
     .expect("persist");
@@ -892,7 +899,7 @@ async fn async_builder_set_model_persists() {
     let orbit_code_home = tmp.path().to_path_buf();
 
     ConfigEditsBuilder::new(&orbit_code_home)
-        .set_model(Some("gpt-5.1-codex"), Some(ReasoningEffort::High))
+        .set_model(Some("gpt-5.1-codex"), Some(ReasoningEffort::High), None)
         .apply()
         .await
         .expect("persist");
@@ -914,7 +921,7 @@ fn blocking_builder_set_model_round_trips_back_and_forth() {
 model_reasoning_effort = "low"
 "#;
     ConfigEditsBuilder::new(orbit_code_home)
-        .set_model(Some("o4-mini"), Some(ReasoningEffort::Low))
+        .set_model(Some("o4-mini"), Some(ReasoningEffort::Low), None)
         .apply_blocking()
         .expect("persist initial");
     let mut contents =
@@ -925,7 +932,7 @@ model_reasoning_effort = "low"
 model_reasoning_effort = "high"
 "#;
     ConfigEditsBuilder::new(orbit_code_home)
-        .set_model(Some("gpt-5.1-codex"), Some(ReasoningEffort::High))
+        .set_model(Some("gpt-5.1-codex"), Some(ReasoningEffort::High), None)
         .apply_blocking()
         .expect("persist update");
     contents =
@@ -933,7 +940,7 @@ model_reasoning_effort = "high"
     assert_eq!(contents, updated_expected);
 
     ConfigEditsBuilder::new(orbit_code_home)
-        .set_model(Some("o4-mini"), Some(ReasoningEffort::Low))
+        .set_model(Some("o4-mini"), Some(ReasoningEffort::Low), None)
         .apply_blocking()
         .expect("persist revert");
     contents =

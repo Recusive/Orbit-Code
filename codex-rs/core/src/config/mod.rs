@@ -1,3 +1,6 @@
+use crate::anthropic_bridge::ANTHROPIC_EXPLICIT_MODEL_REQUIRED_ERROR;
+use crate::anthropic_bridge::CLAUDE_PROVIDER_MISMATCH_ERROR;
+use crate::anthropic_bridge::is_known_anthropic_model;
 use crate::auth::AuthCredentialsStoreMode;
 use crate::config::edit::ConfigEdit;
 use crate::config::edit::ConfigEditsBuilder;
@@ -45,6 +48,7 @@ use crate::features::Features;
 use crate::features::FeaturesToml;
 use crate::git_info::resolve_root_git_project_for_trust;
 use crate::memories::memory_root;
+use crate::model_provider_info::ANTHROPIC_PROVIDER_ID;
 use crate::model_provider_info::LEGACY_OLLAMA_CHAT_PROVIDER_ID;
 use crate::model_provider_info::LMSTUDIO_OSS_PROVIDER_ID;
 use crate::model_provider_info::ModelProviderInfo;
@@ -145,8 +149,9 @@ pub const CONFIG_TOML_FILE: &str = "config.toml";
 const OPENAI_BASE_URL_ENV_VAR: &str = "OPENAI_BASE_URL";
 #[cfg(target_os = "linux")]
 const SYSTEM_BWRAP_PATH: &str = "/usr/bin/bwrap";
-const RESERVED_MODEL_PROVIDER_IDS: [&str; 3] = [
+const RESERVED_MODEL_PROVIDER_IDS: [&str; 4] = [
     OPENAI_PROVIDER_ID,
+    ANTHROPIC_PROVIDER_ID,
     OLLAMA_OSS_PROVIDER_ID,
     LMSTUDIO_OSS_PROVIDER_ID,
 ];
@@ -1979,6 +1984,29 @@ Built-in providers cannot be overridden. Rename your custom provider (for exampl
     }
 }
 
+fn validate_anthropic_model_selection(
+    model: Option<&str>,
+    model_provider: &ModelProviderInfo,
+) -> std::io::Result<()> {
+    if model_provider.wire_api == crate::WireApi::AnthropicMessages && model.is_none() {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            ANTHROPIC_EXPLICIT_MODEL_REQUIRED_ERROR,
+        ));
+    }
+
+    if model.is_some_and(is_known_anthropic_model)
+        && model_provider.wire_api != crate::WireApi::AnthropicMessages
+    {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            CLAUDE_PROVIDER_MISMATCH_ERROR,
+        ));
+    }
+
+    Ok(())
+}
+
 fn deserialize_model_providers<'de, D>(
     deserializer: D,
 ) -> Result<HashMap<String, ModelProviderInfo>, D::Error>
@@ -2383,10 +2411,30 @@ impl Config {
             model_providers.entry(key).or_insert(provider);
         }
 
-        let model_provider_id = model_provider
+        let model = model.or(config_profile.model.clone()).or(cfg.model.clone());
+        // Auto-detect provider from model slug. This ensures switching between
+        // Claude and GPT models in the picker always routes to the right backend,
+        // even if config.toml has a stale model_provider from a previous selection.
+        // Auto-detect provider from model slug so users can freely switch
+        // between Claude and GPT models without manually setting model_provider.
+        let explicit_provider = model_provider
             .or(config_profile.model_provider)
-            .or(cfg.model_provider)
-            .unwrap_or_else(|| "openai".to_string());
+            .or(cfg.model_provider);
+        let model_provider_id = if let Some(slug) = model.as_deref() {
+            if is_known_anthropic_model(slug) {
+                crate::model_provider_info::ANTHROPIC_PROVIDER_ID.to_string()
+            } else if explicit_provider.as_deref()
+                == Some(crate::model_provider_info::ANTHROPIC_PROVIDER_ID)
+            {
+                // Non-Claude model but config says "anthropic" (stale from previous selection).
+                // Route to openai instead.
+                "openai".to_string()
+            } else {
+                explicit_provider.unwrap_or_else(|| "openai".to_string())
+            }
+        } else {
+            explicit_provider.unwrap_or_else(|| "openai".to_string())
+        };
         let model_provider = model_providers
             .get(&model_provider_id)
             .ok_or_else(|| {
@@ -2490,7 +2538,8 @@ impl Config {
 
         let forced_login_method = cfg.forced_login_method;
 
-        let model = model.or(config_profile.model).or(cfg.model);
+        // model was already resolved above (before provider auto-detection).
+        validate_anthropic_model_selection(model.as_deref(), &model_provider)?;
         let service_tier = service_tier_override
             .unwrap_or_else(|| config_profile.service_tier.or(cfg.service_tier));
         let service_tier = match service_tier {

@@ -1078,6 +1078,7 @@ fn into_app_server_tui_cli(cli: TuiCli) -> orbit_code_tui_app_server::Cli {
         fork_session_id: cli.fork_session_id,
         fork_show_all: cli.fork_show_all,
         model: cli.model,
+        model_provider: cli.model_provider,
         oss: cli.oss,
         oss_provider: cli.oss_provider,
         config_profile: cli.config_profile,
@@ -1193,6 +1194,9 @@ fn finalize_fork_interactive(
 fn merge_interactive_cli_flags(interactive: &mut TuiCli, subcommand_cli: TuiCli) {
     if let Some(model) = subcommand_cli.model {
         interactive.model = Some(model);
+    }
+    if let Some(model_provider) = subcommand_cli.model_provider {
+        interactive.model_provider = Some(model_provider);
     }
     if subcommand_cli.oss {
         interactive.oss = true;
@@ -1354,6 +1358,21 @@ mod tests {
         );
         assert_eq!(args.session_id.as_deref(), Some("session-123"));
         assert_eq!(args.prompt.as_deref(), Some("re-review"));
+    }
+
+    #[test]
+    fn interactive_cli_parses_model_provider_override() {
+        let cli = MultitoolCli::try_parse_from([
+            "orbit-code",
+            "--model-provider",
+            "anthropic",
+            "--model",
+            "claude-sonnet-4-6",
+        ])
+        .expect("parse should succeed");
+
+        assert_eq!(cli.interactive.model_provider.as_deref(), Some("anthropic"));
+        assert_eq!(cli.interactive.model.as_deref(), Some("claude-sonnet-4-6"));
     }
 
     fn app_server_from_args(args: &[&str]) -> AppServerCommand {

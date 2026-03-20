@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "ansi-escape",
+    "anthropic",
     "async-utils",
     "app-server",
     "app-server-client",
@@ -81,6 +82,7 @@ license = "Apache-2.0"
 app_test_support = { path = "app-server/tests/common" }
 orbit-code-ansi-escape = { path = "ansi-escape" }
 orbit-code-api = { path = "codex-api" }
+orbit-code-anthropic = { path = "anthropic" }
 orbit-code-artifacts = { path = "artifacts" }
 orbit-code-package-manager = { path = "package-manager" }
 orbit-code-app-server = { path = "app-server" }

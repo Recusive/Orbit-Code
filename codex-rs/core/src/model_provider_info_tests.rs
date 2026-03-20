@@ -121,3 +121,30 @@ supports_websockets = true
     let provider: ModelProviderInfo = toml::from_str(provider_toml).unwrap();
     assert_eq!(provider.websocket_connect_timeout_ms, Some(15_000));
 }
+
+#[test]
+fn test_deserialize_anthropic_messages_wire_api() {
+    let provider_toml = r#"
+name = "Anthropic"
+base_url = "https://api.anthropic.com"
+env_key = "ANTHROPIC_API_KEY"
+wire_api = "anthropic_messages"
+        "#;
+
+    let provider: ModelProviderInfo = toml::from_str(provider_toml).unwrap();
+    assert_eq!(provider.wire_api, WireApi::AnthropicMessages);
+    assert_eq!(provider.wire_api.to_string(), "anthropic_messages");
+}
+
+#[test]
+fn test_deserialize_anthropicmessages_wire_api_alias() {
+    let provider_toml = r#"
+name = "Anthropic"
+base_url = "https://api.anthropic.com"
+env_key = "ANTHROPIC_API_KEY"
+wire_api = "anthropicmessages"
+        "#;
+
+    let provider: ModelProviderInfo = toml::from_str(provider_toml).unwrap();
+    assert_eq!(provider.wire_api, WireApi::AnthropicMessages);
+}

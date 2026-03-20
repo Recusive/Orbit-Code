@@ -6,6 +6,7 @@
 #![deny(clippy::print_stdout, clippy::print_stderr)]
 
 mod analytics_client;
+pub mod anthropic_bridge;
 pub mod api_bridge;
 mod apply_patch;
 mod apps;
@@ -81,6 +82,7 @@ mod truncate;
 mod unified_exec;
 pub mod windows_sandbox;
 pub use client::X_RESPONSESAPI_INCLUDE_TIMING_METRICS_HEADER;
+pub use model_provider_info::ANTHROPIC_PROVIDER_ID;
 pub use model_provider_info::DEFAULT_LMSTUDIO_PORT;
 pub use model_provider_info::DEFAULT_OLLAMA_PORT;
 pub use model_provider_info::LMSTUDIO_OSS_PROVIDER_ID;

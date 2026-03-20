@@ -176,11 +176,11 @@ impl StatusHistoryCell {
                 summarize_sandbox_policy(config.permissions.sandbox_policy.get()),
             ),
         ];
+        let effort_value = reasoning_effort_override
+            .unwrap_or(None)
+            .map(|effort| effort.to_string())
+            .unwrap_or_else(|| "none".to_string());
         if config.model_provider.wire_api == WireApi::Responses {
-            let effort_value = reasoning_effort_override
-                .unwrap_or(None)
-                .map(|effort| effort.to_string())
-                .unwrap_or_else(|| "none".to_string());
             config_entries.push(("reasoning effort", effort_value));
             config_entries.push((
                 "reasoning summaries",
@@ -189,6 +189,8 @@ impl StatusHistoryCell {
                     .map(|summary| summary.to_string())
                     .unwrap_or_else(|| "auto".to_string()),
             ));
+        } else if config.model_provider.wire_api == WireApi::AnthropicMessages {
+            config_entries.push(("effort", effort_value));
         }
         let (model_name, model_details) = compose_model_display(model_name, &config_entries);
         let approval = config_entries
@@ -232,7 +234,16 @@ impl StatusHistoryCell {
         let default_usage = TokenUsage::default();
         let (context_usage, context_window) = match token_info {
             Some(info) => (&info.last_token_usage, info.model_context_window),
-            None => (&default_usage, config.model_context_window),
+            None => {
+                let model_max = anthropic_model_context_window(&model_name);
+                let capped = match (config.model_context_window, model_max) {
+                    (Some(cfg_val), Some(max_val)) => Some(cfg_val.min(max_val)),
+                    (Some(cfg_val), None) => Some(cfg_val),
+                    (None, Some(max_val)) => Some(max_val),
+                    (None, None) => None,
+                };
+                (&default_usage, capped)
+            }
         };
         let context_window = context_window.map(|window| StatusContextWindowData {
             percent_remaining: context_usage.percent_of_context_window_remaining(window),
@@ -471,16 +482,24 @@ impl HistoryCell for StatusHistoryCell {
         let formatter = FieldFormatter::from_labels(labels.iter().map(String::as_str));
         let value_width = formatter.value_width(available_inner_width);
 
+        let is_anthropic = self.model_name.starts_with("claude-");
+        let (usage_url, note_text) = if is_anthropic {
+            (
+                "https://console.anthropic.com/settings/usage",
+                "information on usage and billing",
+            )
+        } else {
+            (
+                "https://chatgpt.com/codex/settings/usage",
+                "information on rate limits and credits",
+            )
+        };
         let note_first_line = Line::from(vec![
             Span::from("Visit ").cyan(),
-            "https://chatgpt.com/codex/settings/usage"
-                .cyan()
-                .underlined(),
+            usage_url.cyan().underlined(),
             Span::from(" for up-to-date").cyan(),
         ]);
-        let note_second_line = Line::from(vec![
-            Span::from("information on rate limits and credits").cyan(),
-        ]);
+        let note_second_line = Line::from(vec![Span::from(note_text).cyan()]);
         let note_lines = adaptive_wrap_lines(
             [note_first_line, note_second_line],
             RtOptions::new(available_inner_width),
@@ -565,6 +584,17 @@ fn format_model_provider(config: &Config) -> Option<String> {
         Some(base_url) => format!("{provider_name} - {base_url}"),
         None => provider_name.to_string(),
     })
+}
+
+fn anthropic_model_context_window(slug: &str) -> Option<i64> {
+    if !slug.starts_with("claude-") {
+        return None;
+    }
+    if matches!(slug, "claude-sonnet-4-6" | "claude-opus-4-6") {
+        Some(1_000_000)
+    } else {
+        Some(200_000)
+    }
 }
 
 fn sanitize_base_url(raw: &str) -> Option<String> {

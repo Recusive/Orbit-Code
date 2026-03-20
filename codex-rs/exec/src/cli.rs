@@ -26,6 +26,14 @@ pub struct Cli {
     #[arg(long, short = 'm', global = true)]
     pub model: Option<String>,
 
+    /// Explicit model provider id to use for this run.
+    #[arg(
+        long = "model-provider",
+        global = true,
+        conflicts_with_all = ["oss", "oss_provider"]
+    )]
+    pub model_provider: Option<String>,
+
     /// Use open-source provider.
     #[arg(long = "oss", default_value_t = false)]
     pub oss: bool,
@@ -314,5 +322,20 @@ mod tests {
         };
         assert_eq!(args.session_id.as_deref(), Some("session-123"));
         assert_eq!(args.prompt.as_deref(), Some(PROMPT));
+    }
+
+    #[test]
+    fn parses_model_provider_override() {
+        let cli = Cli::parse_from([
+            "codex-exec",
+            "--model-provider",
+            "anthropic",
+            "--model",
+            "claude-sonnet-4-6",
+            "hi",
+        ]);
+
+        assert_eq!(cli.model_provider.as_deref(), Some("anthropic"));
+        assert_eq!(cli.model.as_deref(), Some("claude-sonnet-4-6"));
     }
 }

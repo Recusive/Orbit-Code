@@ -18,6 +18,8 @@ pub(crate) fn app_server_tui_config_inputs(
         .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?;
 
     let config_overrides = ConfigOverrides {
+        model: cli.model.clone(),
+        model_provider: cli.model_provider.clone(),
         cwd: cli.cwd.clone(),
         config_profile: cli.config_profile.clone(),
         ..Default::default()

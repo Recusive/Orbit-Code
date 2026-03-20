@@ -703,7 +703,7 @@ pub async fn run_main(
             Some(provider)
         }
     } else {
-        None
+        cli.model_provider.clone()
     };
 
     // When using `--oss`, let the bootstrapper pick the model based on selected provider

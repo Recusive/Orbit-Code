@@ -167,6 +167,7 @@ pub async fn run_main(cli: Cli, arg0_paths: Arg0DispatchPaths) -> anyhow::Result
         command,
         images,
         model: model_cli_arg,
+        model_provider: model_provider_cli_arg,
         oss,
         oss_provider,
         config_profile,
@@ -306,7 +307,7 @@ pub async fn run_main(cli: Cli, arg0_paths: Arg0DispatchPaths) -> anyhow::Result
             ));
         }
     } else {
-        None // No OSS mode enabled
+        model_provider_cli_arg
     };
 
     // When using `--oss`, let the bootstrapper pick the model based on selected provider

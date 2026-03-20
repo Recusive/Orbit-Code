@@ -5252,6 +5252,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "orbit-code-anthropic"
+version = "0.0.0"
+dependencies = [
+ "async-trait",
+ "bytes",
+ "eventsource-stream",
+ "futures",
+ "http 1.4.0",
+ "orbit-code-client",
+ "pretty_assertions",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.18",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "orbit-code-api"
 version = "0.0.0"
 dependencies = [
@@ -5557,6 +5576,7 @@ dependencies = [
  "openssl-sys",
  "opentelemetry",
  "opentelemetry_sdk",
+ "orbit-code-anthropic",
  "orbit-code-api",
  "orbit-code-app-server-protocol",
  "orbit-code-apply-patch",

@@ -3147,7 +3147,15 @@ impl App {
                 let profile = self.active_profile.as_deref();
                 match ConfigEditsBuilder::new(&self.config.orbit_code_home)
                     .with_profile(profile)
-                    .set_model(Some(model.as_str()), effort)
+                    .set_model(
+                        Some(model.as_str()),
+                        effort,
+                        if orbit_code_core::anthropic_bridge::is_known_anthropic_model(&model) {
+                            Some(orbit_code_core::ANTHROPIC_PROVIDER_ID)
+                        } else {
+                            Some(orbit_code_core::OPENAI_PROVIDER_ID)
+                        },
+                    )
                     .apply()
                     .await
                 {

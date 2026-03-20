@@ -53,6 +53,10 @@ pub struct Cli {
     #[arg(long, short = 'm')]
     pub model: Option<String>,
 
+    /// Explicit model provider id to use for this session.
+    #[arg(long = "model-provider", conflicts_with_all = ["oss", "oss_provider"])]
+    pub model_provider: Option<String>,
+
     /// Convenience flag to select the local open source model provider. Equivalent to -c
     /// model_provider=oss; verifies a local LM Studio or Ollama server is running.
     #[arg(long = "oss", default_value_t = false)]

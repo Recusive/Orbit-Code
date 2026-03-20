@@ -30,6 +30,12 @@ use std::sync::OnceLock;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 
+use crate::anthropic_bridge::anthropic_model_defaults;
+use crate::anthropic_bridge::build_messages_request;
+use crate::anthropic_bridge::is_known_anthropic_model;
+use crate::anthropic_bridge::map_anthropic_error;
+use crate::anthropic_bridge::map_anthropic_to_response_stream;
+use crate::anthropic_bridge::merge_anthropic_beta_headers;
 use crate::api_bridge::CoreAuthProvider;
 use crate::api_bridge::auth_provider_from_auth;
 use crate::api_bridge::map_api_error;
@@ -99,6 +105,7 @@ use crate::client_common::ResponseEvent;
 use crate::client_common::ResponseStream;
 use crate::default_client::build_reqwest_client;
 use crate::error::CodexErr;
+use crate::error::EnvVarError;
 use crate::error::Result;
 use crate::flags::ORBIT_RS_SSE_FIXTURE;
 use crate::model_provider_info::ModelProviderInfo;
@@ -111,6 +118,7 @@ use crate::tools::spec::create_tools_json_for_responses_api;
 use crate::util::FeedbackRequestTags;
 use crate::util::emit_feedback_auth_recovery_tags;
 use crate::util::emit_feedback_request_tags_with_auth_env;
+use orbit_code_anthropic::AnthropicClient;
 
 pub const OPENAI_BETA_HEADER: &str = "OpenAI-Beta";
 pub const X_ORBIT_TURN_STATE_HEADER: &str = "x-codex-turn-state";
@@ -1334,6 +1342,10 @@ impl ModelClientSession {
                 )
                 .await
             }
+            WireApi::AnthropicMessages => {
+                self.stream_anthropic_messages(prompt, model_info, effort)
+                    .await
+            }
         }
     }
 
@@ -1353,6 +1365,68 @@ impl ModelClientSession {
             .force_http_fallback(session_telemetry, model_info);
         self.websocket_session = WebsocketSession::default();
         activated
+    }
+
+    #[instrument(
+        name = "model_client.stream_anthropic_messages",
+        level = "info",
+        skip_all,
+        fields(
+            model = %model_info.slug,
+            wire_api = %self.client.state.provider.wire_api,
+            transport = "anthropic_sse",
+            http.method = "POST",
+            api.path = "messages"
+        )
+    )]
+    async fn stream_anthropic_messages(
+        &self,
+        prompt: &Prompt,
+        model_info: &ModelInfo,
+        effort: Option<ReasoningEffortConfig>,
+    ) -> Result<ResponseStream> {
+        if !is_known_anthropic_model(&model_info.slug) {
+            return Err(CodexErr::InvalidRequest(format!(
+                "Anthropic stage 3a supports Claude models only; received `{}`.",
+                model_info.slug
+            )));
+        }
+
+        let defaults = anthropic_model_defaults(&model_info.slug, effort)?;
+        let request = build_messages_request(prompt, &model_info.slug, &defaults)?;
+        let provider = &self.client.state.provider;
+        let mut extra_headers = provider.build_header_map()?;
+        let api_key = extra_headers
+            .get("x-api-key")
+            .and_then(|value| value.to_str().ok())
+            .map(str::to_string)
+            .or(provider.api_key()?)
+            .ok_or_else(|| {
+                CodexErr::EnvVar(EnvVarError {
+                    var: "ANTHROPIC_API_KEY".to_string(),
+                    instructions: provider.env_key_instructions.clone(),
+                })
+            })?;
+        let base_url = provider
+            .base_url
+            .clone()
+            .unwrap_or_else(|| "https://api.anthropic.com".to_string());
+        merge_anthropic_beta_headers(
+            &mut extra_headers,
+            &model_info.slug,
+            &defaults.additional_beta_headers,
+        )?;
+
+        let client = AnthropicClient::new(
+            build_reqwest_client(),
+            base_url,
+            provider.stream_idle_timeout(),
+        );
+        let stream = client
+            .stream(request, api_key, extra_headers)
+            .await
+            .map_err(map_anthropic_error)?;
+        Ok(map_anthropic_to_response_stream(stream))
     }
 }
 
