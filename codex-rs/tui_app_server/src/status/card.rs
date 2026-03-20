@@ -163,10 +163,16 @@ impl StatusHistoryCell {
         collaboration_mode: Option<&str>,
         reasoning_effort_override: Option<Option<ReasoningEffort>>,
     ) -> Self {
+        let is_anthropic_model = model_name.starts_with("claude-");
+        let effective_provider_id = if is_anthropic_model {
+            orbit_code_core::ANTHROPIC_PROVIDER_ID.to_string()
+        } else {
+            config.model_provider_id.clone()
+        };
         let mut config_entries = vec![
             ("workdir", config.cwd.display().to_string()),
             ("model", model_name.to_string()),
-            ("provider", config.model_provider_id.clone()),
+            ("provider", effective_provider_id),
             (
                 "approval",
                 config.permissions.approval_policy.value().to_string(),
@@ -180,7 +186,9 @@ impl StatusHistoryCell {
             .unwrap_or(None)
             .map(|effort| effort.to_string())
             .unwrap_or_else(|| "none".to_string());
-        if config.model_provider.wire_api == WireApi::Responses {
+        if is_anthropic_model {
+            config_entries.push(("effort", effort_value));
+        } else {
             config_entries.push(("reasoning effort", effort_value));
             config_entries.push((
                 "reasoning summaries",
@@ -189,8 +197,6 @@ impl StatusHistoryCell {
                     .map(|summary| summary.to_string())
                     .unwrap_or_else(|| "auto".to_string()),
             ));
-        } else if config.model_provider.wire_api == WireApi::AnthropicMessages {
-            config_entries.push(("effort", effort_value));
         }
         let (model_name, model_details) = compose_model_display(model_name, &config_entries);
         let approval = config_entries
