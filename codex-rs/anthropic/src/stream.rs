@@ -157,21 +157,25 @@ struct ContentBlockDeltaPayload {
 }
 
 #[derive(Debug, Deserialize)]
-#[serde(tag = "type", rename_all = "snake_case")]
+#[serde(tag = "type")]
 enum RawDeltaType {
-    TextDelta { text: String },
-    InputJsonDelta { partial_json: String },
-    ThinkingDelta { thinking: String },
-    SignatureDelta { signature: String },
+    #[serde(rename = "text_delta")]
+    Text { text: String },
+    #[serde(rename = "input_json_delta")]
+    InputJson { partial_json: String },
+    #[serde(rename = "thinking_delta")]
+    Thinking { thinking: String },
+    #[serde(rename = "signature_delta")]
+    Signature { signature: String },
 }
 
 impl RawDeltaType {
     fn into_delta_type(self) -> Result<DeltaType, AnthropicError> {
         Ok(match self {
-            Self::TextDelta { text } => DeltaType::Text { text },
-            Self::InputJsonDelta { partial_json } => DeltaType::InputJson { partial_json },
-            Self::ThinkingDelta { thinking } => DeltaType::Thinking { thinking },
-            Self::SignatureDelta { signature } => DeltaType::Signature { signature },
+            Self::Text { text } => DeltaType::Text { text },
+            Self::InputJson { partial_json } => DeltaType::InputJson { partial_json },
+            Self::Thinking { thinking } => DeltaType::Thinking { thinking },
+            Self::Signature { signature } => DeltaType::Signature { signature },
         })
     }
 }

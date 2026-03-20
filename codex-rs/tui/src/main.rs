@@ -30,6 +30,7 @@ fn into_app_server_cli(cli: Cli) -> orbit_code_tui_app_server::Cli {
         fork_session_id: cli.fork_session_id,
         fork_show_all: cli.fork_show_all,
         model: cli.model,
+        model_provider: cli.model_provider,
         oss: cli.oss,
         oss_provider: cli.oss_provider,
         config_profile: cli.config_profile,
