@@ -11,7 +11,7 @@
 use std::path::PathBuf;
 
 use orbit_code_app_server_protocol::McpServerStatus;
-use orbit_code_chatgpt::connectors::AppInfo;
+use orbit_code_core::connectors::AppInfo;
 use orbit_code_file_search::FileMatch;
 use orbit_code_protocol::ThreadId;
 use orbit_code_protocol::openai_models::ModelPreset;

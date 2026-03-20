@@ -32,7 +32,6 @@ orbit-code-app-server-protocol = { workspace = true }
 orbit-code-apply-patch = { workspace = true }
 orbit-code-async-utils = { workspace = true }
 orbit-code-client = { workspace = true }
-orbit-code-connectors = { workspace = true }
 orbit-code-config = { workspace = true }
 orbit-code-environment = { workspace = true }
 orbit-code-shell-command = { workspace = true }

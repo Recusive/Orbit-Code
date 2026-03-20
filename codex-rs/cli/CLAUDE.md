@@ -4,7 +4,7 @@ The main Codex multitool binary -- the entry point for all CLI subcommands.
 
 ## What this folder does
 
-This is the `codex-cli` crate, which produces the `codex` binary. It acts as a dispatcher that routes subcommands to their respective crate implementations: interactive TUI, headless exec, MCP server, app server, sandbox debugging, login/logout, cloud tasks, apply, resume/fork, feature management, and more.
+This is the `codex-cli` crate, which produces the `codex` binary. It acts as a dispatcher that routes subcommands to their respective crate implementations: interactive TUI, headless exec, MCP server, app server, sandbox debugging, login/logout, resume/fork, feature management, and more.
 
 ## Where it plugs in
 
@@ -18,15 +18,12 @@ This is the `codex-cli` crate, which produces the `codex` binary. It acts as a d
 - `codex-exec` -- headless non-interactive execution
 - `codex-mcp-server` -- MCP server mode
 - `codex-app-server` / `codex-app-server-protocol` / `codex-app-server-test-client` -- app server for IDE integrations
-- `codex-chatgpt` -- `ApplyCommand`, `run_apply_command`
-- `codex-cloud-tasks` -- cloud task browsing
 - `codex-core` -- config, features, auth, sandbox, terminal info
 - `codex-config` -- config file path constants
 - `codex-protocol` -- protocol types, config types
 - `codex-login` -- login flows
 - `codex-execpolicy` -- exec policy checking
 - `codex-state` -- state database for memories
-- `codex-responses-api-proxy` -- responses API proxy
 - `codex-stdio-to-uds` -- stdio-to-UDS relay
 - `codex-rmcp-client` -- MCP client
 - `codex-utils-cli` -- CLI config override parsing

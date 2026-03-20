@@ -1,6 +1,5 @@
 [workspace]
 members = [
-    "backend-client",
     "ansi-escape",
     "async-utils",
     "app-server",
@@ -11,12 +10,7 @@ members = [
     "apply-patch",
     "arg0",
     "feedback",
-    "codex-backend-openapi-models",
-    "cloud-requirements",
-    "cloud-tasks",
-    "cloud-tasks-client",
     "cli",
-    "connectors",
     "config",
     "shell-command",
     "shell-escalation",
@@ -40,7 +34,6 @@ members = [
     "process-hardening",
     "protocol",
     "rmcp-client",
-    "responses-api-proxy",
     "stdio-to-uds",
     "otel",
     "tui",
@@ -97,12 +90,8 @@ orbit-code-app-server-test-client = { path = "app-server-test-client" }
 orbit-code-apply-patch = { path = "apply-patch" }
 orbit-code-arg0 = { path = "arg0" }
 orbit-code-async-utils = { path = "async-utils" }
-orbit-code-backend-client = { path = "backend-client" }
-orbit-code-chatgpt = { path = "chatgpt" }
 orbit-code-cli = { package = "orbit-code", path = "cli" }
 orbit-code-client = { path = "codex-client" }
-orbit-code-cloud-requirements = { path = "cloud-requirements" }
-orbit-code-connectors = { path = "connectors" }
 orbit-code-config = { path = "config" }
 orbit-code-core = { path = "core" }
 orbit-code-environment = { path = "environment" }
@@ -123,7 +112,6 @@ orbit-code-ollama = { path = "ollama" }
 orbit-code-otel = { path = "otel" }
 orbit-code-process-hardening = { path = "process-hardening" }
 orbit-code-protocol = { path = "protocol" }
-orbit-code-responses-api-proxy = { path = "responses-api-proxy" }
 orbit-code-rmcp-client = { path = "rmcp-client" }
 orbit-code-secrets = { path = "secrets" }
 orbit-code-shell-command = { path = "shell-command" }

@@ -6750,7 +6750,7 @@ async fn apps_popup_stays_loading_until_final_snapshot_updates() {
 
     chat.on_connectors_loaded(
         Ok(ConnectorsSnapshot {
-            connectors: vec![orbit_code_chatgpt::connectors::AppInfo {
+            connectors: vec![orbit_code_core::connectors::AppInfo {
                 id: notion_id.to_string(),
                 name: "Notion".to_string(),
                 description: Some("Workspace docs".to_string()),
@@ -6784,7 +6784,7 @@ async fn apps_popup_stays_loading_until_final_snapshot_updates() {
     chat.on_connectors_loaded(
         Ok(ConnectorsSnapshot {
             connectors: vec![
-                orbit_code_chatgpt::connectors::AppInfo {
+                orbit_code_core::connectors::AppInfo {
                     id: notion_id.to_string(),
                     name: "Notion".to_string(),
                     description: Some("Workspace docs".to_string()),
@@ -6799,7 +6799,7 @@ async fn apps_popup_stays_loading_until_final_snapshot_updates() {
                     is_enabled: true,
                     plugin_display_names: Vec::new(),
                 },
-                orbit_code_chatgpt::connectors::AppInfo {
+                orbit_code_core::connectors::AppInfo {
                     id: linear_id.to_string(),
                     name: "Linear".to_string(),
                     description: Some("Project tracking".to_string()),
@@ -6843,7 +6843,7 @@ async fn apps_refresh_failure_keeps_existing_full_snapshot() {
     let linear_id = "unit_test_apps_refresh_failure_connector_2";
 
     let full_connectors = vec![
-        orbit_code_chatgpt::connectors::AppInfo {
+        orbit_code_core::connectors::AppInfo {
             id: notion_id.to_string(),
             name: "Notion".to_string(),
             description: Some("Workspace docs".to_string()),
@@ -6858,7 +6858,7 @@ async fn apps_refresh_failure_keeps_existing_full_snapshot() {
             is_enabled: true,
             plugin_display_names: Vec::new(),
         },
-        orbit_code_chatgpt::connectors::AppInfo {
+        orbit_code_core::connectors::AppInfo {
             id: linear_id.to_string(),
             name: "Linear".to_string(),
             description: Some("Project tracking".to_string()),
@@ -6883,7 +6883,7 @@ async fn apps_refresh_failure_keeps_existing_full_snapshot() {
 
     chat.on_connectors_loaded(
         Ok(ConnectorsSnapshot {
-            connectors: vec![orbit_code_chatgpt::connectors::AppInfo {
+            connectors: vec![orbit_code_core::connectors::AppInfo {
                 id: notion_id.to_string(),
                 name: "Notion".to_string(),
                 description: Some("Workspace docs".to_string()),
@@ -6929,7 +6929,7 @@ async fn apps_popup_preserves_selected_app_across_refresh() {
     chat.on_connectors_loaded(
         Ok(ConnectorsSnapshot {
             connectors: vec![
-                orbit_code_chatgpt::connectors::AppInfo {
+                orbit_code_core::connectors::AppInfo {
                     id: "notion".to_string(),
                     name: "Notion".to_string(),
                     description: Some("Workspace docs".to_string()),
@@ -6944,7 +6944,7 @@ async fn apps_popup_preserves_selected_app_across_refresh() {
                     is_enabled: true,
                     plugin_display_names: Vec::new(),
                 },
-                orbit_code_chatgpt::connectors::AppInfo {
+                orbit_code_core::connectors::AppInfo {
                     id: "slack".to_string(),
                     name: "Slack".to_string(),
                     description: Some("Team chat".to_string()),
@@ -6975,7 +6975,7 @@ async fn apps_popup_preserves_selected_app_across_refresh() {
     chat.on_connectors_loaded(
         Ok(ConnectorsSnapshot {
             connectors: vec![
-                orbit_code_chatgpt::connectors::AppInfo {
+                orbit_code_core::connectors::AppInfo {
                     id: "airtable".to_string(),
                     name: "Airtable".to_string(),
                     description: Some("Spreadsheets".to_string()),
@@ -6990,7 +6990,7 @@ async fn apps_popup_preserves_selected_app_across_refresh() {
                     is_enabled: true,
                     plugin_display_names: Vec::new(),
                 },
-                orbit_code_chatgpt::connectors::AppInfo {
+                orbit_code_core::connectors::AppInfo {
                     id: "notion".to_string(),
                     name: "Notion".to_string(),
                     description: Some("Workspace docs".to_string()),
@@ -7005,7 +7005,7 @@ async fn apps_popup_preserves_selected_app_across_refresh() {
                     is_enabled: true,
                     plugin_display_names: Vec::new(),
                 },
-                orbit_code_chatgpt::connectors::AppInfo {
+                orbit_code_core::connectors::AppInfo {
                     id: "slack".to_string(),
                     name: "Slack".to_string(),
                     description: Some("Team chat".to_string()),
@@ -7048,7 +7048,7 @@ async fn apps_refresh_failure_with_cached_snapshot_triggers_pending_force_refetc
     chat.connectors_prefetch_in_flight = true;
     chat.connectors_force_refetch_pending = true;
 
-    let full_connectors = vec![orbit_code_chatgpt::connectors::AppInfo {
+    let full_connectors = vec![orbit_code_core::connectors::AppInfo {
         id: "unit_test_apps_refresh_failure_pending_connector".to_string(),
         name: "Notion".to_string(),
         description: Some("Workspace docs".to_string()),
@@ -7088,7 +7088,7 @@ async fn apps_popup_keeps_existing_full_snapshot_while_partial_refresh_loads() {
     chat.bottom_pane.set_connectors_enabled(true);
 
     let full_connectors = vec![
-        orbit_code_chatgpt::connectors::AppInfo {
+        orbit_code_core::connectors::AppInfo {
             id: "unit_test_connector_1".to_string(),
             name: "Notion".to_string(),
             description: Some("Workspace docs".to_string()),
@@ -7103,7 +7103,7 @@ async fn apps_popup_keeps_existing_full_snapshot_while_partial_refresh_loads() {
             is_enabled: true,
             plugin_display_names: Vec::new(),
         },
-        orbit_code_chatgpt::connectors::AppInfo {
+        orbit_code_core::connectors::AppInfo {
             id: "unit_test_connector_2".to_string(),
             name: "Linear".to_string(),
             description: Some("Project tracking".to_string()),
@@ -7130,7 +7130,7 @@ async fn apps_popup_keeps_existing_full_snapshot_while_partial_refresh_loads() {
     chat.on_connectors_loaded(
         Ok(ConnectorsSnapshot {
             connectors: vec![
-                orbit_code_chatgpt::connectors::AppInfo {
+                orbit_code_core::connectors::AppInfo {
                     id: "unit_test_connector_1".to_string(),
                     name: "Notion".to_string(),
                     description: Some("Workspace docs".to_string()),
@@ -7145,7 +7145,7 @@ async fn apps_popup_keeps_existing_full_snapshot_while_partial_refresh_loads() {
                     is_enabled: true,
                     plugin_display_names: Vec::new(),
                 },
-                orbit_code_chatgpt::connectors::AppInfo {
+                orbit_code_core::connectors::AppInfo {
                     id: "connector_openai_hidden".to_string(),
                     name: "Hidden OpenAI".to_string(),
                     description: Some("Should be filtered".to_string()),
@@ -7193,7 +7193,7 @@ async fn apps_refresh_failure_without_full_snapshot_falls_back_to_installed_apps
 
     chat.on_connectors_loaded(
         Ok(ConnectorsSnapshot {
-            connectors: vec![orbit_code_chatgpt::connectors::AppInfo {
+            connectors: vec![orbit_code_core::connectors::AppInfo {
                 id: "unit_test_apps_refresh_failure_fallback_connector".to_string(),
                 name: "Notion".to_string(),
                 description: Some("Workspace docs".to_string()),
@@ -7249,7 +7249,7 @@ async fn apps_popup_shows_disabled_status_for_installed_but_disabled_apps() {
 
     chat.on_connectors_loaded(
         Ok(ConnectorsSnapshot {
-            connectors: vec![orbit_code_chatgpt::connectors::AppInfo {
+            connectors: vec![orbit_code_core::connectors::AppInfo {
                 id: "connector_1".to_string(),
                 name: "Notion".to_string(),
                 description: Some("Workspace docs".to_string()),
@@ -7304,7 +7304,7 @@ async fn apps_initial_load_applies_enabled_state_from_config() {
 
     chat.on_connectors_loaded(
         Ok(ConnectorsSnapshot {
-            connectors: vec![orbit_code_chatgpt::connectors::AppInfo {
+            connectors: vec![orbit_code_core::connectors::AppInfo {
                 id: "connector_1".to_string(),
                 name: "Notion".to_string(),
                 description: Some("Workspace docs".to_string()),
@@ -7371,7 +7371,7 @@ async fn apps_initial_load_applies_enabled_state_from_requirements_with_user_ove
 
     chat.on_connectors_loaded(
         Ok(ConnectorsSnapshot {
-            connectors: vec![orbit_code_chatgpt::connectors::AppInfo {
+            connectors: vec![orbit_code_core::connectors::AppInfo {
                 id: "connector_1".to_string(),
                 name: "Notion".to_string(),
                 description: Some("Workspace docs".to_string()),
@@ -7435,7 +7435,7 @@ async fn apps_initial_load_applies_enabled_state_from_requirements_without_user_
 
     chat.on_connectors_loaded(
         Ok(ConnectorsSnapshot {
-            connectors: vec![orbit_code_chatgpt::connectors::AppInfo {
+            connectors: vec![orbit_code_core::connectors::AppInfo {
                 id: "connector_1".to_string(),
                 name: "Notion".to_string(),
                 description: Some("Workspace docs".to_string()),
@@ -7484,7 +7484,7 @@ async fn apps_refresh_preserves_toggled_enabled_state() {
 
     chat.on_connectors_loaded(
         Ok(ConnectorsSnapshot {
-            connectors: vec![orbit_code_chatgpt::connectors::AppInfo {
+            connectors: vec![orbit_code_core::connectors::AppInfo {
                 id: "connector_1".to_string(),
                 name: "Notion".to_string(),
                 description: Some("Workspace docs".to_string()),
@@ -7506,7 +7506,7 @@ async fn apps_refresh_preserves_toggled_enabled_state() {
 
     chat.on_connectors_loaded(
         Ok(ConnectorsSnapshot {
-            connectors: vec![orbit_code_chatgpt::connectors::AppInfo {
+            connectors: vec![orbit_code_core::connectors::AppInfo {
                 id: "connector_1".to_string(),
                 name: "Notion".to_string(),
                 description: Some("Workspace docs".to_string()),
@@ -7555,7 +7555,7 @@ async fn apps_popup_for_not_installed_app_uses_install_only_selected_description
 
     chat.on_connectors_loaded(
         Ok(ConnectorsSnapshot {
-            connectors: vec![orbit_code_chatgpt::connectors::AppInfo {
+            connectors: vec![orbit_code_core::connectors::AppInfo {
                 id: "connector_2".to_string(),
                 name: "Linear".to_string(),
                 description: Some("Project tracking".to_string()),

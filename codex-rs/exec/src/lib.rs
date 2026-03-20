@@ -43,7 +43,6 @@ use orbit_code_app_server_protocol::TurnInterruptResponse;
 use orbit_code_app_server_protocol::TurnStartParams;
 use orbit_code_app_server_protocol::TurnStartResponse;
 use orbit_code_arg0::Arg0DispatchPaths;
-use orbit_code_cloud_requirements::cloud_requirements_loader;
 use orbit_code_core::AuthManager;
 use orbit_code_core::LMSTUDIO_OSS_PROVIDER_ID;
 use orbit_code_core::OLLAMA_OSS_PROVIDER_ID;
@@ -55,6 +54,7 @@ use orbit_code_core::config::ConfigOverrides;
 use orbit_code_core::config::find_orbit_code_home;
 use orbit_code_core::config::load_config_as_toml_with_cli_overrides;
 use orbit_code_core::config::resolve_oss_provider;
+use orbit_code_core::config_loader::CloudRequirementsLoader;
 use orbit_code_core::config_loader::ConfigLoadError;
 use orbit_code_core::config_loader::LoaderOverrides;
 use orbit_code_core::config_loader::format_config_error_with_source;
@@ -286,21 +286,7 @@ pub async fn run_main(cli: Cli, arg0_paths: Arg0DispatchPaths) -> anyhow::Result
         }
     };
 
-    let cloud_auth_manager = AuthManager::shared(
-        orbit_code_home.clone(),
-        /*enable_orbit_code_api_key_env*/ false,
-        config_toml.cli_auth_credentials_store.unwrap_or_default(),
-    );
-    let chatgpt_base_url = config_toml
-        .chatgpt_base_url
-        .clone()
-        .unwrap_or_else(|| "https://chatgpt.com/backend-api/".to_string());
-    // TODO(gt): Make cloud requirements failures blocking once we can fail-closed.
-    let cloud_requirements = cloud_requirements_loader(
-        cloud_auth_manager,
-        chatgpt_base_url,
-        orbit_code_home.clone(),
-    );
+    let cloud_requirements = CloudRequirementsLoader::default();
     let run_cli_overrides = cli_kv_overrides.clone();
     let run_loader_overrides = LoaderOverrides::default();
     let run_cloud_requirements = cloud_requirements.clone();

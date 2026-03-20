@@ -19,7 +19,7 @@ Build, packaging, and deployment scripts for the `@openai/codex` npm package and
 
 | File | Role |
 |------|------|
-| `build_npm_package.py` | Stages and packages a single npm module (`codex`, platform variants, `codex-responses-api-proxy`, or `codex-sdk`). Copies source files, injects version numbers, bundles native binaries from a vendor directory, and optionally runs `npm pack`. |
+| `build_npm_package.py` | Stages and packages a single npm module (`codex`, platform variants, or `codex-sdk`). Copies source files, injects version numbers, bundles native binaries from a vendor directory, and optionally runs `npm pack`. |
 | `install_native_deps.py` | Downloads native Codex binaries and ripgrep from a GitHub Actions workflow run, extracts archives (zst/tar.gz/zip), and installs them into `vendor/<target>/`. Supports parallel downloads. |
 | `build_container.sh` | Builds the Docker image for sandboxed Codex execution: runs `pnpm build`, `pnpm pack`, then `docker build`. |
 | `run_in_container.sh` | Launches a Codex Docker container with a mounted work directory, configures allowed domains, initializes the firewall, and runs `codex --full-auto`. |
@@ -37,7 +37,6 @@ Build, packaging, and deployment scripts for the `@openai/codex` npm package and
 - `codex-cli/bin/codex.js` and `codex-cli/bin/rg` are copied into staged packages
 - `codex-cli/package.json` is read for metadata
 - Native binaries come from `codex-rs/` CI build artifacts
-- `codex-rs/responses-api-proxy/npm/` is used for the responses proxy package
 - `sdk/typescript/` is used for the SDK package
 
 ### Exports To

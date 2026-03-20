@@ -1,6 +1,0 @@
-load("//:defs.bzl", "orbit_code_rust_crate")
-
-orbit_code_rust_crate(
-    name = "responses-api-proxy",
-    crate_name = "orbit_code_responses_api_proxy",
-)

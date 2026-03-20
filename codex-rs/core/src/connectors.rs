@@ -9,17 +9,13 @@ use std::sync::Mutex as StdMutex;
 use std::time::Duration;
 use std::time::Instant;
 
-use anyhow::Context;
 use async_channel::unbounded;
 pub use orbit_code_app_server_protocol::AppBranding;
 pub use orbit_code_app_server_protocol::AppInfo;
 pub use orbit_code_app_server_protocol::AppMetadata;
-use orbit_code_connectors::AllConnectorsCacheKey;
-use orbit_code_connectors::DirectoryListResponse;
 use orbit_code_protocol::protocol::SandboxPolicy;
 use rmcp::model::ToolAnnotations;
 use serde::Deserialize;
-use serde::de::DeserializeOwned;
 use tracing::warn;
 
 use crate::AuthManager;
@@ -30,7 +26,6 @@ use crate::config::types::AppToolApproval;
 use crate::config::types::AppsConfigToml;
 use crate::config::types::ToolSuggestDiscoverableType;
 use crate::config_loader::AppsRequirementsToml;
-use crate::default_client::create_client;
 use crate::default_client::is_first_party_chat_originator;
 use crate::default_client::originator;
 use crate::features::Feature;
@@ -48,9 +43,8 @@ use crate::token_data::TokenData;
 use crate::tools::discoverable::DiscoverablePluginInfo;
 use crate::tools::discoverable::DiscoverableTool;
 
-pub use orbit_code_connectors::CONNECTORS_CACHE_TTL;
+pub const CONNECTORS_CACHE_TTL: Duration = Duration::from_secs(3600);
 const CONNECTORS_READY_TIMEOUT_ON_EMPTY_TOOLS: Duration = Duration::from_secs(30);
-const DIRECTORY_CONNECTORS_TIMEOUT: Duration = Duration::from_secs(60);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) struct AppToolPolicy {
@@ -101,6 +95,66 @@ pub async fn list_accessible_connectors_from_mcp_tools(
         .await?
         .connectors,
     )
+}
+
+/// Stub: ChatGPT connector directory not available in Orbit.
+///
+/// Returns `Err` so callers can treat this as "directory unavailable" rather
+/// than "directory returned zero connectors".
+pub async fn list_all_connectors_with_options(
+    _config: &Config,
+    _force_refetch: bool,
+) -> anyhow::Result<Vec<AppInfo>> {
+    anyhow::bail!("ChatGPT connector directory not available in Orbit")
+}
+
+/// Stub: no cached ChatGPT directory data.
+///
+/// Returns `None` so callers keep MCP-discovered apps unfiltered.
+pub async fn list_cached_all_connectors(_config: &Config) -> Option<Vec<AppInfo>> {
+    None
+}
+
+/// Stub: Orbit only exposes MCP-discovered apps.
+pub async fn list_connectors(config: &Config) -> anyhow::Result<Vec<AppInfo>> {
+    let accessible_connectors = list_accessible_connectors_from_mcp_tools(config).await?;
+    Ok(with_app_enabled_state(accessible_connectors, config))
+}
+
+pub fn merge_connectors_with_accessible(
+    connectors: Vec<AppInfo>,
+    accessible_connectors: Vec<AppInfo>,
+    all_connectors_loaded: bool,
+) -> Vec<AppInfo> {
+    let accessible_connectors = if all_connectors_loaded {
+        let connector_ids: HashSet<&str> = connectors
+            .iter()
+            .map(|connector| connector.id.as_str())
+            .collect();
+        accessible_connectors
+            .into_iter()
+            .filter(|connector| connector_ids.contains(connector.id.as_str()))
+            .collect()
+    } else {
+        accessible_connectors
+    };
+    let merged = merge_connectors(connectors, accessible_connectors);
+    filter_disallowed_connectors(merged)
+}
+
+pub fn connectors_for_plugin_apps(
+    connectors: Vec<AppInfo>,
+    plugin_apps: &[AppConnectorId],
+) -> Vec<AppInfo> {
+    let plugin_app_ids = plugin_apps
+        .iter()
+        .map(|connector_id| connector_id.0.as_str())
+        .collect::<HashSet<_>>();
+
+    filter_disallowed_connectors(merge_plugin_apps(connectors, plugin_apps.to_vec()))
+        .into_iter()
+        .filter(|connector| plugin_app_ids.contains(connector.id.as_str()))
+        .collect()
 }
 
 pub(crate) async fn list_tool_suggest_discoverable_tools_with_auth(
@@ -398,89 +452,10 @@ fn tool_suggest_connector_ids(config: &Config) -> HashSet<String> {
 }
 
 async fn list_directory_connectors_for_tool_suggest_with_auth(
-    config: &Config,
-    auth: Option<&CodexAuth>,
+    _config: &Config,
+    _auth: Option<&CodexAuth>,
 ) -> anyhow::Result<Vec<AppInfo>> {
-    if !config.features.enabled(Feature::Apps) {
-        return Ok(Vec::new());
-    }
-
-    let token_data = if let Some(auth) = auth {
-        auth.get_token_data().ok()
-    } else {
-        let auth_manager = auth_manager_from_config(config);
-        auth_manager
-            .auth()
-            .await
-            .and_then(|auth| auth.get_token_data().ok())
-    };
-    let Some(token_data) = token_data else {
-        return Ok(Vec::new());
-    };
-
-    let account_id = match token_data.account_id.as_deref() {
-        Some(account_id) if !account_id.is_empty() => account_id,
-        _ => return Ok(Vec::new()),
-    };
-    let access_token = token_data.access_token.clone();
-    let account_id = account_id.to_string();
-    let is_workspace_account = token_data.id_token.is_workspace_account();
-    let cache_key = AllConnectorsCacheKey::new(
-        config.chatgpt_base_url.clone(),
-        Some(account_id.clone()),
-        token_data.id_token.chatgpt_user_id.clone(),
-        is_workspace_account,
-    );
-
-    orbit_code_connectors::list_all_connectors_with_options(
-        cache_key,
-        is_workspace_account,
-        /*force_refetch*/ false,
-        |path| {
-            let access_token = access_token.clone();
-            let account_id = account_id.clone();
-            async move {
-                chatgpt_get_request_with_token::<DirectoryListResponse>(
-                    config,
-                    path,
-                    access_token.as_str(),
-                    account_id.as_str(),
-                )
-                .await
-            }
-        },
-    )
-    .await
-}
-
-async fn chatgpt_get_request_with_token<T: DeserializeOwned>(
-    config: &Config,
-    path: String,
-    access_token: &str,
-    account_id: &str,
-) -> anyhow::Result<T> {
-    let client = create_client();
-    let url = format!("{}{}", config.chatgpt_base_url, path);
-    let response = client
-        .get(&url)
-        .bearer_auth(access_token)
-        .header("chatgpt-account-id", account_id)
-        .header("Content-Type", "application/json")
-        .timeout(DIRECTORY_CONNECTORS_TIMEOUT)
-        .send()
-        .await
-        .context("failed to send request")?;
-
-    if response.status().is_success() {
-        response
-            .json()
-            .await
-            .context("failed to parse JSON response")
-    } else {
-        let status = response.status();
-        let body = response.text().await.unwrap_or_default();
-        anyhow::bail!("request failed with status {status}: {body}");
-    }
+    Ok(Vec::new())
 }
 
 fn auth_manager_from_config(config: &Config) -> std::sync::Arc<AuthManager> {

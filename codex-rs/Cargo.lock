@@ -5212,8 +5212,6 @@ dependencies = [
  "orbit-code-app-server-protocol",
  "orbit-code-app-server-test-client",
  "orbit-code-arg0",
- "orbit-code-chatgpt",
- "orbit-code-cloud-tasks",
  "orbit-code-config",
  "orbit-code-core",
  "orbit-code-exec",
@@ -5221,7 +5219,6 @@ dependencies = [
  "orbit-code-login",
  "orbit-code-mcp-server",
  "orbit-code-protocol",
- "orbit-code-responses-api-proxy",
  "orbit-code-rmcp-client",
  "orbit-code-state",
  "orbit-code-stdio-to-uds",
@@ -5301,9 +5298,6 @@ dependencies = [
  "opentelemetry_sdk",
  "orbit-code-app-server-protocol",
  "orbit-code-arg0",
- "orbit-code-backend-client",
- "orbit-code-chatgpt",
- "orbit-code-cloud-requirements",
  "orbit-code-core",
  "orbit-code-environment",
  "orbit-code-feedback",
@@ -5471,48 +5465,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "orbit-code-backend-client"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "orbit-code-backend-openapi-models",
- "orbit-code-client",
- "orbit-code-core",
- "orbit-code-protocol",
- "pretty_assertions",
- "reqwest",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "orbit-code-backend-openapi-models"
-version = "0.0.0"
-dependencies = [
- "serde",
- "serde_json",
- "serde_with",
-]
-
-[[package]]
-name = "orbit-code-chatgpt"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "clap",
- "orbit-code-connectors",
- "orbit-code-core",
- "orbit-code-git",
- "orbit-code-utils-cargo-bin",
- "orbit-code-utils-cli",
- "pretty_assertions",
- "serde",
- "serde_json",
- "tempfile",
- "tokio",
-]
-
-[[package]]
 name = "orbit-code-client"
 version = "0.0.0"
 dependencies = [
@@ -5543,74 +5495,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "orbit-code-cloud-requirements"
-version = "0.0.0"
-dependencies = [
- "async-trait",
- "base64 0.22.1",
- "chrono",
- "hmac",
- "orbit-code-backend-client",
- "orbit-code-core",
- "orbit-code-otel",
- "orbit-code-protocol",
- "pretty_assertions",
- "serde",
- "serde_json",
- "sha2",
- "tempfile",
- "thiserror 2.0.18",
- "tokio",
- "toml 0.9.11+spec-1.1.0",
- "tracing",
-]
-
-[[package]]
-name = "orbit-code-cloud-tasks"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "base64 0.22.1",
- "chrono",
- "clap",
- "crossterm",
- "orbit-code-client",
- "orbit-code-cloud-tasks-client",
- "orbit-code-core",
- "orbit-code-login",
- "orbit-code-tui",
- "orbit-code-utils-cli",
- "owo-colors",
- "pretty_assertions",
- "ratatui",
- "reqwest",
- "serde",
- "serde_json",
- "supports-color 3.0.2",
- "tokio",
- "tokio-stream",
- "tracing",
- "tracing-subscriber",
- "unicode-width 0.2.1",
-]
-
-[[package]]
-name = "orbit-code-cloud-tasks-client"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "chrono",
- "diffy",
- "orbit-code-backend-client",
- "orbit-code-git",
- "serde",
- "serde_json",
- "thiserror 2.0.18",
-]
-
-[[package]]
 name = "orbit-code-config"
 version = "0.0.0"
 dependencies = [
@@ -5631,18 +5515,6 @@ dependencies = [
  "toml 0.9.11+spec-1.1.0",
  "toml_edit 0.24.0+spec-1.1.0",
  "tracing",
-]
-
-[[package]]
-name = "orbit-code-connectors"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "orbit-code-app-server-protocol",
- "pretty_assertions",
- "serde",
- "tokio",
- "urlencoding",
 ]
 
 [[package]]
@@ -5693,7 +5565,6 @@ dependencies = [
  "orbit-code-async-utils",
  "orbit-code-client",
  "orbit-code-config",
- "orbit-code-connectors",
  "orbit-code-environment",
  "orbit-code-execpolicy",
  "orbit-code-file-search",
@@ -5800,7 +5671,6 @@ dependencies = [
  "orbit-code-app-server-protocol",
  "orbit-code-apply-patch",
  "orbit-code-arg0",
- "orbit-code-cloud-requirements",
  "orbit-code-core",
  "orbit-code-feedback",
  "orbit-code-otel",
@@ -6187,22 +6057,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "orbit-code-responses-api-proxy"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "clap",
- "ctor 0.6.3",
- "libc",
- "orbit-code-process-hardening",
- "reqwest",
- "serde",
- "serde_json",
- "tiny_http",
- "zeroize",
-]
-
-[[package]]
 name = "orbit-code-rmcp-client"
 version = "0.0.0"
 dependencies = [
@@ -6374,10 +6228,7 @@ dependencies = [
  "orbit-code-ansi-escape",
  "orbit-code-app-server-protocol",
  "orbit-code-arg0",
- "orbit-code-backend-client",
- "orbit-code-chatgpt",
  "orbit-code-client",
- "orbit-code-cloud-requirements",
  "orbit-code-core",
  "orbit-code-feedback",
  "orbit-code-file-search",
@@ -6466,9 +6317,7 @@ dependencies = [
  "orbit-code-app-server-client",
  "orbit-code-app-server-protocol",
  "orbit-code-arg0",
- "orbit-code-chatgpt",
  "orbit-code-client",
- "orbit-code-cloud-requirements",
  "orbit-code-core",
  "orbit-code-feedback",
  "orbit-code-file-search",

@@ -965,6 +965,70 @@ fn filter_disallowed_connectors_filters_disallowed_connector_ids() {
 }
 
 #[test]
+fn merge_connectors_with_accessible_excludes_accessible_connectors_not_in_all_when_all_loaded() {
+    let merged =
+        merge_connectors_with_accessible(vec![app("alpha")], vec![app("alpha"), app("beta")], true);
+
+    assert_eq!(
+        merged,
+        vec![AppInfo {
+            is_accessible: true,
+            install_url: Some(connector_install_url("alpha", "alpha")),
+            ..app("alpha")
+        }]
+    );
+}
+
+#[test]
+fn merge_connectors_with_accessible_keeps_accessible_connectors_while_all_are_unavailable() {
+    let merged = merge_connectors_with_accessible(
+        vec![app("alpha")],
+        vec![app("alpha"), app("beta")],
+        false,
+    );
+
+    assert_eq!(
+        merged,
+        vec![
+            AppInfo {
+                is_accessible: true,
+                install_url: Some(connector_install_url("alpha", "alpha")),
+                ..app("alpha")
+            },
+            AppInfo {
+                is_accessible: true,
+                install_url: Some(connector_install_url("beta", "beta")),
+                ..app("beta")
+            },
+        ]
+    );
+}
+
+#[test]
+fn connectors_for_plugin_apps_returns_only_requested_plugin_apps() {
+    let connectors = connectors_for_plugin_apps(
+        vec![app("alpha"), app("beta")],
+        &[
+            AppConnectorId("alpha".to_string()),
+            AppConnectorId("gmail".to_string()),
+        ],
+    );
+
+    assert_eq!(
+        connectors,
+        vec![
+            app("alpha"),
+            AppInfo {
+                id: "gmail".to_string(),
+                name: "gmail".to_string(),
+                install_url: Some(connector_install_url("gmail", "gmail")),
+                ..app("gmail")
+            },
+        ]
+    );
+}
+
+#[test]
 fn first_party_chat_originator_filters_target_and_openai_prefixed_connectors() {
     let filtered = filter_disallowed_connectors_for_originator(
         vec![

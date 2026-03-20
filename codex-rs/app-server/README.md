@@ -181,7 +181,7 @@ Example with notification opt-out:
 - `externalAgentConfig/import` — apply selected external-agent migration items by passing explicit `migrationItems` with `cwd` (`null` for home).
 - `config/value/write` — write a single config key/value to the user's config.toml on disk.
 - `config/batchWrite` — apply multiple config edits atomically to the user's config.toml on disk, with optional `reloadUserConfig: true` to hot-reload loaded threads.
-- `configRequirements/read` — fetch loaded requirements constraints from `requirements.toml` and/or MDM (or `null` if none are configured), including allow-lists (`allowedApprovalPolicies`, `allowedSandboxModes`, `allowedWebSearchModes`), pinned feature values (`featureRequirements`), `enforceResidency`, and `network` constraints.
+- `configRequirements/read` — fetch loaded requirements constraints from `requirements.toml` and/or MDM (or `null` if none are configured), including allow-lists (`allowedApprovalPolicies`, `allowedSandboxModes`, `allowedWebSearchModes`), pinned feature values (`featureRequirements`), `enforceResidency`, and `network` constraints. Orbit does not load managed ChatGPT requirements, so this is typically `null` unless local/system requirements files are configured.
 
 ### Example: Start or resume a thread
 
@@ -1151,7 +1151,7 @@ To enable or disable a skill by path:
 
 ## Apps
 
-Use `app/list` to fetch available apps (connectors). Each entry includes metadata like the app `id`, display `name`, `installUrl`, `branding`, `appMetadata`, `labels`, whether it is currently accessible, and whether it is enabled in config.
+Use `app/list` to fetch available apps (connectors). Orbit serves MCP-discovered apps here. Each entry includes the app `id`, display `name`, `installUrl`, whether it is currently accessible, and whether it is enabled in config. Directory-only ChatGPT metadata is not returned.
 
 ```json
 { "method": "app/list", "id": 50, "params": {
@@ -1183,9 +1183,9 @@ Use `app/list` to fetch available apps (connectors). Each entry includes metadat
 
 When `threadId` is provided, app feature gating (`Feature::Apps`) is evaluated using that thread's config snapshot. When omitted, the latest global config is used.
 
-`app/list` returns after both accessible apps and directory apps are loaded. Set `forceRefetch: true` to bypass app caches and fetch fresh data from sources. Cache entries are only replaced when those refetches succeed.
+`app/list` returns after accessible apps are loaded and the server has finished checking for directory metadata. Orbit does not provide a ChatGPT app directory, so responses typically contain the accessible MCP app set only. Set `forceRefetch: true` to bypass app caches and fetch fresh data from sources. Cache entries are only replaced when those refetches succeed.
 
-The server also emits `app/list/updated` notifications whenever either source (accessible apps or directory apps) finishes loading. Each notification includes the latest merged app list.
+The server emits `app/list/updated` notifications as app data loads. In Orbit these updates normally reflect the accessible MCP app set.
 
 ```json
 {
@@ -1238,7 +1238,7 @@ $demo-app Pull the latest updates from the team.
 
 ## Auth endpoints
 
-The JSON-RPC auth/account surface exposes request/response methods plus server-initiated notifications (no `id`). Use these to determine auth state, start or cancel logins, logout, and inspect ChatGPT rate limits.
+The JSON-RPC auth/account surface exposes request/response methods plus server-initiated notifications (no `id`). Use these to determine auth state, start or cancel logins, logout, and inspect rate-limit snapshots.
 
 ### Authentication modes
 
@@ -1255,7 +1255,7 @@ Codex supports these authentication modes. The current mode is surfaced in `acco
 - `account/login/cancel` — cancel a pending ChatGPT login by `loginId`.
 - `account/logout` — sign out; triggers `account/updated`.
 - `account/updated` (notify) — emitted whenever auth mode changes (`authMode`: `apikey`, `chatgpt`, or `null`) and includes the current ChatGPT `planType` when available.
-- `account/rateLimits/read` — fetch ChatGPT rate limits; updates arrive via `account/rateLimits/updated` (notify).
+- `account/rateLimits/read` — fetch rate-limit snapshots. Orbit currently returns an empty snapshot until backend support is added; updates may still arrive via `account/rateLimits/updated` (notify).
 - `account/rateLimits/updated` (notify) — emitted whenever a user's ChatGPT rate limits change.
 - `mcpServer/oauthLogin/completed` (notify) — emitted after a `mcpServer/oauth/login` flow finishes for a server; payload includes `{ name, success, error? }`.
 
@@ -1330,19 +1330,18 @@ Field notes:
 { "method": "account/updated", "params": { "authMode": null, "planType": null } }
 ```
 
-### 6) Rate limits (ChatGPT)
+### 6) Rate limits
 
 ```json
 { "method": "account/rateLimits/read", "id": 6 }
-{ "id": 6, "result": { "rateLimits": { "primary": { "usedPercent": 25, "windowDurationMins": 15, "resetsAt": 1730947200 }, "secondary": null } } }
+{ "id": 6, "result": { "rateLimits": { "limitId": "codex", "primary": null, "secondary": null, "credits": null, "planType": null }, "rateLimitsByLimitId": {} } }
 { "method": "account/rateLimits/updated", "params": { "rateLimits": { … } } }
 ```
 
 Field notes:
 
-- `usedPercent` is current usage within the OpenAI quota window.
-- `windowDurationMins` is the quota window length.
-- `resetsAt` is a Unix timestamp (seconds) for the next reset.
+- Orbit currently returns an empty snapshot for `account/rateLimits/read`.
+- `account/rateLimits/updated` notifications still use the same payload shape when a backend snapshot is available.
 
 ## Experimental API Opt-in
 

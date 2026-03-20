@@ -10,7 +10,6 @@ pub use app::ExitReason;
 use cwd_prompt::CwdPromptAction;
 use cwd_prompt::CwdPromptOutcome;
 use cwd_prompt::CwdSelection;
-use orbit_code_cloud_requirements::cloud_requirements_loader;
 use orbit_code_core::AuthManager;
 use orbit_code_core::CodexAuth;
 use orbit_code_core::INTERACTIVE_SESSION_SOURCES;
@@ -355,20 +354,7 @@ pub async fn run_main(
         tracing::warn!(error = %err, "failed to run personality migration");
     }
 
-    let cloud_auth_manager = AuthManager::shared(
-        orbit_code_home.to_path_buf(),
-        /*enable_orbit_code_api_key_env*/ false,
-        config_toml.cli_auth_credentials_store.unwrap_or_default(),
-    );
-    let chatgpt_base_url = config_toml
-        .chatgpt_base_url
-        .clone()
-        .unwrap_or_else(|| "https://chatgpt.com/backend-api/".to_string());
-    let cloud_requirements = cloud_requirements_loader(
-        cloud_auth_manager,
-        chatgpt_base_url,
-        orbit_code_home.to_path_buf(),
-    );
+    let cloud_requirements = CloudRequirementsLoader::default();
 
     let model_provider_override = if cli.oss {
         let resolved = resolve_oss_provider(
@@ -579,7 +565,7 @@ async fn run_ratatui_app(
     initial_config: Config,
     overrides: ConfigOverrides,
     cli_kv_overrides: Vec<(String, toml::Value)>,
-    mut cloud_requirements: CloudRequirementsLoader,
+    cloud_requirements: CloudRequirementsLoader,
     feedback: orbit_code_feedback::CodexFeedback,
 ) -> color_eyre::Result<AppExitInfo> {
     color_eyre::install()?;
@@ -662,17 +648,6 @@ async fn run_ratatui_app(
             });
         }
         trust_decision_was_made = onboarding_result.directory_trust_decision.is_some();
-        // If this onboarding run included the login step, always refresh cloud requirements and
-        // rebuild config. This avoids missing newly available cloud requirements due to login
-        // status detection edge cases.
-        if show_login_screen {
-            cloud_requirements = cloud_requirements_loader(
-                auth_manager.clone(),
-                initial_config.chatgpt_base_url.clone(),
-                initial_config.orbit_code_home.clone(),
-            );
-        }
-
         // If the user made an explicit trust decision, or we showed the login flow, reload config
         // so current process state reflects persisted trust/auth changes.
         if onboarding_result.directory_trust_decision.is_some() || show_login_screen {

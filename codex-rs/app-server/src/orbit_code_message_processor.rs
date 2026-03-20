@@ -174,9 +174,6 @@ use orbit_code_app_server_protocol::WindowsSandboxSetupStartParams;
 use orbit_code_app_server_protocol::WindowsSandboxSetupStartResponse;
 use orbit_code_app_server_protocol::build_turns_from_rollout_items;
 use orbit_code_arg0::Arg0DispatchPaths;
-use orbit_code_backend_client::Client as BackendClient;
-use orbit_code_chatgpt::connectors;
-use orbit_code_cloud_requirements::cloud_requirements_loader;
 use orbit_code_core::AuthManager;
 use orbit_code_core::CodexAuth;
 use orbit_code_core::CodexThread;
@@ -201,6 +198,7 @@ use orbit_code_core::config::types::McpServerTransportConfig;
 use orbit_code_core::config_loader::CloudRequirementsLoadError;
 use orbit_code_core::config_loader::CloudRequirementsLoadErrorCode;
 use orbit_code_core::config_loader::CloudRequirementsLoader;
+use orbit_code_core::connectors;
 use orbit_code_core::default_client::set_default_client_residency_requirement;
 use orbit_code_core::error::CodexErr;
 use orbit_code_core::error::Result as CodexResult;
@@ -1069,8 +1067,6 @@ impl CodexMessageProcessor {
                     let active_login = self.active_login.clone();
                     let auth_manager = self.auth_manager.clone();
                     let cloud_requirements = self.cloud_requirements.clone();
-                    let chatgpt_base_url = self.config.chatgpt_base_url.clone();
-                    let orbit_code_home = self.config.orbit_code_home.clone();
                     let cli_overrides = self.cli_overrides.clone();
                     let auth_url = server.auth_url.clone();
                     tokio::spawn(async move {
@@ -1101,12 +1097,7 @@ impl CodexMessageProcessor {
 
                         if success {
                             auth_manager.reload();
-                            replace_cloud_requirements_loader(
-                                cloud_requirements.as_ref(),
-                                auth_manager.clone(),
-                                chatgpt_base_url,
-                                orbit_code_home,
-                            );
+                            replace_cloud_requirements_loader(cloud_requirements.as_ref());
                             sync_default_client_residency_requirement(
                                 &cli_overrides,
                                 cloud_requirements.as_ref(),
@@ -1253,12 +1244,7 @@ impl CodexMessageProcessor {
             return;
         }
         self.auth_manager.reload();
-        replace_cloud_requirements_loader(
-            self.cloud_requirements.as_ref(),
-            self.auth_manager.clone(),
-            self.config.chatgpt_base_url.clone(),
-            self.config.orbit_code_home.clone(),
-        );
+        replace_cloud_requirements_loader(self.cloud_requirements.as_ref());
         sync_default_client_residency_requirement(
             &self.cli_overrides,
             self.cloud_requirements.as_ref(),
@@ -1472,64 +1458,8 @@ impl CodexMessageProcessor {
         ),
         JSONRPCErrorError,
     > {
-        let Some(auth) = self.auth_manager.auth().await else {
-            return Err(JSONRPCErrorError {
-                code: INVALID_REQUEST_ERROR_CODE,
-                message: "codex account authentication required to read rate limits".to_string(),
-                data: None,
-            });
-        };
-
-        if !auth.is_chatgpt_auth() {
-            return Err(JSONRPCErrorError {
-                code: INVALID_REQUEST_ERROR_CODE,
-                message: "chatgpt authentication required to read rate limits".to_string(),
-                data: None,
-            });
-        }
-
-        let client = BackendClient::from_auth(self.config.chatgpt_base_url.clone(), &auth)
-            .map_err(|err| JSONRPCErrorError {
-                code: INTERNAL_ERROR_CODE,
-                message: format!("failed to construct backend client: {err}"),
-                data: None,
-            })?;
-
-        let snapshots = client
-            .get_rate_limits_many()
-            .await
-            .map_err(|err| JSONRPCErrorError {
-                code: INTERNAL_ERROR_CODE,
-                message: format!("failed to fetch codex rate limits: {err}"),
-                data: None,
-            })?;
-        if snapshots.is_empty() {
-            return Err(JSONRPCErrorError {
-                code: INTERNAL_ERROR_CODE,
-                message: "failed to fetch codex rate limits: no snapshots returned".to_string(),
-                data: None,
-            });
-        }
-
-        let rate_limits_by_limit_id: HashMap<String, CoreRateLimitSnapshot> = snapshots
-            .iter()
-            .cloned()
-            .map(|snapshot| {
-                let limit_id = snapshot
-                    .limit_id
-                    .clone()
-                    .unwrap_or_else(|| "codex".to_string());
-                (limit_id, snapshot)
-            })
-            .collect();
-
-        let primary = snapshots
-            .iter()
-            .find(|snapshot| snapshot.limit_id.as_deref() == Some("codex"))
-            .cloned()
-            .unwrap_or_else(|| snapshots[0].clone());
-
-        Ok((primary, rate_limits_by_limit_id))
+        let empty = empty_rate_limit_snapshot();
+        Ok((empty, HashMap::new()))
     }
 
     async fn exec_one_off_command(
@@ -5340,13 +5270,8 @@ impl CodexMessageProcessor {
                     all_loaded = true;
                 }
                 AppListLoadResult::Directory(Err(err)) => {
-                    let error = JSONRPCErrorError {
-                        code: INTERNAL_ERROR_CODE,
-                        message: err,
-                        data: None,
-                    };
-                    outgoing.send_error(request_id, error).await;
-                    return;
+                    warn!("failed to load directory-backed apps: {err}");
+                    all_loaded = true;
                 }
             }
 
@@ -7725,17 +7650,22 @@ fn validate_dynamic_tools(tools: &[ApiDynamicToolSpec]) -> Result<(), String> {
     Ok(())
 }
 
-fn replace_cloud_requirements_loader(
-    cloud_requirements: &RwLock<CloudRequirementsLoader>,
-    auth_manager: Arc<AuthManager>,
-    chatgpt_base_url: String,
-    orbit_code_home: PathBuf,
-) {
-    let loader = cloud_requirements_loader(auth_manager, chatgpt_base_url, orbit_code_home);
+fn replace_cloud_requirements_loader(cloud_requirements: &RwLock<CloudRequirementsLoader>) {
     if let Ok(mut guard) = cloud_requirements.write() {
-        *guard = loader;
+        *guard = CloudRequirementsLoader::default();
     } else {
         warn!("failed to update cloud requirements loader");
+    }
+}
+
+fn empty_rate_limit_snapshot() -> CoreRateLimitSnapshot {
+    CoreRateLimitSnapshot {
+        limit_id: Some("codex".to_string()),
+        limit_name: None,
+        primary: None,
+        secondary: None,
+        credits: None,
+        plan_type: None,
     }
 }
 

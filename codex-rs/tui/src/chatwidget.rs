@@ -55,8 +55,6 @@ use crossterm::event::KeyEvent;
 use crossterm::event::KeyEventKind;
 use crossterm::event::KeyModifiers;
 use orbit_code_app_server_protocol::ConfigLayerSource;
-use orbit_code_backend_client::Client as BackendClient;
-use orbit_code_chatgpt::connectors;
 use orbit_code_core::config::Config;
 use orbit_code_core::config::Constrained;
 use orbit_code_core::config::ConstraintResult;
@@ -64,6 +62,7 @@ use orbit_code_core::config::types::ApprovalsReviewer;
 use orbit_code_core::config::types::Notifications;
 use orbit_code_core::config::types::WindowsSandboxModeToml;
 use orbit_code_core::config_loader::ConfigLayerStackOrdering;
+use orbit_code_core::connectors;
 use orbit_code_core::features::FEATURES;
 use orbit_code_core::features::Feature;
 use orbit_code_core::find_thread_name_by_id;
@@ -6081,21 +6080,32 @@ impl ChatWidget {
                 is_final: false,
             });
 
-            let result: Result<ConnectorsSnapshot, String> = async {
-                let all_connectors =
-                    connectors::list_all_connectors_with_options(&config, force_refetch).await?;
-                let connectors = connectors::merge_connectors_with_accessible(
+            let connectors = match connectors::list_all_connectors_with_options(
+                &config,
+                force_refetch,
+            )
+            .await
+            {
+                Ok(all_connectors) => connectors::merge_connectors_with_accessible(
                     all_connectors,
                     accessible_connectors,
                     /*all_connectors_loaded*/ true,
-                );
-                Ok(ConnectorsSnapshot { connectors })
-            }
-            .await
-            .map_err(|err: anyhow::Error| format!("Failed to load apps: {err}"));
+                ),
+                Err(err) => {
+                    debug!(
+                        error = ?err,
+                        "failed to load directory-backed app metadata; using accessible apps only"
+                    );
+                    connectors::merge_connectors_with_accessible(
+                        Vec::new(),
+                        accessible_connectors,
+                        /*all_connectors_loaded*/ false,
+                    )
+                }
+            };
 
             app_event_tx.send(AppEvent::ConnectorsLoaded {
-                result,
+                result: Ok(ConnectorsSnapshot { connectors }),
                 is_final: true,
             });
 
@@ -9499,20 +9509,8 @@ fn hook_event_label(event_name: orbit_code_protocol::protocol::HookEventName) ->
     }
 }
 
-async fn fetch_rate_limits(base_url: String, auth: CodexAuth) -> Vec<RateLimitSnapshot> {
-    match BackendClient::from_auth(base_url, &auth) {
-        Ok(client) => match client.get_rate_limits_many().await {
-            Ok(snapshots) => snapshots,
-            Err(err) => {
-                debug!(error = ?err, "failed to fetch rate limits from /usage");
-                Vec::new()
-            }
-        },
-        Err(err) => {
-            debug!(error = ?err, "failed to construct backend client for rate limits");
-            Vec::new()
-        }
-    }
+async fn fetch_rate_limits(_base_url: String, _auth: CodexAuth) -> Vec<RateLimitSnapshot> {
+    Vec::new()
 }
 
 #[cfg(test)]

@@ -888,8 +888,8 @@ mod tests {
     use orbit_code_app_server_client::InProcessAppServerClient;
     use orbit_code_app_server_client::InProcessClientStartArgs;
     use orbit_code_arg0::Arg0DispatchPaths;
-    use orbit_code_cloud_requirements::cloud_requirements_loader_for_storage;
     use orbit_code_core::config::ConfigBuilder;
+    use orbit_code_core::config_loader::CloudRequirementsLoader;
 
     use orbit_code_protocol::protocol::SessionSource;
     use pretty_assertions::assert_eq;
@@ -909,12 +909,7 @@ mod tests {
             config: Arc::new(config),
             cli_overrides: Vec::new(),
             loader_overrides: Default::default(),
-            cloud_requirements: cloud_requirements_loader_for_storage(
-                orbit_code_home_path.clone(),
-                false,
-                AuthCredentialsStoreMode::File,
-                "https://chatgpt.com/backend-api/".to_string(),
-            ),
+            cloud_requirements: CloudRequirementsLoader::default(),
             feedback: orbit_code_feedback::CodexFeedback::new(),
             config_warnings: Vec::new(),
             session_source: SessionSource::Cli,

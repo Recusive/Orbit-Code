@@ -30,16 +30,13 @@ axum = { workspace = true, default-features = false, features = [
     "ws",
 ] }
 orbit-code-arg0 = { workspace = true }
-orbit-code-cloud-requirements = { workspace = true }
 orbit-code-core = { workspace = true }
 orbit-code-environment = { workspace = true }
 orbit-code-otel = { workspace = true }
 orbit-code-shell-command = { workspace = true }
 orbit-code-utils-cli = { workspace = true }
 orbit-code-utils-pty = { workspace = true }
-orbit-code-backend-client = { workspace = true }
 orbit-code-file-search = { workspace = true }
-orbit-code-chatgpt = { workspace = true }
 orbit-code-login = { workspace = true }
 orbit-code-protocol = { workspace = true }
 orbit-code-app-server-protocol = { workspace = true }

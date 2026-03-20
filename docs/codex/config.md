@@ -14,9 +14,8 @@ Codex can connect to MCP servers configured in `~/.codex/config.toml`. See the c
 
 ## Apps (Connectors)
 
-Use `$` in the composer to insert a ChatGPT connector; the popover lists accessible
-apps. The `/apps` command lists available and installed apps. Connected apps appear first
-and are labeled as connected; others are marked as can be installed.
+Use `$` in the composer to insert an app discovered from MCP tools. The popover lists
+accessible apps, and the `/apps` command lists the same MCP-discovered app set.
 
 ## Notify
 

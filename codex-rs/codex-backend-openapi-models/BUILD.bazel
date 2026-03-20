@@ -1,6 +1,0 @@
-load("//:defs.bzl", "orbit_code_rust_crate")
-
-orbit_code_rust_crate(
-    name = "orbit-code-backend-openapi-models",
-    crate_name = "orbit_code_backend_openapi_models",
-)

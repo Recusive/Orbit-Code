@@ -5,7 +5,7 @@ use orbit_code_app_server_protocol::AppListUpdatedNotification;
 use orbit_code_app_server_protocol::AppsListResponse;
 use orbit_code_app_server_protocol::JSONRPCErrorError;
 use orbit_code_app_server_protocol::ServerNotification;
-use orbit_code_chatgpt::connectors;
+use orbit_code_core::connectors;
 
 use crate::error_code::INVALID_REQUEST_ERROR_CODE;
 use crate::outgoing_message::OutgoingMessageSender;
@@ -25,7 +25,8 @@ pub(super) fn should_send_app_list_updated_notification(
     accessible_loaded: bool,
     all_loaded: bool,
 ) -> bool {
-    connectors.iter().any(|connector| connector.is_accessible) || (accessible_loaded && all_loaded)
+    connectors.iter().any(|connector| connector.is_accessible)
+        || (accessible_loaded && all_loaded && !connectors.is_empty())
 }
 
 pub(super) fn paginate_apps(

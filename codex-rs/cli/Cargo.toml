@@ -23,8 +23,6 @@ orbit-code-app-server = { workspace = true }
 orbit-code-app-server-protocol = { workspace = true }
 orbit-code-app-server-test-client = { workspace = true }
 orbit-code-arg0 = { workspace = true }
-orbit-code-chatgpt = { workspace = true }
-orbit-code-cloud-tasks = { path = "../cloud-tasks" }
 orbit-code-utils-cli = { workspace = true }
 orbit-code-config = { workspace = true }
 orbit-code-core = { workspace = true }
@@ -33,7 +31,6 @@ orbit-code-execpolicy = { workspace = true }
 orbit-code-login = { workspace = true }
 orbit-code-mcp-server = { workspace = true }
 orbit-code-protocol = { workspace = true }
-orbit-code-responses-api-proxy = { workspace = true }
 orbit-code-rmcp-client = { workspace = true }
 orbit-code-state = { workspace = true }
 orbit-code-stdio-to-uds = { workspace = true }

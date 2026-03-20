@@ -2,8 +2,8 @@ use std::collections::HashSet;
 
 use orbit_code_app_server_protocol::AppInfo;
 use orbit_code_app_server_protocol::AppSummary;
-use orbit_code_chatgpt::connectors;
 use orbit_code_core::config::Config;
+use orbit_code_core::connectors;
 use orbit_code_core::plugins::AppConnectorId;
 use tracing::warn;
 

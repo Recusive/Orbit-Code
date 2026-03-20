@@ -1,7 +1,0 @@
-load("//:defs.bzl", "orbit_code_rust_crate")
-
-orbit_code_rust_crate(
-    name = "backend-client",
-    crate_name = "orbit_code_backend_client",
-    compile_data = glob(["tests/fixtures/**"]),
-)

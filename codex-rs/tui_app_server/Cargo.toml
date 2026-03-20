@@ -37,9 +37,7 @@ orbit-code-ansi-escape = { workspace = true }
 orbit-code-app-server-client = { workspace = true }
 orbit-code-app-server-protocol = { workspace = true }
 orbit-code-arg0 = { workspace = true }
-orbit-code-chatgpt = { workspace = true }
 orbit-code-client = { workspace = true }
-orbit-code-cloud-requirements = { workspace = true }
 orbit-code-core = { workspace = true }
 orbit-code-feedback = { workspace = true }
 orbit-code-file-search = { workspace = true }

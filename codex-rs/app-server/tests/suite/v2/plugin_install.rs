@@ -385,8 +385,8 @@ async fn plugin_install_returns_apps_needing_auth() -> Result<()> {
             auth_policy: PluginAuthPolicy::OnInstall,
             apps_needing_auth: vec![AppSummary {
                 id: "alpha".to_string(),
-                name: "Alpha".to_string(),
-                description: Some("Alpha connector".to_string()),
+                name: "alpha".to_string(),
+                description: None,
                 install_url: Some("https://chatgpt.com/apps/alpha/alpha".to_string()),
             }],
         }
@@ -468,8 +468,8 @@ async fn plugin_install_filters_disallowed_apps_needing_auth() -> Result<()> {
             auth_policy: PluginAuthPolicy::OnUse,
             apps_needing_auth: vec![AppSummary {
                 id: "alpha".to_string(),
-                name: "Alpha".to_string(),
-                description: Some("Alpha connector".to_string()),
+                name: "alpha".to_string(),
+                description: None,
                 install_url: Some("https://chatgpt.com/apps/alpha/alpha".to_string()),
             }],
         }

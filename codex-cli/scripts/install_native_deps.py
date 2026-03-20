@@ -49,11 +49,6 @@ BINARY_COMPONENTS = {
         dest_dir="codex",
         binary_basename="codex",
     ),
-    "codex-responses-api-proxy": BinaryComponent(
-        artifact_prefix="codex-responses-api-proxy",
-        dest_dir="codex-responses-api-proxy",
-        binary_basename="codex-responses-api-proxy",
-    ),
     "codex-windows-sandbox-setup": BinaryComponent(
         artifact_prefix="codex-windows-sandbox-setup",
         dest_dir="codex",

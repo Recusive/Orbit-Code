@@ -1,195 +1,200 @@
-# Rust/codex-rs
+# Orbit Code — Coding Conventions
 
-In the codex-rs folder where the rust code lives:
+> **These rules are mandatory.** All code in this repo must follow these conventions exactly. They are derived from the original OpenAI team's patterns and enforced by tooling (clippy, rustfmt, prettier, eslint). Full evidence and file references: `docs/pattern/CODING_CONVENTIONS.md`.
 
-- Crate names are prefixed with `codex-`. For example, the `core` folder's crate is named `codex-core`
-- When using format! and you can inline variables into {}, always do that.
-- Install any commands the repo relies on (for example `just`, `rg`, or `cargo-insta`) if they aren't already available before running instructions here.
-- Never add or modify any code related to `CODEX_SANDBOX_NETWORK_DISABLED_ENV_VAR` or `CODEX_SANDBOX_ENV_VAR`.
-  - You operate in a sandbox where `CODEX_SANDBOX_NETWORK_DISABLED=1` will be set whenever you use the `shell` tool. Any existing code that uses `CODEX_SANDBOX_NETWORK_DISABLED_ENV_VAR` was authored with this fact in mind. It is often used to early exit out of tests that the author knew you would not be able to run given your sandbox limitations.
-  - Similarly, when you spawn a process using Seatbelt (`/usr/bin/sandbox-exec`), `CODEX_SANDBOX=seatbelt` will be set on the child process. Integration tests that want to run Seatbelt themselves cannot be run under Seatbelt, so checks for `CODEX_SANDBOX=seatbelt` are also often used to early exit out of tests, as appropriate.
-- Always collapse if statements per https://rust-lang.github.io/rust-clippy/master/index.html#collapsible_if
-- Always inline format! args when possible per https://rust-lang.github.io/rust-clippy/master/index.html#uninlined_format_args
-- Use method references over closures when possible per https://rust-lang.github.io/rust-clippy/master/index.html#redundant_closure_for_method_calls
-- Avoid bool or ambiguous `Option` parameters that force callers to write hard-to-read code such as `foo(false)` or `bar(None)`. Prefer enums, named methods, newtypes, or other idiomatic Rust API shapes when they keep the callsite self-documenting.
-- When you cannot make that API change and still need a small positional-literal callsite in Rust, follow the `argument_comment_lint` convention:
-  - Use an exact `/*param_name*/` comment before opaque literal arguments such as `None`, booleans, and numeric literals when passing them by position.
-  - Do not add these comments for string or char literals unless the comment adds real clarity; those literals are intentionally exempt from the lint.
-  - If you add one of these comments, the parameter name must exactly match the callee signature.
-- When possible, make `match` statements exhaustive and avoid wildcard arms.
-- When writing tests, prefer comparing the equality of entire objects over fields one by one.
-- When making a change that adds or changes an API, ensure that the documentation in the `docs/` folder is up to date if applicable.
-- If you change `ConfigToml` or nested config types, run `just write-config-schema` to update `codex-rs/core/config.schema.json`.
-- If you change Rust dependencies (`Cargo.toml` or `Cargo.lock`), run `just bazel-lock-update` from the
-  repo root to refresh `MODULE.bazel.lock`, and include that lockfile update in the same change.
-- After dependency changes, run `just bazel-lock-check` from the repo root so lockfile drift is caught
-  locally before CI.
-- Bazel does not automatically make source-tree files available to compile-time Rust file access. If
-  you add `include_str!`, `include_bytes!`, `sqlx::migrate!`, or similar build-time file or
-  directory reads, update the crate's `BUILD.bazel` (`compile_data`, `build_script_data`, or test
-  data) or Bazel may fail even when Cargo passes.
-- Do not create small helper methods that are referenced only once.
-- Avoid large modules:
-  - Prefer adding new modules instead of growing existing ones.
-  - Target Rust modules under 500 LoC, excluding tests.
-  - If a file exceeds roughly 800 LoC, add new functionality in a new module instead of extending
-    the existing file unless there is a strong documented reason not to.
-  - This rule applies especially to high-touch files that already attract unrelated changes, such
-    as `codex-rs/tui/src/app.rs`, `codex-rs/tui/src/bottom_pane/chat_composer.rs`,
-    `codex-rs/tui/src/bottom_pane/footer.rs`, `codex-rs/tui/src/chatwidget.rs`,
-    `codex-rs/tui/src/bottom_pane/mod.rs`, and similarly central orchestration modules.
-  - When extracting code from a large module, move the related tests and module/type docs toward
-    the new implementation so the invariants stay close to the code that owns them.
+## Repository Structure
 
-Run `just fmt` (in `codex-rs` directory) automatically after you have finished making Rust code changes; do not ask for approval to run it. Additionally, run the tests:
+| Directory | Purpose |
+|-----------|---------|
+| `codex-rs/` | **Primary codebase** — Rust implementation (67+ crates) |
+| `codex-cli/` | npm wrapper — thin JS launcher resolving platform-specific Rust binaries |
+| `sdk/` | Client SDKs (Python + TypeScript) for programmatic access |
+| `shell-tool-mcp/` | MCP server exposing shell tool capabilities |
+| `scripts/` | Repo-wide utility scripts (release, install) |
+| `docs/` | Documentation (contributing, install, config) |
+| `tools/` | Developer tooling (argument-comment linting via Dylint) |
 
-1. Run the test for the specific project that was changed. For example, if changes were made in `codex-rs/tui`, run `cargo test -p codex-tui`.
-2. Once those pass, if any changes were made in common, core, or protocol, run the complete test suite with `cargo test` (or `just test` if `cargo-nextest` is installed). Avoid `--all-features` for routine local runs because it expands the build matrix and can significantly increase `target/` disk usage; use it only when you specifically need full feature coverage. project-specific or individual tests can be run without asking the user, but do ask the user before running the complete test suite.
+## Common Commands
 
-Before finalizing a large change to `codex-rs`, run `just fix -p <project>` (in `codex-rs` directory) to fix any linter issues in the code. Prefer scoping with `-p` to avoid slow workspace‑wide Clippy builds; only run `just fix` without `-p` if you changed shared crates. Do not re-run tests after running `fix` or `fmt`.
+```bash
+just codex                   # Run Orbit Code from source
+just test                    # Run Rust tests (nextest)
+just fmt                     # Format Rust code
+just fix                     # Run clippy fixes
+just fix -p <crate>          # Clippy fix scoped to one crate
+just write-config-schema     # Regenerate config JSON schema
+just write-app-server-schema # Regenerate app-server protocol schemas
+just bazel-lock-update       # Update MODULE.bazel.lock after dep changes
+just bazel-lock-check        # Verify lockfile is in sync
+just argument-comment-lint   # Run /*param*/ comment lint
+```
 
-## TUI style conventions
+**Build systems:** Cargo (local dev) + Bazel (CI/release). TypeScript: pnpm + tsup. Task runner: `just` (working dir = `codex-rs/`).
 
-See `codex-rs/tui/styles.md`.
+---
 
-## TUI code conventions
+## Critical Warnings
 
-- When a change lands in `codex-rs/tui` and `codex-rs/tui_app_server` has a parallel implementation of the same behavior, reflect the change in `codex-rs/tui_app_server` too unless there is a documented reason not to.
+- **Never** add or modify code related to `CODEX_SANDBOX_NETWORK_DISABLED_ENV_VAR` or `CODEX_SANDBOX_ENV_VAR`. These are set by the sandbox runtime and existing code was authored with this in mind. `CODEX_SANDBOX_NETWORK_DISABLED=1` is set whenever the `shell` tool runs in sandbox. `CODEX_SANDBOX=seatbelt` is set on child processes spawned under macOS Seatbelt (`/usr/bin/sandbox-exec`). Existing checks for these env vars are intentional early-exit guards — do not remove or modify them.
+- **Never** mutate process environment in tests. Prefer passing environment-derived flags or dependencies from above.
+- If you add `include_str!`, `include_bytes!`, or `sqlx::migrate!`, update the crate's `BUILD.bazel` (`compile_data`, `build_script_data`, or test data) or Bazel will fail even when Cargo passes.
+- Install any commands the repo relies on (e.g., `just`, `rg`, `cargo-insta`, `cargo-nextest`) if they aren't already available before running instructions.
 
-- Use concise styling helpers from ratatui’s Stylize trait.
-  - Basic spans: use "text".into()
-  - Styled spans: use "text".red(), "text".green(), "text".magenta(), "text".dim(), etc.
-  - Prefer these over constructing styles with `Span::styled` and `Style` directly.
-  - Example: patch summary file lines
-    - Desired: vec!["  └ ".into(), "M".red(), " ".dim(), "tui/src/app.rs".dim()]
+---
 
-### TUI Styling (ratatui)
+## Rust — Module Organization
 
-- Prefer Stylize helpers: use "text".dim(), .bold(), .cyan(), .italic(), .underlined() instead of manual Style where possible.
-- Prefer simple conversions: use "text".into() for spans and vec![…].into() for lines; when inference is ambiguous (e.g., Paragraph::new/Cell::from), use Line::from(spans) or Span::from(text).
-- Computed styles: if the Style is computed at runtime, using `Span::styled` is OK (`Span::from(text).set_style(style)` is also acceptable).
-- Avoid hardcoded white: do not use `.white()`; prefer the default foreground (no color).
-- Chaining: combine helpers by chaining for readability (e.g., url.cyan().underlined()).
-- Single items: prefer "text".into(); use Line::from(text) or Span::from(text) only when the target type isn’t obvious from context, or when using .into() would require extra type annotations.
-- Building lines: use vec![…].into() to construct a Line when the target type is obvious and no extra type annotations are needed; otherwise use Line::from(vec![…]).
-- Avoid churn: don’t refactor between equivalent forms (Span::styled ↔ set_style, Line::from ↔ .into()) without a clear readability or functional gain; follow file‑local conventions and do not introduce type annotations solely to satisfy .into().
-- Compactness: prefer the form that stays on one line after rustfmt; if only one of Line::from(vec![…]) or vec![…].into() avoids wrapping, choose that. If both wrap, pick the one with fewer wrapped lines.
+1. Declare modules private by default with `mod foo;`. Re-export only needed types via `pub use foo::Type;` in lib.rs.
+2. Use `pub mod` only for major subsystem modules that form the crate's public API surface. Protocol crates (`protocol`, `app-server-protocol`) export everything publicly.
+3. Use a single `.rs` file for focused modules. Use a subdirectory with `mod.rs` when a module has 3+ sub-modules.
+4. Place integration tests in `tests/all.rs` -> `tests/suite/mod.rs` -> `tests/suite/*.rs`. Use `tests/common/` for shared test utilities as a library crate. Never create multiple top-level test binaries.
+5. Target modules under 500 LoC excluding tests. At ~800 LoC, add new functionality in a new module instead of extending the existing file. Do not create single-use helper methods. This applies especially to high-touch files: `tui/src/app.rs`, `tui/src/bottom_pane/chat_composer.rs`, `tui/src/bottom_pane/footer.rs`, `tui/src/chatwidget.rs`, `tui/src/bottom_pane/mod.rs`, and similarly central orchestration modules.
+6. When extracting code from a large module, move the related tests and module/type docs toward the new implementation so invariants stay close to the code that owns them.
 
-### Text wrapping
+## Rust — Error Handling
 
-- Always use textwrap::wrap to wrap plain strings.
-- If you have a ratatui Line and you want to wrap it, use the helpers in tui/src/wrapping.rs, e.g. word_wrap_lines / word_wrap_line.
-- If you need to indent wrapped lines, use the initial_indent / subsequent_indent options from RtOptions if you can, rather than writing custom logic.
-- If you have a list of lines and you need to prefix them all with some prefix (optionally different on the first vs subsequent lines), use the `prefix_lines` helper from line_utils.
+7. Define error types with `#[derive(Debug, Error)]` from thiserror. Every variant must have an `#[error(...)]` attribute. Use `#[error(transparent)]` for wrapped errors.
+8. Define `pub type Result<T> = std::result::Result<T, YourError>;` alongside each crate-level error type.
+9. Prefer `#[from]` for direct error wrapping. Use manual `From` impls only when conversion requires custom logic.
+10. Add domain-specific query methods to error types (e.g., `is_retryable()`, `to_protocol_error()`). Use exhaustive matches, not wildcards.
+11. Never use `unwrap()` or `expect()` in library code. Use `?` or explicit error handling. Tests may use `expect("descriptive message")`.
 
-## Tests
+## Rust — Async Patterns
 
-### Snapshot tests
+12. Tokio is the sole async runtime. `#[tokio::test]` for async tests, `tokio::spawn` for background tasks, `Handle::current()` only when you need async work in Drop impls.
+13. Channel selection: `broadcast` for fan-out notifications, `oneshot` for single request/response, `async_channel` for MPMC.
+14. Shared state: `tokio::sync::Mutex` for async locking, `tokio::sync::RwLock` for read-heavy state. Always wrap in `Arc<>`.
+15. Use `CancellationToken` with `.child_token()` for hierarchical, coordinated shutdown of subsystems.
+16. Use `JoinSet` for parallel Tokio tasks. Use `FuturesUnordered` for stream-based concurrent futures.
+17. Retries: exponential backoff (`2^(attempt-1)`) with +/-10% jitter via `random_range(0.9..1.1)`. Use saturating arithmetic. Only retry transient errors (429, 5xx, connection failures).
 
-This repo uses snapshot tests (via `insta`), especially in `codex-rs/tui`, to validate rendered output.
+## Rust — Serialization (serde)
 
-**Requirement:** any change that affects user-visible UI (including adding new UI) must include
-corresponding `insta` snapshot coverage (add a new snapshot test if one doesn't exist yet, or
-update the existing snapshot). Review and accept snapshot updates as part of the PR so UI impact
-is easy to review and future diffs stay visual.
+18. Derive sets by type category:
+    - Config: `Serialize, Deserialize, Debug, Clone, Default, PartialEq, Eq, JsonSchema`
+    - Protocol: add `TS`
+    - App-server v2: add `TS` + `ExperimentalApi` where needed
+19. `rename_all` by context: `kebab-case` for config TOML, `snake_case` for protocol, `camelCase` for app-server v2. Exception: config RPC payloads use `snake_case` to mirror TOML keys.
+20. NEVER use `skip_serializing_if` on v2 `Option<T>` payload fields — use `#[ts(optional = nullable)]` instead. For v2 booleans defaulting to false: `#[serde(default, skip_serializing_if = "std::ops::Not::not")] pub field: bool`.
+21. Always add `#[ts(export_to = "v2/")]` on v2 types. Keep `#[serde(rename)]` and `#[ts(rename)]` aligned. For tagged unions: `#[serde(tag = "type")]` and `#[ts(tag = "type")]`.
 
-When UI or text output changes intentionally, update the snapshots as follows:
+## Rust — Traits & Visibility
 
-- Run tests to generate any updated snapshots:
-  - `cargo test -p codex-tui`
-- Check what’s pending:
-  - `cargo insta pending-snapshots -p codex-tui`
-- Review changes by reading the generated `*.snap.new` files directly in the repo, or preview a specific file:
-  - `cargo insta show -p codex-tui path/to/file.snap.new`
-- Only if you intend to accept all new snapshots in this crate, run:
-  - `cargo insta accept -p codex-tui`
+22. Add `Send + Sync` bounds to traits used behind `Arc<dyn Trait>` or across thread boundaries. Add `+ 'static` when the trait object must outlive its scope.
+23. Use `#[async_trait]` for any trait with async methods. Place it directly above the trait definition.
+24. Provide default implementations for optional trait methods. Use no-op defaults for lifecycle hooks (abort, cleanup). Document the default behavior.
+25. Use `pub(crate)` for crate-internal types, `pub(super)` for parent-module-only types. Private by default; selective re-exports via `pub use`.
 
-If you don’t have the tool:
+## Rust — Imports & Naming
 
-- `cargo install cargo-insta`
+26. One import per `use` statement (enforced by `imports_granularity = "Item"` in rustfmt.toml). Run `just fmt` to enforce ordering automatically.
+27. Package names: `orbit-code-<name>` (hyphens). Library names: `orbit_code_<name>` (underscores). Binary names: `orbit-code` or `orbit-code-<tool>` (hyphens).
+28. App-server types: `*Params` for requests, `*Response` for responses, `*Notification` for notifications. RPC methods: `<singular-resource>/<camelCaseMethod>` (e.g., `thread/start`, `fs/readFile`).
 
-### Test assertions
+## Rust — API Design
 
-- Tests should use pretty_assertions::assert_eq for clearer diffs. Import this at the top of the test module if it isn't already.
-- Prefer deep equals comparisons whenever possible. Perform `assert_eq!()` on entire objects, rather than individual fields.
-- Avoid mutating process environment in tests; prefer passing environment-derived flags or dependencies from above.
+29. Avoid bool or ambiguous `Option` parameters that force callers to write `foo(false)` or `bar(None)`. Prefer enums, named methods, or newtypes to keep callsites self-documenting.
+30. When you cannot change the API and have opaque literal arguments (booleans, `None`, numbers), use `/*param_name*/` comments before them. The name must exactly match the callee's parameter. String/char literals are exempt unless the comment adds real clarity.
+31. Use `#[derive(Debug, Parser)]` with `#[clap(flatten)]` for shared option groups and `#[clap(visible_alias)]` for subcommand aliases.
+32. Prefer plain `String` IDs at API boundaries. Do UUID parsing/conversion internally. Timestamps: integer Unix seconds (`i64`) named `*_at`.
+33. When making exhaustive `match` statements, avoid wildcard arms. Prefer listing all variants so the compiler catches new additions.
 
-### Spawning workspace binaries in tests (Cargo vs Bazel)
+## Rust — Documentation
 
-- Prefer `codex_utils_cargo_bin::cargo_bin("...")` over `assert_cmd::Command::cargo_bin(...)` or `escargot` when tests need to spawn first-party binaries.
-  - Under Bazel, binaries and resources may live under runfiles; use `codex_utils_cargo_bin::cargo_bin` to resolve absolute paths that remain stable after `chdir`.
-- When locating fixture files or test resources under Bazel, avoid `env!("CARGO_MANIFEST_DIR")`. Prefer `codex_utils_cargo_bin::find_resource!` so paths resolve correctly under both Cargo and Bazel runfiles.
+34. Add `//!` module docs to every module describing its purpose and key types.
+35. Document all public items with `///`. Use [`TypeName`] syntax for cross-references. Skip docs for trivial getters and self-evident enum variants.
+36. Use `//` inline comments only for non-obvious logic, invariants, or "why" explanations. Never restate what the code does.
+37. When a change adds or modifies an API, update documentation in the `docs/` folder if applicable. At minimum update `app-server/README.md` for app-server changes.
 
-### Integration tests (core)
+## Rust — Testing
 
-- Prefer the utilities in `core_test_support::responses` when writing end-to-end Codex tests.
+38. Use `pretty_assertions::assert_eq!` in every test module. Compare entire objects with `assert_eq!`, not individual fields.
+39. Add `insta` snapshot tests for any UI-affecting change. Snapshot workflow:
+    - Run tests: `cargo test -p codex-tui`
+    - Check pending: `cargo insta pending-snapshots -p codex-tui`
+    - Preview: `cargo insta show -p codex-tui path/to/file.snap.new`
+    - Accept: `cargo insta accept -p codex-tui`
+    - Install if missing: `cargo install cargo-insta`
+40. Use `wiremock::MockServer` and helpers from `core_test_support::responses` for HTTP mocking. Prefer `mount_sse_once` over `mount_sse_once_match` or `mount_sse_sequence`. All `mount_sse*` helpers return a `ResponseMock` — hold onto it to assert against outbound requests. Use `ResponseMock::single_request()` for single-POST tests, `ResponseMock::requests()` to inspect all captured requests. `ResponsesRequest` exposes: `body_json`, `input`, `function_call_output`, `custom_tool_call_output`, `call_output`, `header`, `path`, `query_param`. Build SSE payloads with `ev_*` constructors and `sse(...)`. Typical pattern:
+    ```rust
+    let mock = responses::mount_sse_once(&server, responses::sse(vec![
+        responses::ev_response_created("resp-1"),
+        responses::ev_function_call(call_id, "shell", &serde_json::to_string(&args)?),
+        responses::ev_completed("resp-1"),
+    ])).await;
+    codex.submit(Op::UserTurn { ... }).await?;
+    let request = mock.single_request();
+    // assert using request.function_call_output(call_id) or request.body_json()
+    ```
+41. Use `TestCodexBuilder` fluent API for integration test setup. Chain `.with_config()`, `.with_model()`, `.with_auth()`, `.with_home()`, `.with_pre_build_hook()`.
+42. Use `wait_for_event(codex, predicate)` for async event assertions. Prefer it over `wait_for_event_with_timeout`.
+43. Use `codex_utils_cargo_bin::cargo_bin()` for binary resolution (works with Cargo and Bazel). Use `find_resource!` instead of `env!("CARGO_MANIFEST_DIR")`.
+44. Use `#[ctor]` in `tests/common/lib.rs` for process-startup initialization (deterministic IDs, insta workspace root).
+45. Avoid boilerplate tests that only assert experimental field markers for individual request fields in `common.rs` — rely on schema generation/tests and behavioral coverage instead.
 
-- All `mount_sse*` helpers return a `ResponseMock`; hold onto it so you can assert against outbound `/responses` POST bodies.
-- Use `ResponseMock::single_request()` when a test should only issue one POST, or `ResponseMock::requests()` to inspect every captured `ResponsesRequest`.
-- `ResponsesRequest` exposes helpers (`body_json`, `input`, `function_call_output`, `custom_tool_call_output`, `call_output`, `header`, `path`, `query_param`) so assertions can target structured payloads instead of manual JSON digging.
-- Build SSE payloads with the provided `ev_*` constructors and the `sse(...)`.
-- Prefer `wait_for_event` over `wait_for_event_with_timeout`.
-- Prefer `mount_sse_once` over `mount_sse_once_match` or `mount_sse_sequence`
+## Rust — Clippy & Lints
 
-- Typical pattern:
+46. 33 clippy lints are denied workspace-wide. Key rules enforced:
+    - `unwrap_used`, `expect_used` — no panics in library code (allowed in tests)
+    - `uninlined_format_args` — always `format!("{var}")` not `format!("{}", var)`
+    - `redundant_closure_for_method_calls` — use method references over closures
+    - `collapsible_if` — always collapse nested ifs
+    - All `manual_*` rules — use idiomatic Rust
+    - All `needless_*` rules — no unnecessary borrows, collects, late inits
+47. Disallowed ratatui methods (enforced in clippy.toml): `Color::Rgb`, `Color::Indexed`, `.white()`, `.black()`, `.yellow()`. Use ANSI colors only.
+48. Large-error-threshold: 256 bytes. Box large payloads if an error variant exceeds this.
+49. Crates with TUI output must add `#![deny(clippy::print_stdout, clippy::print_stderr)]` at the top of lib.rs.
 
-  ```rust
-  let mock = responses::mount_sse_once(&server, responses::sse(vec![
-      responses::ev_response_created("resp-1"),
-      responses::ev_function_call(call_id, "shell", &serde_json::to_string(&args)?),
-      responses::ev_completed("resp-1"),
-  ])).await;
+## Rust — TUI (ratatui)
 
-  codex.submit(Op::UserTurn { ... }).await?;
+50. Use Stylize trait helpers: `"text".red()`, `"text".dim()`, `"text".bold()`, `"text".cyan()`. Chain: `url.cyan().underlined()`. Use `Span::styled` only for runtime-computed styles.
+51. Basic spans: `"text".into()`. Lines: `vec![span1, span2].into()`. Use `Line::from(vec![...])` only when the target type isn't obvious. Prefer the form that stays on one line after rustfmt.
+52. Color palette from `tui/styles.md`: Headers = bold. Secondary = dim. Selection/tips = cyan. Success = green. Errors = red. Branding = magenta. Never use blue, yellow, white, black, Rgb, or Indexed.
+53. Text wrapping: `adaptive_wrap_lines()` for content with URLs, `word_wrap_lines()` for plain text, `textwrap::wrap()` for raw strings. Use `prefix_lines` from `line_utils` for indented multi-line output. For indented wrapped lines, use `initial_indent` / `subsequent_indent` options from `RtOptions` rather than writing custom logic.
+54. Mirror all `tui/` changes in `tui_app_server/` unless there is a documented reason not to.
+55. Don't refactor between equivalent forms (`Span::styled` <-> `set_style`, `Line::from` <-> `.into()`) without a clear readability or functional gain. Follow file-local conventions. Do not introduce type annotations solely to satisfy `.into()`.
 
-  // Assert request body if needed.
-  let request = mock.single_request();
-  // assert using request.function_call_output(call_id) or request.json_body() or other helpers.
-  ```
+## Rust — Config & Dependencies
 
-## App-server API Development Best Practices
+56. Config types must derive `JsonSchema`. Run `just write-config-schema` after any `ConfigToml` change.
+57. Run `just write-app-server-schema` (and `--experimental` when needed) after API shape changes. Validate with `cargo test -p codex-app-server-protocol`.
+58. Add all dependencies to `[workspace.dependencies]` in root `Cargo.toml`. Per-crate: `{ workspace = true }` with crate-specific feature overrides only.
+59. After any dependency change: run `just bazel-lock-update` then `just bazel-lock-check`. Include the lockfile update in the same change.
+60. Standard dev-dependencies: `pretty_assertions` (diffs), `tempfile` (temp dirs), `wiremock` (HTTP mocking), `insta` (snapshots).
 
-These guidelines apply to app-server protocol work in `codex-rs`, especially:
+## TypeScript
 
-- `app-server-protocol/src/protocol/common.rs`
-- `app-server-protocol/src/protocol/v2.rs`
-- `app-server/README.md`
+61. ESM-first: `"type": "module"` in package.json. Use `import`/`export` syntax exclusively.
+62. Always use `node:` prefix for built-in imports: `import from "node:fs"`, `import from "node:path"`.
+63. Target ES2022 with ESNext modules. Enable `strict: true` and `noUncheckedIndexedAccess: true`.
+64. `export type` for type-only re-exports from index.ts. `export class` for concrete implementations.
+65. Prefix unused parameters with `_`.
+66. tsup for bundling (ESM output for SDK, CJS for MCP servers). Jest with ts-jest for testing.
+67. Prettier with project config (`trailingComma: "all"`). ESLint flat config with typescript-eslint.
 
-### Core Rules
+## Python
 
-- All active API development should happen in app-server v2. Do not add new API surface area to v1.
-- Follow payload naming consistently:
-  `*Params` for request payloads, `*Response` for responses, and `*Notification` for notifications.
-- Expose RPC methods as `<resource>/<method>` and keep `<resource>` singular (for example, `thread/read`, `app/list`).
-- Always expose fields as camelCase on the wire with `#[serde(rename_all = "camelCase")]` unless a tagged union or explicit compatibility requirement needs a targeted rename.
-- Exception: config RPC payloads are expected to use snake_case to mirror config.toml keys (see the config read/write/list APIs in `app-server-protocol/src/protocol/v2.rs`).
-- Always set `#[ts(export_to = "v2/")]` on v2 request/response/notification types so generated TypeScript lands in the correct namespace.
-- Never use `#[serde(skip_serializing_if = "Option::is_none")]` for v2 API payload fields.
-  Exception: client->server requests that intentionally have no params may use:
-  `params: #[ts(type = "undefined")] #[serde(skip_serializing_if = "Option::is_none")] Option<()>`.
-- Keep Rust and TS wire renames aligned. If a field or variant uses `#[serde(rename = "...")]`, add matching `#[ts(rename = "...")]`.
-- For discriminated unions, use explicit tagging in both serializers:
-  `#[serde(tag = "type", ...)]` and `#[ts(tag = "type", ...)]`.
-- Prefer plain `String` IDs at the API boundary (do UUID parsing/conversion internally if needed).
-- Timestamps should be integer Unix seconds (`i64`) and named `*_at` (for example, `created_at`, `updated_at`, `resets_at`).
-- For experimental API surface area:
-  use `#[experimental("method/or/field")]`, derive `ExperimentalApi` when field-level gating is needed, and use `inspect_params: true` in `common.rs` when only some fields of a method are experimental.
+68. Hatchling build system. Pydantic v2 models. `src/` layout.
+69. pytest with `-q`. ruff for linting. Auto-generate models from JSON schema.
 
-### Client->server request payloads (`*Params`)
+## Build & Workflow
 
-- Every optional field must be annotated with `#[ts(optional = nullable)]`. Do not use `#[ts(optional = nullable)]` outside client->server request payloads (`*Params`).
-- Optional collection fields (for example `Vec`, `HashMap`) must use `Option<...>` + `#[ts(optional = nullable)]`. Do not use `#[serde(default)]` to model optional collections, and do not use `skip_serializing_if` on v2 payload fields.
-- When you want omission to mean `false` for boolean fields, use `#[serde(default, skip_serializing_if = "std::ops::Not::not")] pub field: bool` over `Option<bool>`.
-- For new list methods, implement cursor pagination by default:
-  request fields `pub cursor: Option<String>` and `pub limit: Option<u32>`,
-  response fields `pub data: Vec<...>` and `pub next_cursor: Option<String>`.
+70. Run `just fmt` after every Rust change. Do not ask for approval — just run it.
+71. Run `just fix -p <crate>` before finalizing large changes. Scope with `-p` to avoid slow workspace-wide builds. Only run `just fix` without `-p` if you changed shared crates.
+72. Test the changed crate first: `cargo test -p <crate>`. Project-specific or individual tests can be run without asking the user. Ask the user before running the complete test suite (`just test`). Run full suite only if core, common, or protocol crates changed. Avoid `--all-features` for routine runs — it expands the build matrix and increases `target/` disk usage.
+73. Do not re-run tests after running `just fix` or `just fmt`.
+74. All active API development happens in app-server v2. Do not add new API surface area to v1.
+75. For experimental API surface: use `#[experimental("method/or/field")]`, derive `ExperimentalApi` when field-level gating is needed, and use `inspect_params: true` in `common.rs` when only some fields of a method are experimental.
 
-### Development Workflow
+## App-Server V2 Quick Reference
 
-- Update docs/examples when API behavior changes (at minimum `app-server/README.md`).
-- Regenerate schema fixtures when API shapes change:
-  `just write-app-server-schema`
-  (and `just write-app-server-schema --experimental` when experimental API fixtures are affected).
-- Validate with `cargo test -p codex-app-server-protocol`.
-- Avoid boilerplate tests that only assert experimental field markers for individual
-  request fields in `common.rs`; rely on schema generation/tests and behavioral coverage instead.
+- Payloads: `*Params` (request), `*Response` (response), `*Notification` (notification)
+- Wire format: `camelCase` via `#[serde(rename_all = "camelCase")]`
+- Optional fields in `*Params`: `#[ts(optional = nullable)]`. Do not use `#[ts(optional = nullable)]` outside `*Params`.
+- Optional collections in `*Params`: use `Option<Vec<...>>` + `#[ts(optional = nullable)]`. Never use `#[serde(default)]` for optional collections, and do not use `skip_serializing_if` on v2 payload fields.
+- Boolean defaults-to-false: `#[serde(default, skip_serializing_if = "std::ops::Not::not")] pub field: bool`
+- No-params exception: client->server requests with no params may use `params: #[ts(type = "undefined")] #[serde(skip_serializing_if = "Option::is_none")] Option<()>`
+- Cursor pagination for list methods: request `cursor: Option<String>` + `limit: Option<u32>`, response `data: Vec<...>` + `next_cursor: Option<String>`
+- TypeScript export: `#[ts(export_to = "v2/")]` on all v2 types
+- Validate with `cargo test -p codex-app-server-protocol`
+- Key files: `app-server-protocol/src/protocol/common.rs`, `app-server-protocol/src/protocol/v2.rs`, `app-server/README.md`

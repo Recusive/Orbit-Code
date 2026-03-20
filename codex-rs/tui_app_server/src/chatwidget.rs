@@ -81,7 +81,6 @@ use orbit_code_app_server_protocol::Turn;
 use orbit_code_app_server_protocol::TurnCompletedNotification;
 use orbit_code_app_server_protocol::TurnPlanStepStatus;
 use orbit_code_app_server_protocol::TurnStatus;
-use orbit_code_chatgpt::connectors;
 use orbit_code_core::config::Config;
 use orbit_code_core::config::Constrained;
 use orbit_code_core::config::ConstraintResult;
@@ -89,6 +88,7 @@ use orbit_code_core::config::types::ApprovalsReviewer;
 use orbit_code_core::config::types::Notifications;
 use orbit_code_core::config::types::WindowsSandboxModeToml;
 use orbit_code_core::config_loader::ConfigLayerStackOrdering;
+use orbit_code_core::connectors;
 use orbit_code_core::features::FEATURES;
 use orbit_code_core::features::Feature;
 use orbit_code_core::find_thread_name_by_id;
@@ -7182,21 +7182,32 @@ impl ChatWidget {
                 is_final: false,
             });
 
-            let result: Result<ConnectorsSnapshot, String> = async {
-                let all_connectors =
-                    connectors::list_all_connectors_with_options(&config, force_refetch).await?;
-                let connectors = connectors::merge_connectors_with_accessible(
+            let connectors = match connectors::list_all_connectors_with_options(
+                &config,
+                force_refetch,
+            )
+            .await
+            {
+                Ok(all_connectors) => connectors::merge_connectors_with_accessible(
                     all_connectors,
                     accessible_connectors,
                     /*all_connectors_loaded*/ true,
-                );
-                Ok(ConnectorsSnapshot { connectors })
-            }
-            .await
-            .map_err(|err: anyhow::Error| format!("Failed to load apps: {err}"));
+                ),
+                Err(err) => {
+                    debug!(
+                        error = ?err,
+                        "failed to load directory-backed app metadata; using accessible apps only"
+                    );
+                    connectors::merge_connectors_with_accessible(
+                        Vec::new(),
+                        accessible_connectors,
+                        /*all_connectors_loaded*/ false,
+                    )
+                }
+            };
 
             app_event_tx.send(AppEvent::ConnectorsLoaded {
-                result,
+                result: Ok(ConnectorsSnapshot { connectors }),
                 is_final: true,
             });
 

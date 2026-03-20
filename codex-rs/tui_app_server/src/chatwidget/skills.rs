@@ -12,7 +12,7 @@ use crate::bottom_pane::SkillsToggleView;
 use crate::bottom_pane::popup_consts::standard_popup_hint_line;
 use crate::skills_helpers::skill_description;
 use crate::skills_helpers::skill_display_name;
-use orbit_code_chatgpt::connectors::AppInfo;
+use orbit_code_core::connectors::AppInfo;
 use orbit_code_core::connectors::connector_mention_slug;
 use orbit_code_core::mention_syntax::TOOL_MENTION_SIGIL;
 use orbit_code_core::skills::model::SkillDependencies;

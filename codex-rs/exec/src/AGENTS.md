@@ -35,7 +35,7 @@ Contains all Rust source files that implement the headless Codex CLI. The code h
 - `codex-app-server-client` (InProcessAppServerClient)
 - `codex-app-server-protocol` (JSON-RPC types)
 - `codex-protocol` (Event, EventMsg, all event payload types)
-- `codex-arg0`, `codex-otel`, `codex-feedback`, `codex-cloud-requirements`
+- `codex-arg0`, `codex-otel`, `codex-feedback`
 
 ### Exports to
 

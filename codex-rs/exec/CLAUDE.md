@@ -23,7 +23,6 @@ Provides the `codex-exec` binary and its library crate (`codex_exec`). It accept
 - `codex-app-server-protocol`: ClientRequest variants (ThreadStart, TurnStart, ReviewStart, etc.), ServerRequest variants, RequestId
 - `codex-protocol`: Event, EventMsg, AskForApproval, SandboxMode, SessionSource, ReviewTarget, UserInput
 - `codex-arg0`: Arg0DispatchPaths, arg0_dispatch_or_else
-- `codex-cloud-requirements`: cloud_requirements_loader
 
 ## Exports to
 

@@ -5,8 +5,6 @@ use clap_complete::Shell;
 use clap_complete::generate;
 use orbit_code_arg0::Arg0DispatchPaths;
 use orbit_code_arg0::arg0_dispatch_or_else;
-use orbit_code_chatgpt::apply_command::ApplyCommand;
-use orbit_code_chatgpt::apply_command::run_apply_command;
 use orbit_code_cli::LandlockCommand;
 use orbit_code_cli::SeatbeltCommand;
 use orbit_code_cli::WindowsCommand;
@@ -16,12 +14,10 @@ use orbit_code_cli::login::run_login_with_api_key;
 use orbit_code_cli::login::run_login_with_chatgpt;
 use orbit_code_cli::login::run_login_with_device_code;
 use orbit_code_cli::login::run_logout;
-use orbit_code_cloud_tasks::Cli as CloudTasksCli;
 use orbit_code_exec::Cli as ExecCli;
 use orbit_code_exec::Command as ExecCommand;
 use orbit_code_exec::ReviewArgs;
 use orbit_code_execpolicy::ExecPolicyCheckCommand;
-use orbit_code_responses_api_proxy::Args as ResponsesApiProxyArgs;
 use orbit_code_state::StateRuntime;
 use orbit_code_state::state_db_path;
 use orbit_code_tui::AppExitInfo;
@@ -125,23 +121,11 @@ enum Subcommand {
     #[clap(hide = true)]
     Execpolicy(ExecpolicyCommand),
 
-    /// Apply the latest diff produced by Codex agent as a `git apply` to your local working tree.
-    #[clap(visible_alias = "a")]
-    Apply(ApplyCommand),
-
     /// Resume a previous interactive session (picker by default; use --last to continue the most recent).
     Resume(ResumeCommand),
 
     /// Fork a previous interactive session (picker by default; use --last to fork the most recent).
     Fork(ForkCommand),
-
-    /// [EXPERIMENTAL] Browse tasks from Codex Cloud and apply changes locally.
-    #[clap(name = "cloud", alias = "cloud-tasks")]
-    Cloud(CloudTasksCli),
-
-    /// Internal: run the responses API proxy.
-    #[clap(hide = true)]
-    ResponsesApiProxy(ResponsesApiProxyArgs),
 
     /// Internal: relay stdio to a Unix domain socket.
     #[clap(hide = true, name = "stdio-to-uds")]
@@ -781,18 +765,6 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
             reject_remote_mode_for_subcommand(root_remote.as_deref(), "completion")?;
             print_completion(completion_cli);
         }
-        Some(Subcommand::Cloud(mut cloud_cli)) => {
-            reject_remote_mode_for_subcommand(root_remote.as_deref(), "cloud")?;
-            prepend_config_flags(
-                &mut cloud_cli.config_overrides,
-                root_config_overrides.clone(),
-            );
-            orbit_code_cloud_tasks::run_main(
-                cloud_cli,
-                arg0_paths.orbit_code_linux_sandbox_exe.clone(),
-            )
-            .await?;
-        }
         Some(Subcommand::Sandbox(sandbox_args)) => match sandbox_args.cmd {
             SandboxCommand::Macos(mut seatbelt_cli) => {
                 reject_remote_mode_for_subcommand(root_remote.as_deref(), "sandbox macos")?;
@@ -847,19 +819,6 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
                 run_execpolicycheck(cmd)?
             }
         },
-        Some(Subcommand::Apply(mut apply_cli)) => {
-            reject_remote_mode_for_subcommand(root_remote.as_deref(), "apply")?;
-            prepend_config_flags(
-                &mut apply_cli.config_overrides,
-                root_config_overrides.clone(),
-            );
-            run_apply_command(apply_cli, /*cwd*/ None).await?;
-        }
-        Some(Subcommand::ResponsesApiProxy(args)) => {
-            reject_remote_mode_for_subcommand(root_remote.as_deref(), "responses-api-proxy")?;
-            tokio::task::spawn_blocking(move || orbit_code_responses_api_proxy::run_main(args))
-                .await??;
-        }
         Some(Subcommand::StdioToUds(cmd)) => {
             reject_remote_mode_for_subcommand(root_remote.as_deref(), "stdio-to-uds")?;
             let socket_path = cmd.socket_path;

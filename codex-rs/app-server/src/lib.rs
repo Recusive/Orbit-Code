@@ -1,8 +1,6 @@
 #![deny(clippy::print_stdout, clippy::print_stderr)]
 
 use orbit_code_arg0::Arg0DispatchPaths;
-use orbit_code_cloud_requirements::cloud_requirements_loader;
-use orbit_code_core::AuthManager;
 use orbit_code_core::config::Config;
 use orbit_code_core::config::ConfigBuilder;
 use orbit_code_core::config_loader::CloudRequirementsLoader;
@@ -420,20 +418,10 @@ pub async fn run_main_with_transport(
                 }
             }
 
-            let auth_manager = AuthManager::shared(
-                config.orbit_code_home.clone(),
-                /*enable_orbit_code_api_key_env*/ false,
-                config.cli_auth_credentials_store_mode,
-            );
-            cloud_requirements_loader(
-                auth_manager,
-                config.chatgpt_base_url,
-                config.orbit_code_home.clone(),
-            )
+            CloudRequirementsLoader::default()
         }
         Err(err) => {
-            warn!(error = %err, "Failed to preload config for cloud requirements");
-            // TODO(gt): Make cloud requirements preload failures blocking once we can fail-closed.
+            warn!(error = %err, "Failed to preload config before app-server startup");
             CloudRequirementsLoader::default()
         }
     };
