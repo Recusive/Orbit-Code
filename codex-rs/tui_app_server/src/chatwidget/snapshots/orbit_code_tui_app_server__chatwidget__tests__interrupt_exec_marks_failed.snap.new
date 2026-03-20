@@ -1,0 +1,7 @@
+---
+source: tui_app_server/src/chatwidget/tests.rs
+assertion_line: 7140
+expression: exec_blob
+---
+• Ran sleep 1
+  └ (no output)

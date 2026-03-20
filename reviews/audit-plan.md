@@ -1,188 +1,189 @@
-# Plan Audit: Stage 2 — Remove Dead Crates
+# Plan Audit: Stage 3a — Claude Provider (Anthropic Messages API + OAuth)
 
-**Date**: 2026-03-19
-**Plan Document**: `docs/migration/02-remove-dead-crates.md`
+**Date**: 2026-03-20
+**Plan Document**: `docs/migration/03a-claude-provider.md`
 **Branch**: main
 
 ## Plan Summary
 
-The plan proposes removing 8 OpenAI-specific crates from the Rust workspace in bottom-up order: delete leaf crates first, then mid-level crates, then the most-connected `cloud-requirements` crate. For `cloud-requirements`, callers switch to passing `None` instead of a real loader. The stated goal is removing ~15,000 lines of OpenAI-specific code to create a clean foundation for multi-provider support.
+This plan adds full Claude model support to Orbit Code by creating a new `orbit-anthropic` crate implementing the Anthropic Messages API with SSE streaming, extending the `WireApi` enum with an `AnthropicMessages` variant, adding Anthropic OAuth PKCE flow to the login crate, and wiring dispatch in `core::client.rs`. Users would authenticate via API key or Claude Pro/Max OAuth (browser code-paste flow).
 
 ## Files Reviewed
 
 | File | Role | Risk |
 |------|------|------|
-| `codex-rs/Cargo.toml` | Workspace root — members + dependencies | High |
-| `codex-rs/cli/src/main.rs` | CLI dispatcher — subcommand imports | High |
-| `codex-rs/cli/Cargo.toml` | CLI dependencies | Medium |
-| `codex-rs/app-server/Cargo.toml` | App-server dependencies | High |
-| `codex-rs/app-server/src/lib.rs` | App-server bootstrap — cloud_requirements usage | High |
-| `codex-rs/app-server/src/orbit_code_message_processor.rs` | Agent message handler — chatgpt, backend-client, connectors usage | High |
-| `codex-rs/exec/Cargo.toml` | Exec dependencies | Medium |
-| `codex-rs/exec/src/lib.rs` | Exec — cloud_requirements usage | Medium |
-| `codex-rs/tui/Cargo.toml` | TUI dependencies | High |
-| `codex-rs/tui/src/lib.rs` | TUI bootstrap — cloud_requirements, chatgpt_base_url | High |
-| `codex-rs/tui/src/chatwidget.rs` | TUI chat — BackendClient, connectors::AppInfo | High |
-| `codex-rs/tui_app_server/Cargo.toml` | TUI app-server dependencies | High |
-| `codex-rs/tui_app_server/src/lib.rs` | TUI app-server bootstrap — cloud_requirements | High |
-| `codex-rs/core/Cargo.toml` | Core engine dependencies | High |
-| `codex-rs/core/src/connectors.rs` | Core connectors — orbit_code_connectors imports | High |
-| `codex-rs/chatgpt/src/lib.rs` | ChatGPT crate — connectors module definition | Medium |
-| `pnpm-workspace.yaml` | pnpm workspace — responses-api-proxy entry | Low |
+| `codex-rs/core/src/model_provider_info.rs` | `WireApi` enum, provider registry, `ModelProviderInfo` struct | High |
+| `codex-rs/core/src/client.rs` | Model client, stream dispatch, WebSocket/SSE transport | High |
+| `codex-rs/core/src/auth.rs` | `AuthMode`, `CodexAuth`, `AuthManager`, token refresh | High |
+| `codex-rs/core/src/api_bridge.rs` | Auth→provider translation, `CoreAuthProvider`, error mapping | High |
+| `codex-rs/login/src/lib.rs` | Login crate public API, re-exports | Medium |
+| `codex-rs/login/src/server.rs` | Browser OAuth flow (OpenAI), reference for Anthropic flow | Medium |
+| `codex-rs/login/src/pkce.rs` | PKCE generation (reusable) | Low |
+| `codex-rs/core/models.json` | Model metadata registry | Medium |
+| `codex-rs/Cargo.toml` | Workspace members, dependencies, lints | Medium |
+| `reference/opencode-anthropic-auth/index.mjs` | Authoritative spec: OAuth flow, tool prefixing, header setup | Spec |
+| `reference/opencode/packages/opencode/src/provider/transform.ts` | Authoritative spec: message sanitization, empty content, caching, thinking config | Spec |
+| `reference/opencode/packages/opencode/src/provider/schema.ts` | ProviderID/ModelID branded types | Spec |
+| `reference/opencode/packages/opencode/src/auth/index.ts` | Auth type union: oauth vs api | Spec |
+| `reference/opencode/packages/opencode/src/plugin/codex.ts` | OpenAI/Codex PKCE flow, device code flow | Spec |
+| `reference/opencode/packages/plugin/src/index.ts` | AuthHook interface, authorize/callback pattern | Spec |
 
-_Risk: High (core logic, many dependents), Medium (feature code), Low (utilities, tests)_
+_Risk: High (core logic, many dependents), Medium (feature code), Low (utilities, tests), Spec (reference implementation)_
 
-## Verdict: NEEDS REWORK
+## Verdict: APPROVE WITH CHANGES
 
-The plan has an **incorrect dependency graph** that will cause build failures. Three crates listed as "leaf" or "dependents already removed" have undiscovered live dependents, and the scope of source code changes is significantly underestimated for 4 crates (tui, tui_app_server, core, app-server).
-
----
+The plan's overall architecture — a dedicated `orbit-anthropic` crate with wire-protocol types, dispatch via `WireApi` enum, and separate auth flow — is sound and follows the codebase's existing patterns. The plan has been updated to address all critical gaps identified in the initial audit (ResponseEvent mapping, auth bypass, BUILD.bazel, exhaustive matches, tool translation). Additional spec-validated details have been added: message sanitization (empty content filtering, toolCallId sanitization), thinking/reasoning configuration (adaptive vs budgeted), temperature handling, and `?beta=true` URL scoping.
 
 ## Critical Issues (Must Fix Before Implementation)
 
 | # | Section | Problem | Recommendation |
 |---|---------|---------|----------------|
-| 1 | 2.1 | **`connectors` crate is NOT a leaf** — `core/Cargo.toml` depends on `orbit-code-connectors`. `core/src/connectors.rs` imports `AllConnectorsCacheKey`, `DirectoryListResponse`, `CONNECTORS_CACHE_TTL`, and `list_all_connectors_with_options()`. Removing `connectors` without updating `core` will break the build. | Move `connectors` from Task 1 (leaf) to Task 2 (mid-level). Add `core/Cargo.toml` and `core/src/connectors.rs` edits: replace `orbit_code_connectors` imports with stubs or inline the types. |
-| 2 | 2.1 | **`backend-client` has live dependents** — `tui/Cargo.toml` and `app-server/Cargo.toml` both depend on `orbit-code-backend-client`. `tui/src/chatwidget.rs` uses `BackendClient::from_auth()` for rate limits; `app-server/src/orbit_code_message_processor.rs` does the same. Plan says "EASY — dependents already removed" — wrong. | Add `tui/Cargo.toml`, `tui/src/chatwidget.rs`, `app-server/Cargo.toml`, `app-server/src/orbit_code_message_processor.rs` to the modification list. Stub rate limit functions to return empty vecs. |
-| 3 | 2.1 | **TUI source changes completely missing for `cloud-requirements`** — Plan says "(The TUI may not directly call the loader — check if there are source imports too)". Reality: `tui/src/lib.rs` has 15+ references to `cloud_requirements_loader`, `CloudRequirementsLoader` type, and `.cloud_requirements()` builder calls. | Add full `tui/src/lib.rs` edits to Task 3: remove import, replace all `cloud_requirements_loader(...)` calls with `CloudRequirementsLoader::default()` or `None`, update function signatures. |
-| 4 | 2.1 | **TUI and tui_app_server deps on `chatgpt` not addressed** — Both `tui/Cargo.toml` and `tui_app_server/Cargo.toml` depend on `orbit-code-chatgpt`. Used for `connectors::AppInfo` type in chatwidget, skills, composer, app_event, and extensive tests (~30 test references each). Plan only removes chatgpt from cli and app-server. | Add TUI and tui_app_server to Task 2. Replace `orbit_code_chatgpt::connectors::AppInfo` imports with `orbit_code_core::connectors::AppInfo` (already re-exported from `orbit_code_app_server_protocol`). |
-| 5 | 2.1 | **Wrong file name** — Plan references `codex-rs/app-server/src/codex_message_processor.rs`. Actual file is `codex-rs/app-server/src/orbit_code_message_processor.rs` (renamed in Stage 1). | Fix the file name in the plan. |
+| 1 | 2.1 | **`ResponseEvent` mapping is unspecified** — The plan says "map events back to internal format" (Task 3, Step 3) but `ResponseEvent` and `ResponseItem` are tightly coupled to OpenAI's Responses API types. The Anthropic SSE event model (message_start, content_block_delta, etc.) has no 1:1 mapping. This is the hardest part of the integration and has zero detail. | Add a dedicated subtask with explicit mapping table: which `AnthropicEvent` variants produce which `ResponseEvent` variants. Include handling of tool_use blocks → `ResponseItem::FunctionCall`, thinking blocks → `ResponseItem::Reasoning`, text blocks → `ResponseItem::Message`. Define how `response_id` is synthesized (Anthropic returns `message_id`, not `response_id`). |
+| 2 | 2.1 | **Auth header mechanism mismatch** — `CoreAuthProvider` implements `ApiAuthProvider` with only `bearer_token()` and `account_id()`. The `orbit_code_api` layer always sends `Authorization: Bearer {token}`. Anthropic API key auth requires `x-api-key: {key}` (not Bearer). The plan doesn't address how `orbit-anthropic` bypasses the existing auth bridge. | Clarify in the plan that `orbit-anthropic` handles its own HTTP auth headers internally and does NOT go through `auth_provider_from_auth()` / `CoreAuthProvider`. The dispatch in `client.rs` should resolve auth separately for the Anthropic path and pass it directly to `AnthropicClient::stream()`. |
+| 3 | 2.5 | **Missing BUILD.bazel for new crate** — Convention: "If you add `include_str!`, `include_bytes!`, or `sqlx::migrate!`, update the crate's BUILD.bazel." More broadly, every new crate needs a BUILD.bazel for CI. The plan creates `orbit-anthropic/` but never mentions Bazel. CI will fail. | Add a step to Task 1: create `codex-rs/orbit-anthropic/BUILD.bazel` with correct `rust_library` target, deps, and test targets. Run `just bazel-lock-update && just bazel-lock-check` after adding the workspace member. |
+| 4 | 2.1 | **`AuthMode` exhaustive match breakage** — Adding `AnthropicApiKey`/`AnthropicOAuth` to `AuthMode` (Task 3, Step 5) breaks exhaustive matches in: `AuthRequestTelemetryContext::new()` (`client.rs:1532-1535`), `enforce_login_restrictions()` (`auth.rs:483-494`), `TelemetryAuthMode::from()` (`auth.rs:50-57`), and the `has_next()` / `unavailable_reason()` methods in `UnauthorizedRecovery`. These are not mentioned in the plan. | List every exhaustive match on `AuthMode` that will break. For each, specify the new branch behavior. `UnauthorizedRecovery::has_next()` currently returns `false` for non-ChatGPT auth — it needs an Anthropic OAuth refresh path too. |
+| 5 | 2.2 | **Tool schema translation not detailed** — The plan says "convert internal tool definitions to Anthropic tool schema format" (Task 3, Step 3) but the codebase uses `create_tools_json_for_responses_api()` which outputs OpenAI Responses API tool format. Anthropic uses a different schema (`name`, `description`, `input_schema` with JSON Schema). | Add a function spec for `tools_to_anthropic_format()` in the `orbit-anthropic` crate or in `core::tools`. Show the mapping from OpenAI tool JSON to Anthropic tool JSON, including handling of `function` type tools, the `computer_20241022` type (if applicable), and `bash_20241022` type tools. |
 
 ## Recommended Improvements (Should Consider)
 
 | # | Section | Problem | Recommendation |
 |---|---------|---------|----------------|
-| 1 | 2.5 | **`core/src/connectors.rs` needs deep surgery** — This file calls `orbit_code_connectors::list_all_connectors_with_options()` which does HTTP calls to the ChatGPT backend. Removing the connectors crate requires either inlining the function or stubbing it to return empty results. The `AllConnectorsCacheKey` and `DirectoryListResponse` types also need stubs. | Create a minimal stub in `core` or return empty results from the connector listing functions. This is the hardest part of removing `connectors` — document the approach explicitly. |
-| 2 | 2.5 | **`git add -A` in commit steps** — Multiple tasks use `git add -A` which may accidentally stage untracked files (secrets, build artifacts, IDE config). | Use `git add` with specific paths or at minimum `git add codex-rs/ pnpm-workspace.yaml` to scope the staging. |
-| 3 | 2.2 | **`chatgpt_base_url` config field becomes dead** — After removing cloud-requirements and chatgpt, the `chatgpt_base_url` field in config is no longer used by any production code path. It should be cleaned up or at least noted for future removal. | Add a follow-up note or TODO to remove the `chatgpt_base_url` config field in a later stage. |
-| 4 | 2.5 | **`local_chatgpt_auth.rs` in tui_app_server** — This module (`tui_app_server/src/local_chatgpt_auth.rs`) has "chatgpt" in the name but only depends on `core::auth` and `app-server-protocol`. It does NOT depend on the `chatgpt` crate. No action needed but worth confirming during implementation. | Verify it compiles without `orbit-code-chatgpt` dep. Consider renaming in a future cleanup. |
-| 5 | 2.8 | **Test scope is underestimated** — Plan only runs `cargo test -p orbit-code-core` and `cargo test -p orbit-code-cli`. Both TUI crates have extensive connector/chatgpt tests that will break. | Run `cargo test --workspace` or at minimum add `-p orbit-code-tui -p orbit-code-tui-app-server -p orbit-code-app-server` to the test commands. |
-| 6 | 2.5 | **No `cargo check` between Task 1 and Task 2** — Task 1 removes leaf crates but doesn't verify the build before proceeding. If the dependency graph is wrong (as found), errors cascade. | Add `cargo check` after every task, not just Tasks 2 and 3. |
+| 1 | 2.5 | **No token refresh wiring for Anthropic OAuth** — `AuthManager::refresh_if_stale()` only handles `CodexAuth::Chatgpt`. If a user has Anthropic OAuth tokens, they'll expire with no automatic refresh. The plan implements `anthropic_refresh_token()` but doesn't wire it into the `AuthManager` lifecycle. | Extend `AuthManager::refresh_if_stale()` to handle a new `CodexAuth::AnthropicOAuth` variant. The refresh logic should check `expires_at` and call `anthropic_refresh_token()` when tokens are within the refresh window. |
+| 2 | 2.4 | **Missing `just fmt` and `just fix` in commit steps** — Convention 70: "Run `just fmt` after every Rust change. Do not ask for approval — just run it." Convention 71: "Run `just fix -p <crate>` before finalizing large changes." The plan's commit steps only run `cargo check`. | Add `just fmt` and `just fix -p orbit-anthropic` (and `-p orbit-code-core`, `-p orbit-code-login`) to each task's commit step. |
+| 3 | 2.2 | **`ModelProviderInfo::to_api_provider()` has OpenAI-specific logic** — The function defaults to `https://chatgpt.com/backend-api/codex` for ChatGPT auth and `https://api.openai.com/v1` for API key auth. When dispatching to Anthropic, this function is still called but returns an OpenAI-shaped provider object. The Anthropic dispatch path shouldn't go through this code. | The Anthropic dispatch in `client.rs` should construct the `AnthropicClient` directly using `ModelProviderInfo.base_url` and the resolved auth, bypassing `to_api_provider()` entirely. Document this in the plan. |
+| 4 | 2.5 | **Error type size may exceed 256-byte threshold** — Convention 48: "Large-error-threshold: 256 bytes." `AnthropicError::Api { status: u16, error_type: String, message: String }` has two heap-allocated strings. While the enum itself stores pointers (not inline data), run `clippy` to verify. | Add `#[allow(clippy::result_large_err)]` if needed, or Box the `Api` variant payload: `Api(Box<AnthropicApiError>)`. |
+| 5 | 2.1 | **`models.json` schema gap** — Current model entries have OpenAI-specific fields (`reasoning_summary_format`, `shell_type`, `support_verbosity`, `apply_patch_tool_type`). Claude models have different capability profiles (thinking vs reasoning summaries, no verbosity support). The plan's model entries (Task 3, Step 4) are minimal JSON stubs with no capability metadata. | Define full model entries with all required fields. At minimum: `slug`, `display_name`, `context_window`, `input_modalities`, `supports_parallel_tool_calls`, and a marker for provider type. Consider whether `models.json` needs a `provider` or `wire_api` field to route model→provider. |
+| 6 | 2.5 | **`code_with_state.split('#')` is fragile** — Task 2, Step 3 splits the pasted code on `#` with `splits[0]` (panics on empty input). The plan shows `splits.get(1).copied()` for state but uses direct indexing for code. | Use `.split_once('#')` or validate input before splitting. Return a clear error for malformed input. |
 
 ## Nice-to-Haves (Optional Enhancements)
 
 | # | Section | Idea | Benefit |
 |---|---------|------|---------|
-| 1 | 2.6 | Run `cargo-shear` after removal to detect any newly-unused deps | Catches transitive dependencies that are no longer needed after removing 8 crates |
-| 2 | 2.6 | Update `[workspace.metadata.cargo-shear] ignored` list | Some ignored entries may no longer be needed |
-| 3 | 2.2 | Clean up `[patch.crates-io]` entries that reference OpenAI forks | Future cleanup opportunity — not blocking |
+| 1 | 2.6 | Add a `provider` field to model entries in `models.json` so model→provider routing is declarative rather than requiring string prefix matching on model slugs. | Eliminates fragile `claude-*` prefix matching; makes adding future providers trivial. |
+| 2 | 2.6 | Abstract the SSE event parsing in `orbit-anthropic/src/stream.rs` behind a trait so other Anthropic-compatible providers (e.g., Amazon Bedrock) could reuse the types. | Forward-compatible with multi-cloud Claude access. |
+| 3 | 2.3 | Consider whether the `orbit-anthropic` client should share the `reqwest::Client` from `build_reqwest_client()` rather than creating its own, for connection pooling benefits. | Reuses TLS session cache and connection pool across providers. |
 
 ## Edge Cases Not Addressed
 
-- **What happens if `core/src/connectors.rs` functions are called at runtime after the `connectors` crate is removed?** The plan doesn't address the `core` dependency on `connectors` at all. `list_all_connectors_with_options()` in `core/src/connectors.rs` calls into the `connectors` crate to fetch connector data from the ChatGPT backend API. Removing the crate without updating this function will fail to compile.
-
-- **What happens to the `connectors_tests.rs` in core?** `core/src/connectors_tests.rs` uses `CloudRequirementsLoader::new(async move { ... })` directly. After removing `cloud-requirements`, this test file needs updating to use the default/None loader pattern.
-
-- **What about `orbit-code-chatgpt::connectors::AppInfo` vs `orbit_code_app_server_protocol::AppInfo`?** The `AppInfo` type is defined in `app-server-protocol` and re-exported through `core::connectors`. The `chatgpt::connectors` module provides *different* functions (like `list_apps`, `connector listing via ChatGPT API`). Simply re-pointing imports from `chatgpt::connectors::AppInfo` to `core::connectors::AppInfo` should work for the type, but the connector *functions* need stubs.
-
-- **What happens to Bazel `BUILD.bazel` files?** The `backend-client/BUILD.bazel` file exists. If Bazel builds are used in CI, they'll also need updating. The plan only addresses Cargo.
-
-- **What happens if the `cloud-tasks` member uses a direct path dep instead of workspace?** The CLI references `cloud-tasks` with `orbit-code-cloud-tasks = { path = "../cloud-tasks" }` (not `workspace = true`), and there's no workspace dependency entry for it. The plan says "Remove from workspace.dependencies" but there may be nothing to remove for this crate.
+- **What happens if a user sets `ANTHROPIC_API_KEY` but passes `--model gpt-5.3-codex`?** The plan doesn't specify provider resolution order when both OpenAI and Anthropic credentials are present.
+- **What happens if Anthropic returns `overloaded_error` (529)?** The plan's error type includes `Overloaded` but the retry logic in `core::client.rs` only handles OpenAI-specific retry patterns. Anthropic's 529 overloaded responses need exponential backoff per convention 17.
+- **What happens when the `mcp_` prefix collides with a user's actual tool name starting with `mcp_`?** OAuth mode strips the prefix on inbound — if a tool is legitimately named `mcp_something`, the prefix stripping would corrupt it.
+- **What happens if the user's clipboard contains a newline when pasting the OAuth code?** The `code#state` parsing doesn't trim whitespace.
+- **What happens if Anthropic's SSE stream emits an `error` event mid-stream?** The plan's event types include `Error` but the client doesn't specify whether this aborts the stream or is recoverable.
+- **What happens with `max_tokens` for Anthropic?** The Anthropic API requires `max_tokens` in every request (unlike OpenAI where it's optional). The plan's `MessagesRequest` includes it, but the dispatch path in `client.rs` needs to know the model's max output token limit to set it. The current `ModelInfo` doesn't carry this field.
 
 ## Code Suggestions
 
-### Critical Issue 1: Fix core's dependency on connectors
+### Critical Issue 1: ResponseEvent Mapping
 
-In `codex-rs/core/Cargo.toml`, remove:
-```toml
-orbit-code-connectors = { workspace = true }
-```
-
-In `codex-rs/core/src/connectors.rs`, replace the `orbit_code_connectors` imports. The simplest approach — inline minimal type stubs and return empty results:
+Add this mapping table and translation function to the plan:
 
 ```rust
-// BEFORE:
-use orbit_code_connectors::AllConnectorsCacheKey;
-use orbit_code_connectors::DirectoryListResponse;
-pub use orbit_code_connectors::CONNECTORS_CACHE_TTL;
-
-// AFTER:
-// Stub types — connectors crate removed in Stage 2
-pub const CONNECTORS_CACHE_TTL: Duration = Duration::from_secs(300);
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct AllConnectorsCacheKey { /* fields */ }
-
-// Stub the list_all_connectors function to return empty
-```
-
-The `list_all_connectors_with_options()` call site (line ~435) needs to be replaced with a function that returns an empty result, since the ChatGPT connector directory API is no longer accessible.
-
-### Critical Issue 2: Fix backend-client dependents
-
-In `codex-rs/tui/src/chatwidget.rs`, replace:
-```rust
-// BEFORE:
-use orbit_code_backend_client::Client as BackendClient;
-
-// AFTER (in fetch_rate_limits function):
-async fn fetch_rate_limits(_base_url: String, _auth: CodexAuth) -> Vec<RateLimitSnapshot> {
-    Vec::new() // Rate limits require OpenAI backend — stub until Orbit backend supports this
+// In core::client.rs or a new core::anthropic_bridge.rs
+fn map_anthropic_events(
+    events: impl Stream<Item = Result<AnthropicEvent, AnthropicError>>,
+) -> impl Stream<Item = Result<ResponseEvent, ApiError>> {
+    // AnthropicEvent::MessageStart → no direct ResponseEvent (extract message_id for later)
+    // AnthropicEvent::ContentBlockStart { Text } → no event (prepare accumulator)
+    // AnthropicEvent::ContentBlockDelta { TextDelta } → ResponseEvent::OutputTextDelta
+    // AnthropicEvent::ContentBlockStart { ToolUse { id, name } } → no event (prepare)
+    // AnthropicEvent::ContentBlockDelta { InputJsonDelta } → accumulate JSON
+    // AnthropicEvent::ContentBlockStop (for tool_use) → ResponseEvent::OutputItemDone(FunctionCall)
+    // AnthropicEvent::ContentBlockStart { Thinking } → no event (prepare)
+    // AnthropicEvent::ContentBlockDelta { ThinkingDelta } → ResponseEvent::ReasoningDelta
+    // AnthropicEvent::MessageDelta → extract usage
+    // AnthropicEvent::MessageStop → ResponseEvent::Completed { response_id: message_id, usage }
 }
 ```
 
-Same pattern in `app-server/src/orbit_code_message_processor.rs`.
-
-### Critical Issue 3: Fix TUI cloud_requirements
-
-In `codex-rs/tui/src/lib.rs`, replace all usages:
-```rust
-// BEFORE:
-use orbit_code_cloud_requirements::cloud_requirements_loader;
-// ...
-let cloud_requirements = cloud_requirements_loader(
-    cloud_auth_manager,
-    chatgpt_base_url,
-    orbit_code_home.to_path_buf(),
-);
-
-// AFTER:
-use orbit_code_core::config_loader::CloudRequirementsLoader;
-// ...
-let cloud_requirements = CloudRequirementsLoader::default();
-```
-
-### Critical Issue 4: Fix chatgpt::connectors imports
-
-In all TUI files (`tui/src/chatwidget.rs`, `tui/src/app_event.rs`, `tui/src/bottom_pane/chat_composer.rs`, `tui/src/chatwidget/skills.rs`, and their `tui_app_server` equivalents):
+### Critical Issue 2: Auth Bypass for Anthropic
 
 ```rust
-// BEFORE:
-use orbit_code_chatgpt::connectors;
-use orbit_code_chatgpt::connectors::AppInfo;
-
-// AFTER:
-use orbit_code_core::connectors;
-use orbit_code_app_server_protocol::AppInfo;
+// In client.rs stream() method, the Anthropic branch should NOT call
+// self.client.current_client_setup() which goes through auth_provider_from_auth().
+// Instead:
+WireApi::AnthropicMessages => {
+    let auth = match self.client.state.auth_manager.as_ref() {
+        Some(manager) => manager.auth().await,
+        None => None,
+    };
+    // Resolve Anthropic-specific auth
+    let anthropic_auth = match auth {
+        Some(CodexAuth::AnthropicOAuth { access_token, .. }) => {
+            AnthropicAuth::OAuth { access_token }
+        }
+        _ => {
+            // Fall back to env var
+            let key = self.client.state.provider.api_key()?
+                .ok_or(CodexErr::MissingApiKey)?;
+            AnthropicAuth::ApiKey(key)
+        }
+    };
+    // Create AnthropicClient with provider.base_url and anthropic_auth
+}
 ```
 
----
+### Critical Issue 4: Exhaustive Match Points
+
+These locations need new arms for `AnthropicApiKey`/`AnthropicOAuth`:
+
+```rust
+// auth.rs:50-57 — TelemetryAuthMode conversion
+impl From<AuthMode> for TelemetryAuthMode {
+    fn from(mode: AuthMode) -> Self {
+        match mode {
+            AuthMode::ApiKey => TelemetryAuthMode::ApiKey,
+            AuthMode::Chatgpt => TelemetryAuthMode::Chatgpt,
+            AuthMode::AnthropicApiKey => TelemetryAuthMode::AnthropicApiKey, // new
+            AuthMode::AnthropicOAuth => TelemetryAuthMode::AnthropicOAuth,   // new
+        }
+    }
+}
+
+// client.rs:1532-1535 — telemetry auth mode name
+AuthMode::AnthropicApiKey => "AnthropicApiKey",
+AuthMode::AnthropicOAuth => "AnthropicOAuth",
+
+// auth.rs:483-494 — enforce_login_restrictions needs Anthropic handling
+```
+
+### Recommended Issue 6: Safe Code Parsing
+
+```rust
+pub async fn anthropic_exchange_code(
+    code_with_state: &str,
+    verifier: &str,
+) -> Result<AnthropicTokens, LoginError> {
+    let trimmed = code_with_state.trim();
+    let (code, state) = match trimmed.split_once('#') {
+        Some((c, s)) => (c, Some(s)),
+        None => (trimmed, None),
+    };
+    if code.is_empty() {
+        return Err(LoginError::InvalidCode("empty authorization code".into()));
+    }
+    // ... proceed with exchange
+}
+```
 
 ## Verdict Details
 
 ### Correctness: CONCERNS
 
-The dependency graph in the plan is factually wrong for 3 of 8 crates:
-1. `connectors` — has undiscovered dependent: `core`
-2. `backend-client` — has undiscovered dependents: `tui`, `app-server`
-3. `chatgpt` — has undiscovered dependents: `tui`, `tui_app_server`
-
-Executing the plan as written will fail at `cargo check` after Task 1 (connectors removal breaks core) and again after Task 2 (backend-client removal breaks tui and app-server).
+The plan correctly identifies the wire protocol, auth flows, and SSE event types from the spec references. However, the translation between Anthropic events and the internal `ResponseEvent`/`ResponseItem` model is the core correctness challenge and it's entirely unspecified. The `mcp_` tool name prefixing also has a collision edge case.
 
 ### Architecture: PASS
 
-The overall approach (bottom-up removal, passing None for cloud requirements) is sound. The `CloudRequirementsLoader` type surviving in `core::config_loader` while implementations are removed is the right pattern. The problem is purely in the dependency analysis, not the architectural approach.
+The decision to create a standalone `orbit-anthropic` crate mirrors the existing `orbit-code-ollama` and `orbit-code-lmstudio` pattern. Extending `WireApi` with a new variant and dispatching in `client.rs` is the right approach. The PKCE code in the login crate is properly reusable.
 
-### Performance: PASS (N/A)
+### Performance: PASS
 
-This is a code removal plan. No performance impact — code is being deleted, not added. The stub functions returning empty vecs are O(1) with no allocations.
+No performance regressions expected. The SSE streaming approach is equivalent to the current OpenAI path. The Anthropic client will use its own `reqwest` transport, which is fine for a first implementation.
 
 ### Production Readiness: CONCERNS
 
-- The `fetch_rate_limits` function in TUI and app-server will silently return empty results after stubbing. This should be documented so users know rate limit display is temporarily unavailable.
-- The connector listing functions in `core` will need careful stubbing to ensure the apps/connectors feature degrades gracefully rather than erroring.
-- The plan's verification step (Task 5, Step 5) only greps for Rust import names — it doesn't check `Cargo.toml` dependency entries. A stale `[dependencies]` entry pointing to a deleted path will cause build failure.
+Missing Bazel integration means CI will fail. Missing `just fmt`/`just fix` in commit steps. Missing auth refresh lifecycle integration for Anthropic OAuth. Fragile string splitting for OAuth code parsing. Missing `max_tokens` resolution for Anthropic requests. These are all fixable but need to be in the plan before implementation.
 
 ### Extensibility: PASS
 
-The plan correctly notes that the remaining ~65 crates form a clean foundation for multi-provider support. Removing the OpenAI-specific crates is the right move. The `CloudRequirementsLoader` interface in core provides the extensibility point for future enterprise config systems.
+The architecture supports future providers cleanly. The `WireApi` enum pattern scales. The `orbit-anthropic` crate boundary is clean. The auth storage extension for Anthropic tokens follows the existing `auth.json` pattern.

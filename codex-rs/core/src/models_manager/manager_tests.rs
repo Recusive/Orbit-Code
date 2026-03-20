@@ -727,3 +727,30 @@ fn bundled_models_json_roundtrips() {
         "bundled models.json should contain at least one model"
     );
 }
+
+#[test]
+fn bundled_claude_models_stay_hidden_and_do_not_become_defaults() {
+    let file_contents = include_str!("../../models.json");
+    let response: ModelsResponse =
+        serde_json::from_str(file_contents).expect("bundled models.json should deserialize");
+
+    let claude_presets = response
+        .models
+        .iter()
+        .filter(|model| model.slug.starts_with("claude-"))
+        .cloned()
+        .map(ModelPreset::from)
+        .collect::<Vec<_>>();
+
+    assert!(
+        !claude_presets.is_empty(),
+        "bundled models.json should contain hidden Claude presets"
+    );
+    assert!(claude_presets.iter().all(|preset| !preset.show_in_picker));
+
+    let default_model = ModelsManager::get_model_offline_for_tests(None);
+    assert!(
+        !default_model.starts_with("claude-"),
+        "hidden Claude presets must not become the offline default"
+    );
+}

@@ -1,0 +1,6 @@
+---
+source: tui_app_server/src/chatwidget/tests.rs
+assertion_line: 11188
+expression: header
+---
+› Ask Codex to do anything

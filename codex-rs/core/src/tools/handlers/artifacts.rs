@@ -5,6 +5,7 @@ use orbit_code_artifacts::ArtifactRuntimeManager;
 use orbit_code_artifacts::ArtifactRuntimeManagerConfig;
 use orbit_code_artifacts::ArtifactsClient;
 use orbit_code_artifacts::ArtifactsError;
+use serde::Deserialize;
 use serde_json::Value as JsonValue;
 use std::time::Duration;
 use std::time::Instant;
@@ -24,6 +25,7 @@ use crate::tools::events::ToolEmitter;
 use crate::tools::events::ToolEventCtx;
 use crate::tools::events::ToolEventFailure;
 use crate::tools::events::ToolEventStage;
+use crate::tools::handlers::parse_arguments;
 use crate::tools::registry::ToolHandler;
 use crate::tools::registry::ToolKind;
 
@@ -39,6 +41,12 @@ struct ArtifactsToolArgs {
     timeout_ms: Option<u64>,
 }
 
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ArtifactsFunctionArgs {
+    input: String,
+}
+
 #[async_trait]
 impl ToolHandler for ArtifactsHandler {
     type Output = FunctionToolOutput;
@@ -48,7 +56,10 @@ impl ToolHandler for ArtifactsHandler {
     }
 
     fn matches_kind(&self, payload: &ToolPayload) -> bool {
-        matches!(payload, ToolPayload::Custom { .. })
+        matches!(
+            payload,
+            ToolPayload::Function { .. } | ToolPayload::Custom { .. }
+        )
     }
 
     async fn is_mutating(&self, _invocation: &ToolInvocation) -> bool {
@@ -71,6 +82,10 @@ impl ToolHandler for ArtifactsHandler {
         }
 
         let args = match payload {
+            ToolPayload::Function { arguments } => {
+                let args: ArtifactsFunctionArgs = parse_arguments(&arguments)?;
+                parse_freeform_args(&args.input)?
+            }
             ToolPayload::Custom { input } => parse_freeform_args(&input)?,
             _ => {
                 return Err(FunctionCallError::RespondToModel(

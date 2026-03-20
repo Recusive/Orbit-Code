@@ -1,0 +1,7 @@
+---
+source: tui_app_server/src/chatwidget/tests.rs
+assertion_line: 6024
+expression: active_combined
+---
+↳ Interacted with background terminal · just fix
+  └ pwd

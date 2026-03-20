@@ -1,0 +1,6 @@
+---
+source: tui_app_server/src/chatwidget/tests.rs
+assertion_line: 8902
+expression: blob
+---
+■ '/model' is disabled while a task is in progress.

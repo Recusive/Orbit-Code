@@ -1,0 +1,10 @@
+---
+source: tui_app_server/src/bottom_pane/feedback_view.rs
+assertion_line: 674
+expression: rendered
+---
+▌ Tell us more (safety check)
+▌
+▌ (optional) Share what was refused and why it should have b
+
+Press enter to confirm or esc to go back

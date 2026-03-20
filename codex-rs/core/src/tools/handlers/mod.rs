@@ -61,7 +61,7 @@ pub use tool_suggest::ToolSuggestHandler;
 pub use unified_exec::UnifiedExecHandler;
 pub use view_image::ViewImageHandler;
 
-fn parse_arguments<T>(arguments: &str) -> Result<T, FunctionCallError>
+pub(crate) fn parse_arguments<T>(arguments: &str) -> Result<T, FunctionCallError>
 where
     T: for<'de> Deserialize<'de>,
 {

@@ -7,6 +7,7 @@ use crate::function_tool::FunctionCallError;
 use crate::tools::context::FunctionToolOutput;
 use crate::tools::context::ToolInvocation;
 use crate::tools::context::ToolPayload;
+use crate::tools::handlers::parse_arguments;
 use crate::tools::registry::ToolHandler;
 use crate::tools::registry::ToolKind;
 
@@ -36,6 +37,12 @@ struct CodeModeExecArgs {
     code: String,
     yield_time_ms: Option<u64>,
     max_output_tokens: Option<usize>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct CodeModeFunctionArgs {
+    input: String,
 }
 
 impl CodeModeExecuteHandler {
@@ -193,7 +200,10 @@ impl ToolHandler for CodeModeExecuteHandler {
     }
 
     fn matches_kind(&self, payload: &ToolPayload) -> bool {
-        matches!(payload, ToolPayload::Custom { .. })
+        matches!(
+            payload,
+            ToolPayload::Function { .. } | ToolPayload::Custom { .. }
+        )
     }
 
     async fn handle(&self, invocation: ToolInvocation) -> Result<Self::Output, FunctionCallError> {
@@ -207,6 +217,10 @@ impl ToolHandler for CodeModeExecuteHandler {
         } = invocation;
 
         match payload {
+            ToolPayload::Function { arguments } if tool_name == PUBLIC_TOOL_NAME => {
+                let args: CodeModeFunctionArgs = parse_arguments(&arguments)?;
+                self.execute(session, turn, call_id, args.input).await
+            }
             ToolPayload::Custom { input } if tool_name == PUBLIC_TOOL_NAME => {
                 self.execute(session, turn, call_id, input).await
             }

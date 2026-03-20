@@ -1,0 +1,7 @@
+---
+source: tui/src/chatwidget/tests.rs
+assertion_line: 8200
+expression: active_blob(&chat)
+---
+• Exploring
+  └ List ls -la

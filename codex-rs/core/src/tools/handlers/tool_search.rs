@@ -6,6 +6,7 @@ use crate::mcp_connection_manager::ToolInfo;
 use crate::tools::context::ToolInvocation;
 use crate::tools::context::ToolPayload;
 use crate::tools::context::ToolSearchOutput;
+use crate::tools::handlers::parse_arguments;
 use crate::tools::registry::ToolHandler;
 use crate::tools::registry::ToolKind;
 use crate::tools::spec::mcp_tool_to_deferred_openai_tool;
@@ -47,6 +48,7 @@ impl ToolHandler for ToolSearchHandler {
         let ToolInvocation { payload, .. } = invocation;
 
         let args = match payload {
+            ToolPayload::Function { arguments } => parse_arguments(&arguments)?,
             ToolPayload::ToolSearch { arguments } => arguments,
             _ => {
                 return Err(FunctionCallError::Fatal(format!(

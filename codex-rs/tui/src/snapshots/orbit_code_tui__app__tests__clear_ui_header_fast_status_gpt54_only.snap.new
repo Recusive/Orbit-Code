@@ -1,0 +1,11 @@
+---
+source: tui/src/app.rs
+assertion_line: 6461
+expression: rendered
+---
+╭────────────────────────────────────────────────────╮
+│ >_ Orbit Code (v<VERSION>)                         │
+│                                                    │
+│ model:     gpt-5.4 xhigh   fast   /model to change │
+│ directory: /tmp/project                            │
+╰────────────────────────────────────────────────────╯

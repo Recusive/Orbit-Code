@@ -1,0 +1,11 @@
+---
+source: tui_app_server/src/app.rs
+assertion_line: 7745
+expression: rendered
+---
+╭─────────────────────────────────────────────╮
+│ >_ Orbit Code (v<VERSION>)                  │
+│                                             │
+│ model:     gpt-test high   /model to change │
+│ directory: /tmp/project                     │
+╰─────────────────────────────────────────────╯
