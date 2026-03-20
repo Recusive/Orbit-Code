@@ -53,6 +53,7 @@ pub enum ContentBlockType {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+#[allow(clippy::enum_variant_names)]
 pub enum DeltaType {
     TextDelta {
         text: String,
