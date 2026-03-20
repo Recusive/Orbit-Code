@@ -5,7 +5,6 @@ use crate::history_cell::with_border_with_inner_width;
 use crate::version::ORBIT_CLI_VERSION;
 use chrono::DateTime;
 use chrono::Local;
-use orbit_code_core::WireApi;
 use orbit_code_core::config::Config;
 use orbit_code_protocol::ThreadId;
 use orbit_code_protocol::account::PlanType;
