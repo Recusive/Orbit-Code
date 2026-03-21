@@ -1,10 +1,10 @@
 # codex-rs/core/src/
 
-Root source directory for the `codex-core` library crate. Contains all Rust modules that implement the Codex agent engine.
+Root source directory for the `orbit-code-core` library crate. Contains all Rust modules that implement the Codex agent engine.
 
 ## What this folder does
 
-This is the main source tree for `codex-core`. The entry point is `lib.rs`, which declares every module and re-exports the public API consumed by upstream crates (`codex-tui`, `codex-exec`, `codex-app-server`).
+This is the main source tree for `orbit-code-core`. The entry point is `lib.rs`, which declares every module and re-exports the public API consumed by upstream crates (`orbit-code-tui`, `orbit-code-exec`, `orbit-code-app-server`).
 
 ## Module organization
 
@@ -12,8 +12,8 @@ The source tree is a mix of single-file modules and directory modules:
 
 ### Core session and agent loop
 - `codex.rs` / `codex/` -- `Session` struct: the main agent loop, turn orchestration, event emission
-- `codex_thread.rs` -- `CodexThread`: public wrapper around a session for external consumers
-- `codex_delegate.rs` -- Delegate trait for session lifecycle callbacks
+- `orbit_code_thread.rs` -- `CodexThread`: public wrapper around a session for external consumers
+- `orbit_code_delegate.rs` -- Delegate trait for session lifecycle callbacks
 - `thread_manager.rs` -- `ThreadManager`: manages multiple concurrent agent threads
 
 ### Configuration
@@ -49,7 +49,12 @@ The source tree is a mix of single-file modules and directory modules:
 - `message_history.rs` -- Message history serialization
 
 ### Auth and security
-- `auth.rs` / `auth/` -- Authentication manager, credential storage (file, keyring, ephemeral)
+- `auth.rs` -- Auth types (`CodexAuth`, `AuthMode`), constants, re-exports
+- `auth/manager.rs` -- `AuthManager`: session auth cache, provider-filtered lookups, token refresh
+- `auth/persistence.rs` -- Save/load auth to disk (v2 format, provider merging)
+- `auth/recovery.rs` -- `UnauthorizedRecovery`: 401 recovery state machine
+- `auth/storage.rs` -- Storage backends (file, keyring, ephemeral), `AuthDotJsonV2`, `ProviderName`
+- `anthropic_auth/` -- Anthropic-specific: OAuth types, token refresh, request modifications (tool prefixing, system prompt)
 - `guardian/` -- Guardian review for automated approval decisions
 - `safety.rs` -- Platform sandbox detection
 - `seatbelt.rs` -- macOS Seatbelt sandbox profile generation
@@ -72,11 +77,11 @@ The source tree is a mix of single-file modules and directory modules:
 
 ## Key imports
 
-- `codex_protocol` -- Core protocol types (`Op`, `EventMsg`, `ResponseItem`, etc.)
-- `codex_config` -- Configuration TOML parsing and layer merging
-- `codex_client` -- HTTP API client
-- `codex_hooks` -- Hook execution engine
-- `codex_otel` -- OpenTelemetry instrumentation
+- `orbit_code_protocol` -- Core protocol types (`Op`, `EventMsg`, `ResponseItem`, etc.)
+- `orbit_code_config` -- Configuration TOML parsing and layer merging
+- `orbit_code_client` -- HTTP API client
+- `orbit_code_hooks` -- Hook execution engine
+- `orbit_code_otel` -- OpenTelemetry instrumentation
 
 ## Key exports
 

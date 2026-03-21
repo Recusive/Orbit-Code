@@ -17,11 +17,11 @@ const DEFAULT_READ_TIMEOUT: std::time::Duration = std::time::Duration::from_secs
 
 fn create_config_toml_custom_provider(
     orbit_code_home: &Path,
-    requires_openai_auth: bool,
+    requires_auth: bool,
 ) -> std::io::Result<()> {
     let config_toml = orbit_code_home.join("config.toml");
-    let requires_line = if requires_openai_auth {
-        "requires_openai_auth = true\n"
+    let requires_line = if requires_auth {
+        "requires_auth = true\n"
     } else {
         ""
     };

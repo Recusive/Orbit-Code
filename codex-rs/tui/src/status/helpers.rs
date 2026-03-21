@@ -87,19 +87,47 @@ pub(crate) fn compose_agents_summary(config: &Config) -> String {
 pub(crate) fn compose_account_display(
     auth_manager: &AuthManager,
     plan: Option<PlanType>,
+    model_provider_id: &str,
 ) -> Option<StatusAccountDisplay> {
-    let auth = auth_manager.auth_cached()?;
+    use orbit_code_core::auth::ProviderName;
 
-    match auth.auth_mode() {
-        CoreAuthMode::ApiKey => Some(StatusAccountDisplay::ApiKey),
-        CoreAuthMode::Chatgpt => {
-            let email = auth.get_account_email();
-            let plan = plan
-                .map(|plan_type| title_case(format!("{plan_type:?}").as_str()))
-                .or_else(|| Some("Unknown".to_string()));
-            Some(StatusAccountDisplay::ChatGpt { email, plan })
-        }
+    // When the active provider is Anthropic, check Anthropic auth first.
+    if model_provider_id == "anthropic"
+        && let Some(auth) = auth_manager.auth_cached_for_provider(ProviderName::Anthropic)
+    {
+        return match auth.auth_mode() {
+            CoreAuthMode::AnthropicApiKey => Some(StatusAccountDisplay::AnthropicApiKey),
+            CoreAuthMode::AnthropicOAuth => Some(StatusAccountDisplay::AnthropicOAuth),
+            _ => None,
+        };
     }
+
+    // OpenAI / ChatGPT path
+    if let Some(auth) = auth_manager.auth_cached() {
+        return match auth.auth_mode() {
+            CoreAuthMode::ApiKey => Some(StatusAccountDisplay::ApiKey),
+            CoreAuthMode::Chatgpt => {
+                let email = auth.get_account_email();
+                let plan = plan
+                    .map(|plan_type| title_case(format!("{plan_type:?}").as_str()))
+                    .or_else(|| Some("Unknown".to_string()));
+                Some(StatusAccountDisplay::ChatGpt { email, plan })
+            }
+            CoreAuthMode::AnthropicApiKey => Some(StatusAccountDisplay::AnthropicApiKey),
+            CoreAuthMode::AnthropicOAuth => Some(StatusAccountDisplay::AnthropicOAuth),
+        };
+    }
+
+    // Final fallback: check Anthropic provider directly.
+    if let Some(auth) = auth_manager.auth_cached_for_provider(ProviderName::Anthropic) {
+        return match auth.auth_mode() {
+            CoreAuthMode::AnthropicApiKey => Some(StatusAccountDisplay::AnthropicApiKey),
+            CoreAuthMode::AnthropicOAuth => Some(StatusAccountDisplay::AnthropicOAuth),
+            _ => None,
+        };
+    }
+
+    None
 }
 
 pub(crate) fn format_tokens_compact(value: i64) -> String {

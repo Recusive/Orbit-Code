@@ -1,42 +1,55 @@
 # codex-rs/core/src/auth/
 
-Credential storage backends for Codex CLI authentication.
+Multi-provider authentication for Codex CLI — supports OpenAI (ChatGPT) and Anthropic (Claude) simultaneously.
 
 ## What this folder does
 
-Implements the pluggable storage layer for persisting authentication credentials (API keys, OAuth tokens). Supports four storage modes:
+Implements the full auth lifecycle: credential storage, session caching, save/load with provider merging, and 401 recovery. The v2 storage format (`auth.json`) holds credentials for multiple providers side-by-side, so users can switch between GPT and Claude models without re-authenticating.
 
-- **File** (`FileAuthStorage`): Reads/writes `auth.json` in `$CODEX_HOME/` with 0600 permissions on Unix.
-- **Keyring** (`KeyringAuthStorage`): Stores credentials in the OS keyring (macOS Keychain, Linux Secret Service, Windows Credential Manager). Uses a SHA-256 hash of the codex_home path as the keyring entry key.
-- **Auto** (`AutoAuthStorage`): Tries keyring first, falls back to file storage on failure.
-- **Ephemeral** (`EphemeralAuthStorage`): In-memory only, using a global `Mutex<HashMap>`. No persistence across process restarts.
+## Module structure
 
-## Key files
+| File | Lines | Responsibility |
+|------|-------|----------------|
+| `../auth.rs` | ~550 | Types: `CodexAuth` enum, `AuthMode`, `ChatgptAuth`, `ApiKeyAuth`, env var constants, re-exports |
+| `manager.rs` | ~730 | `AuthManager` — single source of truth for session auth. Caches credentials, handles reload, ChatGPT token refresh, provider-filtered lookups via `auth_cached_for_provider()` |
+| `persistence.rs` | ~380 | All disk I/O: `save_auth()`, `save_auth_v2()`, `load_auth()`, `login_with_*()`, `logout()`. Both save functions merge into existing storage to preserve other providers |
+| `recovery.rs` | ~240 | `UnauthorizedRecovery` state machine — drives 401 recovery through reload → refresh → external refresh steps |
+| `storage.rs` | ~630 | Storage backends (`FileAuthStorage`, `KeyringAuthStorage`, `AutoAuthStorage`, `EphemeralAuthStorage`), `AuthDotJsonV2` format, `ProviderName`/`ProviderAuth` enums, v1↔v2 migration |
+| `storage_tests.rs` | ~630 | Storage backend tests |
 
-| File | Purpose |
-|------|---------|
-| `storage.rs` | `AuthStorageBackend` trait and all four implementations; `AuthDotJson` struct; `create_auth_storage()` factory |
-| `storage_tests.rs` | Tests for storage backends |
+## Data format (v2)
 
-## Imports from
-
-- `crate::token_data::TokenData` -- OAuth token structure
-- `codex_app_server_protocol::AuthMode` -- authentication mode enum
-- `codex_keyring_store` -- `KeyringStore` trait and `DefaultKeyringStore` implementation
-
-## Exports to
-
-- `crate::auth` (parent module in `auth.rs`) -- uses `AuthStorageBackend` for the `AuthManager` and `CodexAuth` types
-- `crate::config` -- `AuthCredentialsStoreMode` is a config option
-
-## Data format
-
-The `auth.json` file structure:
 ```json
 {
-  "auth_mode": "...",
-  "OPENAI_API_KEY": "...",
-  "tokens": { ... },
-  "last_refresh": "2025-01-01T00:00:00Z"
+  "version": 2,
+  "providers": {
+    "openai": {
+      "type": "chatgpt",
+      "tokens": { "id_token": "...", "access_token": "...", "refresh_token": "..." },
+      "last_refresh": "2026-03-21T..."
+    },
+    "anthropic": {
+      "type": "anthropic_oauth",
+      "access_token": "sk-ant-oat01-...",
+      "refresh_token": "sk-ant-ort01-...",
+      "expires_at": 1774151408
+    }
+  }
 }
 ```
+
+Both `save_auth()` and `save_auth_v2()` merge into existing storage — saving OpenAI auth preserves any existing Anthropic entry and vice versa.
+
+## Key types
+
+- **`CodexAuth`** — enum: `ApiKey`, `Chatgpt`, `ChatgptAuthTokens`, `AnthropicApiKey`, `AnthropicOAuth`
+- **`AuthManager`** — session-scoped cache with `auth_cached_for_provider(ProviderName)` for provider-filtered lookups
+- **`ProviderName`** — `OpenAI` | `Anthropic` (strongly-typed HashMap key)
+- **`ProviderAuth`** — per-provider credential variant (5 types across both providers)
+- **`UnauthorizedRecovery`** — state machine for 401 handling (reload → refresh → external)
+
+## Related modules
+
+- **`../anthropic_auth/`** — Anthropic-specific auth: OAuth types, token refresh, request modifications (tool prefixing, system prompt)
+- **`../../auth_tests.rs`** — Unit tests for auth loading, provider preservation, manager behavior
+- **`../../auth_env_telemetry.rs`** — Tracks which auth env vars are present at startup
