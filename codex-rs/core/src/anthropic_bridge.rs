@@ -45,6 +45,7 @@ const ANTHROPIC_1M_HEADER_ERROR_PREFIX: &str =
     "Anthropic stage 3a failed to add required beta header";
 const DEFAULT_ANTHROPIC_MAX_TOKENS: u64 = 32_000;
 const RESPONSE_STREAM_CHANNEL_CAPACITY: usize = 128;
+const OAUTH_TOOL_PREFIX: &str = "mcp_";
 
 pub(crate) struct AnthropicModelDefaults {
     pub(crate) max_tokens: u64,
@@ -55,6 +56,39 @@ pub(crate) struct AnthropicModelDefaults {
 
 pub fn is_known_anthropic_model(model: &str) -> bool {
     model.starts_with("claude-")
+}
+
+/// Prefix tool names with `mcp_` for OAuth mode (Anthropic requirement).
+/// Must prefix BOTH tool definitions AND tool_use blocks in message history.
+pub(crate) fn prefix_tool_names_for_oauth(request: &mut MessagesRequest) {
+    // 1. Prefix tool definitions
+    if let Some(tools) = &mut request.tools {
+        for tool in tools {
+            if !tool.name.starts_with(OAUTH_TOOL_PREFIX) {
+                tool.name = format!("{OAUTH_TOOL_PREFIX}{}", tool.name);
+            }
+        }
+    }
+
+    // 2. Prefix tool_use blocks in message history
+    for message in &mut request.messages {
+        if let Content::Blocks(blocks) = &mut message.content {
+            for block in blocks {
+                if let ContentBlock::ToolUse { name, .. } = block
+                    && !name.starts_with(OAUTH_TOOL_PREFIX)
+                {
+                    *name = format!("{OAUTH_TOOL_PREFIX}{name}");
+                }
+            }
+        }
+    }
+}
+
+/// Strip `mcp_` prefix from tool names in responses (Anthropic requirement).
+fn strip_oauth_tool_prefix(name: &str) -> String {
+    name.strip_prefix(OAUTH_TOOL_PREFIX)
+        .unwrap_or(name)
+        .to_string()
 }
 
 pub(crate) fn anthropic_model_defaults(
@@ -68,7 +102,9 @@ pub(crate) fn anthropic_model_defaults(
     }
 
     let normalized_effort = effort.unwrap_or(ReasoningEffortConfig::Medium);
-    let thinking = if requires_1m_context(slug) {
+    // Opus 4.6 and Sonnet 4.6 use adaptive thinking.
+    // Other models use budgeted thinking.
+    let thinking = if uses_adaptive_thinking(slug) {
         Some(ThinkingConfig::Adaptive {})
     } else {
         budgeted_thinking_config(DEFAULT_ANTHROPIC_MAX_TOKENS, normalized_effort)
@@ -347,7 +383,7 @@ pub(crate) fn map_anthropic_error(error: AnthropicError) -> CodexErr {
     }
 }
 
-pub(crate) fn map_anthropic_to_response_stream<S>(stream: S) -> ResponseStream
+pub(crate) fn map_anthropic_to_response_stream<S>(stream: S, is_oauth: bool) -> ResponseStream
 where
     S: Stream<Item = std::result::Result<AnthropicEvent, AnthropicError>> + Send + 'static,
 {
@@ -507,7 +543,11 @@ where
                         } => {
                             let item = ResponseItem::FunctionCall {
                                 id: None,
-                                name,
+                                name: if is_oauth {
+                                    strip_oauth_tool_prefix(&name)
+                                } else {
+                                    name
+                                },
                                 namespace: None,
                                 arguments: if arguments.is_empty() {
                                     "{}".to_string()
@@ -550,6 +590,11 @@ where
                     error_type,
                     message,
                 }) => {
+                    tracing::debug!(
+                        error_type = %error_type,
+                        message = %message,
+                        "Anthropic SSE error event"
+                    );
                     let stream_error = if error_type == "invalid_request_error" {
                         AnthropicError::Api(Box::new(orbit_code_anthropic::AnthropicApiError {
                             status: 400,
@@ -577,8 +622,15 @@ where
     ResponseStream { rx_event }
 }
 
+/// Models that use adaptive thinking (type: "adaptive") instead of budgeted thinking.
+fn uses_adaptive_thinking(slug: &str) -> bool {
+    matches!(slug, "claude-opus-4-6" | "claude-sonnet-4-6")
+}
+
 fn requires_1m_context(slug: &str) -> bool {
-    matches!(slug, "claude-sonnet-4-6" | "claude-opus-4-6")
+    // Only opus-4-6 gets the 1M context beta via OAuth.
+    // Sonnet-4-6 is rate-limited on long context for Pro/Max subscriptions.
+    matches!(slug, "claude-opus-4-6")
 }
 
 /// Models that support the `output_config.effort` parameter.
@@ -891,7 +943,7 @@ mod tests {
             Ok(AnthropicEvent::MessageStop),
         ]);
 
-        let mut stream = map_anthropic_to_response_stream(Box::pin(events));
+        let mut stream = map_anthropic_to_response_stream(Box::pin(events), false);
         let mut output_events = Vec::new();
         while let Some(event) = stream.rx_event.recv().await {
             output_events.push(event.expect("ok event"));

@@ -1508,11 +1508,6 @@ impl ModelClientSession {
             "Anthropic request details"
         );
 
-        // Dump the full request body for debugging
-        if let Ok(json) = serde_json::to_string_pretty(&request) {
-            let _ = std::fs::write("/tmp/anthropic-request-body.json", &json);
-        }
-
         let client = AnthropicClient::new(
             build_reqwest_client(),
             base_url,

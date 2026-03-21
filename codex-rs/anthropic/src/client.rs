@@ -26,7 +26,24 @@ use std::time::Duration;
 use tokio::sync::mpsc;
 use tokio::time::timeout;
 
+/// Authentication mode for Anthropic API requests.
+#[derive(Debug, Clone)]
+pub enum AnthropicAuth {
+    /// API key: sent as `x-api-key` header.
+    ApiKey(String),
+    /// OAuth bearer token: sent as `Authorization: Bearer` header.
+    /// When using OAuth:
+    /// - Tool names must be prefixed with `mcp_`
+    /// - `anthropic-beta` header must include `oauth-2025-04-20`
+    /// - URL must include `?beta=true` query parameter
+    BearerToken(String),
+}
+
 const STREAM_CHANNEL_CAPACITY: usize = 128;
+const OAUTH_BETA_TAG: &str = "oauth-2025-04-20";
+const OAUTH_EFFORT_BETA_TAG: &str = "effort-2025-11-24";
+const OAUTH_CONTEXT_MGMT_BETA_TAG: &str = "context-management-2025-06-27";
+const OAUTH_USER_AGENT: &str = "claude-cli/2.1.81 (external, cli)";
 
 pub struct AnthropicClient {
     transport: Arc<dyn HttpTransport>,
@@ -59,10 +76,28 @@ impl AnthropicClient {
     pub async fn stream(
         &self,
         request: MessagesRequest,
-        api_key: String,
+        auth: AnthropicAuth,
         mut extra_headers: HeaderMap,
     ) -> Result<AnthropicStream> {
-        extra_headers.insert("x-api-key", header_value(&api_key)?);
+        match &auth {
+            AnthropicAuth::ApiKey(api_key) => {
+                extra_headers.insert("x-api-key", header_value(api_key)?);
+            }
+            AnthropicAuth::BearerToken(token) => {
+                extra_headers.remove("x-api-key");
+                extra_headers.insert(
+                    http::header::AUTHORIZATION,
+                    header_value(&format!("Bearer {token}"))?,
+                );
+                extra_headers.insert(
+                    http::header::USER_AGENT,
+                    HeaderValue::from_static(OAUTH_USER_AGENT),
+                );
+                merge_beta_header(&mut extra_headers, OAUTH_BETA_TAG);
+                merge_beta_header(&mut extra_headers, OAUTH_EFFORT_BETA_TAG);
+                merge_beta_header(&mut extra_headers, OAUTH_CONTEXT_MGMT_BETA_TAG);
+            }
+        }
         extra_headers.insert(
             http::header::CONTENT_TYPE,
             HeaderValue::from_static("application/json"),
@@ -74,11 +109,13 @@ impl AnthropicClient {
             .entry("anthropic-beta")
             .or_insert(HeaderValue::from_static(ANTHROPIC_BETA_HEADER_VALUE));
 
-        let mut transport_request = Request::new(
-            Method::POST,
-            format!("{}/v1/messages", self.base_url.trim_end_matches('/')),
-        )
-        .with_json(&request);
+        let base = self.base_url.trim_end_matches('/');
+        let url = match &auth {
+            AnthropicAuth::BearerToken(_) => format!("{base}/v1/messages?beta=true"),
+            AnthropicAuth::ApiKey(_) => format!("{base}/v1/messages"),
+        };
+
+        let mut transport_request = Request::new(Method::POST, url).with_json(&request);
         transport_request.headers = extra_headers;
         transport_request.timeout = Some(self.idle_timeout);
 
@@ -86,16 +123,26 @@ impl AnthropicClient {
             .transport
             .stream(transport_request)
             .await
-            .map_err(map_transport_error)?;
+            .map_err(|e| {
+                tracing::debug!(error = ?e, "Anthropic SSE transport error");
+                map_transport_error(e)
+            })?;
 
         let mut events = response.bytes.eventsource();
         let idle_timeout = self.idle_timeout;
         let (tx, rx) = mpsc::channel(STREAM_CHANNEL_CAPACITY);
 
-        tokio::spawn(async move {
+        let reader_task = tokio::spawn(async move {
             loop {
                 match timeout(idle_timeout, events.next()).await {
                     Ok(Some(Ok(event))) => {
+                        if event.event == "error" {
+                            tracing::debug!(
+                                event_name = %event.event,
+                                data = %event.data,
+                                "Anthropic SSE raw error event"
+                            );
+                        }
                         match parse_sse_event(event.event.as_str(), event.data.as_str()) {
                             Ok(Some(parsed)) => {
                                 let should_close = matches!(
@@ -117,12 +164,14 @@ impl AnthropicClient {
                         }
                     }
                     Ok(Some(Err(err))) => {
+                        tracing::debug!(error = %err, "Anthropic SSE eventsource error");
                         let _ = tx
                             .send(Err(AnthropicError::StreamParse(err.to_string())))
                             .await;
                         return;
                     }
                     Ok(None) => {
+                        tracing::debug!("Anthropic SSE stream closed before message_stop");
                         let _ = tx
                             .send(Err(AnthropicError::StreamParse(
                                 "stream closed before message_stop".to_string(),
@@ -140,7 +189,10 @@ impl AnthropicClient {
             }
         });
 
-        Ok(AnthropicStream { rx })
+        Ok(AnthropicStream {
+            rx,
+            _reader_task: reader_task,
+        })
     }
 }
 
@@ -149,7 +201,34 @@ fn header_value(value: &str) -> Result<HeaderValue> {
         .map_err(|err| AnthropicError::StreamParse(format!("invalid header value: {err}")))
 }
 
+fn merge_beta_header(headers: &mut HeaderMap, new_beta: &str) {
+    if let Some(existing) = headers.get("anthropic-beta").and_then(|v| v.to_str().ok()) {
+        if !existing.contains(new_beta) {
+            let merged = format!("{existing},{new_beta}");
+            if let Ok(val) = HeaderValue::from_str(&merged) {
+                headers.insert("anthropic-beta", val);
+            }
+        }
+    } else if let Ok(val) = HeaderValue::from_str(new_beta) {
+        headers.insert("anthropic-beta", val);
+    }
+}
+
 fn map_transport_error(error: TransportError) -> AnthropicError {
+    if let TransportError::Http {
+        status,
+        ref body,
+        ref url,
+        ..
+    } = error
+    {
+        tracing::warn!(
+            status = %status,
+            body = ?body.as_deref().unwrap_or("<none>"),
+            url = ?url,
+            "Anthropic HTTP error response"
+        );
+    }
     match error {
         TransportError::Http {
             status,
@@ -210,6 +289,13 @@ fn parse_api_error(status: u16, body: Option<String>) -> AnthropicError {
 
 pub struct AnthropicStream {
     rx: mpsc::Receiver<Result<AnthropicEvent>>,
+    _reader_task: tokio::task::JoinHandle<()>,
+}
+
+impl Drop for AnthropicStream {
+    fn drop(&mut self) {
+        self._reader_task.abort();
+    }
 }
 
 impl Stream for AnthropicStream {
@@ -304,7 +390,11 @@ mod tests {
             Duration::from_secs(5),
         );
         let mut stream = client
-            .stream(test_request(), "sk-ant-test".to_string(), HeaderMap::new())
+            .stream(
+                test_request(),
+                AnthropicAuth::ApiKey("sk-ant-test".to_string()),
+                HeaderMap::new(),
+            )
             .await
             .expect("stream");
 
@@ -365,7 +455,11 @@ mod tests {
             Duration::from_secs(5),
         );
         let mut stream = client
-            .stream(test_request(), "sk-ant-test".to_string(), HeaderMap::new())
+            .stream(
+                test_request(),
+                AnthropicAuth::ApiKey("sk-ant-test".to_string()),
+                HeaderMap::new(),
+            )
             .await
             .expect("stream");
 
