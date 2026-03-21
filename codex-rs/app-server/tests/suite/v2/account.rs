@@ -49,7 +49,7 @@ const DEFAULT_READ_TIMEOUT: std::time::Duration = std::time::Duration::from_secs
 struct CreateConfigTomlParams {
     forced_method: Option<String>,
     forced_workspace_id: Option<String>,
-    requires_openai_auth: Option<bool>,
+    requires_auth: Option<bool>,
     base_url: Option<String>,
 }
 
@@ -71,8 +71,8 @@ fn create_config_toml(
     } else {
         String::new()
     };
-    let requires_line = match params.requires_openai_auth {
-        Some(true) => "requires_openai_auth = true\n".to_string(),
+    let requires_line = match params.requires_auth {
+        Some(true) => "requires_auth = true\n".to_string(),
         Some(false) => String::new(),
         None => String::new(),
     };
@@ -148,6 +148,7 @@ async fn logout_account_removes_auth_and_notifies() -> Result<()> {
     let get_id = mcp
         .send_get_account_request(GetAccountParams {
             refresh_token: false,
+            provider: None,
         })
         .await?;
     let get_resp: JSONRPCResponse = timeout(
@@ -167,7 +168,7 @@ async fn set_auth_token_updates_account_and_notifies() -> Result<()> {
     create_config_toml(
         orbit_code_home.path(),
         CreateConfigTomlParams {
-            requires_openai_auth: Some(true),
+            requires_auth: Some(true),
             base_url: Some(format!("{}/v1", mock_server.uri())),
             ..Default::default()
         },
@@ -215,6 +216,7 @@ async fn set_auth_token_updates_account_and_notifies() -> Result<()> {
     let get_id = mcp
         .send_get_account_request(GetAccountParams {
             refresh_token: false,
+            provider: None,
         })
         .await?;
     let get_resp: JSONRPCResponse = timeout(
@@ -230,7 +232,7 @@ async fn set_auth_token_updates_account_and_notifies() -> Result<()> {
                 email: "embedded@example.com".to_string(),
                 plan_type: AccountPlanType::Pro,
             }),
-            requires_openai_auth: true,
+            requires_auth: true,
         }
     );
 
@@ -243,7 +245,7 @@ async fn account_read_refresh_token_is_noop_in_external_mode() -> Result<()> {
     create_config_toml(
         orbit_code_home.path(),
         CreateConfigTomlParams {
-            requires_openai_auth: Some(true),
+            requires_auth: Some(true),
             ..Default::default()
         },
     )?;
@@ -283,6 +285,7 @@ async fn account_read_refresh_token_is_noop_in_external_mode() -> Result<()> {
     let get_id = mcp
         .send_get_account_request(GetAccountParams {
             refresh_token: true,
+            provider: None,
         })
         .await?;
     let get_resp: JSONRPCResponse = timeout(
@@ -298,7 +301,7 @@ async fn account_read_refresh_token_is_noop_in_external_mode() -> Result<()> {
                 email: "embedded@example.com".to_string(),
                 plan_type: AccountPlanType::Pro,
             }),
-            requires_openai_auth: true,
+            requires_auth: true,
         }
     );
 
@@ -348,7 +351,7 @@ async fn external_auth_refreshes_on_unauthorized() -> Result<()> {
     create_config_toml(
         orbit_code_home.path(),
         CreateConfigTomlParams {
-            requires_openai_auth: Some(true),
+            requires_auth: Some(true),
             base_url: Some(format!("{}/v1", mock_server.uri())),
             ..Default::default()
         },
@@ -469,7 +472,7 @@ async fn external_auth_refresh_error_fails_turn() -> Result<()> {
     create_config_toml(
         orbit_code_home.path(),
         CreateConfigTomlParams {
-            requires_openai_auth: Some(true),
+            requires_auth: Some(true),
             base_url: Some(format!("{}/v1", mock_server.uri())),
             ..Default::default()
         },
@@ -586,7 +589,7 @@ async fn external_auth_refresh_mismatched_workspace_fails_turn() -> Result<()> {
         orbit_code_home.path(),
         CreateConfigTomlParams {
             forced_workspace_id: Some("org-expected".to_string()),
-            requires_openai_auth: Some(true),
+            requires_auth: Some(true),
             base_url: Some(format!("{}/v1", mock_server.uri())),
             ..Default::default()
         },
@@ -708,7 +711,7 @@ async fn external_auth_refresh_invalid_access_token_fails_turn() -> Result<()> {
     create_config_toml(
         orbit_code_home.path(),
         CreateConfigTomlParams {
-            requires_openai_auth: Some(true),
+            requires_auth: Some(true),
             base_url: Some(format!("{}/v1", mock_server.uri())),
             ..Default::default()
         },
@@ -1097,7 +1100,7 @@ async fn get_account_no_auth() -> Result<()> {
     create_config_toml(
         orbit_code_home.path(),
         CreateConfigTomlParams {
-            requires_openai_auth: Some(true),
+            requires_auth: Some(true),
             ..Default::default()
         },
     )?;
@@ -1108,6 +1111,7 @@ async fn get_account_no_auth() -> Result<()> {
 
     let params = GetAccountParams {
         refresh_token: false,
+        provider: None,
     };
     let request_id = mcp.send_get_account_request(params).await?;
 
@@ -1119,7 +1123,7 @@ async fn get_account_no_auth() -> Result<()> {
     let account: GetAccountResponse = to_response(resp)?;
 
     assert_eq!(account.account, None, "expected no account");
-    assert_eq!(account.requires_openai_auth, true);
+    assert_eq!(account.requires_auth, true);
     Ok(())
 }
 
@@ -1129,7 +1133,7 @@ async fn get_account_with_api_key() -> Result<()> {
     create_config_toml(
         orbit_code_home.path(),
         CreateConfigTomlParams {
-            requires_openai_auth: Some(true),
+            requires_auth: Some(true),
             ..Default::default()
         },
     )?;
@@ -1149,6 +1153,7 @@ async fn get_account_with_api_key() -> Result<()> {
 
     let params = GetAccountParams {
         refresh_token: false,
+        provider: None,
     };
     let request_id = mcp.send_get_account_request(params).await?;
 
@@ -1161,7 +1166,7 @@ async fn get_account_with_api_key() -> Result<()> {
 
     let expected = GetAccountResponse {
         account: Some(Account::ApiKey {}),
-        requires_openai_auth: true,
+        requires_auth: true,
     };
     assert_eq!(received, expected);
     Ok(())
@@ -1173,7 +1178,7 @@ async fn get_account_when_auth_not_required() -> Result<()> {
     create_config_toml(
         orbit_code_home.path(),
         CreateConfigTomlParams {
-            requires_openai_auth: Some(false),
+            requires_auth: Some(false),
             ..Default::default()
         },
     )?;
@@ -1183,6 +1188,7 @@ async fn get_account_when_auth_not_required() -> Result<()> {
 
     let params = GetAccountParams {
         refresh_token: false,
+        provider: None,
     };
     let request_id = mcp.send_get_account_request(params).await?;
 
@@ -1195,7 +1201,7 @@ async fn get_account_when_auth_not_required() -> Result<()> {
 
     let expected = GetAccountResponse {
         account: None,
-        requires_openai_auth: false,
+        requires_auth: false,
     };
     assert_eq!(received, expected);
     Ok(())
@@ -1207,7 +1213,7 @@ async fn get_account_with_chatgpt() -> Result<()> {
     create_config_toml(
         orbit_code_home.path(),
         CreateConfigTomlParams {
-            requires_openai_auth: Some(true),
+            requires_auth: Some(true),
             ..Default::default()
         },
     )?;
@@ -1225,6 +1231,7 @@ async fn get_account_with_chatgpt() -> Result<()> {
 
     let params = GetAccountParams {
         refresh_token: false,
+        provider: None,
     };
     let request_id = mcp.send_get_account_request(params).await?;
 
@@ -1240,7 +1247,7 @@ async fn get_account_with_chatgpt() -> Result<()> {
             email: "user@example.com".to_string(),
             plan_type: AccountPlanType::Pro,
         }),
-        requires_openai_auth: true,
+        requires_auth: true,
     };
     assert_eq!(received, expected);
     Ok(())
@@ -1252,7 +1259,7 @@ async fn get_account_with_chatgpt_missing_plan_claim_returns_unknown() -> Result
     create_config_toml(
         orbit_code_home.path(),
         CreateConfigTomlParams {
-            requires_openai_auth: Some(true),
+            requires_auth: Some(true),
             ..Default::default()
         },
     )?;
@@ -1268,6 +1275,7 @@ async fn get_account_with_chatgpt_missing_plan_claim_returns_unknown() -> Result
 
     let params = GetAccountParams {
         refresh_token: false,
+        provider: None,
     };
     let request_id = mcp.send_get_account_request(params).await?;
 
@@ -1283,7 +1291,7 @@ async fn get_account_with_chatgpt_missing_plan_claim_returns_unknown() -> Result
             email: "user@example.com".to_string(),
             plan_type: AccountPlanType::Unknown,
         }),
-        requires_openai_auth: true,
+        requires_auth: true,
     };
     assert_eq!(received, expected);
     Ok(())

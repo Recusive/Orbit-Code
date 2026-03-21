@@ -776,9 +776,10 @@ pub async fn run_main(
 
     let log_dir = orbit_code_core::config::log_dir(&config)?;
     std::fs::create_dir_all(&log_dir)?;
-    // Open (or create) your log file, appending to it.
+    // Open (or create) the log file. Truncate on each session start so
+    // `tail -f` only shows the current session's logs.
     let mut log_file_opts = OpenOptions::new();
-    log_file_opts.create(true).append(true);
+    log_file_opts.create(true).write(true).truncate(true);
 
     // Ensure the file is only readable and writable by the current user.
     // Doing the equivalent to `chmod 600` on Windows is quite a bit more code
@@ -952,7 +953,7 @@ async fn run_ratatui_app(
     let should_show_trust_screen_flag = !remote_mode && should_show_trust_screen(&initial_config);
     let mut trust_decision_was_made = false;
     let needs_onboarding_app_server =
-        should_show_trust_screen_flag || initial_config.model_provider.requires_openai_auth;
+        should_show_trust_screen_flag || initial_config.model_provider.requires_auth;
     let mut onboarding_app_server = if needs_onboarding_app_server {
         Some(AppServerSession::new(
             start_app_server(
@@ -969,7 +970,7 @@ async fn run_ratatui_app(
     } else {
         None
     };
-    let login_status = if initial_config.model_provider.requires_openai_auth {
+    let login_status = if initial_config.model_provider.requires_auth {
         let Some(app_server) = onboarding_app_server.as_mut() else {
             unreachable!("onboarding app server should exist when auth is required");
         };
@@ -1482,7 +1483,7 @@ async fn get_login_status(
     app_server: &mut AppServerSession,
     config: &Config,
 ) -> color_eyre::Result<LoginStatus> {
-    if !config.model_provider.requires_openai_auth {
+    if !config.model_provider.requires_auth {
         return Ok(LoginStatus::NotAuthenticated);
     }
 
@@ -1550,7 +1551,7 @@ fn should_show_onboarding(
 fn should_show_login_screen(login_status: LoginStatus, config: &Config) -> bool {
     // Only show the login screen for providers that actually require OpenAI auth
     // (OpenAI or equivalents). For OSS/other providers, skip login entirely.
-    if !config.model_provider.requires_openai_auth {
+    if !config.model_provider.requires_auth {
         return false;
     }
 

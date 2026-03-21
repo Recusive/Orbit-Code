@@ -2,44 +2,4 @@
 
 Collection of end-to-end test scenarios for the apply-patch specification, designed to be portable across languages and platforms.
 
-## What this folder does
-
-Each numbered subdirectory is a self-contained test case. Every scenario consists of:
-- `input/` -- initial filesystem state (copied to a temp directory before running)
-- `patch.txt` -- the patch to apply
-- `expected/` -- the expected filesystem state after applying the patch
-
-The test runner (`tests/suite/scenarios.rs`) iterates over all directories here, applies the patch, and asserts the final filesystem state matches `expected/` exactly.
-
-## What it plugs into
-
-- Consumed by `tests/suite/scenarios.rs` via the `test_apply_patch_scenarios()` test function.
-- The `apply_patch` binary is invoked as a subprocess within each scenario.
-
-## Scenarios
-
-| Directory | Tests |
-|-----------|-------|
-| `001_add_file` | Adding a new file |
-| `002_multiple_operations` | Add, delete, and update in a single patch |
-| `003_multiple_chunks` | Multiple update chunks within one file |
-| `004_move_to_new_directory` | Move/rename a file to a new directory path |
-| `005_rejects_empty_patch` | Empty patch (no hunks) is rejected; input unchanged |
-| `006_rejects_missing_context` | Update with non-matching context lines fails; input unchanged |
-| `007_rejects_missing_file_delete` | Deleting a non-existent file fails; input unchanged |
-| `008_rejects_empty_update_hunk` | Update hunk with no diff lines is rejected |
-| `009_requires_existing_file_for_update` | Updating a non-existent file fails |
-| `010_move_overwrites_existing_destination` | Move overwrites a file already at the destination |
-| `011_add_overwrites_existing_file` | Add File overwrites an existing file |
-| `012_delete_directory_fails` | Deleting a directory (not a file) fails |
-| `013_rejects_invalid_hunk_header` | Invalid hunk header syntax is rejected |
-| `014_update_file_appends_trailing_newline` | Updated file gets a trailing newline appended |
-| `015_failure_after_partial_success_leaves_changes` | Earlier successful hunks persist even if a later hunk fails |
-| `016_pure_addition_update_chunk` | Update chunk with only additions (no old lines) |
-| `017_whitespace_padded_hunk_header` | Hunk header with leading whitespace is tolerated |
-| `018_whitespace_padded_patch_markers` | Begin/End Patch markers with extra whitespace are tolerated |
-| `019_unicode_simple` | Patch with Unicode characters (accented, emoji) |
-| `020_delete_file_success` | Successfully deleting an existing file |
-| `020_whitespace_padded_patch_marker_lines` | Patch markers with trailing whitespace on marker lines |
-| `021_update_file_deletion_only` | Update that only removes lines (no additions) |
-| `022_update_file_end_of_file_marker` | Update using `*** End of File` marker for EOF-anchored changes |
+Contains 23 subdirectories (001_add_file, 002_multiple_operations, 003_multiple_chunks, 004_move_to_new_directory, 005_rejects_empty_patch...).

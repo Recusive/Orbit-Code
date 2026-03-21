@@ -1,41 +1,20 @@
 # codex-rs/file-search/
 
-Fuzzy file search engine using `nucleo` for scoring and `ignore` for filesystem walking. Provides both a library API and a standalone CLI binary.
+Fuzzy file search engine using `nucleo` for scoring and `ignore` for gitignore-aware filesystem traversal. Provides both a library API and a standalone CLI binary.
 
-## What this folder does
+## Build & Test
+```bash
+cargo build -p orbit-code-file-search
+cargo test -p orbit-code-file-search
+```
 
-Implements high-performance fuzzy filename matching across directory trees. Uses the `nucleo` fuzzy matcher (same engine as Helix editor) for relevance scoring and the `ignore` crate (from ripgrep) for gitignore-aware filesystem traversal. Supports both one-shot search (`run()`) and interactive sessions (`create_session()`) with live query updates and streaming results.
+## Architecture
 
-## What it plugs into
+The search engine uses a two-thread architecture: a walker thread discovers files via the `ignore` crate (same walker as ripgrep), and a matcher thread scores them with the `nucleo` fuzzy matcher (same engine as Helix editor). Threads coordinate via `crossbeam-channel`. Two modes are supported: one-shot search via `run()` returning `FileSearchResults`, and interactive sessions via `create_session()` that allow live query updates and streaming results through a `SessionReporter` trait without re-walking the filesystem.
 
-- **codex-core** -- used as the file search tool for the agent
-- Standalone CLI (`codex-file-search`) for manual fuzzy file search
-- Interactive sessions can be driven by any UI that implements `SessionReporter`
-
-## Imports from
-
-- `nucleo`: fuzzy matching engine (Nucleo, Matcher, Pattern, Utf32String)
-- `ignore`: gitignore-aware file tree walker (WalkBuilder, OverrideBuilder)
-- `crossbeam-channel`: multi-producer work signaling between walker and matcher threads
-- `clap`: CLI argument parsing
-- `serde`, `serde_json`: result serialization
-
-## Exports to
-
-- `run(pattern, roots, options, cancel_flag)` -- one-shot synchronous search returning `FileSearchResults`
-- `create_session(dirs, options, reporter, cancel_flag)` -- interactive session returning `FileSearchSession` with `update_query()` for live re-matching
-- `FileMatch` (score, path, match_type, root, indices), `MatchType` (File, Directory), `FileSearchResults`, `FileSearchSnapshot`
-- `FileSearchOptions` (limit, exclude, threads, compute_indices, respect_gitignore)
-- `SessionReporter` trait (on_update, on_complete) for streaming results
-- `Reporter` trait (report_match, warn_matches_truncated, warn_no_search_pattern) for one-shot CLI output
-- `Cli` -- clap CLI definition
-- `run_main(cli, reporter)` -- async CLI entry point
-- `file_name_from_path()`, `cmp_by_score_desc_then_path_asc()` -- utilities
-
-## Key files
-
-- `Cargo.toml` -- crate metadata; binary `codex-file-search`, library `codex_file_search`
-- `README.md` -- documentation
-- `src/lib.rs` -- core implementation: walker thread, matcher thread, session management, one-shot `run()`, interactive `create_session()`
-- `src/cli.rs` -- clap CLI definition: pattern, limit, cwd, threads, exclude, json, compute-indices flags
-- `src/main.rs` -- binary entry point with stdio reporter (supports plain text, JSON, and highlighted index output)
+## Key Considerations
+- Walker uses `require_git(true)` to scope gitignore rules to actual git repositories only
+- Nucleo is configured with `Config::DEFAULT.match_paths()` for path-aware scoring
+- Walker and matcher run on OS threads (not Tokio tasks) -- this is intentional for CPU-bound fuzzy matching
+- Cancellation is cooperative via `Arc<AtomicBool>` checked periodically in both threads
+- The `FileSearchOptions` struct controls limits, excludes, thread count, gitignore behavior, and index computation

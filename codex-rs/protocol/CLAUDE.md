@@ -1,56 +1,57 @@
-# codex-rs/protocol/
+# protocol
 
-Core protocol types crate (`codex-protocol`) defining the data structures for Codex CLI sessions, events, configuration, permissions, and models.
+Core shared type definitions for the entire Orbit Code workspace.
 
-## What this folder does
+## Build & Test
 
-This crate defines the shared type system used across all Codex Rust crates. It contains:
-- The session protocol (Submission Queue / Event Queue pattern) for user-agent communication
-- Configuration types (sandbox modes, approval policies, collaboration modes, web search, etc.)
-- Model definitions (ResponseItem variants, content items, OpenAI model metadata)
-- Permission and sandbox policy types (filesystem, network, approval workflows)
-- Prompt templates embedded as markdown (base instructions, approval policy instructions, sandbox mode instructions, realtime conversation framing)
-- Turn items, user input, message history, MCP types, custom prompts, dynamic tools
+```bash
+cargo test -p orbit-code-protocol          # Run tests
+just fix -p orbit-code-protocol            # Clippy
+just fmt                                    # Format
+```
 
-## What it plugs into
+## Architecture
 
-- Used by nearly every crate in the workspace: `codex-core`, `codex-otel`, `codex-tui`, `codex-exec`, `codex-config`, `codex-app-server`, etc.
-- Provides the canonical type definitions for JSON serialization/deserialization of the protocol
-- Types also generate TypeScript bindings via `ts-rs` for cross-language integration
+This crate defines the shared type system consumed by nearly every other crate in the workspace. There is no runtime logic here -- it is purely types, serialization, and embedded prompt templates.
 
-## Imports from
+### Core Abstraction: SQ/EQ Protocol
 
-- `codex-execpolicy` -- execution policy types
-- `codex-git` -- git-related utilities
-- `codex-utils-absolute-path` -- `AbsolutePathBuf` for filesystem paths
-- `codex-utils-image` -- image handling utilities
-- `serde`, `serde_json`, `serde_with` -- serialization
-- `schemars` -- JSON Schema generation
-- `ts-rs` -- TypeScript type generation
-- `uuid` -- unique identifiers
-- `strum`, `strum_macros` -- enum string conversions
-- `icu_decimal`, `icu_locale_core` -- number formatting with locale support
+The central pattern is a Submission Queue / Event Queue protocol defined in `protocol.rs`:
 
-## Exports to
+- **`Op`** (Submission Queue) -- commands the client sends to the agent: `UserTurn`, `ConfigureSession`, `ReviewApproval`, etc.
+- **`EventMsg`** (Event Queue) -- events the agent emits back: `Turn`, `GetInput`, `AgentError`, `TaskComplete`, etc.
 
-All types are public and consumed across the workspace. Key exports include:
-- `protocol` module -- `Op` (submission queue), `EventMsg` (event queue), `SandboxPolicy`, `AskForApproval`, `ReviewDecision`, `SessionSource`, `W3cTraceContext`, `WritableRoot`, and many more
-- `config_types` -- `ReasoningSummary`, `SandboxMode`, `ModeKind`, `CollaborationMode`, `Personality`, `WebSearchMode`, `ServiceTier`, `TrustLevel`, etc.
-- `models` -- `ResponseItem`, `ContentItem`, `BaseInstructions`, `PermissionProfile`
-- `permissions` -- `FileSystemSandboxPolicy`, `NetworkSandboxPolicy`, `FileSystemAccessMode`, `FileSystemPath`, `FileSystemSpecialPath`
-- `items` -- `TurnItem` variants (UserMessage, AgentMessage, Plan, Reasoning, WebSearch, etc.)
-- `approvals` -- `ExecApprovalRequestEvent`, `ApplyPatchApprovalRequestEvent`, `ElicitationRequest`, `GuardianAssessmentEvent`
-- `user_input` -- `UserInput` (Text, Image, LocalImage)
-- `ThreadId`, `mcp`, `custom_prompts`, `dynamic_tools`, `message_history`, `plan_tool`, etc.
+These two enums are the fundamental interface between the TUI/app-server and the core agent runtime.
 
-## Key files
+### Type Categories
 
-- `Cargo.toml` -- crate definition with dependencies
-- `src/lib.rs` -- module declarations and `ThreadId` re-export
-- `src/protocol.rs` -- main protocol types (Op, EventMsg, SandboxPolicy, etc.)
-- `src/config_types.rs` -- configuration enums and structs
-- `src/models.rs` -- ResponseItem, ContentItem, model definitions
-- `src/permissions.rs` -- filesystem/network sandbox policies with resolution logic
-- `src/items.rs` -- turn item types
-- `src/approvals.rs` -- approval request/response events
-- `src/prompts/` -- embedded markdown prompt templates
+The remaining modules fall into four groups:
+
+1. **Config types** (`config_types.rs`) -- `SandboxMode`, `ModeKind`, `CollaborationMode`, `Personality`, `WebSearchMode`, `ServiceTier`, etc. These mirror TOML config fields and derive `JsonSchema`.
+2. **Model types** (`models.rs`, `openai_models.rs`) -- `ResponseItem`, `ContentItem`, `BaseInstructions`, `PermissionProfile`. The model-level representation of API responses and tool calls.
+3. **Permission types** (`permissions.rs`) -- `FileSystemSandboxPolicy`, `NetworkSandboxPolicy`, filesystem path resolution logic. Contains significant validation/resolution logic unlike the other mostly-declarative modules.
+4. **Session types** (`items.rs`, `approvals.rs`, `user_input.rs`, `mcp.rs`, `dynamic_tools.rs`) -- turn items, approval events, MCP tool definitions, dynamic tool specs.
+
+### Prompt Templates
+
+`src/prompts/` contains embedded markdown templates organized into subdirectories:
+
+- `base_instructions/` -- default system prompt
+- `permissions/approval_policy/` -- per-approval-mode instructions (never, on_failure, unless_trusted, etc.)
+- `permissions/sandbox_mode/` -- per-sandbox-mode instructions (read_only, workspace_write, danger_full_access)
+- `realtime/` -- conversation framing for realtime sessions
+
+These are included at compile time via `include_str!` in `protocol.rs`.
+
+### TypeScript Bindings
+
+Most types derive `ts_rs::TS` to generate TypeScript definitions. The bindings are consumed by the app-server-protocol schema generation pipeline.
+
+## Key Considerations
+
+- **Widespread rebuild impact.** This crate is a dependency of nearly every other crate. Any change here triggers rebuilds across the workspace. Keep changes focused.
+- **`protocol.rs` is very large** (~150K). When adding new protocol functionality, consider whether it belongs in a separate module (items, approvals, etc.) rather than extending protocol.rs further.
+- **`permissions.rs` has runtime logic.** Unlike other modules which are mostly type definitions, permissions.rs contains path resolution and policy validation logic with substantial test coverage.
+- **Config types must derive `JsonSchema`.** If you change `config_types.rs`, run `just write-config-schema` to regenerate the config schema.
+- **`include_str!` and Bazel.** If you add or rename prompt template files, update the crate's `BUILD.bazel` `compile_data` or Bazel builds will fail.
+- **Serde conventions.** Config types use `kebab-case`, protocol types use `snake_case`. Check the existing `rename_all` on the type you are modifying.

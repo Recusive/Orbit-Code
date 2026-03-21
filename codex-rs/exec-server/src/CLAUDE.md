@@ -1,6 +1,6 @@
 # codex-rs/exec-server/src/
 
-Source code for the `codex-exec-server` crate.
+Source code for the `orbit-code-exec-server` crate.
 
 ## What this folder does
 

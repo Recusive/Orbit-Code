@@ -1,30 +1,18 @@
 # scripts/install/
 
-## Purpose
+Platform-specific standalone installers that download the Codex CLI binary from GitHub Releases without requiring npm or Node.js.
 
-Platform-specific installer scripts that download and install the Codex CLI binary directly from GitHub Releases, without requiring npm or Node.js. These provide an alternative installation path for users who prefer a standalone binary.
+## Architecture
 
-## Key Files
+Both scripts follow the same pattern: detect OS/architecture, query the GitHub API for the latest release version (or use a provided version), download the platform-specific npm tarball from GitHub Releases, extract the native binaries, install them to a local directory, and update `$PATH`.
 
-| File | Role |
-|------|------|
-| `install.sh` | POSIX shell installer for macOS and Linux. Detects OS/architecture, resolves the latest release version from the GitHub API, downloads the platform-specific npm tarball, extracts the `codex` and `rg` binaries to `~/.local/bin` (or `$CODEX_INSTALL_DIR`), and configures `$PATH` in the user's shell profile. |
-| `install.ps1` | PowerShell installer for Windows. Detects architecture (x64/ARM64), downloads the platform tarball, extracts `codex.exe`, `rg.exe`, `codex-command-runner.exe`, and `codex-windows-sandbox-setup.exe` to `%LOCALAPPDATA%\Programs\OpenAI\Codex\bin` (or `$env:CODEX_INSTALL_DIR`), and updates the user's `PATH` environment variable. |
+## Module Layout
 
-## How They Work
+- **install.sh** -- POSIX shell installer for macOS and Linux. Installs to `~/.local/bin` (or `$CODEX_INSTALL_DIR`). Handles Rosetta detection on macOS.
+- **install.ps1** -- PowerShell installer for Windows. Installs to `%LOCALAPPDATA%\Programs\OpenAI\Codex\bin` (or `$env:CODEX_INSTALL_DIR`).
 
-1. Accept an optional version argument (defaults to `latest`)
-2. Query the GitHub API (`api.github.com/repos/openai/codex/releases/latest`) to resolve the version tag
-3. Download the platform-specific npm tarball from GitHub Releases (e.g., `codex-npm-darwin-arm64-0.6.0.tgz`)
-4. Extract native binaries from the `package/vendor/<target>/` path inside the tarball
-5. Install to the target directory and update `$PATH`
+## Key Considerations
 
-## Supported Platforms
-
-- **install.sh**: macOS (Intel + Apple Silicon, with Rosetta detection), Linux (x64 + ARM64)
-- **install.ps1**: Windows (x64 + ARM64)
-
-## Relationship to Other Directories
-
-- Downloads artifacts produced by `codex-cli/scripts/build_npm_package.py` and published to GitHub Releases
-- The tarball structure matches what `codex-cli/scripts/build_npm_package.py` produces for platform packages
+- The tarball structure these scripts expect must match what `codex-cli/scripts/build_npm_package.py` produces.
+- Both scripts accept an optional version argument (defaults to `latest`).
+- The GitHub API endpoint used is `api.github.com/repos/openai/codex/releases/latest`.

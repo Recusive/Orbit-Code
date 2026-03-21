@@ -35,9 +35,10 @@ Collect context first:
 - Current branch: `git branch --show-current`
 - Repository assumptions: Orbit Code monorepo with Rust-first implementation in `codex-rs/`, plus Python and TypeScript SDKs, Bazel support, pnpm workspace packages, docs, scripts, and generated schemas.
 - Read the root `AGENTS.md` and `CLAUDE.md`.
+- Read `docs/pattern/CODING_CONVENTIONS.md` — the comprehensive coding conventions with file:line evidence for every rule.
 - Read the nearest subsystem `AGENTS.md` and `CLAUDE.md` files for every area the plan touches.
 
-Keep the review anchored in repo conventions, not generic preferences.
+`CLAUDE.md` (rules 1–75) and `docs/pattern/CODING_CONVENTIONS.md` are the two authoritative convention sources. Keep the review anchored in these repo conventions, not generic preferences.
 
 ## Step 0: Understand the plan
 

@@ -1,46 +1,20 @@
 # codex-rs/environment/
 
-Crate: `codex-environment` -- Filesystem abstraction layer for the Codex executor.
+Filesystem abstraction layer for the Codex executor: trait-based async file operations with a default local implementation backed by Tokio.
 
-## What this crate does
+## Build & Test
+```bash
+cargo build -p orbit-code-environment
+cargo test -p orbit-code-environment
+```
 
-Provides a trait-based filesystem abstraction (`ExecutorFileSystem`) that the Codex core executor uses for all file operations. The default implementation (`LocalFileSystem`) delegates to Tokio's async filesystem APIs. This abstraction enables testing with mock filesystems and enforces consistent behavior (e.g., file size limits, recursive copy safety checks).
+## Architecture
 
-## Main types
+`ExecutorFileSystem` is an async trait defining all file operations the executor can perform (read, write, mkdir, metadata, readdir, remove, copy). `LocalFileSystem` implements this trait using `tokio::fs` for async I/O. The `Environment` struct wraps the filesystem and provides a `get_filesystem()` accessor. This trait boundary enables mock filesystem injection in tests.
 
-- `Environment` -- Simple struct that provides access to the filesystem implementation via `get_filesystem()`
-- `ExecutorFileSystem` trait -- Async trait defining all file operations:
-  - `read_file`, `write_file`, `create_directory`, `get_metadata`, `read_directory`, `remove`, `copy`
-- `LocalFileSystem` -- Default implementation using `tokio::fs` and `std::fs`
-- `FileMetadata` -- File metadata (is_directory, is_file, timestamps)
-- `ReadDirectoryEntry` -- Directory listing entry
-- `CreateDirectoryOptions`, `RemoveOptions`, `CopyOptions` -- Operation option structs
-- `FileSystemResult<T>` -- Type alias for `io::Result<T>`
+## Key Considerations
 
-## Key behaviors
-
-- **Read limit**: Files larger than 512 MB are rejected
-- **Recursive copy safety**: Prevents copying a directory into itself or a descendant
-- **Symlink handling**: Copies symlinks as symlinks on Unix/Windows
-- **Cross-platform**: Handles Unix symlinks, Windows symlink directories, and non-UTF-8 paths
-
-## What it plugs into
-
-- Used by `codex-core` as the filesystem backend for tool execution (file read/write/copy/remove operations)
-- The `Environment` struct is passed through the core execution pipeline
-
-## Imports from / exports to
-
-**Dependencies:**
-- `async-trait` -- For async trait definitions
-- `codex-utils-absolute-path` -- `AbsolutePathBuf` for type-safe absolute paths
-- `tokio` -- Async filesystem operations
-
-**Exports:**
-- `Environment`, `ExecutorFileSystem`, `FileMetadata`, `ReadDirectoryEntry`, `CopyOptions`, `CreateDirectoryOptions`, `RemoveOptions`, `FileSystemResult`
-
-## Key files
-
-- `Cargo.toml` -- Crate manifest
-- `src/lib.rs` -- `Environment` struct and module re-exports
-- `src/fs.rs` -- `ExecutorFileSystem` trait definition and `LocalFileSystem` implementation
+- Files larger than 512 MB (`MAX_READ_FILE_BYTES`) are rejected by `read_file` -- this is a safety limit to prevent unbounded memory allocation.
+- Recursive copy (`copy_dir_recursive`) includes a safety check (`destination_is_same_or_descendant_of_source`) to prevent infinite loops when copying a directory into itself.
+- Symlinks are copied as symlinks (not dereferenced) on both Unix and Windows -- platform-specific `copy_symlink` handles the difference.
+- The crate has minimal dependencies (only `async-trait`, `orbit-code-utils-absolute-path`, `tokio`) -- keep it lightweight since it sits low in the dependency graph.

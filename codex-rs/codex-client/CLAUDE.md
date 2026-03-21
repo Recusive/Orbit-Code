@@ -1,54 +1,23 @@
 # codex-rs/codex-client/
 
-Low-level HTTP transport, SSE streaming, retry logic, and custom CA support for Codex API clients.
+Low-level HTTP transport layer: reqwest-based client, SSE streaming, retry with exponential backoff, custom CA certificate support, zstd compression, and OpenTelemetry request telemetry.
 
-## What this folder does
+## Build & Test
+```bash
+cargo build -p orbit-code-client
+cargo test -p orbit-code-client
+```
 
-Provides the foundational HTTP client layer used by all Codex API crates. Handles reqwest-based transport with custom CA certificate support (via `NODE_EXTRA_CA_CERTS` and system certs), SSE stream processing, request retry with exponential backoff, zstd compression, and OpenTelemetry-based request telemetry.
+## Architecture
 
-## Where it plugs in
+The crate defines `HttpTransport`, an async trait for HTTP request execution, with `ReqwestTransport` as the production implementation. This trait boundary enables mock HTTP in tests across the workspace. `CodexHttpClient` wraps a transport with pre-configured defaults (headers, timeouts) and provides `CodexRequestBuilder` for fluent request construction.
 
-- Used by `codex-api` for Responses API and Realtime API communication
-- Used by `codex-backend-client` for backend API calls (via `build_reqwest_client_with_custom_ca`)
-- Used by `codex-chatgpt` indirectly through `codex-core`
-- Provides the `HttpTransport` trait for mockable HTTP in tests
+Custom CA certificate loading (`custom_ca.rs`) reads from `NODE_EXTRA_CA_CERTS` and merges with system certs to build a rustls `ClientConfig`. Retry logic (`retry.rs`) implements exponential backoff with jitter. SSE stream conversion (`sse.rs`) wraps HTTP response byte streams into parsed events. Request telemetry (`telemetry.rs`) captures metadata for OpenTelemetry spans.
 
-## Imports from
+## Key Considerations
 
-- `reqwest` -- HTTP client with JSON and streaming support
-- `rustls` / `rustls-native-certs` / `rustls-pki-types` -- TLS with custom CA
-- `codex-utils-rustls-provider` -- shared rustls provider
-- `eventsource-stream` -- SSE parsing
-- `opentelemetry` / `tracing-opentelemetry` -- distributed tracing
-- `zstd` -- request body compression
-- `tokio` -- async runtime
-
-## Exports to
-
-Public API from `lib.rs`:
-
-- `ReqwestTransport` / `HttpTransport` / `ByteStream` / `StreamResponse` -- HTTP transport abstraction
-- `CodexHttpClient` / `CodexRequestBuilder` -- high-level client with defaults
-- `build_reqwest_client_with_custom_ca` / `maybe_build_rustls_client_config_with_custom_ca` -- custom CA support
-- `Request` / `RequestCompression` / `Response` -- request/response types
-- `RetryPolicy` / `RetryOn` / `run_with_retry` / `backoff` -- retry primitives
-- `sse_stream` -- SSE stream helper
-- `RequestTelemetry` -- per-request telemetry
-- `TransportError` / `StreamError` -- error types
-
-## Key files
-
-| File | Role |
-|------|------|
-| `Cargo.toml` | Crate manifest; depends on `reqwest`, `rustls`, `eventsource-stream`, `opentelemetry`, `zstd` |
-| `src/lib.rs` | Module declarations and public re-exports |
-| `src/transport.rs` | `HttpTransport` trait, `ReqwestTransport` implementation, `ByteStream`, `StreamResponse` |
-| `src/default_client.rs` | `CodexHttpClient` / `CodexRequestBuilder` -- pre-configured HTTP client |
-| `src/custom_ca.rs` | Custom CA certificate loading from `NODE_EXTRA_CA_CERTS` env var and system certs |
-| `src/request.rs` | `Request` / `Response` types with zstd compression support |
-| `src/retry.rs` | `RetryPolicy`, `RetryOn`, `run_with_retry` with exponential backoff |
-| `src/sse.rs` | SSE stream processing helpers |
-| `src/error.rs` | `TransportError` / `StreamError` enums |
-| `src/telemetry.rs` | `RequestTelemetry` for OpenTelemetry span instrumentation |
-| `src/bin/custom_ca_probe.rs` | Test binary for verifying custom CA behavior |
-| `tests/` | Tests for CA handling |
+- `HttpTransport` trait is the mock boundary for all HTTP in the workspace -- `orbit-code-api` and `orbit-code-core` depend on it for test isolation.
+- Custom CA loading supports `NODE_EXTRA_CA_CERTS` (the Node.js convention) for corporate proxy compatibility. The `custom_ca_probe` binary in `src/bin/` is a diagnostic tool for verifying CA setup.
+- Retry policy uses `2^(attempt-1)` backoff with +/-10% jitter. Only retries transient errors (429, 5xx, connection failures).
+- Request compression uses zstd when `RequestCompression::Zstd` is specified.
+- `StreamError` and `TransportError` are distinct error types -- `StreamError` is for SSE-specific failures, `TransportError` for HTTP-level issues.

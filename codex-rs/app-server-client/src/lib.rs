@@ -1108,7 +1108,7 @@ mod tests {
                     id: request.id,
                     result: serde_json::to_value(GetAccountResponse {
                         account: None,
-                        requires_openai_auth: false,
+                        requires_auth: false,
                     })
                     .expect("response should serialize"),
                 }),
@@ -1125,6 +1125,7 @@ mod tests {
                 request_id: RequestId::Integer(1),
                 params: orbit_code_app_server_protocol::GetAccountParams {
                     refresh_token: false,
+                    provider: None,
                 },
             })
             .await
@@ -1162,7 +1163,7 @@ mod tests {
                     id: request.id,
                     result: serde_json::to_value(GetAccountResponse {
                         account: None,
-                        requires_openai_auth: false,
+                        requires_auth: false,
                     })
                     .expect("response should serialize"),
                 }),
@@ -1183,6 +1184,7 @@ mod tests {
                     request_id: RequestId::Integer(1),
                     params: orbit_code_app_server_protocol::GetAccountParams {
                         refresh_token: false,
+                        provider: None,
                     },
                 })
                 .await
@@ -1198,6 +1200,7 @@ mod tests {
                 request_id: RequestId::Integer(1),
                 params: orbit_code_app_server_protocol::GetAccountParams {
                     refresh_token: false,
+                    provider: None,
                 },
             })
             .await
@@ -1215,7 +1218,7 @@ mod tests {
             first_response,
             GetAccountResponse {
                 account: None,
-                requires_openai_auth: false,
+                requires_auth: false,
             }
         );
 
@@ -1234,6 +1237,7 @@ mod tests {
                             AccountUpdatedNotification {
                                 auth_mode: None,
                                 plan_type: None,
+                                provider: None,
                             },
                         ))
                         .expect("notification should serialize"),

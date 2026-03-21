@@ -10,6 +10,7 @@ use orbit_code_cli::SeatbeltCommand;
 use orbit_code_cli::WindowsCommand;
 use orbit_code_cli::login::read_api_key_from_stdin;
 use orbit_code_cli::login::run_login_status;
+use orbit_code_cli::login::run_login_with_anthropic;
 use orbit_code_cli::login::run_login_with_api_key;
 use orbit_code_cli::login::run_login_with_chatgpt;
 use orbit_code_cli::login::run_login_with_device_code;
@@ -258,6 +259,10 @@ struct LoginCommand {
     #[clap(skip)]
     config_overrides: CliConfigOverrides,
 
+    /// Provider to log in to. Defaults to openai.
+    #[arg(long, value_parser = ["openai", "anthropic"])]
+    provider: Option<String>,
+
     #[arg(
         long = "with-api-key",
         help = "Read the API key from stdin (e.g. `printenv OPENAI_API_KEY | codex login --with-api-key`)"
@@ -298,6 +303,10 @@ enum LoginSubcommand {
 struct LogoutCommand {
     #[clap(skip)]
     config_overrides: CliConfigOverrides,
+
+    /// Provider to log out from. If omitted, logs out from all providers.
+    #[arg(long, value_parser = ["openai", "anthropic"])]
+    provider: Option<String>,
 }
 
 #[derive(Debug, Parser)]
@@ -732,7 +741,9 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
                     run_login_status(login_cli.config_overrides).await;
                 }
                 None => {
-                    if login_cli.use_device_code {
+                    if login_cli.provider.as_deref() == Some("anthropic") {
+                        run_login_with_anthropic(login_cli.config_overrides).await;
+                    } else if login_cli.use_device_code {
                         run_login_with_device_code(
                             login_cli.config_overrides,
                             login_cli.issuer_base_url,
@@ -759,7 +770,7 @@ async fn cli_main(arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
                 &mut logout_cli.config_overrides,
                 root_config_overrides.clone(),
             );
-            run_logout(logout_cli.config_overrides).await;
+            run_logout(logout_cli.provider.as_deref(), logout_cli.config_overrides).await;
         }
         Some(Subcommand::Completion(completion_cli)) => {
             reject_remote_mode_for_subcommand(root_remote.as_deref(), "completion")?;

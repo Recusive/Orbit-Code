@@ -855,7 +855,7 @@
           "minimum": 0.0,
           "type": "integer"
         },
-        "requires_openai_auth": {
+        "requires_auth": {
           "default": false,
           "description": "Does this provider require an OpenAI API Key or ChatGPT login token? If true, user is presented with login screen on first run, and login preference and token/key are stored in auth.json. If false (which is the default), login screen is skipped, and API key (if needed) comes from the \"env_key\" environment variable.",
           "type": "boolean"
@@ -1786,6 +1786,13 @@
           "description": "The Responses API exposed by OpenAI at `/v1/responses`.",
           "enum": [
             "responses"
+          ],
+          "type": "string"
+        },
+        {
+          "description": "The Anthropic Messages API exposed by Anthropic at `/v1/messages`.",
+          "enum": [
+            "anthropicmessages"
           ],
           "type": "string"
         }

@@ -1,52 +1,39 @@
 # codex-rs/
 
-Root of the Rust Cargo workspace for the Codex CLI -- a standalone, native executable for AI-assisted coding.
+Rust Cargo workspace containing the native implementation of Orbit Code -- TUI, headless execution, app-server, MCP server, sandbox tooling, and all supporting libraries.
 
-## What this folder does
+## Build & Test
 
-This is a multi-crate Cargo workspace containing the Rust implementation of the Codex CLI. It provides a terminal UI (TUI), a headless execution mode, an MCP server, sandbox tooling, and all supporting libraries (config, secrets, networking, process hardening, etc.).
+```bash
+just codex                    # run from source
+just test                     # run tests (cargo-nextest)
+just fmt                      # format (rustfmt)
+just fix -p <crate>           # clippy fix scoped to one crate
+just fix                      # clippy fix workspace-wide (slow)
+just write-config-schema      # regenerate config JSON schema
+just write-app-server-schema  # regenerate app-server protocol schemas
+just bazel-lock-update        # update MODULE.bazel.lock after dep changes
+just bazel-lock-check         # verify lockfile is in sync
+cargo test -p <crate>         # test a single crate
+cargo insta accept -p <crate> # accept snapshot changes
+```
 
-## Key crates
+## Architecture
 
-| Crate | Path | Purpose |
-|-------|------|---------|
-| `codex-core` | `core/` | Business logic engine; library for building Codex-powered apps |
-| `codex-tui` | `tui/` | Fullscreen Ratatui-based terminal UI |
-| `codex-cli` | `cli/` | Multitool binary that dispatches subcommands (tui, exec, sandbox, mcp-server, etc.) |
-| `codex-exec` | `exec/` | Headless/non-interactive CLI for automation |
-| `codex-app-server` | `app-server/` | App server for IDE integrations (MCP-based protocol) |
-| `codex-protocol` | `protocol/` | Core protocol types (Op, EventMsg, Session, Turn) |
-| `codex-config` | `config/` | Configuration loading and layered merge from TOML files |
-| `codex-secrets` | `secrets/` | Encrypted secrets management with keyring backend |
+The workspace contains 67+ crates organized around a core engine (`orbit-code-core`) that handles AI model interaction, tool execution, and session management. The TUI (`orbit-code-tui`) provides the terminal interface using ratatui. The CLI binary (`orbit-code-cli`) dispatches subcommands (tui, exec, sandbox, mcp-server, app-server). The app-server (`orbit-code-app-server`) exposes a JSON-RPC WebSocket protocol for IDE integrations. The protocol crate (`orbit-code-protocol`) defines shared wire types (Op, EventMsg, Session, Turn).
 
-## Workspace configuration
+Key supporting crates handle config loading, secrets management, sandboxing (macOS Seatbelt, Linux landlock), shell command parsing, and OpenTelemetry instrumentation.
 
-- **Rust edition**: 2024 (workspace-wide default)
-- **Toolchain**: Rust 1.93.0 (pinned in `rust-toolchain.toml`)
-- **Formatter**: `rustfmt.toml` -- edition 2024, `imports_granularity = "Item"`
-- **Linter**: Extensive Clippy deny rules in `Cargo.toml` `[workspace.lints.clippy]`; `clippy.toml` adds disallowed ratatui color methods and a 256-byte `large-error-threshold`
-- **License auditing**: `deny.toml` for `cargo-deny` (advisories, licenses, bans, sources)
-- **Release profile**: LTO fat, strip symbols, single codegen unit
+## Key Considerations
 
-## Build system
-
-- **Primary**: Cargo (`cargo build`, `cargo test`)
-- **Secondary**: Bazel (experimental; see `docs/bazel.md` and `BUILD.bazel` files)
-- **Test runner**: `cargo-nextest` (configured in `.config/nextest.toml`)
-
-## Imports / exports
-
-- The workspace depends on ~150 external crates (see `[workspace.dependencies]` in `Cargo.toml`)
-- Several crates are patched via `[patch.crates-io]`: crossterm, ratatui, tokio-tungstenite, tungstenite (all from forks)
-- The `cli/` binary is the main deliverable; it is distributed via npm (`@openai/codex`), Homebrew, and GitHub Releases
-
-## Key files
-
-- `Cargo.toml` -- workspace definition, all member crates, shared dependencies, lint config, release profile
-- `Cargo.lock` -- locked dependency versions
-- `rust-toolchain.toml` -- pinned Rust toolchain
-- `clippy.toml` -- custom Clippy configuration
-- `rustfmt.toml` -- formatter settings
-- `deny.toml` -- cargo-deny configuration for license/advisory/ban/source checks
-- `README.md` -- user-facing documentation for installing and using the CLI
-- `config.md` -- detailed configuration reference
+- **Rust 1.93.0**, edition 2024, pinned in `rust-toolchain.toml`.
+- **All crate names** use the `orbit-code-*` prefix (hyphens in package names, underscores in library names).
+- **33 clippy lints denied workspace-wide** -- see `[workspace.lints.clippy]` in `Cargo.toml`. No `unwrap()`/`expect()` in library code.
+- **Formatter**: `imports_granularity = "Item"` -- one import per `use` statement. Run `just fmt` after every change.
+- **Dependencies**: all declared in `[workspace.dependencies]` in root `Cargo.toml`. Per-crate uses `{ workspace = true }`.
+- **After dependency changes**: run `just bazel-lock-update` then `just bazel-lock-check`.
+- **TUI colors**: ANSI only. `Color::Rgb`, `Color::Indexed`, `.white()`, `.black()`, `.yellow()` are disallowed via clippy.toml.
+- **Snapshots**: use `cargo-insta`. Run `cargo insta accept -p <crate>` to accept changes.
+- **Mirror rule**: all `tui/` changes must be mirrored in `tui_app_server/` unless documented otherwise.
+- **Bazel**: secondary build system for CI/release. If you add `include_str!`, `include_bytes!`, or `sqlx::migrate!`, update the crate's `BUILD.bazel`.
+- **Test structure**: integration tests go in `tests/all.rs` -> `tests/suite/mod.rs` -> `tests/suite/*.rs`. Never create multiple top-level test binaries.

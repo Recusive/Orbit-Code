@@ -1801,7 +1801,7 @@ fn claude_model_accepts_custom_anthropic_messages_provider() -> std::io::Result<
             stream_max_retries: None,
             stream_idle_timeout_ms: None,
             websocket_connect_timeout_ms: None,
-            requires_openai_auth: false,
+            requires_auth: false,
             supports_websockets: false,
         },
     );
@@ -4323,7 +4323,7 @@ model_verbosity = "high"
         stream_max_retries: Some(10),
         stream_idle_timeout_ms: Some(300_000),
         websocket_connect_timeout_ms: Some(15_000),
-        requires_openai_auth: false,
+        requires_auth: false,
         supports_websockets: false,
     };
     let model_provider_map = {

@@ -1,6 +1,6 @@
 # codex-rs/debug-client/src/
 
-Source directory for the `codex-debug-client` binary.
+Source directory for the `orbit-code-debug-client` binary.
 
 ## What this folder does
 

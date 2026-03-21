@@ -752,6 +752,7 @@ mod tests {
         let notification = ServerNotification::AccountUpdated(AccountUpdatedNotification {
             auth_mode: Some(AuthMode::ApiKey),
             plan_type: None,
+            provider: None,
         });
 
         let jsonrpc_notification = OutgoingMessage::AppServerNotification(notification);

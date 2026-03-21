@@ -12,11 +12,11 @@ A tiny command-line client that spawns `codex app-server` as a subprocess and co
 
 - Spawns `codex app-server` as a child process
 - Communicates via the app server protocol v2 (JSON-RPC over stdio)
-- Uses `codex-app-server-protocol` for protocol types
+- Uses `orbit-code-app-server-protocol` for protocol types
 
 ## Imports from
 
-- `codex-app-server-protocol` -- `AskForApproval` and protocol types
+- `orbit-code-app-server-protocol` -- `AskForApproval` and protocol types
 - `clap` -- CLI argument parsing
 - `serde` / `serde_json` -- JSON-RPC message serialization
 
@@ -24,7 +24,7 @@ A tiny command-line client that spawns `codex app-server` as a subprocess and co
 
 | File | Role |
 |------|------|
-| `Cargo.toml` | Crate manifest; depends on `codex-app-server-protocol`, `clap`, `serde_json` |
+| `Cargo.toml` | Crate manifest; depends on `orbit-code-app-server-protocol`, `clap`, `serde_json` |
 | `README.md` | Usage guide with CLI flags and interactive commands |
 | `src/main.rs` | `Cli` clap struct; main loop reading stdin and dispatching commands |
 | `src/client.rs` | `AppServerClient` -- spawns `codex app-server`, sends JSON-RPC requests, manages thread lifecycle |

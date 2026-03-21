@@ -1,17 +1,12 @@
 # sdk/python/src/
 
-Source root for the `codex-app-server-sdk` Python package. Contains the single package `codex_app_server/`.
+Source root for the `orbit-code-app-server-sdk` Python package. Contains the single installable package `orbit_code_app_server/`.
 
-## Purpose
+## Module Layout
 
-This directory is the `packages` root in `pyproject.toml` for the Hatch build system. Everything under `codex_app_server/` is what gets distributed in the wheel.
-
-## Contents
-
-- `codex_app_server/` -- the installable Python package (see its own CLAUDE.md for details)
-
-## Plugs Into
-
-- Referenced by `pyproject.toml` at `sdk/python/pyproject.toml` as `[tool.hatch.build.targets.wheel] packages = ["src/codex_app_server"]`
-- Tests in `sdk/python/tests/` add this directory to `sys.path` via `conftest.py`
-- Examples in `sdk/python/examples/` add this directory to `sys.path` via `_bootstrap.py`
+- **API surface**: `api.py` (Codex, AsyncCodex, Thread, AsyncThread, TurnHandle), `__init__.py` (re-exports)
+- **Transport**: `client.py` (sync JSON-RPC over stdio), `async_client.py` (async wrapper via `asyncio.to_thread`)
+- **Wire types**: `models.py` (shared Pydantic models), `generated/` (auto-generated from Rust JSON schema -- do not edit)
+- **Inputs/outputs**: `_inputs.py` (TextInput, ImageInput, etc.), `_run.py` (RunResult dataclass)
+- **Error handling**: `errors.py` (AppServerError, JsonRpcError, ServerBusyError hierarchy)
+- **Utilities**: `retry.py` (exponential backoff for transient errors)

@@ -5,4 +5,6 @@ pub(crate) enum StatusAccountDisplay {
         plan: Option<String>,
     },
     ApiKey,
+    AnthropicApiKey,
+    AnthropicOAuth,
 }

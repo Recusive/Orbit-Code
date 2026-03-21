@@ -1,31 +1,22 @@
 # sdk/python-runtime/
 
-Template package for `codex-cli-bin` -- the platform-specific Codex CLI runtime distribution for Python.
+Template package for `orbit-code-cli-bin` -- distributes the platform-specific `codex` CLI binary as a Python wheel.
 
-## Purpose
+## Build & Test
 
-This is the packaging template for distributing the Codex CLI binary as a Python wheel. The published `codex-app-server-sdk` pins an exact `codex-cli-bin` version, and that runtime package carries the platform-specific `codex` binary for the target wheel platform.
+This package is not built locally in normal development. It is a template that gets populated with a real binary during release staging via `sdk/python/scripts/update_sdk_artifacts.py stage-runtime`.
 
-This package is **wheel-only** -- building an sdist is intentionally blocked by the custom build hook.
+```bash
+pip install -e .    # only works after a binary has been staged to bin/
+```
 
-## Key Files
+## Architecture
 
-| File | Role |
-|------|------|
-| `pyproject.toml` | Package metadata for `codex-cli-bin`; version `0.0.0-dev` (set during release staging); declares custom build hook |
-| `hatch_build.py` | Custom Hatch build hook: blocks sdist builds and marks the wheel as platform-specific (`pure_python=False`, `infer_tag=True`) |
-| `README.md` | Brief description of the package's purpose |
-| `src/codex_cli_bin/__init__.py` | Provides `bundled_codex_path()` function to locate the bundled binary |
+The package provides a single function `bundled_codex_path()` that returns the path to the bundled `codex` binary at `<package_dir>/bin/codex` (or `codex.exe` on Windows). The custom Hatch build hook in `hatch_build.py` blocks sdist builds and marks wheels as platform-specific (`pure_python=False`, `infer_tag=True`).
 
-## Imports From
+## Key Considerations
 
-- Nothing external (self-contained package)
-
-## Exports To
-
-- `codex_app_server.client` imports `from codex_cli_bin import bundled_codex_path` to resolve the CLI binary path
-- The `_runtime_setup.py` in `sdk/python/` stages this package template with a real binary during release
-
-## Binary Location
-
-At runtime, the binary is expected at `<package_dir>/bin/codex` (or `codex.exe` on Windows). The binary is placed there during release staging by `sdk/python/scripts/update_sdk_artifacts.py stage-runtime`.
+- Wheel-only -- building an sdist is intentionally blocked.
+- The version is `0.0.0-dev` in the template and gets set to a real version during release staging.
+- The `orbit-code-app-server-sdk` Python SDK pins an exact version of this package as a dependency.
+- The binary at `bin/codex` does not exist in the source tree; it is placed there by the release pipeline.

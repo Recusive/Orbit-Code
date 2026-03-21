@@ -1,41 +1,7 @@
 # codex-rs/feedback/src/
 
-Source code for the `codex-feedback` crate.
+Source for the `orbit-code-feedback` crate -- ring-buffer log capture with Sentry upload.
 
-## What this folder does
-
-Contains the implementation of log ring-buffer capture, metadata tagging, and Sentry-based feedback upload.
-
-## Key files
-
-- `lib.rs` -- Main implementation:
-  - **Constants**: `DEFAULT_MAX_BYTES` (4 MB), `SENTRY_DSN`, `UPLOAD_TIMEOUT_SECS` (10), `MAX_FEEDBACK_TAGS` (64)
-  - **Types**:
-    - `CodexFeedback` -- Thread-safe feedback collector wrapping `FeedbackInner` (ring buffer + tags) in `Arc`
-    - `FeedbackInner` -- Holds `Mutex<RingBuffer>` and `Mutex<BTreeMap<String, String>>` for tags
-    - `RingBuffer` -- Fixed-capacity byte ring buffer using `VecDeque<u8>`
-    - `FeedbackMakeWriter` / `FeedbackWriter` -- `tracing_subscriber` writer that appends to the ring buffer
-    - `FeedbackSnapshot` -- Immutable snapshot with bytes, tags, diagnostics, and thread_id
-    - `FeedbackMetadataLayer` -- Custom `tracing_subscriber::Layer` that captures key/value tags from events
-    - `FeedbackTagsVisitor` -- `tracing::field::Visit` implementation for extracting tag fields
-  - **Key methods**:
-    - `CodexFeedback::logger_layer()` -- Full-fidelity TRACE-level log capture layer
-    - `CodexFeedback::metadata_layer()` -- Tag collection layer filtered to `"feedback_tags"` target
-    - `FeedbackSnapshot::upload_feedback()` -- Builds Sentry envelope with event, tags, and attachments; flushes with timeout
-
-- `feedback_diagnostics.rs` -- Connectivity diagnostics:
-  - `FeedbackDiagnostics` -- Collects environment-based diagnostics
-  - `FeedbackDiagnostic` -- Individual diagnostic with headline and detail lines
-  - `collect_from_env()` -- Checks for `OPENAI_BASE_URL` and proxy environment variables (`HTTP_PROXY`, `HTTPS_PROXY`, etc.)
-  - `attachment_text()` -- Formats diagnostics as a human-readable attachment string
-
-## Imports from / exports to
-
-**Imports:**
-- `codex_protocol::{ThreadId, protocol::SessionSource}`
-- `sentry::{Client, protocol::*}` -- Sentry client and protocol types
-- `tracing::{Event, Level, field::Visit}` -- Tracing primitives
-- `tracing_subscriber::{Layer, filter::Targets, fmt::writer::MakeWriter}`
-
-**Exports:**
-- All public types re-exported through `lib.rs`
+## Module Layout
+- **Core** (`lib.rs`): `CodexFeedback` collector with ring buffer and tag map; `FeedbackSnapshot` with `upload_feedback()` and `save_to_temp_file()`; `FeedbackMakeWriter`/`FeedbackWriter` implementing `tracing_subscriber::fmt::MakeWriter`; `FeedbackMetadataLayer` for tag extraction from tracing events
+- **Diagnostics** (`feedback_diagnostics.rs`): `FeedbackDiagnostics` collecting connectivity info from environment variables; `FeedbackDiagnostic` formatting for Sentry attachments

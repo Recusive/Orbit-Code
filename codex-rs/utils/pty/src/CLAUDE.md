@@ -1,30 +1,14 @@
 # codex-rs/utils/pty/src/
 
-Source directory for the `codex-utils-pty` crate.
+PTY and pipe-based process spawning with cross-platform process group management. Provides unified `ProcessHandle`/`SpawnedProcess` abstractions with stdin/stdout/stderr multiplexing via Tokio channels.
 
-## Key files
+## Build & Test
+```bash
+cargo build -p orbit-code-utils-pty
+cargo test -p orbit-code-utils-pty
+```
 
-- `lib.rs` -- module declarations and public API re-exports; defines `DEFAULT_OUTPUT_BYTES_CAP` (1 MiB)
-- `process.rs` -- core abstractions:
-  - `ProcessHandle` -- wraps writer channel, child killer, reader/writer/wait task handles, PTY handles; provides `writer_sender()`, `has_exited()`, `exit_code()`, `resize()`, `close_stdin()`, `request_terminate()`, `terminate()`; implements `Drop` for cleanup
-  - `SpawnedProcess` -- bundles `ProcessHandle` with `stdout_rx`, `stderr_rx`, `exit_rx`
-  - `TerminalSize` -- rows/cols with default 24x80
-  - `PtyHandles` / `PtyMasterHandle` -- keep PTY file descriptors alive
-  - `combine_output_receivers` -- merges stdout/stderr via `tokio::select!` into a broadcast channel
-- `pipe.rs` -- pipe-based spawning:
-  - `spawn_process` / `spawn_process_no_stdin` -- async functions using `tokio::process::Command`
-  - Unix `pre_exec`: detaches from TTY, sets parent death signal (Linux), closes inherited FDs
-  - `PipeChildTerminator` -- kills process group on Unix, single process on Windows
-- `pty.rs` -- PTY-based spawning:
-  - `spawn_process` -- uses `portable-pty` on most platforms, raw `openpty` on Unix when preserving inherited FDs
-  - `spawn_process_preserving_fds` -- Unix-only path using raw `libc::openpty`, `setsid`, `TIOCSCTTY`
-  - `close_inherited_fds_except` -- closes non-stdio FDs in `/dev/fd` except preserved ones
-  - `conpty_supported()` -- delegates to Windows ConPTY check
-- `process_group.rs` -- OS-specific process group management:
-  - `set_process_group()` -- `setpgid(0, 0)` on Unix
-  - `detach_from_tty()` -- `setsid()` on Unix (falls back to `setpgid`)
-  - `kill_process_group` / `kill_process_group_by_pid` / `terminate_process_group` -- SIGKILL/SIGTERM to process groups
-  - `set_parent_death_signal` -- Linux-only `prctl(PR_SET_PDEATHSIG)` with race detection
-  - All functions are no-ops on non-Unix platforms
-- `tests.rs` -- integration tests
-- `win/` -- Windows ConPTY implementation (see `win/` subdirectory)
+## Key Considerations
+- Uses `edition = "2021"` (not the workspace default 2024) due to platform-specific compatibility constraints.
+- Windows ConPTY implementation is vendored from WezTerm in `src/win/`.
+- Process group management (`kill_process_group`, `set_parent_death_signal`) is Unix-only; all functions are no-ops on Windows.

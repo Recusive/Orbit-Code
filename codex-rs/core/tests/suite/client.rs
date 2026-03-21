@@ -1799,7 +1799,7 @@ async fn azure_responses_request_includes_store_and_reasoning_ids() {
         stream_max_retries: Some(0),
         stream_idle_timeout_ms: Some(5_000),
         websocket_connect_timeout_ms: None,
-        requires_openai_auth: false,
+        requires_auth: false,
         supports_websockets: false,
     };
 
@@ -2403,7 +2403,7 @@ async fn azure_overrides_assign_properties_used_for_responses_url() {
         stream_max_retries: None,
         stream_idle_timeout_ms: None,
         websocket_connect_timeout_ms: None,
-        requires_openai_auth: false,
+        requires_auth: false,
         supports_websockets: false,
     };
 
@@ -2488,7 +2488,7 @@ async fn env_var_overrides_loaded_auth() {
         stream_max_retries: None,
         stream_idle_timeout_ms: None,
         websocket_connect_timeout_ms: None,
-        requires_openai_auth: false,
+        requires_auth: false,
         supports_websockets: false,
     };
 

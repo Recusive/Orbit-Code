@@ -1766,6 +1766,7 @@ impl App {
         op: AppCommand,
     ) -> Result<()> {
         let Some(thread_id) = self.active_thread_id else {
+            tracing::error!("submit_active_thread_op: active_thread_id is None — message dropped");
             self.chat_widget
                 .add_error_message("No active thread is available.".to_string());
             return Ok(());

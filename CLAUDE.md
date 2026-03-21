@@ -1,8 +1,10 @@
-# Orbit Code — Monorepo Root
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## What This Is
 
-Orbit Code is the terminal-based coding agent for the Orbit ecosystem. It provides a rich TUI for interacting with AI agents directly from the terminal. This is a fork of OpenAI's Codex CLI, rebuilt to connect to the Orbit backend.
+Orbit Code is the terminal-based coding agent for the Orbit ecosystem. A fork of OpenAI's Codex CLI, rebuilt to connect to the Orbit backend. Rich TUI for AI-powered coding directly from the terminal.
 
 **Parent project:** [Orbit](https://github.com/Recusive/Orbit) — AI-native desktop IDE
 **This repo:** [Orbit Code](https://github.com/Recusive/Orbit-Code) — Terminal agent
@@ -23,36 +25,123 @@ Orbit Code is the terminal-based coding agent for the Orbit ecosystem. It provid
 
 ## Common Commands
 
+**Important:** The justfile sets `working-directory := "codex-rs"`, so all `just` commands run from `codex-rs/` regardless of your shell's cwd. Cargo commands (`cargo test -p ...`) must be run from `codex-rs/`.
+
 ```bash
-just codex                   # Run Orbit Code from source
-just test                    # Run Rust tests (nextest)
+# Core development
+just codex                   # Run Orbit Code from source (alias: just c)
+just test                    # Run Rust tests (nextest, --no-fail-fast)
 just fmt                     # Format Rust code
 just fix                     # Run clippy fixes
 just fix -p <crate>          # Clippy fix scoped to one crate
-just write-config-schema     # Regenerate config JSON schema
-just write-app-server-schema # Regenerate app-server protocol schemas
+
+# Running a single test
+cargo test -p <crate> -- <test_name>         # Run one test by name
+cargo test -p <crate> -- <module>::<test>     # Run test in specific module
+cargo nextest run -p <crate> -E 'test(name)' # Via nextest filter
+
+# Schema regeneration (required after type changes)
+just write-config-schema     # After any ConfigToml change
+just write-app-server-schema # After API shape changes (add --experimental for experimental)
+just write-hooks-schema      # After hooks schema changes
+
+# Snapshot tests (TUI changes)
+cargo insta pending-snapshots -p orbit-code-tui   # Check pending snapshots
+cargo insta show -p orbit-code-tui <path.snap.new> # Preview a snapshot
+cargo insta accept -p orbit-code-tui              # Accept all pending
+
+# Other
+just mcp-server-run          # Run the MCP server
+just log                     # Tail logs from state SQLite database
 just bazel-lock-update       # Update MODULE.bazel.lock after dep changes
 just bazel-lock-check        # Verify lockfile is in sync
 just argument-comment-lint   # Run /*param*/ comment lint
+
+# SDK development
+cd sdk/typescript && pnpm install && pnpm test   # TypeScript SDK
+cd sdk/python && pip install -e . && pytest -q   # Python SDK
 ```
 
 ## Architecture Overview
 
-Orbit Code is primarily a **Rust application** (`codex-rs/`) that:
-1. Provides a terminal UI (TUI) built with `ratatui`
-2. Connects to a backend API for AI model access
-3. Executes tools (shell commands, file operations) in sandboxed environments
-4. Manages sessions, conversations, and agent state
-5. Exposes an app-server (JSON-RPC WebSocket) for IDE integrations
-6. Provides an MCP server for Model Context Protocol integrations
+### Crate Layers
+
+The workspace has a clear dependency hierarchy. Understanding these layers prevents circular dependencies and tells you which crates to rebuild after changes.
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     CONSUMER LAYER                               │
+│  tui              Full TUI (ratatui)                            │
+│  tui_app_server   TUI variant for IDE integration (app-server)  │
+│  cli              Binary entry point, subcommand dispatch       │
+│  exec             Headless/non-interactive CLI                  │
+│  app-server       JSON-RPC WebSocket API for IDE integrations   │
+│  mcp-server       MCP protocol server                           │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │ depends on
+┌───────────────────────────▼─────────────────────────────────────┐
+│                      ENGINE LAYER                                │
+│  core              Agent loop, tool execution, config, auth,    │
+│                    sandboxing, sessions, multi-agent, MCP mgmt  │
+│  app-server-protocol  JSON-RPC types (v1 + v2)                  │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │ depends on
+┌───────────────────────────▼─────────────────────────────────────┐
+│                    FOUNDATION LAYER                               │
+│  protocol          Op, EventMsg, TurnItem, SandboxPolicy, etc.  │
+│  config            TOML config parsing and layer merging         │
+│  hooks             Lifecycle hook execution engine               │
+│  secrets           Encrypted secrets (keyring backend)           │
+│  execpolicy        Execution policy types                        │
+│  anthropic         Anthropic API client                          │
+│  login             OAuth/auth login flows                        │
+│  otel              OpenTelemetry instrumentation                 │
+│  utils/*           ~20 utility crates (path, git, pty, etc.)    │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Core Data Flow: Submission Queue / Event Queue
+
+The fundamental pattern is a **bidirectional async channel** between consumers (TUI, app-server) and the core engine:
+
+```
+Consumer (TUI/app-server)                    orbit-code-core (Session)
+        │                                            │
+        │──── Op::UserTurn { items, cwd, ... } ────▶│
+        │                                            │── model API call
+        │◀── EventMsg::TurnStarted ─────────────────│
+        │◀── EventMsg::AgentMessage ────────────────│
+        │◀── EventMsg::ExecApprovalRequest ─────────│
+        │──── Op::ExecApprovalDecision ────────────▶│
+        │                                            │── execute tool
+        │◀── EventMsg::ExecOutput ──────────────────│
+        │◀── EventMsg::TurnCompleted ───────────────│
+```
+
+- **`Op`** enum (protocol/src/protocol.rs) = submissions from consumer to engine (user input, approval decisions, interrupts)
+- **`EventMsg`** enum (protocol/src/protocol.rs) = events from engine to consumer (agent messages, tool calls, approvals, errors)
+- **`Session`** (core/src/codex.rs) = the agent loop that processes Ops and emits EventMsgs
+- **`CodexThread`** (core/src/orbit_code_thread.rs) = public wrapper around Session for external consumers
+
+### The `tui` / `tui_app_server` Duality
+
+There are **two nearly identical TUI crates**:
+- **`tui/`** — Standalone terminal TUI (uses `orbit-code-core` directly)
+- **`tui_app_server/`** — TUI variant that goes through the app-server protocol (for IDE integration)
+
+**Convention 54: Mirror all `tui/` changes in `tui_app_server/`** unless there is a documented reason not to. These crates share ~90% of their code but have different session management paths.
+
+### Test File Convention
+
+Unit tests live in **sibling `*_tests.rs` files**, not inline `#[cfg(test)]` modules. For example:
+- `auth.rs` → `auth_tests.rs`
+- `codex.rs` → `orbit_code_tests.rs`
+
+Integration tests follow: `tests/all.rs` → `tests/suite/mod.rs` → `tests/suite/*.rs`
 
 **Build systems:** Cargo (local dev) + Bazel (CI/release). TypeScript: pnpm + tsup. Task runner: `just` (working dir = `codex-rs/`).
 
-## Orbit Ecosystem Context
-
-- **Orbit** (Desktop) = Full GUI IDE with editor, browser, terminal, vault
-- **Orbit Code** (Terminal) = Terminal-only agent with the same core engine
-- Both share the AI agent architecture; this repo provides the TUI + backend integration layer
+**Toolchain:** Rust 1.93.0 (edition 2024), pinned in `codex-rs/rust-toolchain.toml`.
 
 ---
 
@@ -137,10 +226,10 @@ Orbit Code is primarily a **Rust application** (`codex-rs/`) that:
 
 38. Use `pretty_assertions::assert_eq!` in every test module. Compare entire objects with `assert_eq!`, not individual fields.
 39. Add `insta` snapshot tests for any UI-affecting change. Snapshot workflow:
-    - Run tests: `cargo test -p codex-tui`
-    - Check pending: `cargo insta pending-snapshots -p codex-tui`
-    - Preview: `cargo insta show -p codex-tui path/to/file.snap.new`
-    - Accept: `cargo insta accept -p codex-tui`
+    - Run tests: `cargo test -p orbit-code-tui`
+    - Check pending: `cargo insta pending-snapshots -p orbit-code-tui`
+    - Preview: `cargo insta show -p orbit-code-tui path/to/file.snap.new`
+    - Accept: `cargo insta accept -p orbit-code-tui`
     - Install if missing: `cargo install cargo-insta`
 40. Use `wiremock::MockServer` and helpers from `core_test_support::responses` for HTTP mocking. Prefer `mount_sse_once` over `mount_sse_once_match` or `mount_sse_sequence`. All `mount_sse*` helpers return a `ResponseMock` — hold onto it to assert against outbound requests. Use `ResponseMock::single_request()` for single-POST tests, `ResponseMock::requests()` to inspect all captured requests. `ResponsesRequest` exposes: `body_json`, `input`, `function_call_output`, `custom_tool_call_output`, `call_output`, `header`, `path`, `query_param`. Build SSE payloads with `ev_*` constructors and `sse(...)`. Typical pattern:
     ```rust
@@ -155,7 +244,7 @@ Orbit Code is primarily a **Rust application** (`codex-rs/`) that:
     ```
 41. Use `TestCodexBuilder` fluent API for integration test setup. Chain `.with_config()`, `.with_model()`, `.with_auth()`, `.with_home()`, `.with_pre_build_hook()`.
 42. Use `wait_for_event(codex, predicate)` for async event assertions. Prefer it over `wait_for_event_with_timeout`.
-43. Use `codex_utils_cargo_bin::cargo_bin()` for binary resolution (works with Cargo and Bazel). Use `find_resource!` instead of `env!("CARGO_MANIFEST_DIR")`.
+43. Use `orbit_code_utils_cargo_bin::cargo_bin()` for binary resolution (works with Cargo and Bazel). Use `find_resource!` instead of `env!("CARGO_MANIFEST_DIR")`.
 44. Use `#[ctor]` in `tests/common/lib.rs` for process-startup initialization (deterministic IDs, insta workspace root).
 45. Avoid boilerplate tests that only assert experimental field markers for individual request fields in `common.rs` — rely on schema generation/tests and behavioral coverage instead.
 
@@ -184,7 +273,7 @@ Orbit Code is primarily a **Rust application** (`codex-rs/`) that:
 ### Rust — Config & Dependencies
 
 56. Config types must derive `JsonSchema`. Run `just write-config-schema` after any `ConfigToml` change.
-57. Run `just write-app-server-schema` (and `--experimental` when needed) after API shape changes. Validate with `cargo test -p codex-app-server-protocol`.
+57. Run `just write-app-server-schema` (and `--experimental` when needed) after API shape changes. Validate with `cargo test -p orbit-code-app-server-protocol`.
 58. Add all dependencies to `[workspace.dependencies]` in root `Cargo.toml`. Per-crate: `{ workspace = true }` with crate-specific feature overrides only.
 59. After any dependency change: run `just bazel-lock-update` then `just bazel-lock-check`. Include the lockfile update in the same change.
 60. Standard dev-dependencies: `pretty_assertions` (diffs), `tempfile` (temp dirs), `wiremock` (HTTP mocking), `insta` (snapshots).
@@ -223,5 +312,86 @@ Orbit Code is primarily a **Rust application** (`codex-rs/`) that:
 - No-params exception: client->server requests with no params may use `params: #[ts(type = "undefined")] #[serde(skip_serializing_if = "Option::is_none")] Option<()>`
 - Cursor pagination for list methods: request `cursor: Option<String>` + `limit: Option<u32>`, response `data: Vec<...>` + `next_cursor: Option<String>`
 - TypeScript export: `#[ts(export_to = "v2/")]` on all v2 types
-- Validate with `cargo test -p codex-app-server-protocol`
+- Validate with `cargo test -p orbit-code-app-server-protocol`
 - Key files: `app-server-protocol/src/protocol/common.rs`, `app-server-protocol/src/protocol/v2.rs`, `app-server/README.md`
+
+---
+
+## Zero-Tolerance Lint & Type Enforcement Policy
+
+> **This section is non-negotiable.** Every rule below applies to all code in this repository — Rust, TypeScript, and Python. There are no exceptions, no "fix later", and no workarounds.
+
+### Core Principle
+
+**We do not suppress lint issues. We fix them.** If a linter, compiler, or type checker flags a problem, the only acceptable response is to resolve the underlying issue. Suppression annotations, disable comments, and workaround patterns are categorically prohibited.
+
+### Rust — Forbidden Suppression Patterns
+
+The following attributes and patterns are **never permitted** in any Rust code (library or test):
+
+| Forbidden | What to do instead |
+|-----------|--------------------|
+| `#[allow(dead_code)]` | Delete the dead code. If it's planned for future use, it doesn't belong in the codebase yet. |
+| `#[allow(unused_imports)]` | Remove the unused import. |
+| `#[allow(unused_variables)]` | Prefix with `_` if the variable is intentionally unused (e.g., `_guard`), or remove it. Do not blanket-allow. |
+| `#[allow(unused_mut)]` | Remove the unnecessary `mut`. |
+| `#[allow(unused_assignments)]` | Restructure the code so the assignment is used. |
+| `#[allow(unreachable_code)]` | Delete the unreachable code or fix the control flow. |
+| `#[allow(unreachable_patterns)]` | Fix the match arms. |
+| `#[allow(clippy::*)]` | Fix what clippy is complaining about. Every workspace-denied lint exists for a reason. |
+| `#[cfg_attr(test, allow(...))]` | Tests follow the same rules. Fix the issue in test code too. |
+| `#![allow(...)]` at crate root | Never. Crate-level allows mask problems across the entire crate. |
+
+**The only exception**: `#[allow(unused_imports)]` or `#[allow(unused_variables)]` inside `#[cfg(...)]` blocks where the import/variable is used on one platform but not another — and even then, prefer `#[cfg]`-gating the import itself rather than suppressing the warning.
+
+### TypeScript — Forbidden Suppression Patterns
+
+| Forbidden | What to do instead |
+|-----------|--------------------|
+| `// eslint-disable-next-line` | Fix the ESLint violation. |
+| `// eslint-disable` (block or file) | Fix all violations in the block/file. |
+| `// @ts-ignore` | Fix the type error. |
+| `// @ts-expect-error` | Fix the type error. The only acceptable use is in test files asserting that incorrect usage produces a type error. |
+| `// @ts-nocheck` | Never. This disables all type checking for the file. |
+| `as any` | Use proper types. If the type is complex, define it. If it's from an external library, use the library's types or declare a minimal interface. |
+| `as unknown as T` | This is a double-cast hack. Fix the actual type mismatch. |
+| `!` (non-null assertion) | Use proper null checks, optional chaining, or narrow the type. |
+| `@ts-ignore` in JSDoc | Same as above — fix the type. |
+
+### Python — Forbidden Suppression Patterns
+
+| Forbidden | What to do instead |
+|-----------|--------------------|
+| `# type: ignore` | Fix the type error. If mypy/pyright is wrong, file an issue upstream. |
+| `# noqa` | Fix the linting issue. |
+| `# noinspection` | Fix what the inspector flagged. |
+| `# pylint: disable=*` | Fix the pylint violation. |
+| `# ruff: noqa` | Fix the ruff violation. |
+| `typing.Any` as escape hatch | Use proper types. Define `TypeVar`, `Protocol`, or a concrete type. `Any` is acceptable only at true system boundaries (e.g., JSON deserialization of unknown external input). |
+
+### Strict Typing Requirements
+
+1. **Rust**: All types must be fully specified. No `impl` return types that hide the concrete type from callers unless the function is private and the return type is genuinely complex (e.g., iterator chains). Prefer concrete types at API boundaries.
+2. **TypeScript**: `strict: true` and `noUncheckedIndexedAccess: true` are mandatory. Every function must have explicit parameter types and return types. No implicit `any`. No untyped destructuring.
+3. **Python**: All function signatures must have type annotations (parameters and return types). Use `from __future__ import annotations` for forward references.
+
+### What "Fix It" Means
+
+- **Dead code**: Delete it. If it's speculative future code, it belongs in a branch or issue, not in `main`.
+- **Unused import**: Remove it. If you need it later, add it later.
+- **Type mismatch**: Change the code or the type — do not cast or suppress.
+- **Clippy lint**: Refactor to satisfy the lint. The 33 workspace-denied clippy lints exist because the patterns they flag are genuinely problematic.
+- **Complex type**: Define a named type alias or struct. Complexity is not an excuse for `any` or suppression.
+- **Third-party type issue**: Wrap the third-party call in a properly typed function. Do not let bad external types leak into the codebase.
+
+### No "TODO: Fix Type" or "FIXME: Suppress" Comments
+
+Code that ships with type suppressions, lint disables, or "fix later" comments is incomplete code. It does not get merged. If a type is hard to get right, that's a signal to design the type correctly — not to defer it.
+
+### Enforcement
+
+- `just fix -p <crate>` must pass with zero warnings for any changed crate.
+- `cargo test -p <crate>` must compile without warnings.
+- TypeScript `npm run typecheck` must pass with zero errors.
+- Python `ruff check` and type checking must pass clean.
+- PRs with any suppression annotation will be rejected.

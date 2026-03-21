@@ -2,11 +2,11 @@
 
 ## Purpose
 
-A CLI test client for the `codex-app-server`. Provides a command-line interface for manually or programmatically exercising the app-server's JSON-RPC API over stdio or WebSocket transports. Used for development testing, debugging, and as a harness for integration test scripts.
+A CLI test client for the `orbit-code-app-server`. Provides a command-line interface for manually or programmatically exercising the app-server's JSON-RPC API over stdio or WebSocket transports. Used for development testing, debugging, and as a harness for integration test scripts.
 
 ## What It Plugs Into
 
-- Connects to a running `codex-app-server` instance via stdio (launching as a subprocess) or WebSocket (`--url ws://...`).
+- Connects to a running `orbit-code-app-server` instance via stdio (launching as a subprocess) or WebSocket (`--url ws://...`).
 - Performs the initialize/initialized handshake, then dispatches subcommands that map to app-server JSON-RPC methods.
 
 ## Key Features
@@ -27,11 +27,11 @@ A CLI test client for the `codex-app-server`. Provides a command-line interface 
 
 ## Imports From
 
-- `codex-app-server-protocol` -- All JSON-RPC and typed protocol types for constructing requests and parsing responses.
-- `codex-core` -- Config loading.
-- `codex-protocol` -- Shared types.
-- `codex-otel` -- Observability setup.
-- `codex-utils-cli` -- CLI utilities.
+- `orbit-code-app-server-protocol` -- All JSON-RPC and typed protocol types for constructing requests and parsing responses.
+- `orbit-code-core` -- Config loading.
+- `orbit-code-protocol` -- Shared types.
+- `orbit-code-otel` -- Observability setup.
+- `orbit-code-utils-cli` -- CLI utilities.
 - `tungstenite` -- Synchronous WebSocket client.
 
 ## Exports To

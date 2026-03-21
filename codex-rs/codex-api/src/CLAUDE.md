@@ -1,22 +1,14 @@
 # codex-rs/codex-api/src/
 
-Source directory for the `codex-api` crate.
+Implementation of all OpenAI API clients, organized by endpoint, transport, and shared types.
 
-## What this folder does
+## Module Layout
 
-Contains the implementation of all OpenAI API clients, organized into endpoint-specific modules, request construction helpers, SSE stream processing, and shared types.
-
-## Key files
-
-| File | Role |
-|------|------|
-| `lib.rs` | Module declarations and public re-exports |
-| `auth.rs` | `AuthProvider` trait -- provides bearer tokens for API requests |
-| `common.rs` | Shared types: `ResponsesApiRequest`, `ResponseEvent`, `ResponseStream`, `CompactionInput`, `MemorySummarizeInput/Output`, `RawMemory` |
-| `error.rs` | `ApiError` enum with variants for transport, SSE, WebSocket, and API errors |
-| `provider.rs` | `Provider` struct -- encapsulates base URL, auth, and API version; `is_azure_responses_wire_base_url` helper |
-| `rate_limits.rs` | Parsing rate limit information from HTTP response headers |
-| `telemetry.rs` | `SseTelemetry` and `WebsocketTelemetry` structs for tracking API call metrics |
-| `endpoint/` | API endpoint client implementations |
-| `requests/` | Request construction and header building |
-| `sse/` | SSE stream processing |
+- **endpoint/** -- Per-endpoint client implementations: `ResponsesClient` (HTTP SSE), `ResponsesWebsocketClient`, `RealtimeWebsocketClient`, `CompactClient`, `MemoriesClient`, `ModelsClient`
+- **requests/** -- Request construction: header building, body formatting, API version handling
+- **sse/** -- SSE stream processing: `process_sse`, `spawn_response_stream`, fixture helpers for testing
+- **provider** (`provider.rs`) -- `Provider` struct for base URL, auth, and API version; Azure URL detection
+- **auth** (`auth.rs`) -- `AuthProvider` trait for supplying bearer tokens to requests
+- **common** (`common.rs`) -- Shared types: `ResponsesApiRequest`, `ResponseEvent`, `ResponseStream`, `CompactionInput`, memory types
+- **error** (`error.rs`) -- `ApiError` enum covering transport, SSE, WebSocket, and API-level errors
+- **telemetry** (`telemetry.rs`) -- `SseTelemetry` and `WebsocketTelemetry` for per-request metric capture

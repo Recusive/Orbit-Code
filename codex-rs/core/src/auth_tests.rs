@@ -629,7 +629,7 @@ fn save_auth_preserves_existing_providers_on_chatgpt_then_anthropic() {
     // This is what the TUI onboarding does: load v2, merge, save_auth_v2
     let mut v2_for_anthropic = super::load_auth_dot_json_v2(dir.path(), store_mode)
         .expect("load v2")
-        .unwrap_or_else(AuthDotJsonV2::new);
+        .unwrap_or_default();
     v2_for_anthropic.set_provider_auth(
         ProviderName::Anthropic,
         ProviderAuth::AnthropicOAuth {
@@ -744,5 +744,95 @@ fn save_auth_v2_preserves_existing_providers() {
     assert!(
         final_v2.provider_auth(ProviderName::Anthropic).is_some(),
         "Anthropic should exist after save_auth_v2"
+    );
+}
+
+/// Exact real-world flow: ChatGPT login (v1 format with tokens) via save_auth,
+/// then Anthropic OAuth via TUI onboarding (load_v2 → merge → save_auth_v2).
+/// This tests with the REAL ChatGPT v1 format, not simplified openai_api_key.
+#[test]
+fn real_flow_chatgpt_login_then_anthropic_onboarding_preserves_both() {
+    let dir = tempdir().expect("tempdir");
+    let store_mode = AuthCredentialsStoreMode::File;
+
+    // Step 1: Simulate ChatGPT login via login server (v1 format → save_auth)
+    // This is what login/src/server.rs does after browser OAuth
+    let _fake_jwt = write_auth_file(
+        AuthFileParams {
+            openai_api_key: None,
+            chatgpt_plan_type: Some("pro".to_string()),
+            chatgpt_account_id: Some("acct-123".to_string()),
+        },
+        dir.path(),
+    )
+    .expect("write v1 auth file");
+
+    // Load it as v1 and save via save_auth (which converts v1→v2 and merges)
+    let v1 = super::load_auth_dot_json(dir.path(), store_mode)
+        .expect("load v1")
+        .expect("v1 should exist");
+    super::save_auth(dir.path(), &v1, store_mode).expect("save_auth chatgpt");
+
+    // Verify ChatGPT is in v2
+    let v2_after_chatgpt = super::load_auth_dot_json_v2(dir.path(), store_mode)
+        .expect("load v2")
+        .expect("v2 should exist after chatgpt");
+    assert!(
+        v2_after_chatgpt
+            .provider_auth(ProviderName::OpenAI)
+            .is_some(),
+        "OpenAI/ChatGPT should exist in v2 after login. Got providers: {:?}",
+        v2_after_chatgpt.providers.keys().collect::<Vec<_>>()
+    );
+
+    // Step 2: Simulate Anthropic OAuth onboarding (exactly what tui/onboarding/auth.rs does)
+    let mut v2_for_anthropic = match super::load_auth_dot_json_v2(dir.path(), store_mode) {
+        Ok(Some(v2)) => v2,
+        _ => AuthDotJsonV2::new(),
+    };
+    v2_for_anthropic.set_provider_auth(
+        ProviderName::Anthropic,
+        ProviderAuth::AnthropicOAuth {
+            access_token: "sk-ant-oat01-test".to_string(),
+            refresh_token: "sk-ant-ort01-test".to_string(),
+            expires_at: 9999999999,
+        },
+    );
+    super::save_auth_v2(dir.path(), &v2_for_anthropic, store_mode).expect("save_auth_v2 anthropic");
+
+    // Step 3: Verify BOTH providers survive
+    let final_v2 = super::load_auth_dot_json_v2(dir.path(), store_mode)
+        .expect("load final v2")
+        .expect("final v2 should exist");
+
+    let has_openai = final_v2.provider_auth(ProviderName::OpenAI).is_some();
+    let has_anthropic = final_v2.provider_auth(ProviderName::Anthropic).is_some();
+
+    assert!(
+        has_openai,
+        "ChatGPT auth MUST survive after Anthropic onboarding. Providers: {:?}",
+        final_v2.providers.keys().collect::<Vec<_>>()
+    );
+    assert!(
+        has_anthropic,
+        "Anthropic auth should exist after onboarding"
+    );
+
+    // Step 4: Verify AuthManager can find both via auth_cached_for_provider
+    let manager = AuthManager::new(
+        dir.path().to_path_buf(),
+        /*enable_orbit_code_api_key_env*/ false,
+        store_mode,
+    );
+    let openai = manager.auth_cached_for_provider(ProviderName::OpenAI);
+    let anthropic = manager.auth_cached_for_provider(ProviderName::Anthropic);
+    assert!(openai.is_some(), "AuthManager should find OpenAI auth");
+    assert!(
+        anthropic.is_some(),
+        "AuthManager should find Anthropic auth"
+    );
+    assert!(
+        matches!(anthropic, Some(CodexAuth::AnthropicOAuth(_))),
+        "Anthropic auth should be AnthropicOAuth variant"
     );
 }

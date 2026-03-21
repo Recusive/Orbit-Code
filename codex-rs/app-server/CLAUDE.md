@@ -1,54 +1,62 @@
 # app-server
 
-## Purpose
+JSON-RPC application server bridging UI clients (TUI, VS Code extension, test harness) to the core agent runtime.
 
-The `codex-app-server` crate is the main application server for the Codex CLI ecosystem. It exposes a JSON-RPC API over stdio or WebSocket transports, accepting client requests (thread management, turn execution, config reads/writes, filesystem operations, fuzzy file search, plugin management, etc.) and forwarding them to the core agent runtime. It is the process boundary between UI clients (TUI, VS Code extension, test harness) and the Codex agent engine.
+## Build & Test
 
-## What It Plugs Into
+```bash
+cargo test -p orbit-code-app-server        # Run tests
+just fix -p orbit-code-app-server          # Clippy
+just fmt                                    # Format
+```
 
-- **Downstream (serves):** Any JSON-RPC client connecting via stdio or `ws://` -- the TUI, VS Code extension, `codex-app-server-client` (in-process or remote), and the test client.
-- **Upstream (depends on):**
-  - `codex-core` -- agent runtime, auth, config, thread management.
-  - `codex-app-server-protocol` -- all JSON-RPC message types, request/response/notification enums, and schema generation.
-  - `codex-protocol` -- lower-level shared protocol types (ThreadId, SessionSource, events).
-  - `codex-feedback`, `codex-state`, `codex-otel` -- telemetry, logging, and observability.
-  - `codex-login`, `codex-chatgpt`, `codex-backend-client` -- auth and API integration.
-  - `codex-file-search` -- fuzzy file search engine.
-  - `codex-rmcp-client` -- MCP server communication.
-
-## Key Exports
-
-- `run_main` / `run_main_with_transport` -- entry points that boot the server event loop.
-- `AppServerTransport` -- enum for Stdio vs WebSocket transport selection.
-- `in_process` module -- in-memory transport for embedding the server inside a CLI process without a socket boundary.
-- `INPUT_TOO_LARGE_ERROR_CODE`, `INVALID_PARAMS_ERROR_CODE` -- public error code constants.
+Tests live in `tests/all.rs` -> `tests/suite/`. Shared test utilities are in `tests/common/`.
 
 ## Architecture
 
-The server runs two concurrent Tokio tasks:
+### Two-Task Event Loop
 
-1. **Processor loop** -- receives transport events (connection open/close, incoming JSON-RPC messages), dispatches them through `MessageProcessor` which routes to `CodexMessageProcessor` for thread/turn/agent operations, `ConfigApi` for config CRUD, `FsApi` for file operations, etc.
-2. **Outbound router loop** -- takes `OutgoingEnvelope` messages from the processor and writes them to the appropriate per-connection writer, handling broadcast, filtering, and backpressure.
+The server runs two concurrent Tokio tasks (bootstrapped in `lib.rs`):
 
-## Key Files
+1. **Processor loop** -- receives `TransportEvent`s (connection open/close, incoming JSON-RPC messages) and dispatches them through `MessageProcessor`.
+2. **Outbound router loop** -- takes `OutgoingEnvelope` messages from the processor and writes them to the appropriate per-connection writer, handling broadcast and filtering.
 
-| File | Role |
-|------|------|
-| `Cargo.toml` | Crate manifest with all workspace dependencies |
-| `src/lib.rs` | Server bootstrap, config loading, tracing setup, main event loop |
-| `src/main.rs` | Binary entry point, CLI arg parsing (`--listen`) |
-| `src/transport.rs` | Stdio and WebSocket transport implementations, connection lifecycle |
-| `src/in_process.rs` | In-memory transport for embedding server in-process |
-| `src/message_processor.rs` | Top-level request router (initialize, config, FS, delegates to CodexMessageProcessor) |
-| `src/codex_message_processor.rs` | Agent-domain request handler (threads, turns, models, plugins, auth, etc.) |
-| `src/outgoing_message.rs` | Outgoing message types and sender abstraction |
-| `src/thread_state.rs` | Per-thread runtime state |
-| `src/thread_status.rs` | Thread status tracking and watch manager |
-| `src/config_api.rs` | Config read/write/batch-write handler |
-| `src/fs_api.rs` | Filesystem operation handler |
-| `src/command_exec.rs` | PTY-based command execution manager |
-| `src/fuzzy_file_search.rs` | Fuzzy file search session manager |
-| `src/dynamic_tools.rs` | Dynamic tool call handling |
-| `src/models.rs` | Model listing and supported-model helpers |
-| `src/filters.rs` | Notification filtering logic |
-| `src/error_code.rs` | JSON-RPC error code constants |
+### Request Processing Pipeline
+
+```
+Transport (stdio/ws/in-process)
+  -> TransportEvent
+    -> MessageProcessor (message_processor.rs)
+      -> Initialize handshake
+      -> ConfigApi (config read/write)
+      -> FsApi (filesystem ops)
+      -> ExternalAgentConfigApi
+      -> CodexMessageProcessor (orbit_code_message_processor.rs)
+        -> Thread/turn management
+        -> Model listing
+        -> Plugin/MCP operations
+        -> Auth, analytics, reviews
+```
+
+`MessageProcessor` handles the initialize handshake and routes to domain-specific handlers. Most agent-domain logic (threads, turns, models, plugins, auth) is delegated to `CodexMessageProcessor`.
+
+### Transport Layer
+
+Three transport modes, all producing the same `TransportEvent` stream:
+
+- **Stdio** -- line-delimited JSON over stdin/stdout
+- **WebSocket** -- axum-based WS acceptor with `/health` and `/readyz` endpoints
+- **In-process** -- channel-based in-memory transport (`in_process.rs`) for embedding the server inside a CLI process without a socket boundary
+
+### The `orbit_code_message_processor` Dual Structure
+
+`orbit_code_message_processor.rs` is a single large file (~338K) that also has a companion directory `orbit_code_message_processor/` containing helper submodules (`apps_list_helpers.rs`, `plugin_app_helpers.rs`). This is the Rust module + directory coexistence pattern -- the `.rs` file is the module root and the directory holds extracted helpers.
+
+## Key Considerations
+
+- **`orbit_code_message_processor.rs` is extremely large.** When adding new request handlers, extract helper logic into the `orbit_code_message_processor/` subdirectory rather than growing the main file further.
+- **`bespoke_event_handling.rs` is also very large** (~146K). It handles custom event transformation for specific notification types.
+- **Connection lifecycle matters.** The outbound router tracks per-connection state. If you add new notification types, ensure they flow through the `filters.rs` logic correctly.
+- **In-process transport** is used by the TUI to embed the app-server without process boundaries. Changes to the transport abstraction must keep the in-process path working.
+- **Mirror TUI changes.** If the app-server's message handling affects what the TUI displays, ensure `tui_app_server/` stays in sync per the root CLAUDE.md convention.
+- **Error codes.** Use constants from `error_code.rs` (`INVALID_PARAMS_ERROR_CODE`, `INPUT_TOO_LARGE_ERROR_CODE`, etc.) rather than raw integers.

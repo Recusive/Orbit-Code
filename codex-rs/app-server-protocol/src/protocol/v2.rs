@@ -1563,6 +1563,14 @@ pub enum Account {
     #[serde(rename = "chatgpt", rename_all = "camelCase")]
     #[ts(rename = "chatgpt", rename_all = "camelCase")]
     Chatgpt { email: String, plan_type: PlanType },
+
+    #[serde(rename = "anthropicApiKey", rename_all = "camelCase")]
+    #[ts(rename = "anthropicApiKey", rename_all = "camelCase")]
+    AnthropicApiKey {},
+
+    #[serde(rename = "anthropicOAuth", rename_all = "camelCase")]
+    #[ts(rename = "anthropicOAuth", rename_all = "camelCase")]
+    AnthropicOAuth {},
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS, ExperimentalApi)]
@@ -1598,6 +1606,18 @@ pub enum LoginAccountParams {
         #[ts(optional = nullable)]
         chatgpt_plan_type: Option<String>,
     },
+
+    #[serde(rename = "anthropicApiKey", rename_all = "camelCase")]
+    #[ts(rename = "anthropicApiKey", rename_all = "camelCase")]
+    AnthropicApiKey {
+        #[serde(rename = "apiKey")]
+        #[ts(rename = "apiKey")]
+        api_key: String,
+    },
+
+    #[serde(rename = "anthropicOAuth")]
+    #[ts(rename = "anthropicOAuth")]
+    AnthropicOAuth,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]
@@ -1620,6 +1640,18 @@ pub enum LoginAccountResponse {
     #[serde(rename = "chatgptAuthTokens", rename_all = "camelCase")]
     #[ts(rename = "chatgptAuthTokens", rename_all = "camelCase")]
     ChatgptAuthTokens {},
+
+    #[serde(rename = "anthropicApiKey")]
+    #[ts(rename = "anthropicApiKey")]
+    AnthropicApiKey {},
+
+    #[serde(rename = "anthropicOAuth", rename_all = "camelCase")]
+    #[ts(rename = "anthropicOAuth", rename_all = "camelCase")]
+    AnthropicOAuth {
+        login_id: String,
+        auth_url: String,
+        instructions: String,
+    },
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]
@@ -1643,6 +1675,36 @@ pub enum CancelLoginAccountStatus {
 #[ts(export_to = "v2/")]
 pub struct CancelLoginAccountResponse {
     pub status: CancelLoginAccountStatus,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, JsonSchema, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export_to = "v2/")]
+pub struct SubmitOAuthCodeParams {
+    pub login_id: String,
+    pub code: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, JsonSchema, TS)]
+#[serde(tag = "type", rename_all = "camelCase")]
+#[ts(export_to = "v2/")]
+pub enum SubmitOAuthCodeResponse {
+    #[serde(rename = "success")]
+    Success,
+    #[serde(rename = "failed")]
+    Failed { message: String },
+    #[serde(rename = "notFound")]
+    NotFound,
+    #[serde(rename = "expired")]
+    Expired,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default, JsonSchema, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export_to = "v2/")]
+pub struct LogoutAccountParams {
+    #[ts(optional = nullable)]
+    pub provider: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]
@@ -1704,6 +1766,9 @@ pub struct GetAccountParams {
     /// themselves and call `account/login/start` with `chatgptAuthTokens`.
     #[serde(default)]
     pub refresh_token: bool,
+    /// Optional provider name to scope the account read to a specific provider.
+    #[ts(optional = nullable)]
+    pub provider: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]
@@ -1711,7 +1776,8 @@ pub struct GetAccountParams {
 #[ts(export_to = "v2/")]
 pub struct GetAccountResponse {
     pub account: Option<Account>,
-    pub requires_openai_auth: bool,
+    #[serde(alias = "requires_openai_auth")]
+    pub requires_auth: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default, JsonSchema, TS)]
@@ -3517,6 +3583,8 @@ pub struct Thread {
 pub struct AccountUpdatedNotification {
     pub auth_mode: Option<AuthMode>,
     pub plan_type: Option<PlanType>,
+    #[ts(optional = nullable)]
+    pub provider: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, JsonSchema, TS)]

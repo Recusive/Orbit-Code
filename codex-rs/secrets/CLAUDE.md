@@ -1,58 +1,23 @@
 # codex-rs/secrets/
 
-Crate: `codex-secrets` -- Encrypted secrets management for the Codex CLI.
+Encrypted secrets management: age-encrypted storage with OS keyring passphrase, scoped secrets (global vs per-environment), and best-effort output redaction.
 
-## What this crate does
+## Build & Test
+```bash
+cargo build -p orbit-code-secrets
+cargo test -p orbit-code-secrets
+```
 
-Provides a secrets management system that allows users to store, retrieve, and delete encrypted secrets (API keys, tokens, etc.). Secrets are encrypted at rest using `age` (scrypt-based) encryption, with the encryption passphrase stored in the OS keyring. Also provides a best-effort secret redaction utility for sanitizing output.
+## Architecture
 
-## Main types and functions
+`SecretsManager` is the high-level API for storing/retrieving/deleting secrets, backed by the `SecretsBackend` trait. The default `LocalSecretsBackend` stores all secrets in a single age-encrypted file (`~/.codex/secrets/local.age`) as a JSON `BTreeMap`. The encryption passphrase is generated randomly and persisted in the OS keyring via `orbit-code-keyring-store`.
 
-- `SecretsManager` -- High-level API for managing secrets:
-  - `set(scope, name, value)` -- Store a secret
-  - `get(scope, name)` -- Retrieve a secret
-  - `delete(scope, name)` -- Delete a secret
-  - `list(scope_filter)` -- List all secrets, optionally filtered by scope
-- `SecretName` -- Validated secret name (uppercase A-Z, digits, underscores only)
-- `SecretScope` -- Scoping enum: `Global` or `Environment(id)` (per-project secrets)
-- `SecretListEntry` -- Entry in a secret listing (scope + name)
-- `SecretsBackendKind` -- Backend selection enum (currently only `Local`)
-- `SecretsBackend` trait -- Backend abstraction with `set`, `get`, `delete`, `list`
-- `LocalSecretsBackend` -- Default backend that stores secrets in an age-encrypted file (`local.age`) under `~/.codex/secrets/`
-- `redact_secrets(input: String) -> String` -- Best-effort redaction of secrets from text output using regex patterns
+Secrets are scoped via `SecretScope` -- either `Global` or `Environment(id)`, where the environment ID is derived from the git repo name or a SHA-256 hash of the working directory. The `sanitizer` module provides `redact_secrets()` for best-effort redaction of common secret patterns (API keys, bearer tokens, AWS keys) from text output.
 
-## Key behaviors
+## Key Considerations
 
-- **Encryption**: Uses `age` crate with scrypt recipient/identity; passphrase stored in OS keyring via `codex-keyring-store`
-- **Storage**: Secrets stored as a JSON `BTreeMap<String, String>` inside an age-encrypted file
-- **Scoping**: Secrets can be global or scoped to an environment (derived from git repo name or cwd hash)
-- **Redaction patterns**: OpenAI API keys (`sk-*`), AWS access keys (`AKIA*`), Bearer tokens, and generic secret/password/token assignments
-
-## What it plugs into
-
-- Used by `codex-core` to inject secrets as environment variables during command execution
-- Used by `codex-cli` for the `codex secret` subcommand (set/get/delete/list)
-- The `redact_secrets` function is used to sanitize model output and logs
-
-## Imports from / exports to
-
-**Dependencies:**
-- `age` -- Encryption/decryption
-- `codex-keyring-store` -- OS keyring for passphrase storage
-- `base64` -- Encoding
-- `rand` -- Secure random passphrase generation
-- `regex` -- Secret redaction patterns
-- `schemars` -- JSON schema generation for `SecretsBackendKind`
-- `serde`, `serde_json` -- Serialization of the secrets file
-- `sha2` -- Hashing for keyring account derivation
-
-**Exports:**
-- `SecretsManager`, `SecretName`, `SecretScope`, `SecretListEntry`, `SecretsBackendKind`, `SecretsBackend`, `LocalSecretsBackend`
-- `redact_secrets`, `environment_id_from_cwd`
-
-## Key files
-
-- `Cargo.toml` -- Crate manifest
-- `src/lib.rs` -- Core types, `SecretsManager`, scope/name validation, keyring account computation
-- `src/local.rs` -- `LocalSecretsBackend` with age encryption, keyring passphrase management
-- `src/sanitizer.rs` -- `redact_secrets` function with regex-based pattern matching
+- `SecretName` validation is strict: uppercase A-Z, digits, and underscores only. Invalid names are rejected at parse time.
+- The secrets file uses a read-modify-write pattern (decrypt, mutate, re-encrypt, write) -- not concurrency-safe across multiple processes.
+- `redact_secrets()` uses lazy-compiled regex patterns and is designed for best-effort output sanitization, not security-critical redaction.
+- The `environment_id_from_cwd()` function prefers git repo name over SHA-256 hash -- falls back to hashing when not in a git repo.
+- Tests that touch the keyring may behave differently on CI vs local (OS keyring availability).

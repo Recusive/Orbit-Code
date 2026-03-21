@@ -8,7 +8,7 @@ Provides the `ExperimentalApi` derive macro that generates runtime introspection
 
 ## Where it plugs in
 
-- Used by the `codex-app-server-protocol` crate to mark experimental API protocol fields
+- Used by the `orbit-code-app-server-protocol` crate to mark experimental API protocol fields
 - This is a `proc-macro` crate -- it cannot export non-macro items
 
 ## Imports from

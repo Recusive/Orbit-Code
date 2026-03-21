@@ -1,6 +1,6 @@
 # codex-rs/codex-experimental-api-macros/src/
 
-Source directory for the `codex-experimental-api-macros` proc-macro crate.
+Source directory for the `orbit-code-experimental-api-macros` proc-macro crate.
 
 ## What this folder does
 

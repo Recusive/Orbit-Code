@@ -98,6 +98,12 @@ impl OnboardingScreen {
                 Some(ForcedLoginMethod::Api) => SignInOption::ApiKey,
                 _ => SignInOption::ChatGpt,
             };
+            // For Anthropic provider, default to Claude sign-in
+            let highlighted_mode = if config.model_provider_id == "anthropic" {
+                SignInOption::Claude
+            } else {
+                highlighted_mode
+            };
             steps.push(Step::Auth(AuthModeWidget {
                 request_frame: tui.frame_requester(),
                 highlighted_mode,
@@ -199,13 +205,17 @@ impl OnboardingScreen {
         self.should_exit
     }
 
-    fn is_api_key_entry_active(&self) -> bool {
+    fn is_text_input_active(&self) -> bool {
         self.steps.iter().any(|step| {
             if let Step::Auth(widget) = step {
-                return widget
-                    .sign_in_state
-                    .read()
-                    .is_ok_and(|g| matches!(&*g, SignInState::ApiKeyEntry(_)));
+                return widget.sign_in_state.read().is_ok_and(|g| {
+                    matches!(
+                        &*g,
+                        SignInState::ApiKeyEntry(_)
+                            | SignInState::AnthropicApiKeyEntry(_)
+                            | SignInState::AnthropicOAuthCodeEntry(_)
+                    )
+                });
             }
             false
         })
@@ -217,7 +227,7 @@ impl KeyboardHandler for OnboardingScreen {
         if !matches!(key_event.kind, KeyEventKind::Press | KeyEventKind::Repeat) {
             return;
         }
-        let is_api_key_entry_active = self.is_api_key_entry_active();
+        let is_api_key_entry_active = self.is_text_input_active();
         let should_quit = match key_event {
             KeyEvent {
                 code: KeyCode::Char('d'),

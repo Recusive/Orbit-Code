@@ -2,18 +2,18 @@
 
 ## Purpose
 
-The `codex-app-server-client` crate provides a high-level client facade for interacting with the app-server. It supports two transport modes:
+The `orbit-code-app-server-client` crate provides a high-level client facade for interacting with the app-server. It supports two transport modes:
 
-1. **In-process** -- Wraps `codex_app_server::in_process` with a worker task, providing async request/response helpers, surface-specific startup policy, and bounded shutdown. Used by the TUI and exec surfaces.
+1. **In-process** -- Wraps `orbit_code_app_server::in_process` with a worker task, providing async request/response helpers, surface-specific startup policy, and bounded shutdown. Used by the TUI and exec surfaces.
 2. **Remote (WebSocket)** -- `RemoteAppServerClient` connects to a running app-server instance over WebSocket, performing the initialize/initialized handshake and providing the same event-driven API.
 
 Both transports expose a unified `AppServerEvent` enum so callers can switch between in-process and remote without changing their higher-level session logic.
 
 ## What It Plugs Into
 
-- **Consumed by:** TUI (`codex-tui`), exec surface, and any CLI surface that needs to talk to the app-server.
-- **Wraps:** `codex-app-server::in_process` for the in-process transport path.
-- **Connects to:** A running `codex-app-server` WebSocket endpoint for the remote transport path.
+- **Consumed by:** TUI (`orbit-code-tui`), exec surface, and any CLI surface that needs to talk to the app-server.
+- **Wraps:** `orbit-code-app-server::in_process` for the in-process transport path.
+- **Connects to:** A running `orbit-code-app-server` WebSocket endpoint for the remote transport path.
 
 ## Key Exports
 
@@ -33,11 +33,11 @@ Both transports expose a unified `AppServerEvent` enum so callers can switch bet
 
 ## Imports From
 
-- `codex-app-server` -- `in_process` module for the embedded runtime.
-- `codex-app-server-protocol` -- All JSON-RPC and typed protocol types.
-- `codex-core` -- `Config`, `AuthManager`, `ThreadManager`, config loader.
-- `codex-protocol` -- `SessionSource`.
-- `codex-feedback` -- Feedback sink.
+- `orbit-code-app-server` -- `in_process` module for the embedded runtime.
+- `orbit-code-app-server-protocol` -- All JSON-RPC and typed protocol types.
+- `orbit-code-core` -- `Config`, `AuthManager`, `ThreadManager`, config loader.
+- `orbit-code-protocol` -- `SessionSource`.
+- `orbit-code-feedback` -- Feedback sink.
 - `tokio-tungstenite` -- WebSocket client for remote transport.
 
 ## Exports To

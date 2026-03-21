@@ -130,8 +130,8 @@ pub struct ModelProviderInfo {
     /// user is presented with login screen on first run, and login preference and token/key
     /// are stored in auth.json. If false (which is the default), login screen is skipped,
     /// and API key (if needed) comes from the "env_key" environment variable.
-    #[serde(default)]
-    pub requires_openai_auth: bool,
+    #[serde(default, alias = "requires_openai_auth")]
+    pub requires_auth: bool,
 
     /// Whether this provider supports the Responses API WebSocket transport.
     #[serde(default)]
@@ -278,7 +278,7 @@ impl ModelProviderInfo {
             stream_max_retries: None,
             stream_idle_timeout_ms: None,
             websocket_connect_timeout_ms: None,
-            requires_openai_auth: true,
+            requires_auth: true,
             supports_websockets: true,
         }
     }
@@ -317,7 +317,7 @@ impl ModelProviderInfo {
             stream_max_retries: None,
             stream_idle_timeout_ms: None,
             websocket_connect_timeout_ms: None,
-            requires_openai_auth: false,
+            requires_auth: true,
             supports_websockets: false,
         }
     }
@@ -394,7 +394,7 @@ pub fn create_oss_provider_with_base_url(base_url: &str, wire_api: WireApi) -> M
         stream_max_retries: None,
         stream_idle_timeout_ms: None,
         websocket_connect_timeout_ms: None,
-        requires_openai_auth: false,
+        requires_auth: false,
         supports_websockets: false,
     }
 }

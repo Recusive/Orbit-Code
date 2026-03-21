@@ -336,6 +336,14 @@ pub async fn run_login_status(cli_config_overrides: CliConfigOverrides) -> ! {
                 eprintln!("Logged in using ChatGPT");
                 std::process::exit(0);
             }
+            AuthMode::AnthropicApiKey => {
+                eprintln!("Logged in to Anthropic using an API key");
+                std::process::exit(0);
+            }
+            AuthMode::AnthropicOAuth => {
+                eprintln!("Logged in to Anthropic using OAuth");
+                std::process::exit(0);
+            }
         },
         Ok(None) => {
             eprintln!("Not logged in");
@@ -348,23 +356,133 @@ pub async fn run_login_status(cli_config_overrides: CliConfigOverrides) -> ! {
     }
 }
 
-pub async fn run_logout(cli_config_overrides: CliConfigOverrides) -> ! {
+/// Interactive Anthropic login menu: choose between API key entry.
+///
+/// OAuth (browser-based) login for Anthropic is not yet implemented; only the
+/// API key flow is available for now. The menu is structured so the OAuth
+/// option can be wired up in a future stage without changing the user-facing
+/// interface.
+pub async fn run_login_with_anthropic(cli_config_overrides: CliConfigOverrides) -> ! {
     let config = load_config_or_exit(cli_config_overrides).await;
+    let _login_log_guard = init_login_file_logging(&config);
+    tracing::info!("starting anthropic login flow");
 
-    match logout(
+    eprintln!("Anthropic Login");
+    eprintln!("───────────────");
+    eprintln!();
+    eprintln!("  Enter your Anthropic API key.");
+    eprintln!("  (Get one at https://console.anthropic.com/settings/keys)");
+    eprintln!();
+
+    let api_key = read_line_from_tty();
+    let api_key = api_key.trim();
+
+    if api_key.is_empty() {
+        eprintln!("API key cannot be empty");
+        std::process::exit(1);
+    }
+
+    let mut v2 = match orbit_code_core::auth::load_auth_dot_json_v2(
         &config.orbit_code_home,
         config.cli_auth_credentials_store_mode,
     ) {
-        Ok(true) => {
-            eprintln!("Successfully logged out");
-            std::process::exit(0);
+        Ok(Some(existing)) => existing,
+        _ => orbit_code_core::auth::AuthDotJsonV2::new(),
+    };
+    v2.set_provider_auth(
+        orbit_code_core::auth::ProviderName::Anthropic,
+        orbit_code_core::auth::ProviderAuth::AnthropicApiKey {
+            key: api_key.to_string(),
+        },
+    );
+    if let Err(e) = orbit_code_core::auth::save_auth_v2(
+        &config.orbit_code_home,
+        &v2,
+        config.cli_auth_credentials_store_mode,
+    ) {
+        eprintln!("Failed to save auth: {e}");
+        std::process::exit(1);
+    }
+
+    eprintln!("Anthropic API key saved.");
+    std::process::exit(0);
+}
+
+/// Read a single line from the terminal (not stdin, which may be piped).
+fn read_line_from_tty() -> String {
+    let mut buf = String::new();
+    if let Err(e) = std::io::stdin().read_line(&mut buf) {
+        eprintln!("Failed to read input: {e}");
+        std::process::exit(1);
+    }
+    buf
+}
+
+pub async fn run_logout(provider: Option<&str>, cli_config_overrides: CliConfigOverrides) -> ! {
+    let config = load_config_or_exit(cli_config_overrides).await;
+
+    match provider {
+        Some("anthropic") => {
+            match orbit_code_core::auth::logout_provider(
+                &config.orbit_code_home,
+                orbit_code_core::auth::ProviderName::Anthropic,
+                config.cli_auth_credentials_store_mode,
+            ) {
+                Ok(true) => {
+                    eprintln!("Logged out from Anthropic.");
+                    std::process::exit(0);
+                }
+                Ok(false) => {
+                    eprintln!("Not logged in to Anthropic.");
+                    std::process::exit(0);
+                }
+                Err(e) => {
+                    eprintln!("Error logging out from Anthropic: {e}");
+                    std::process::exit(1);
+                }
+            }
         }
-        Ok(false) => {
-            eprintln!("Not logged in");
-            std::process::exit(0);
+        Some("openai") => {
+            match orbit_code_core::auth::logout_provider(
+                &config.orbit_code_home,
+                orbit_code_core::auth::ProviderName::OpenAI,
+                config.cli_auth_credentials_store_mode,
+            ) {
+                Ok(true) => {
+                    eprintln!("Logged out from OpenAI.");
+                    std::process::exit(0);
+                }
+                Ok(false) => {
+                    eprintln!("Not logged in to OpenAI.");
+                    std::process::exit(0);
+                }
+                Err(e) => {
+                    eprintln!("Error logging out from OpenAI: {e}");
+                    std::process::exit(1);
+                }
+            }
         }
-        Err(e) => {
-            eprintln!("Error logging out: {e}");
+        None => {
+            match logout(
+                &config.orbit_code_home,
+                config.cli_auth_credentials_store_mode,
+            ) {
+                Ok(true) => {
+                    eprintln!("Logged out from all providers.");
+                    std::process::exit(0);
+                }
+                Ok(false) => {
+                    eprintln!("Not logged in");
+                    std::process::exit(0);
+                }
+                Err(e) => {
+                    eprintln!("Error logging out: {e}");
+                    std::process::exit(1);
+                }
+            }
+        }
+        Some(other) => {
+            eprintln!("Unknown provider: {other}");
             std::process::exit(1);
         }
     }

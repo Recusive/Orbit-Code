@@ -2,13 +2,13 @@
 
 ## Purpose
 
-Source code for the `codex-app-server-test-client` binary. Implements a CLI tool for exercising the app-server JSON-RPC API.
+Source code for the `orbit-code-app-server-test-client` binary. Implements a CLI tool for exercising the app-server JSON-RPC API.
 
 ## Key Files
 
 | File | Role |
 |------|------|
-| `main.rs` | Binary entry point. Creates a single-threaded Tokio runtime and calls `codex_app_server_test_client::run()`. Minimal -- all logic is in `lib.rs`. |
+| `main.rs` | Binary entry point. Creates a single-threaded Tokio runtime and calls `orbit_code_app_server_test_client::run()`. Minimal -- all logic is in `lib.rs`. |
 | `lib.rs` | Core client implementation. Defines the CLI structure using `clap` with subcommands for all major app-server operations. Key components: |
 
 ### `lib.rs` Details
@@ -21,14 +21,14 @@ Source code for the `codex-app-server-test-client` binary. Implements a CLI tool
 
 ## What It Plugs Into
 
-- Connects to `codex-app-server` via WebSocket or stdio.
-- Uses `codex-app-server-protocol` for all message types.
+- Connects to `orbit-code-app-server` via WebSocket or stdio.
+- Uses `orbit-code-app-server-protocol` for all message types.
 
 ## Imports From
 
-- `codex-app-server-protocol` -- All JSON-RPC types, `ClientRequest`, `ServerRequest`, `ServerNotification`, individual request/response param structs.
-- `codex-core` -- Config loading for stdio mode.
-- `codex-protocol` -- Shared protocol types.
+- `orbit-code-app-server-protocol` -- All JSON-RPC types, `ClientRequest`, `ServerRequest`, `ServerNotification`, individual request/response param structs.
+- `orbit-code-core` -- Config loading for stdio mode.
+- `orbit-code-protocol` -- Shared protocol types.
 - `tungstenite` -- Synchronous WebSocket client.
 - `clap` -- CLI argument parsing.
 - `serde_json` -- JSON serialization.

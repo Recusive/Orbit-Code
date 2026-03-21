@@ -1,33 +1,20 @@
 # codex-rs/ollama/
 
-Client library for integrating Codex with a local Ollama server.
+Client library for integrating with a local Ollama server for open-source model support.
 
-## What this folder does
+## Build & Test
+```bash
+cargo build -p orbit-code-ollama
+cargo test -p orbit-code-ollama
+```
 
-The `codex-ollama` crate manages communication with a local Ollama instance for running open-source models. It handles server connectivity checks, model listing, model pulling with progress reporting, version detection, and Responses API compatibility checking.
+## Architecture
 
-## Where it plugs in
+`OllamaClient` wraps a `reqwest::Client` and communicates with the Ollama server using both its native API (`/api/tags`, `/api/version`, `/api/pull`) and OpenAI-compatible endpoints (`/v1/models`). The client auto-detects which API style to use based on the base URL. The top-level `ensure_oss_ready()` orchestrates server verification, model availability checks, and streaming model pulls with progress reporting. `ensure_responses_supported()` validates the Ollama version is >= 0.13.4 for Responses API compatibility.
 
-- **Consumed by**: `codex-cli` and `codex-tui` when the `--oss` flag is used and the configured provider is Ollama.
-- **Depends on**: `codex-core` (for `Config`, `ModelProviderInfo`, `OLLAMA_OSS_PROVIDER_ID`), `reqwest` (HTTP client), `semver` (version parsing), `futures`/`async-stream` (streaming pull), `serde_json`, `tokio`, `tracing`.
-
-## Main functions
-
-- `ensure_oss_ready(config)` -- Top-level entry: verifies the Ollama server is reachable, checks model availability, pulls if missing with CLI progress display.
-- `ensure_responses_supported(provider)` -- Version check: ensures Ollama >= 0.13.4 for Responses API support.
-- `OllamaClient::try_from_oss_provider(config)` / `try_from_provider(provider)` -- Constructs a client and probes server health.
-- `OllamaClient::fetch_models()` -- Lists local models via `/api/tags`.
-- `OllamaClient::fetch_version()` -- Queries server version via `/api/version`.
-- `OllamaClient::pull_model_stream(model)` -- Streams pull progress events.
-- `OllamaClient::pull_with_reporter(model, reporter)` -- High-level pull with progress reporting.
-
-## Key files
-
-| File | Role |
-|------|------|
-| `Cargo.toml` | Crate manifest; depends on codex-core, reqwest, semver, async-stream, futures |
-| `src/lib.rs` | Public API: `ensure_oss_ready()`, `ensure_responses_supported()`, `DEFAULT_OSS_MODEL` (`"gpt-oss:20b"`), version support logic |
-| `src/client.rs` | `OllamaClient` implementation: server probing (native `/api/tags` or OpenAI-compat `/v1/models`), model listing, version fetching, streaming pull, progress-reported pull |
-| `src/parser.rs` | `pull_events_from_value()`: parses JSON pull stream objects into `PullEvent` variants |
-| `src/pull.rs` | `PullEvent` enum (Status, ChunkProgress, Success, Error), `PullProgressReporter` trait, `CliProgressReporter` (stderr inline progress with speed), `TuiProgressReporter` (delegates to CLI for now) |
-| `src/url.rs` | URL utilities: `is_openai_compatible_base_url()` (detects `/v1` suffix), `base_url_to_host_root()` (strips `/v1` to get native Ollama root) |
+## Key Considerations
+- `wiremock` is a regular dependency (not just dev), because it is used in the library for test support in downstream crates
+- Ollama version `0.0.0` (dev builds) is treated as compatible with the Responses API
+- The URL module detects `/v1` suffix to distinguish OpenAI-compatible vs native Ollama endpoints -- `base_url_to_host_root()` strips `/v1` to reach native APIs
+- Pull progress reporting uses `async-stream` for streaming events -- `PullProgressReporter` trait allows TUI and CLI to render differently
+- `DEFAULT_OSS_MODEL` is `"gpt-oss:20b"`

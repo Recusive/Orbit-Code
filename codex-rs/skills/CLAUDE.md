@@ -1,31 +1,20 @@
 # codex-rs/skills/
 
-Embedded system skills management for Codex.
+Embedded system skills: compiles skill assets (agent configs, reference docs, scripts) into the binary and extracts them to `CODEX_HOME/skills/.system` on startup.
 
-## What this folder does
+## Build & Test
+```bash
+cargo build -p orbit-code-skills
+cargo test -p orbit-code-skills
+```
 
-Bundles and installs built-in "system skills" (agent configurations, reference docs, scripts) into `CODEX_HOME/skills/.system`. Skills are embedded at compile time using `include_dir` and extracted to disk on startup. A fingerprint-based marker file avoids re-extraction when the embedded content has not changed.
+## Architecture
 
-## What it plugs into
+The crate uses `include_dir` to embed the contents of `src/assets/samples/` at compile time. On startup, `install_system_skills()` computes a fingerprint (hash of all embedded files) and compares it against a marker file in the target directory. If the fingerprint differs, it extracts all embedded files to `CODEX_HOME/skills/.system`, overwriting stale content. If the fingerprint matches, extraction is skipped entirely.
 
-- Called by `codex-core` during startup to ensure system skills are available on disk.
-- The skills directory structure is used by the agent skill loader.
+## Key Considerations
 
-## Imports from
-
-- `codex-utils-absolute-path` -- path normalization.
-- `include_dir` -- compile-time directory embedding.
-- `thiserror` -- error type derivation.
-
-## Exports to
-
-- `install_system_skills(codex_home)` -- extracts embedded skills to disk.
-- `system_cache_root_dir(codex_home)` -- returns the path to the system skills cache.
-- `SystemSkillsError` -- error type.
-
-## Key files
-
-- `Cargo.toml` -- crate manifest.
-- `build.rs` -- emits `cargo:rerun-if-changed` for all files under `src/assets/samples/`.
-- `src/lib.rs` -- skill installation logic, fingerprinting, and disk extraction.
-- `src/assets/samples/` -- embedded skill packages.
+- `build.rs` emits `cargo:rerun-if-changed` for all files under `src/assets/samples/` -- adding or modifying skill files triggers a rebuild.
+- The `include_dir` dependency means all skill assets are compiled into the binary -- large files increase binary size directly.
+- Fingerprint-based caching means skills are only re-extracted when the embedded content changes, not on every startup.
+- If using Bazel, embedded asset files must be listed in `BUILD.bazel` `compile_data` or the build will fail even though Cargo passes.

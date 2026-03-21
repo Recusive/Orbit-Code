@@ -1,50 +1,52 @@
 # app-server-protocol
 
-## Purpose
+Single source of truth for the JSON-RPC API contract between the app-server and its clients. Defines all request, response, notification, and error types for v1 and v2 protocol versions, plus JSON Schema and TypeScript binding generation.
 
-The `codex-app-server-protocol` crate defines the complete JSON-RPC protocol for communication between the app-server and its clients. It contains all request, response, notification, and error types for both v1 and v2 protocol versions, along with JSON Schema and TypeScript type generation tooling.
+## Build & Test
 
-This is the single source of truth for the app-server API contract. Schema fixtures (JSON and TypeScript) are generated from Rust types and committed to the `schema/` directory for cross-language consumers.
+```bash
+cargo test -p orbit-code-app-server-protocol   # Run tests (includes schema fixture validation)
+just write-app-server-schema                    # Regenerate schema fixtures in schema/
+just write-app-server-schema --experimental     # Include experimental API surface
+just fmt                                        # Format
+just fix -p orbit-code-app-server-protocol      # Clippy
+```
 
-## What It Plugs Into
+The `schema/` directory contains committed JSON and TypeScript fixtures generated from Rust types. Tests in `tests/schema_fixtures.rs` verify that committed fixtures match generated output -- if you change types, you must regenerate.
 
-- **Consumed by:** `codex-app-server`, `codex-app-server-client`, `codex-app-server-test-client`, TUI, exec surface, and any other crate that sends or receives app-server messages.
-- **Depends on:** `codex-protocol` for lower-level shared types, `codex-utils-absolute-path`, `codex-experimental-api-macros` for experimental API gating.
+## Architecture
 
-## Key Exports
+### Protocol Structure
 
-- **JSON-RPC primitives:** `JSONRPCMessage`, `JSONRPCRequest`, `JSONRPCResponse`, `JSONRPCNotification`, `JSONRPCError`, `RequestId`, `Result`.
-- **Typed enums:** `ClientRequest`, `ClientNotification`, `ServerRequest`, `ServerNotification` -- tagged unions for all protocol methods.
-- **v1 types:** `InitializeParams`, `InitializeResponse`, `ClientInfo`, `InitializeCapabilities`, etc.
-- **v2 types:** Hundreds of request/response/notification structs covering threads, turns, config, plugins, MCP, accounts, models, filesystem, etc.
-- **Schema generation:** `generate_json`, `generate_ts`, `write_schema_fixtures`, `GenerateTsOptions`.
-- **Experimental API:** `ExperimentalApi` trait, `experimental_fields()`, `experimental_required_message()`.
-- **Thread history:** Types for reconstructing thread item history from events.
+The protocol is split across three files in `src/protocol/`:
 
-## Key Files
+- **`common.rs`** -- the core dispatch layer. Defines `ClientRequest`, `ClientNotification`, `ServerRequest`, and `ServerNotification` as tagged enums that route JSON-RPC method names to their v1 or v2 handler types. Also defines `AuthMode` and experimental API method registries via macros.
+- **`v1.rs`** -- legacy v1 types (`InitializeParams`, `InitializeResponse`, `ClientInfo`, etc.). No new API surface should be added here.
+- **`v2.rs`** -- the active v2 API surface. Hundreds of `*Params`/`*Response`/`*Notification` structs covering threads, turns, config, plugins, accounts, models, MCP, filesystem, approvals, command execution, analytics, and more.
 
-| File | Role |
-|------|------|
-| `Cargo.toml` | Crate manifest |
-| `src/lib.rs` | Crate root; re-exports all protocol types and schema generation APIs |
-| `src/protocol/` | Protocol type definitions (common, v1, v2, mappers, serde_helpers, thread_history) |
-| `src/jsonrpc_lite.rs` | JSON-RPC envelope types (message, request, response, error, notification) |
-| `src/export.rs` | JSON Schema and TypeScript generation logic |
-| `src/schema_fixtures.rs` | Schema fixture read/write/comparison utilities |
-| `src/experimental_api.rs` | Experimental API gating trait and field registry |
-| `src/bin/write_schema_fixtures.rs` | CLI binary to regenerate schema fixtures |
-| `schema/` | Generated schema fixtures (JSON and TypeScript) |
-| `tests/schema_fixtures.rs` | Tests ensuring committed fixtures match generated output |
+### TypeScript & JSON Schema Generation
 
-## Imports From
+Types derive `ts_rs::TS` and `schemars::JsonSchema`. The generation pipeline in `export.rs` produces both JSON Schema files and TypeScript definitions, partitioned by v1/v2 and with experimental field filtering. The `bin/write_schema_fixtures.rs` binary drives the regeneration.
 
-- `codex-protocol` -- Core shared types (ThreadId, SessionSource, events, config types, models).
-- `codex-experimental-api-macros` -- Proc macro for `#[derive(ExperimentalApi)]`.
-- `codex-utils-absolute-path` -- `AbsolutePathBuf`.
-- `schemars` -- JSON Schema derivation.
-- `ts-rs` -- TypeScript type generation.
-- `serde`, `serde_json` -- Serialization.
+### Experimental API Gating
 
-## Exports To
+The `ExperimentalApi` trait (from `orbit-code-experimental-api-macros`) marks methods and fields as experimental. The `common.rs` macros register experimental methods, and `#[derive(ExperimentalApi)]` with `#[experimental("reason")]` on struct fields provides field-level gating. Use `inspect_params: true` in the macro when only some fields of a stable method are experimental.
 
-- Used by every crate that communicates with the app-server.
+### Supporting Modules
+
+- `jsonrpc_lite.rs` -- JSON-RPC envelope types (`JSONRPCMessage`, `JSONRPCRequest`, `JSONRPCResponse`, `JSONRPCNotification`, `JSONRPCError`). Note: does not require the `"jsonrpc": "2.0"` field.
+- `mappers.rs` -- `From` impls converting between v1 and v2 types.
+- `serde_helpers.rs` -- custom serde for `Option<Option<T>>` (double-option) patterns.
+- `thread_history.rs` -- reconstructing thread item history from `EventMsg` events.
+
+## Key Considerations
+
+- **All new API work goes in v2.** Do not add new types or methods to `v1.rs`.
+- **v2 wire format is `camelCase`.** All v2 types use `#[serde(rename_all = "camelCase")]`.
+- **`#[ts(optional = nullable)]` is for `*Params` fields only.** Do not use it on response or notification types.
+- **Never use `skip_serializing_if` on v2 `Option<T>` fields.** Use `#[ts(optional = nullable)]` instead. Exception: booleans defaulting to false use `#[serde(default, skip_serializing_if = "std::ops::Not::not")]`.
+- **Always add `#[ts(export_to = "v2/")]`** on v2 types to ensure TypeScript bindings land in the right directory.
+- **Keep `#[serde(rename)]` and `#[ts(rename)]` aligned** when renaming fields for wire compatibility.
+- **Regenerate after changes.** Run `just write-app-server-schema` after any type changes, then `cargo test -p orbit-code-app-server-protocol` to verify fixtures match.
+- **`v2.rs` is very large** (~270K). Follow the naming conventions (`*Params`, `*Response`, `*Notification`) and group related types together near their RPC method registration in `common.rs`.
+- **Experimental fields need `ExperimentalApi`.** If adding an experimental field to a stable method's params, derive `ExperimentalApi` on the params struct, mark the field with `#[experimental("method/name")]`, and set `inspect_params: true` on the method variant in `common.rs`.

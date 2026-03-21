@@ -160,6 +160,7 @@ impl AppServerSession {
                 request_id: account_request_id,
                 params: GetAccountParams {
                     refresh_token: false,
+                    provider: None,
                 },
             })
             .await
@@ -241,6 +242,24 @@ impl AppServerSession {
                     true,
                 )
             }
+            Some(Account::AnthropicApiKey {}) => (
+                Some(AuthMode::AnthropicApiKey),
+                None,
+                Some(TelemetryAuthMode::AnthropicApiKey),
+                Some(StatusAccountDisplay::AnthropicApiKey),
+                None,
+                FeedbackAudience::External,
+                false,
+            ),
+            Some(Account::AnthropicOAuth {}) => (
+                Some(AuthMode::AnthropicOAuth),
+                None,
+                Some(TelemetryAuthMode::AnthropicOAuth),
+                Some(StatusAccountDisplay::AnthropicOAuth),
+                None,
+                FeedbackAudience::External,
+                false,
+            ),
             None => (
                 None,
                 None,
@@ -712,6 +731,8 @@ pub(crate) fn status_account_display_from_auth_mode(
                 plan: plan_type.map(|plan_type| title_case(format!("{plan_type:?}").as_str())),
             })
         }
+        Some(AuthMode::AnthropicApiKey) => Some(StatusAccountDisplay::AnthropicApiKey),
+        Some(AuthMode::AnthropicOAuth) => Some(StatusAccountDisplay::AnthropicOAuth),
         None => None,
     }
 }

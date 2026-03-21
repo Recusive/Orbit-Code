@@ -1,44 +1,23 @@
 # codex-rs/state/
 
-SQLite-backed persistent state management for Codex.
+SQLite-backed persistent state: thread metadata, structured log storage, backfill orchestration, agent jobs, and memories.
 
-## What this folder does
+## Build & Test
+```bash
+cargo build -p orbit-code-state
+cargo test -p orbit-code-state
+```
 
-Provides `StateRuntime`, a high-level interface for storing and querying thread metadata, logs, backfill state, agent jobs, and memories in local SQLite databases. Extracts metadata from JSONL rollout files and mirrors it into structured tables.
+## Architecture
 
-## What it plugs into
+`StateRuntime` is the primary entry point -- it manages two SQLite databases (state DB for threads/backfill/jobs/memories, logs DB for structured log events), runs migrations on startup, and provides query methods organized by domain. Thread metadata is extracted from JSONL rollout files via `apply_rollout_item()` which transforms protocol-level events into structured table rows.
 
-- Used by `codex-core` for thread/session persistence across CLI restarts.
-- The `log_db` module provides a `tracing_subscriber::Layer` for writing structured logs to SQLite.
-- The `logs_client` binary provides a standalone log tailing CLI.
+The `log_db` module implements a `tracing_subscriber::Layer` that captures log events and batch-inserts them into the logs DB via a background tokio task. A standalone `logs_client` binary (`src/bin/`) provides CLI-based log tailing.
 
-## Imports from
+## Key Considerations
 
-- `codex-protocol` -- `ThreadId`, `RolloutItem`, `EventMsg`, `ResponseItem`, and other protocol types.
-- `sqlx` -- SQLite connection pooling, migrations, and queries.
-- `chrono` -- date/time handling.
-- `serde`, `serde_json` -- serialization.
-- `tokio` -- async runtime.
-- `tracing`, `tracing-subscriber` -- log layer integration.
-
-## Exports to
-
-- `StateRuntime` -- primary entrypoint: manages DB pools, runs migrations, provides query methods for threads, logs, backfill, agent jobs, and memories.
-- Model types: `ThreadMetadata`, `ThreadMetadataBuilder`, `ThreadsPage`, `LogEntry`, `LogQuery`, `LogRow`, `AgentJob`, `AgentJobItem`, `BackfillState`, `Stage1Output`, etc.
-- Path helpers: `state_db_path()`, `logs_db_path()`.
-- Extraction: `apply_rollout_item()`, `rollout_item_affects_thread_metadata()`.
-- Constants: `SQLITE_HOME_ENV`, `LOGS_DB_FILENAME`, `STATE_DB_FILENAME`, version numbers.
-
-## Key files
-
-- `Cargo.toml` -- crate manifest.
-- `src/lib.rs` -- module declarations, re-exports, and metric constants.
-- `src/runtime.rs` -- `StateRuntime` implementation with DB initialization and query methods.
-- `src/model/` -- data model types.
-- `src/runtime/` -- runtime submodules (threads, logs, backfill, agent_jobs, memories).
-- `src/extract.rs` -- rollout item to thread metadata extraction.
-- `src/log_db.rs` -- tracing layer that writes log events to SQLite.
-- `src/migrations.rs` -- SQLx migration runner setup.
-- `src/paths.rs` -- file path utilities.
-- `migrations/` -- SQLite migration SQL files for the state DB.
-- `logs_migrations/` -- SQLite migration SQL files for the logs DB.
+- Both databases use WAL mode with busy timeout for concurrent read access -- but writes are not safe across multiple processes.
+- Migrations live in `migrations/` (state DB) and `logs_migrations/` (logs DB) as SQL files. Adding a migration requires updating `BUILD.bazel` if using `sqlx::migrate!`.
+- `apply_rollout_item()` is the core data extraction function -- it must handle all `RolloutItem` variants. Adding a new variant to `orbit-code-protocol` requires updating the extraction logic here.
+- The `SQLITE_HOME_ENV` environment variable overrides the default SQLite database location.
+- `ThreadMetadataBuilder` uses a builder pattern for incremental construction from multiple rollout items.

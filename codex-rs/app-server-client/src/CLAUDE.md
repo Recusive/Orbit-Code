@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Source code for the `codex-app-server-client` crate. Implements two transport-backed client facades for the app-server JSON-RPC API.
+Source code for the `orbit-code-app-server-client` crate. Implements two transport-backed client facades for the app-server JSON-RPC API.
 
 ## Key Files
 
@@ -13,17 +13,17 @@ Source code for the `codex-app-server-client` crate. Implements two transport-ba
 
 ## What It Plugs Into
 
-- `lib.rs` depends on `codex-app-server::in_process` for the embedded runtime.
+- `lib.rs` depends on `orbit-code-app-server::in_process` for the embedded runtime.
 - `remote.rs` depends on `tokio-tungstenite` for WebSocket connectivity.
 - Both paths produce `AppServerEvent` values consumed by TUI/exec surfaces.
 
 ## Imports From
 
-- `codex-app-server::in_process` -- `InProcessStartArgs`, `InProcessClientHandle`, `InProcessServerEvent`.
-- `codex-app-server-protocol` -- All typed request/response/notification enums, JSON-RPC primitives.
-- `codex-core` -- Config, auth manager, thread manager.
-- `codex-protocol` -- `SessionSource`.
+- `orbit-code-app-server::in_process` -- `InProcessStartArgs`, `InProcessClientHandle`, `InProcessServerEvent`.
+- `orbit-code-app-server-protocol` -- All typed request/response/notification enums, JSON-RPC primitives.
+- `orbit-code-core` -- Config, auth manager, thread manager.
+- `orbit-code-protocol` -- `SessionSource`.
 
 ## Exports To
 
-- Public API consumed by `codex-tui`, exec surface, and other CLI callers.
+- Public API consumed by `orbit-code-tui`, exec surface, and other CLI callers.

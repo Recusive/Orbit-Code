@@ -1,44 +1,62 @@
 # codex-rs/hooks/
 
-Hook system for the Codex agent. Provides lifecycle hooks that run external commands at key points in the agent session: session start, user prompt submission, and stop.
+Hook system for lifecycle events in the Orbit Code agent. Hooks are external commands that receive JSON on stdin and return JSON on stdout.
 
-## What this folder does
+## Build & Test
 
-Implements a hook discovery, dispatch, and execution engine. Hooks are configured in the config layer stack and are implemented as external commands that receive JSON input on stdin and return JSON output on stdout. The system supports three event types: `SessionStart`, `UserPromptSubmit`, and `Stop`. Hooks can provide context to the agent, block operations, or inject system messages. Also supports legacy notify hooks (fire-and-forget external commands after agent turns).
+```bash
+cargo test -p orbit-code-hooks            # Run tests
+just fmt                                   # Format after changes
+just fix -p orbit-code-hooks               # Clippy
+just write-hooks-schema                    # Regenerate JSON schema fixtures after wire type changes
+```
 
-## What it plugs into
+## Architecture
 
-- **codex-core** -- the agent engine calls hooks at session start, prompt submission, and stop events
-- **codex-config** -- hooks are discovered from the `ConfigLayerStack` (global, project, local)
-- **codex-protocol** -- hook run summaries are emitted as protocol events (HookStarted, HookCompleted)
+### Hook lifecycle
 
-## Imports from
+Hooks fire at three points in the agent session:
 
-- `codex-config`: `ConfigLayerStack` for hook configuration discovery
-- `codex-protocol`: `HookRunSummary`, `HookEventName`, `HookRunStatus`, `HookOutputEntryKind`, `ThreadId`, `SandboxPermissions`
-- `schemars`: JSON Schema generation for hook input/output wire formats
-- `chrono`: timestamp serialization
-- `tokio`: async command execution
-- `regex`: matcher patterns for hook filtering
+1. **SessionStart** -- when a session begins. Can inject context (system messages) or block the session.
+2. **UserPromptSubmit** -- when the user submits a prompt. Can modify the prompt, inject context, or block submission.
+3. **Stop** -- when the agent session ends. Can perform cleanup or emit final context.
 
-## Exports to
+### Data flow
 
-- `Hooks` -- main entry point: `new(config)`, `dispatch(payload)`, `run_session_start()`, `run_user_prompt_submit()`, `run_stop()`, and preview methods
-- `HooksConfig` -- configuration: legacy_notify_argv, feature_enabled, config_layer_stack, shell_program/args
-- `Hook`, `HookPayload`, `HookEvent`, `HookResult`, `HookResponse` -- core types
-- `HookEventAfterAgent`, `HookEventAfterToolUse`, `HookToolInput`, `HookToolInputLocalShell`, `HookToolKind` -- event detail types
-- `SessionStartRequest/Outcome`, `UserPromptSubmitRequest/Outcome`, `StopRequest/Outcome` -- typed request/response for each event
-- `legacy_notify_json()`, `notify_hook()` -- legacy notification support
-- `write_schema_fixtures()` -- generates JSON Schema files for hook input/output formats
-- `command_from_argv()` -- utility for building `tokio::process::Command` from argv
+```
+ConfigLayerStack
+    |
+    v
+discovery.rs -- scans config layers for hook definitions
+    |
+    v
+ConfiguredHandler -- (event_name, command, matcher, timeout, source_path)
+    |
+    v
+ClaudeHooksEngine -- holds handlers, dispatches per event type
+    |
+    v
+command_runner.rs -- spawns hook command, sends JSON stdin, reads JSON stdout, enforces timeout
+    |
+    v
+output_parser.rs -- parses JSON output into typed outcomes (continue/block, system messages, etc.)
+```
 
-## Key files
+### Key abstractions
 
-- `Cargo.toml` -- crate metadata; library `codex_hooks`
-- `src/lib.rs` -- module declarations and public re-exports
-- `src/registry.rs` -- `Hooks` struct (main API) and `HooksConfig`
-- `src/types.rs` -- `Hook`, `HookPayload`, `HookEvent`, `HookResult`, `HookResponse`, tool input types
-- `src/schema.rs` -- JSON Schema definitions and fixture generation for hook wire formats
-- `src/legacy_notify.rs` -- legacy fire-and-forget notification support (backward compat)
-- `src/user_notification.rs` -- `UserNotification` serialization for legacy notify
-- `schema/` -- JSON Schema definition files
+- `Hooks` (registry.rs) -- public API. Created from `HooksConfig`. Exposes `run_session_start()`, `run_user_prompt_submit()`, `run_stop()`, and `preview_*` methods. Also dispatches legacy notify hooks.
+- `ClaudeHooksEngine` (engine/mod.rs) -- internal engine that holds discovered `ConfiguredHandler` entries and delegates to per-event run/preview functions.
+- `events/` -- per-event modules (`session_start.rs`, `user_prompt_submit.rs`, `stop.rs`) with typed `*Request` and `*Outcome` structs.
+- `schema.rs` -- JSON Schema wire types (`*CommandInput`, `*OutputWire`) and `write_schema_fixtures()` for generating schema files.
+
+### Legacy hooks
+
+`legacy_notify.rs` provides backward-compatible fire-and-forget notification hooks (no JSON protocol, just spawns a command with JSON as an argument).
+
+## Key Considerations
+
+- After changing any wire type in `schema.rs` or the event input/output structs, run `just write-hooks-schema` to regenerate the fixtures in `schema/generated/`.
+- Hook commands run as child processes with a configurable timeout. The shell used is controlled by `HooksConfig.shell_program` and `shell_args`.
+- Hooks are discovered from the `ConfigLayerStack` (same layered config as the rest of the system). Each config layer can define hooks, and they are merged by the discovery module.
+- This is a library crate with one binary (`write_hooks_schema_fixtures` in `src/bin/`) used only for schema generation.
+- No `tests/` directory -- tests are unit tests within source modules and the engine submodules.

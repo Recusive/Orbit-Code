@@ -1,56 +1,43 @@
 # codex-rs/config/
 
-Crate: `codex-config` -- Configuration loading, merging, and validation for the Codex CLI.
+Layered configuration loading, merging, validation, and constraint enforcement for Orbit Code.
 
-## What this crate does
+## Build & Test
 
-Manages the layered configuration system for Codex. Configuration comes from multiple sources (user config.toml, project config, managed/cloud requirements, CLI overrides) and this crate merges them into a single effective configuration. It also validates constraints, computes fingerprints for change detection, and provides error diagnostics with source positions.
+```bash
+cargo test -p orbit-code-config        # Run tests
+just fmt                               # Format after changes
+just fix -p orbit-code-config          # Clippy
+just write-config-schema               # Regenerate JSON schema after ConfigToml changes
+```
 
-## Main types and modules
+## Architecture
 
-- `ConfigLayerStack` / `ConfigLayerEntry` -- Ordered stack of TOML configuration layers with metadata and merge logic
-- `ConfigRequirements` / `ConfigRequirementsToml` -- Parsed configuration requirements (sandbox mode, network constraints, MCP servers, exec policy, etc.)
-- `CloudRequirementsLoader` -- Loads configuration requirements from cloud/remote sources
-- `Constrained<T>` / `ConstraintError` -- Wrapper types for values that may be constrained by requirements
-- `RequirementsExecPolicy` -- Execution policy rules from requirements (prefix patterns, allow/deny decisions)
-- `LoaderOverrides` -- Test-friendly overrides for configuration inputs
+Configuration flows through a layered stack with precedence (later layers override earlier):
 
-## Key features
+1. **System/managed config** -- enterprise/MDM-pushed configuration
+2. **User config** -- `~/.orbit-code/config.toml`
+3. **Project config** -- `.orbit-code/config.toml` in the project root
+4. **CLI overrides** -- command-line flags converted to a TOML layer
 
-- **Layered merge**: Multiple TOML config layers are merged with later layers taking precedence via `merge_toml_values`
-- **Fingerprinting**: `version_for_toml` computes SHA-based fingerprints for change detection
-- **Constraint system**: Requirements can constrain config values; `Constrained<T>` tracks whether a value is user-set or requirements-enforced
-- **Error diagnostics**: Rich error reporting with TOML source positions (`TextRange`, `TextPosition`)
-- **CLI override builder**: `build_cli_overrides_layer` creates a config layer from command-line flags
+Core data flow:
+- `ConfigLayerStack` holds an ordered list of `ConfigLayerEntry` values (each wrapping a `toml::Value` with a fingerprint and source metadata)
+- `merge_toml_values()` deep-merges TOML tables (recursive table merge, scalar overwrite)
+- The merged result is deserialized into `ConfigRequirementsToml` -> `ConfigRequirements`
+- `Constrained<T>` wraps values that may be locked by requirements (e.g., sandbox mode forced by enterprise policy). Attempting to change a constrained value produces a `ConstraintError`
+- `version_for_toml()` computes SHA fingerprints for change detection
+- `CloudRequirementsLoader` fetches remote/managed requirements asynchronously
 
-## What it plugs into
+Key modules:
+- `state.rs` -- `ConfigLayerStack`, `ConfigLayerEntry`, layer ordering and merge
+- `config_requirements.rs` -- all requirement types (`ConfigRequirementsToml`, network constraints, sandbox mode, MCP server requirements, etc.)
+- `constraint.rs` -- `Constrained<T>` and constraint enforcement
+- `diagnostics.rs` -- error types with TOML source positions for user-facing messages
+- `overrides.rs` -- `build_cli_overrides_layer()` for CLI flag -> TOML conversion
 
-- Used by `codex-core` to load the effective configuration at session start
-- Used by `codex-app-server` to expose config layers to IDE clients
-- Referenced by `codex-cli` for command-line config override handling
+## Key Considerations
 
-## Imports from / exports to
-
-**Dependencies:**
-- `codex-app-server-protocol` -- `ConfigLayer`, `ConfigLayerMetadata`, `ConfigLayerSource` types
-- `codex-execpolicy` -- Execution policy types
-- `codex-protocol` -- Protocol types
-- `codex-utils-absolute-path` -- `AbsolutePathBuf`
-- `futures`, `serde`, `serde_json`, `toml`, `toml_edit`, `tracing`, `sha2`, `thiserror`, `tokio`
-
-**Exports:**
-- All public types listed above are re-exported from `lib.rs`
-
-## Key files
-
-- `Cargo.toml` -- Crate manifest
-- `src/lib.rs` -- Module declarations and public re-exports
-- `src/state.rs` -- `ConfigLayerStack`, `ConfigLayerEntry`, `LoaderOverrides`
-- `src/config_requirements.rs` -- `ConfigRequirements`, `ConfigRequirementsToml`, and all requirement types
-- `src/cloud_requirements.rs` -- Cloud/remote requirements loading
-- `src/constraint.rs` -- `Constrained<T>`, `ConstraintError`
-- `src/merge.rs` -- TOML value merge logic
-- `src/overrides.rs` -- CLI override layer builder
-- `src/diagnostics.rs` -- Error types with TOML source position info
-- `src/fingerprint.rs` -- SHA fingerprinting for change detection
-- `src/requirements_exec_policy.rs` -- Execution policy from requirements
+- Config types must derive `JsonSchema`. After any change to `ConfigToml` or related types, run `just write-config-schema` to regenerate `core/config.schema.json`.
+- This crate is a library only (no binary). It is consumed primarily by `orbit-code-core` for session configuration and by `orbit-code-app-server` to expose config layers to IDE clients.
+- `RequirementsExecPolicy` in `requirements_exec_policy.rs` defines execution policy rules (prefix patterns, allow/deny) that are separate from `orbit-code-execpolicy` -- these come from managed config requirements.
+- No integration tests directory -- all tests are unit tests within the source modules.

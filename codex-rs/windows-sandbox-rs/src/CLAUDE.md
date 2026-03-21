@@ -1,6 +1,6 @@
 # codex-rs/windows-sandbox-rs/src/
 
-Source code for the `codex-windows-sandbox` crate.
+Source code for the `orbit-code-windows-sandbox` crate.
 
 ## What this folder does
 

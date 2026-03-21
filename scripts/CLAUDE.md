@@ -1,30 +1,20 @@
 # scripts/
 
-## Purpose
+Repository-wide utility scripts for CI, release management, and developer tooling. These operate at the monorepo level (as opposed to `codex-cli/scripts/` which is package-specific).
 
-Repository-wide utility scripts for CI, release management, code quality checks, and developer tooling. These operate at the monorepo level (as opposed to `codex-cli/scripts/` which is package-specific).
+## Architecture
 
-## Key Files
+The release pipeline centers on `stage_npm_packages.py`, which downloads native artifacts from GitHub Actions and invokes `codex-cli/scripts/build_npm_package.py` to produce npm tarballs in `dist/npm/`. CI quality scripts (`asciicheck.py`, `check_blob_size.py`, `readme_toc.py`, `check-module-bazel-lock.sh`) are invoked by GitHub Actions workflows.
 
-| File | Role |
-|------|------|
-| `stage_npm_packages.py` | Top-level release orchestrator. Downloads native artifacts from a GitHub Actions workflow, installs them via `codex-cli/scripts/install_native_deps.py`, then invokes `codex-cli/scripts/build_npm_package.py` for each requested package. Writes tarballs to `dist/npm/`. |
-| `asciicheck.py` | Linter that checks files for non-ASCII characters. Supports `--fix` mode to replace common Unicode characters (smart quotes, em dashes, non-breaking spaces) with ASCII equivalents. Used in CI to keep source files ASCII-clean. |
-| `check_blob_size.py` | CI check that fails if any changed git blob exceeds a configurable size limit (default 500 KiB). Supports an allowlist file. Writes a GitHub Actions step summary. |
-| `check-module-bazel-lock.sh` | Verifies that `MODULE.bazel.lock` is up to date by running `bazel mod deps --lockfile_mode=error`. |
-| `readme_toc.py` | Checks (and optionally fixes with `--fix`) the Table of Contents in Markdown files. Looks for `<!-- Begin ToC -->` / `<!-- End ToC -->` markers. |
-| `mock_responses_websocket_server.py` | Development tool that runs a mock WebSocket server implementing a minimal Responses API endpoint. Used for testing the Codex agent's WebSocket integration locally. |
-| `debug-codex.sh` | Developer convenience script that builds and runs the Codex CLI from source via `cargo run --bin codex`. Intended for use as `chatgpt.cliExecutable` in VS Code settings. |
-| `install/` | Platform-specific installer scripts (see `scripts/install/CLAUDE.md`) |
+## Module Layout
 
-## Imports From
+- **Release**: `stage_npm_packages.py` (top-level orchestrator for npm tarball production)
+- **CI linters**: `asciicheck.py` (non-ASCII detection), `check_blob_size.py` (blob size limits), `readme_toc.py` (ToC validation), `check-module-bazel-lock.sh` (Bazel lockfile sync)
+- **Dev tools**: `debug-codex.sh` (build and run CLI from source), `mock_responses_websocket_server.py` (mock WebSocket server for local testing)
+- **Installers**: `install/` (platform-specific standalone installers that bypass npm)
 
-- `stage_npm_packages.py` dynamically imports `codex-cli/scripts/build_npm_package.py` to reuse package definitions (`PACKAGE_NATIVE_COMPONENTS`, `PACKAGE_EXPANSIONS`, `CODEX_PLATFORM_PACKAGES`)
-- `debug-codex.sh` invokes `cargo run` in the `codex-rs/` directory
-- `check_blob_size.py` uses git CLI commands
-- `mock_responses_websocket_server.py` depends on the `websockets` Python package
+## Key Considerations
 
-## Exports To
-
-- `stage_npm_packages.py` produces npm tarballs in `dist/npm/`
-- CI scripts (`asciicheck.py`, `check_blob_size.py`, `check-module-bazel-lock.sh`, `readme_toc.py`) are invoked by GitHub Actions workflows in `.github/`
+- `stage_npm_packages.py` dynamically imports from `codex-cli/scripts/build_npm_package.py` -- the two must stay in sync.
+- `mock_responses_websocket_server.py` requires the `websockets` Python package.
+- `asciicheck.py` supports `--fix` mode for common Unicode-to-ASCII replacements.

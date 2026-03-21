@@ -1,31 +1,19 @@
 # codex-rs/ansi-escape/
 
-Crate: `codex-ansi-escape` -- ANSI escape sequence parser for TUI rendering.
+Converts strings containing ANSI escape codes into Ratatui `Text` and `Line` types for TUI rendering. Also handles tab expansion (tabs to 4 spaces).
 
-## What this crate does
+## Build & Test
+```bash
+cargo build -p orbit-code-ansi-escape
+cargo test -p orbit-code-ansi-escape
+```
 
-Converts strings containing ANSI escape codes (colors, bold, underline, etc.) into Ratatui `Text` and `Line` types suitable for rendering in the terminal UI. Also handles tab expansion (replacing tabs with 4 spaces) to avoid visual artifacts in transcript views.
+## Architecture
 
-## Main functions
+This is a thin wrapper around the `ansi-to-tui` crate. `ansi_escape()` converts a multi-line ANSI string to `ratatui::text::Text`, and `ansi_escape_line()` does the same for a single line. Tabs are expanded to 4 spaces before conversion to avoid visual artifacts in transcript/gutter views.
 
-- `ansi_escape(s: &str) -> Text<'static>` -- Parses a string with ANSI escapes into a Ratatui `Text` (multi-line)
-- `ansi_escape_line(s: &str) -> Line<'static>` -- Parses a single-line string with ANSI escapes; warns if multiple lines are found
-
-## What it plugs into
-
-- Used by `codex-tui` for rendering command output and transcript content that may contain ANSI color codes
-
-## Imports from / exports to
-
-**Dependencies:**
-- `ansi-to-tui` -- Third-party crate that does the actual ANSI-to-Ratatui conversion
-- `ratatui` -- TUI framework; this crate produces Ratatui `Text` and `Line` types
-- `tracing` -- For logging warnings/errors during parsing
-
-**Exported to:**
-- Consumed as `codex-ansi-escape` by other workspace crates (primarily `codex-tui`)
-
-## Key files
-
-- `Cargo.toml` -- Crate manifest
-- `src/lib.rs` -- Single-file implementation with `ansi_escape` and `ansi_escape_line` functions
+## Key Considerations
+- `ansi_escape()` panics on parse or UTF-8 errors -- these are treated as programmer errors, not recoverable failures
+- `ansi_escape_line()` logs a warning if the input contains multiple lines and returns only the first
+- No `[lints]` section in `Cargo.toml` -- workspace lints are not applied to this crate
+- This crate has no tests of its own

@@ -54,11 +54,19 @@ pub enum ContentBlockType {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum DeltaType {
-    Text { text: String },
-    InputJson { partial_json: String },
-    Thinking { thinking: String },
+    Text {
+        text: String,
+    },
+    InputJson {
+        partial_json: String,
+    },
+    Thinking {
+        thinking: String,
+    },
     /// Signature for thinking block verification. Ignored by the bridge.
-    Signature { signature: String },
+    Signature {
+        signature: String,
+    },
 }
 
 pub fn parse_sse_event(
@@ -104,6 +112,7 @@ pub fn parse_sse_event(
         "message_stop" => Ok(Some(AnthropicEvent::MessageStop)),
         "ping" => Ok(Some(AnthropicEvent::Ping)),
         "error" => {
+            tracing::warn!(raw_error_data = data, "Anthropic SSE error event received");
             let payload: ErrorPayload = serde_json::from_str(data)?;
             Ok(Some(AnthropicEvent::Error {
                 error_type: payload.error.r#type,

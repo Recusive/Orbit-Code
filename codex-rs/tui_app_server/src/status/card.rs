@@ -447,6 +447,8 @@ impl HistoryCell for StatusHistoryCell {
             StatusAccountDisplay::ApiKey => {
                 "API key configured (run codex login to use ChatGPT)".to_string()
             }
+            StatusAccountDisplay::AnthropicApiKey => "Anthropic API key configured".to_string(),
+            StatusAccountDisplay::AnthropicOAuth => "Claude Pro/Max (OAuth)".to_string(),
         });
 
         let mut labels: Vec<String> = vec!["Model", "Directory", "Permissions", "Agents.md"]

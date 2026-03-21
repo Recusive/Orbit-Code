@@ -9,6 +9,7 @@ use reqwest::header::HeaderValue;
 use std::sync::LazyLock;
 use std::sync::Mutex;
 use std::sync::RwLock;
+use std::time::Duration;
 
 /// Set this to add a suffix to the User-Agent string.
 ///
@@ -207,7 +208,8 @@ pub fn try_build_reqwest_client() -> Result<reqwest::Client, BuildCustomCaTransp
     let mut builder = reqwest::Client::builder()
         // Set UA via dedicated helper to avoid header validation pitfalls
         .user_agent(ua)
-        .default_headers(default_headers());
+        .default_headers(default_headers())
+        .connect_timeout(Duration::from_secs(10));
     if is_sandboxed() {
         builder = builder.no_proxy();
     }

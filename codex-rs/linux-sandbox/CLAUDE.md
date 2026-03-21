@@ -1,6 +1,6 @@
 # codex-rs/linux-sandbox/
 
-Linux-specific process sandbox for the Codex CLI. Ships as both a library (`codex_linux_sandbox`) and a standalone binary (`codex-linux-sandbox`).
+Linux-specific process sandbox for the Codex CLI. Ships as both a library (`orbit_code_linux_sandbox`) and a standalone binary (`orbit-code-linux-sandbox`).
 
 ## What this folder does
 
@@ -10,12 +10,12 @@ Provides filesystem and network isolation for commands executed by the Codex age
 2. **Seccomp** -- installs a BPF filter that blocks or restricts network-related syscalls (`connect`, `socket`, `bind`, etc.) depending on the policy.
 3. **Landlock** -- legacy/backup filesystem restriction kept for fallback use.
 
-The binary is invoked by `codex-core` as a helper process when spawning sandboxed commands on Linux.
+The binary is invoked by `orbit-code-core` as a helper process when spawning sandboxed commands on Linux.
 
 ## Where it plugs in
 
-- **Consumed by**: `codex-core` (`exec::process_exec_tool_call`) invokes the `codex-linux-sandbox` binary to wrap child commands.
-- **Depends on**: `codex-core` (error types), `codex-protocol` (sandbox policy types like `SandboxPolicy`, `FileSystemSandboxPolicy`, `NetworkSandboxPolicy`), `codex-utils-absolute-path`, `landlock`, `seccompiler`, `libc`.
+- **Consumed by**: `orbit-code-core` (`exec::process_exec_tool_call`) invokes the `orbit-code-linux-sandbox` binary to wrap child commands.
+- **Depends on**: `orbit-code-core` (error types), `orbit-code-protocol` (sandbox policy types like `SandboxPolicy`, `FileSystemSandboxPolicy`, `NetworkSandboxPolicy`), `orbit-code-utils-absolute-path`, `landlock`, `seccompiler`, `libc`.
 
 ## Key files
 

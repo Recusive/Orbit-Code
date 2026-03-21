@@ -3,8 +3,10 @@
 mod client;
 mod error;
 mod stream;
+mod token_refresh;
 mod types;
 
+pub use client::AnthropicAuth;
 pub use client::AnthropicClient;
 pub use client::AnthropicStream;
 pub use error::AnthropicApiError;
@@ -15,6 +17,8 @@ pub use stream::ContentBlockType;
 pub use stream::DeltaType;
 pub use stream::Usage;
 pub use stream::parse_sse_event;
+pub use token_refresh::RefreshedTokens;
+pub use token_refresh::refresh_anthropic_token;
 pub use types::CacheControl;
 pub use types::Content;
 pub use types::ContentBlock;

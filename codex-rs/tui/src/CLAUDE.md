@@ -1,107 +1,32 @@
 # codex-rs/tui/src/
 
-Source code root for the `codex-tui` crate.
+Source modules for `orbit-code-tui`. Flat layout with subdirectories for complex subsystems.
 
-## What this folder does
+## Module Map
 
-Contains all Rust source modules for the TUI: the library root (`lib.rs`), the binary entry point (`main.rs`), the CLI argument parser, the application state machine, the chat widget, streaming pipeline, rendering engine, onboarding flows, and all supporting utilities. This is a flat module layout -- most modules are single `.rs` files declared in `lib.rs`, with complex subsystems split into subdirectories (`app/`, `bottom_pane/`, `chatwidget/`, `streaming/`, `tui/`, etc.).
+**Core app loop:** `lib.rs` (entry + bootstrap), `app.rs` (event loop state machine), `app_event.rs` / `app_event_sender.rs` (event types + channel), `app_backtrack.rs` (undo/rollback), `cli.rs` (clap args), `app_server_tui_dispatch.rs` (delegates to app-server TUI when active). `app/` subdir has `agent_navigation.rs` and `pending_interactive_replay.rs`.
 
-## Module organization
+**Chat/transcript:** `chatwidget.rs` (main chat surface + history), `history_cell.rs` (individual transcript entries), `exec_command.rs` (shell command display). `chatwidget/` subdir has `agent.rs`, `interrupts.rs`, `realtime.rs`, `session_header.rs`, `skills.rs`, `tests.rs`.
 
-### Core application
+**Streaming pipeline:** `streaming/` -- `controller.rs` (StreamController), `chunking.rs` (content splitting), `commit_tick.rs` (periodic flush to UI).
 
-| File | Purpose |
-|------|---------|
-| `lib.rs` | Library root; module declarations, `run_main()` entry point, config/auth/session bootstrapping |
-| `main.rs` | Binary entry point; CLI parsing, dispatch to `run_main()` or app-server mode |
-| `cli.rs` | `Cli` struct (clap-derived CLI arguments) |
-| `app.rs` | `App` state machine -- the main event loop that drives the entire TUI |
-| `app_event.rs` | `AppEvent` enum -- all events the app processes (key input, agent messages, timers, etc.) |
-| `app_event_sender.rs` | `AppEventSender` -- typed sender for `AppEvent` channels |
-| `app_backtrack.rs` | State management for conversation backtracking/undo |
-| `app_server_tui_dispatch.rs` | Logic to detect and dispatch to app-server TUI mode |
+**Input/composer:** `bottom_pane/` (composer, approval overlays, popups, footer, file search, skill/command pickers), `clipboard_paste.rs`, `clipboard_text.rs`, `external_editor.rs`, `insert_history.rs`, `mention_codec.rs`, `slash_command.rs`.
 
-### Chat and transcript
+**Rendering:** `render/` (syntax highlighting, line utils, Renderable trait), `markdown.rs` + `markdown_render.rs` + `markdown_stream.rs` (markdown pipeline), `diff_render.rs`, `wrapping.rs`, `live_wrap.rs`, `line_truncation.rs`, `shimmer.rs`, `style.rs`, `color.rs`.
 
-| File | Purpose |
-|------|---------|
-| `chatwidget.rs` | `ChatWidget` -- main chat surface owning history cells, active streaming cell, bottom pane |
-| `history_cell.rs` | `HistoryCell` -- individual transcript entries (messages, tool calls, status) |
-| `exec_command.rs` | Shell command parsing and display for exec tool calls |
-| `diff_render.rs` | Diff rendering for file patches |
-| `markdown.rs` | Markdown data types |
-| `markdown_render.rs` | Markdown-to-ratatui-Line rendering |
-| `markdown_stream.rs` | Incremental markdown streaming collector |
+**Terminal:** `tui.rs` + `tui/` (terminal lifecycle, event stream, frame scheduling, job control), `custom_terminal.rs` (inline scrolling/viewport), `ascii_animation.rs` + `frames.rs` (loading spinners).
 
-### Input and composer
+**Session:** `resume_picker.rs` (resume/fork picker), `session_log.rs` (event logging), `cwd_prompt.rs` (directory selection on resume).
 
-| File | Purpose |
-|------|---------|
-| `bottom_pane/` | Interactive footer: composer, popups, approval overlays, selection lists |
-| `clipboard_paste.rs` | Paste event handling |
-| `clipboard_text.rs` | Clipboard read/write operations |
-| `external_editor.rs` | External editor integration ($EDITOR) |
+**Onboarding/config:** `onboarding/` (welcome, login, directory trust), `model_migration.rs`, `oss_selection.rs`, `collaboration_modes.rs`, `debug_config.rs`, `theme_picker.rs`.
 
-### Rendering
+**Status/overlays:** `status/` (account, rate limits, session card), `notifications/` (OSC9, BEL), `pager_overlay.rs`, `tooltips.rs`, `status_indicator_widget.rs`, `update_prompt.rs`, `updates.rs`.
 
-| File | Purpose |
-|------|---------|
-| `render/` | Rendering engine: syntax highlighting, line utilities, renderable trait |
-| `style.rs` | Centralized style constants |
-| `color.rs` | Color utilities |
-| `shimmer.rs` | Shimmer/loading animation effect for text spans |
-| `wrapping.rs` | Text wrapping and adaptive line layout |
-| `line_truncation.rs` | Line truncation utilities |
-| `live_wrap.rs` | Live wrapping for streaming output |
+**Public widgets:** `public_widgets/` exports `ComposerInput` for use by external crates.
 
-### Terminal and TUI
+## Patterns
 
-| File | Purpose |
-|------|---------|
-| `tui.rs` | `Tui` wrapper: terminal init/restore, event streams, mode management |
-| `tui/` | Terminal subsystem: event stream, frame rate limiter, frame scheduler, job control |
-| `custom_terminal.rs` | Custom ratatui terminal with inline scrolling and viewport management |
-| `ascii_animation.rs` | Animated spinner using frame data from `frames/` |
-| `frames.rs` | Compile-time embedded animation frame constants |
-
-### Session management
-
-| File | Purpose |
-|------|---------|
-| `resume_picker.rs` | Session resume/fork picker UI |
-| `session_log.rs` | High-fidelity session event logging |
-| `cwd_prompt.rs` | CWD selection prompt for resume/fork with changed directories |
-
-### Onboarding and configuration
-
-| File | Purpose |
-|------|---------|
-| `onboarding/` | First-run experience: welcome, login, directory trust |
-| `collaboration_modes.rs` | Collaboration mode settings UI |
-| `debug_config.rs` | Debug configuration overlay |
-| `theme_picker.rs` | Syntax theme picker |
-| `model_migration.rs` | Model migration prompts |
-
-### Notifications and status
-
-| File | Purpose |
-|------|---------|
-| `notifications/` | Desktop notification backends (OSC 9, BEL) |
-| `status/` | Status output formatting: account, rate limits, session card |
-| `status_indicator_widget.rs` | Animated status dot widget |
-| `tooltips.rs` | Tooltip content and display |
-| `version.rs` | Version string constants |
-
-## Imports from
-
-- `codex-core`, `codex-protocol`, `codex-state`, `codex-login` and ~30 other workspace crates
-- `ratatui`, `crossterm` for terminal UI
-- `syntect`, `two-face` for syntax highlighting
-- `pulldown-cmark` for markdown parsing
-- `tokio` for async runtime
-
-## Exports to
-
-- `codex-tui` binary (via `main.rs`)
-- `codex-cli` binary (via `lib.rs::run_main()`)
-- `codex-cloud-tasks` and other crates consume `ComposerInput`, `render_markdown_text()`, and other public items
+- Tests use sibling `*_tests.rs` files (e.g., `chatwidget/tests.rs`, `markdown_render_tests.rs`, `status/tests.rs`).
+- `voice.rs` and `audio_device.rs` are feature-gated behind `voice-input` (and excluded on Linux).
+- `exec_cell/` has its own `model.rs` / `render.rs` split for exec tool call rendering.
+- Snapshot dirs (`snapshots/`) appear at multiple levels: `src/snapshots/`, `chatwidget/snapshots/`, `status/snapshots/`, `onboarding/snapshots/`, `bottom_pane/snapshots/`, `render/snapshots/`.

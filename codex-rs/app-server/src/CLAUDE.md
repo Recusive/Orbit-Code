@@ -1,56 +1,19 @@
 # app-server/src
 
-## Purpose
+## Module Categories
 
-Contains all source code for the `codex-app-server` crate. This directory houses the server's entry points, transport layer, request processing pipeline, and domain-specific API handlers.
+**Entry points:** `lib.rs` (server bootstrap, two-task event loop, config loading, tracing setup), `main.rs` (binary entry point, `--listen` CLI arg parsing).
 
-## Module Structure
+**Transport:** `transport.rs` (stdio + WebSocket transport implementations, `AppServerTransport` enum, `TransportEvent`), `in_process.rs` (in-memory channel transport for embedding without process boundaries), `outgoing_message.rs` (`OutgoingMessage` enum, `OutgoingMessageSender`, `ConnectionId`).
 
-The crate is organized into a flat module layout declared in `lib.rs`:
+**Request processing:** `message_processor.rs` (top-level router: initialize handshake, delegates to domain handlers), `orbit_code_message_processor.rs` (core agent-domain handler: threads, turns, models, plugins, auth, MCP, reviews, analytics). Note: `orbit_code_message_processor.rs` coexists with `orbit_code_message_processor/` directory containing extracted helpers (`apps_list_helpers.rs`, `plugin_app_helpers.rs`).
 
-### Entry Points
+**Domain handlers:** `config_api.rs` (config CRUD), `fs_api.rs` (filesystem operations), `external_agent_config_api.rs` (external agent config detection/import), `command_exec.rs` (PTY-based command execution), `fuzzy_file_search.rs` (file search sessions), `dynamic_tools.rs` (dynamic tool calls), `models.rs` (model listing).
 
-- **`main.rs`** -- Binary entry point. Parses `--listen` CLI arg (stdio or ws://), resolves managed config path, and calls `run_main_with_transport`.
-- **`lib.rs`** -- Library root. Boots config, tracing, telemetry, and runs the two-task event loop (processor + outbound router). Exports `run_main`, `run_main_with_transport`, `AppServerTransport`.
+**State & routing:** `thread_state.rs` (per-thread runtime state), `thread_status.rs` (thread status change notifications), `filters.rs` (notification filtering/routing), `bespoke_event_handling.rs` (custom event transformation -- very large file).
 
-### Transport Layer
+**Supporting:** `error_code.rs` (JSON-RPC error constants), `server_request_error.rs` (error mapping), `app_server_tracing.rs` (request tracing spans).
 
-- **`transport.rs`** -- Defines `AppServerTransport` (Stdio / WebSocket), `TransportEvent`, connection state types. Implements stdio line-delimited JSON and axum-based WebSocket acceptor with health/readyz endpoints.
-- **`in_process.rs`** -- In-memory channel-based transport for embedding the server without process boundaries. Provides `InProcessClientHandle`, `InProcessStartArgs`, `start()`.
-- **`outgoing_message.rs`** -- `OutgoingMessage` enum (Response, Error, Request, Notification, AppServerNotification), `OutgoingMessageSender` for routing, `ConnectionId`, `ConnectionRequestId`.
+**Binaries:** `bin/notify_capture.rs`, `bin/test_notify_capture.rs`.
 
-### Request Processing
-
-- **`message_processor.rs`** -- Top-level `MessageProcessor`. Handles initialize handshake, routes requests to config/FS/external-agent-config APIs or delegates to `CodexMessageProcessor`.
-- **`codex_message_processor.rs`** -- Core domain logic handler. Processes thread/start, turn/start, turn/interrupt, model/list, plugin operations, auth, fuzzy file search, MCP, review, analytics, and more.
-
-### Domain Handlers
-
-- **`config_api.rs`** -- `ConfigApi` for config/read, config/valueWrite, config/batchWrite, config/requirementsRead.
-- **`fs_api.rs`** -- `FsApi` for filesystem CRUD (read, write, mkdir, metadata, readdir, remove, copy).
-- **`external_agent_config_api.rs`** -- `ExternalAgentConfigApi` for detecting and importing external agent configurations.
-- **`command_exec.rs`** -- `CommandExecManager` for PTY-backed command execution with resize/write/terminate support.
-- **`fuzzy_file_search.rs`** -- Fuzzy file search session management.
-- **`dynamic_tools.rs`** -- Dynamic tool call execution.
-- **`models.rs`** -- Model listing helpers and supported model enumeration.
-
-### Supporting Modules
-
-- **`thread_state.rs`** -- Per-thread runtime state tracking.
-- **`thread_status.rs`** -- `ThreadWatchManager` for thread status change notifications.
-- **`filters.rs`** -- Notification filtering and routing logic.
-- **`error_code.rs`** -- JSON-RPC error code constants (INVALID_PARAMS, INPUT_TOO_LARGE, OVERLOADED, etc.).
-- **`bespoke_event_handling.rs`** -- Custom event transformation logic for specific notification types.
-- **`server_request_error.rs`** -- Server request error mapping.
-- **`app_server_tracing.rs`** -- Tracing span construction for request instrumentation.
-
-## Imports From
-
-- `codex-app-server-protocol` -- All JSON-RPC and typed protocol types.
-- `codex-core` -- Agent runtime, config, auth, thread management.
-- `codex-protocol` -- Shared lower-level types.
-- Various utility crates: `codex-feedback`, `codex-state`, `codex-file-search`, `codex-login`, `codex-chatgpt`, etc.
-
-## Exports To
-
-- The crate's public API (consumed by `codex-app-server-client`, the TUI, and tests) comes from `lib.rs`.
+**Message processor submodules:** `message_processor/tracing_tests.rs`.

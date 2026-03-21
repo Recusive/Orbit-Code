@@ -40,6 +40,8 @@ pub enum ToolDecisionSource {
 pub enum TelemetryAuthMode {
     ApiKey,
     Chatgpt,
+    AnthropicApiKey,
+    AnthropicOAuth,
 }
 
 /// Start a metrics timer using the globally installed metrics client.

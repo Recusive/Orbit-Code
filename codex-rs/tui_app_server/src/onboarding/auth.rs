@@ -94,6 +94,19 @@ pub(crate) enum SignInState {
     ChatGptSuccess,
     ApiKeyEntry(ApiKeyInputState),
     ApiKeyConfigured,
+    AnthropicApiKeyEntry(ApiKeyInputState),
+    AnthropicApiKeyConfigured,
+    AnthropicPickMethod,
+    AnthropicOAuthCodeEntry(AnthropicOAuthCodeEntryState),
+    AnthropicOAuthSuccess,
+}
+
+#[derive(Clone)]
+pub(crate) struct AnthropicOAuthCodeEntryState {
+    pub value: String,
+    pub verifier: String,
+    pub auth_url: String,
+    pub error: Option<String>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -101,6 +114,7 @@ pub(crate) enum SignInOption {
     ChatGpt,
     DeviceCode,
     ApiKey,
+    Claude,
 }
 
 const API_KEY_DISABLED_MESSAGE: &str = "API key login is disabled.";
@@ -129,7 +143,22 @@ pub(crate) struct ContinueWithDeviceCodeState {
 
 impl KeyboardHandler for AuthModeWidget {
     fn handle_key_event(&mut self, key_event: KeyEvent) {
+        // Handle Anthropic OAuth code entry input
+        if self.handle_anthropic_oauth_code_entry_key_event(&key_event) {
+            return;
+        }
+
+        // Handle Anthropic API key entry input
+        if self.handle_anthropic_api_key_entry_key_event(&key_event) {
+            return;
+        }
+
         if self.handle_api_key_entry_key_event(&key_event) {
+            return;
+        }
+
+        // Handle Anthropic pick method sub-menu
+        if self.handle_anthropic_pick_method_key_event(&key_event) {
             return;
         }
 
@@ -149,6 +178,9 @@ impl KeyboardHandler for AuthModeWidget {
             KeyCode::Char('3') => {
                 self.select_option_by_index(/*index*/ 2);
             }
+            KeyCode::Char('4') => {
+                self.select_option_by_index(/*index*/ 3);
+            }
             KeyCode::Enter => {
                 let sign_in_state = { (*self.sign_in_state.read().unwrap()).clone() };
                 match sign_in_state {
@@ -157,6 +189,9 @@ impl KeyboardHandler for AuthModeWidget {
                     }
                     SignInState::ChatGptSuccessMessage => {
                         *self.sign_in_state.write().unwrap() = SignInState::ChatGptSuccess;
+                    }
+                    SignInState::AnthropicApiKeyConfigured | SignInState::AnthropicOAuthSuccess => {
+                        // Already complete — StepStateProvider returns Complete
                     }
                     _ => {}
                 }
@@ -192,6 +227,24 @@ impl KeyboardHandler for AuthModeWidget {
                         self.set_error(/*message*/ None);
                         self.request_frame.schedule_frame();
                     }
+                    SignInState::AnthropicApiKeyEntry(_) => {
+                        *sign_in_state = SignInState::AnthropicPickMethod;
+                        drop(sign_in_state);
+                        self.set_error(/*message*/ None);
+                        self.request_frame.schedule_frame();
+                    }
+                    SignInState::AnthropicPickMethod => {
+                        *sign_in_state = SignInState::PickMode;
+                        drop(sign_in_state);
+                        self.set_error(/*message*/ None);
+                        self.request_frame.schedule_frame();
+                    }
+                    SignInState::AnthropicOAuthCodeEntry(_) => {
+                        *sign_in_state = SignInState::AnthropicPickMethod;
+                        drop(sign_in_state);
+                        self.set_error(/*message*/ None);
+                        self.request_frame.schedule_frame();
+                    }
                     _ => {}
                 }
             }
@@ -200,6 +253,14 @@ impl KeyboardHandler for AuthModeWidget {
     }
 
     fn handle_paste(&mut self, pasted: String) {
+        // Try Anthropic OAuth code paste first
+        if self.handle_anthropic_oauth_code_paste(pasted.clone()) {
+            return;
+        }
+        // Try Anthropic key paste next, then OpenAI
+        if self.handle_anthropic_api_key_paste(pasted.clone()) {
+            return;
+        }
         let _ = self.handle_api_key_entry_paste(pasted);
     }
 }
@@ -245,6 +306,7 @@ impl AuthModeWidget {
         if self.is_api_login_allowed() {
             options.push(SignInOption::ApiKey);
         }
+        options.push(SignInOption::Claude);
         options
     }
 
@@ -257,6 +319,7 @@ impl AuthModeWidget {
         if self.is_api_login_allowed() {
             options.push(SignInOption::ApiKey);
         }
+        options.push(SignInOption::Claude);
         options
     }
 
@@ -300,6 +363,9 @@ impl AuthModeWidget {
                 } else {
                     self.disallow_api_login();
                 }
+            }
+            SignInOption::Claude => {
+                self.start_anthropic_pick_method();
             }
         }
     }
@@ -384,6 +450,14 @@ impl AuthModeWidget {
                         option,
                         "Provide your own API key",
                         "Pay for what you use",
+                    ));
+                }
+                SignInOption::Claude => {
+                    lines.extend(create_mode_item(
+                        idx,
+                        option,
+                        "Sign in with Claude",
+                        "Anthropic API key or OAuth",
                     ));
                 }
             }
@@ -735,6 +809,503 @@ impl AuthModeWidget {
         self.request_frame.schedule_frame();
     }
 
+    fn handle_anthropic_api_key_entry_key_event(&mut self, key_event: &KeyEvent) -> bool {
+        let mut should_save: Option<String> = None;
+        let mut should_request_frame = false;
+
+        {
+            let mut guard = self.sign_in_state.write().unwrap();
+            if let SignInState::AnthropicApiKeyEntry(state) = &mut *guard {
+                match key_event.code {
+                    KeyCode::Esc => {
+                        *guard = SignInState::AnthropicPickMethod;
+                        self.set_error(/*message*/ None);
+                        should_request_frame = true;
+                    }
+                    KeyCode::Enter => {
+                        let trimmed = state.value.trim().to_string();
+                        if trimmed.is_empty() {
+                            self.set_error(Some("API key cannot be empty".to_string()));
+                            should_request_frame = true;
+                        } else {
+                            should_save = Some(trimmed);
+                        }
+                    }
+                    KeyCode::Backspace => {
+                        if state.prepopulated_from_env {
+                            state.value.clear();
+                            state.prepopulated_from_env = false;
+                        } else {
+                            state.value.pop();
+                        }
+                        self.set_error(/*message*/ None);
+                        should_request_frame = true;
+                    }
+                    KeyCode::Char(c)
+                        if key_event.kind == KeyEventKind::Press
+                            && !key_event.modifiers.contains(KeyModifiers::SUPER)
+                            && !key_event.modifiers.contains(KeyModifiers::CONTROL)
+                            && !key_event.modifiers.contains(KeyModifiers::ALT) =>
+                    {
+                        if state.prepopulated_from_env {
+                            state.value.clear();
+                            state.prepopulated_from_env = false;
+                        }
+                        state.value.push(c);
+                        self.set_error(/*message*/ None);
+                        should_request_frame = true;
+                    }
+                    _ => {}
+                }
+            } else {
+                return false;
+            }
+        }
+
+        if let Some(api_key) = should_save {
+            self.save_anthropic_api_key(api_key);
+        } else if should_request_frame {
+            self.request_frame.schedule_frame();
+        }
+        true
+    }
+
+    fn handle_anthropic_api_key_paste(&mut self, pasted: String) -> bool {
+        let trimmed = pasted.trim();
+        if trimmed.is_empty() {
+            return false;
+        }
+
+        let mut guard = self.sign_in_state.write().unwrap();
+        if let SignInState::AnthropicApiKeyEntry(state) = &mut *guard {
+            if state.prepopulated_from_env {
+                state.value = trimmed.to_string();
+                state.prepopulated_from_env = false;
+            } else {
+                state.value.push_str(trimmed);
+            }
+            self.set_error(/*message*/ None);
+        } else {
+            return false;
+        }
+
+        drop(guard);
+        self.request_frame.schedule_frame();
+        true
+    }
+
+    fn start_anthropic_api_key_entry(&mut self) {
+        self.set_error(/*message*/ None);
+        // Check for ANTHROPIC_API_KEY env var as prefill
+        let prefill = std::env::var("ANTHROPIC_API_KEY")
+            .ok()
+            .filter(|v| !v.is_empty());
+        *self.sign_in_state.write().unwrap() =
+            SignInState::AnthropicApiKeyEntry(ApiKeyInputState {
+                value: prefill.clone().unwrap_or_default(),
+                prepopulated_from_env: prefill.is_some(),
+            });
+        self.request_frame.schedule_frame();
+    }
+
+    fn save_anthropic_api_key(&mut self, api_key: String) {
+        self.set_error(/*message*/ None);
+        let request_handle = self.app_server_request_handle.clone();
+        let sign_in_state = self.sign_in_state.clone();
+        let error = self.error.clone();
+        let request_frame = self.request_frame.clone();
+        tokio::spawn(async move {
+            match request_handle
+                .request_typed::<LoginAccountResponse>(ClientRequest::LoginAccount {
+                    request_id: onboarding_request_id(),
+                    params: LoginAccountParams::AnthropicApiKey {
+                        api_key: api_key.clone(),
+                    },
+                })
+                .await
+            {
+                Ok(LoginAccountResponse::AnthropicApiKey {}) => {
+                    *error.write().unwrap() = None;
+                    *sign_in_state.write().unwrap() = SignInState::AnthropicApiKeyConfigured;
+                }
+                Ok(other) => {
+                    *error.write().unwrap() = Some(format!(
+                        "Unexpected account/login/start response: {other:?}"
+                    ));
+                    *sign_in_state.write().unwrap() =
+                        SignInState::AnthropicApiKeyEntry(ApiKeyInputState {
+                            value: api_key,
+                            prepopulated_from_env: false,
+                        });
+                }
+                Err(err) => {
+                    *error.write().unwrap() =
+                        Some(format!("Failed to save Anthropic API key: {err}"));
+                    *sign_in_state.write().unwrap() =
+                        SignInState::AnthropicApiKeyEntry(ApiKeyInputState {
+                            value: api_key,
+                            prepopulated_from_env: false,
+                        });
+                }
+            }
+            request_frame.schedule_frame();
+        });
+        self.request_frame.schedule_frame();
+    }
+
+    fn render_anthropic_api_key_entry(
+        &self,
+        area: Rect,
+        buf: &mut Buffer,
+        state: &ApiKeyInputState,
+    ) {
+        let lines: Vec<Line> = vec![
+            "".into(),
+            Line::from(vec!["  ".into(), "Enter your Anthropic API key".bold()]),
+            "  Get one at https://console.anthropic.com/settings/keys"
+                .dim()
+                .into(),
+            "".into(),
+        ];
+
+        let api_key_display = if state.value.is_empty() {
+            "sk-ant-..."
+        } else {
+            &state.value
+        };
+
+        let key_line = Line::from(vec![
+            "  ".into(),
+            "API Key: ".dim(),
+            api_key_display.to_string().cyan(),
+        ]);
+
+        let mut all_lines = lines;
+        all_lines.push(key_line);
+        all_lines.push("".into());
+        all_lines.push("  Press Enter to save  |  Esc to go back".dim().into());
+
+        if let Some(err) = self.error_message() {
+            all_lines.push("".into());
+            all_lines.push(err.red().into());
+        }
+
+        Paragraph::new(all_lines)
+            .wrap(Wrap { trim: false })
+            .render(area, buf);
+    }
+
+    fn render_anthropic_api_key_configured(&self, area: Rect, buf: &mut Buffer) {
+        let lines: Vec<Line> = vec![
+            "".into(),
+            "  Anthropic API key saved successfully!"
+                .fg(Color::Green)
+                .into(),
+            "".into(),
+            "  Press Enter to continue".dim().into(),
+        ];
+        Paragraph::new(lines)
+            .wrap(Wrap { trim: false })
+            .render(area, buf);
+    }
+
+    fn start_anthropic_pick_method(&mut self) {
+        self.set_error(/*message*/ None);
+        *self.sign_in_state.write().unwrap() = SignInState::AnthropicPickMethod;
+        self.request_frame.schedule_frame();
+    }
+
+    fn handle_anthropic_pick_method_key_event(&mut self, key_event: &KeyEvent) -> bool {
+        let guard = self.sign_in_state.read().unwrap();
+        if !matches!(&*guard, SignInState::AnthropicPickMethod) {
+            return false;
+        }
+        drop(guard);
+
+        match key_event.code {
+            KeyCode::Char('1') => {
+                self.start_anthropic_api_key_entry();
+                true
+            }
+            KeyCode::Char('2') => {
+                self.start_anthropic_oauth();
+                true
+            }
+            KeyCode::Enter => {
+                // Default: API key
+                self.start_anthropic_api_key_entry();
+                true
+            }
+            _ => false,
+        }
+    }
+
+    fn start_anthropic_oauth(&mut self) {
+        self.set_error(/*message*/ None);
+        let (auth_url, verifier) = match orbit_code_login::anthropic_authorize_url(
+            orbit_code_login::AnthropicAuthMode::MaxSubscription,
+        ) {
+            Ok(result) => result,
+            Err(e) => {
+                self.set_error(Some(format!("Failed to generate OAuth URL: {e}")));
+                self.request_frame.schedule_frame();
+                return;
+            }
+        };
+        // Try to open the browser
+        let _ = webbrowser::open(&auth_url);
+        *self.sign_in_state.write().unwrap() =
+            SignInState::AnthropicOAuthCodeEntry(AnthropicOAuthCodeEntryState {
+                value: String::new(),
+                verifier,
+                auth_url,
+                error: None,
+            });
+        self.request_frame.schedule_frame();
+    }
+
+    fn handle_anthropic_oauth_code_entry_key_event(&mut self, key_event: &KeyEvent) -> bool {
+        let mut should_exchange: Option<(String, String)> = None;
+        let mut should_request_frame = false;
+
+        {
+            let mut guard = self.sign_in_state.write().unwrap();
+            if let SignInState::AnthropicOAuthCodeEntry(state) = &mut *guard {
+                match key_event.code {
+                    KeyCode::Esc => {
+                        *guard = SignInState::AnthropicPickMethod;
+                        self.set_error(/*message*/ None);
+                        should_request_frame = true;
+                    }
+                    KeyCode::Enter => {
+                        let trimmed = state.value.trim().to_string();
+                        if trimmed.is_empty() {
+                            self.set_error(Some("Please paste the authorization code".to_string()));
+                            should_request_frame = true;
+                        } else {
+                            should_exchange = Some((trimmed, state.verifier.clone()));
+                        }
+                    }
+                    KeyCode::Backspace => {
+                        state.value.pop();
+                        self.set_error(/*message*/ None);
+                        should_request_frame = true;
+                    }
+                    KeyCode::Char(c)
+                        if key_event.kind == KeyEventKind::Press
+                            && !key_event.modifiers.contains(KeyModifiers::SUPER)
+                            && !key_event.modifiers.contains(KeyModifiers::CONTROL)
+                            && !key_event.modifiers.contains(KeyModifiers::ALT) =>
+                    {
+                        state.value.push(c);
+                        self.set_error(/*message*/ None);
+                        should_request_frame = true;
+                    }
+                    _ => {}
+                }
+            } else {
+                return false;
+            }
+        }
+
+        if let Some((code_with_state, verifier)) = should_exchange {
+            self.exchange_anthropic_oauth_code(code_with_state, verifier);
+        } else if should_request_frame {
+            self.request_frame.schedule_frame();
+        }
+        true
+    }
+
+    fn handle_anthropic_oauth_code_paste(&mut self, pasted: String) -> bool {
+        let trimmed = pasted.trim();
+        if trimmed.is_empty() {
+            return false;
+        }
+
+        let mut guard = self.sign_in_state.write().unwrap();
+        if let SignInState::AnthropicOAuthCodeEntry(state) = &mut *guard {
+            state.value.push_str(trimmed);
+            self.set_error(/*message*/ None);
+        } else {
+            return false;
+        }
+
+        drop(guard);
+        self.request_frame.schedule_frame();
+        true
+    }
+
+    fn exchange_anthropic_oauth_code(&mut self, code_with_state: String, verifier: String) {
+        let sign_in_state = self.sign_in_state.clone();
+        let request_frame = self.request_frame.clone();
+        let orbit_code_home = self.orbit_code_home.clone();
+        let store_mode = self.cli_auth_credentials_store_mode;
+
+        tokio::spawn(async move {
+            match orbit_code_login::anthropic_exchange_code(&code_with_state, &verifier).await {
+                Ok(tokens) => {
+                    use orbit_code_core::auth::AuthDotJsonV2;
+                    use orbit_code_core::auth::ProviderAuth;
+                    use orbit_code_core::auth::ProviderName;
+                    use orbit_code_core::auth::save_auth_v2;
+
+                    let now = chrono::Utc::now().timestamp();
+                    let expires_at =
+                        now.saturating_add(i64::try_from(tokens.expires_in).unwrap_or(3600));
+                    let mut v2 = match orbit_code_core::auth::load_auth_dot_json_v2(
+                        &orbit_code_home,
+                        store_mode,
+                    ) {
+                        Ok(Some(v2)) => v2,
+                        _ => AuthDotJsonV2::new(),
+                    };
+                    v2.set_provider_auth(
+                        ProviderName::Anthropic,
+                        ProviderAuth::AnthropicOAuth {
+                            access_token: tokens.access_token,
+                            refresh_token: tokens.refresh_token,
+                            expires_at,
+                        },
+                    );
+
+                    match save_auth_v2(&orbit_code_home, &v2, store_mode) {
+                        Ok(()) => {
+                            *sign_in_state.write().unwrap() = SignInState::AnthropicOAuthSuccess;
+                        }
+                        Err(e) => {
+                            tracing::warn!("Failed to save Anthropic OAuth tokens: {e}");
+                            let mut guard = sign_in_state.write().unwrap();
+                            if let SignInState::AnthropicOAuthCodeEntry(state) = &mut *guard {
+                                state.error = Some(format!("Failed to save: {e}"));
+                            }
+                        }
+                    }
+                }
+                Err(e) => {
+                    tracing::warn!("anthropic_oauth_exchange_failed: {e}");
+                    let mut guard = sign_in_state.write().unwrap();
+                    if let SignInState::AnthropicOAuthCodeEntry(state) = &mut *guard {
+                        state.error = Some(format!("Exchange failed: {e}"));
+                    }
+                }
+            }
+            request_frame.schedule_frame();
+        });
+    }
+
+    fn render_anthropic_pick_method(&self, area: Rect, buf: &mut Buffer) {
+        let lines: Vec<Line> = vec![
+            "".into(),
+            Line::from(vec!["  ".into(), "Sign in with Claude".bold()]),
+            "".into(),
+            Line::from(vec!["  1. ".cyan().dim(), "Anthropic API key".cyan()]),
+            "     Paste your API key from console.anthropic.com"
+                .dim()
+                .into(),
+            "".into(),
+            Line::from(vec![
+                "  2. ".cyan().dim(),
+                "Sign in with browser (OAuth)".cyan(),
+            ]),
+            "     Opens your browser for code-paste sign-in"
+                .dim()
+                .into(),
+            "".into(),
+            "  Press 1 or 2 to choose  |  Esc to go back".dim().into(),
+        ];
+
+        if let Some(err) = self.error_message() {
+            let mut all_lines = lines;
+            all_lines.push("".into());
+            all_lines.push(err.red().into());
+            Paragraph::new(all_lines)
+                .wrap(Wrap { trim: false })
+                .render(area, buf);
+        } else {
+            Paragraph::new(lines)
+                .wrap(Wrap { trim: false })
+                .render(area, buf);
+        }
+    }
+
+    fn render_anthropic_oauth_code_entry(
+        &self,
+        area: Rect,
+        buf: &mut Buffer,
+        state: &AnthropicOAuthCodeEntryState,
+    ) {
+        let mut lines: Vec<Line> = vec![
+            "".into(),
+            Line::from(vec!["  ".into(), "Sign in with Claude (OAuth)".bold()]),
+            "".into(),
+        ];
+
+        if self.animations_enabled {
+            self.request_frame
+                .schedule_frame_in(std::time::Duration::from_millis(100));
+            let mut spans = vec!["  ".into()];
+            spans.extend(shimmer_spans("Complete sign-in in your browser"));
+            lines.push(spans.into());
+        } else {
+            lines.push("  Complete sign-in in your browser".into());
+        }
+
+        lines.push("".into());
+        if !state.auth_url.is_empty() {
+            lines.push("  If the link doesn't open automatically, open:".into());
+            lines.push("".into());
+            lines.push(Line::from(vec![
+                "  ".into(),
+                state.auth_url.as_str().cyan().underlined(),
+            ]));
+            lines.push("".into());
+        }
+        lines.push("  Paste the authorization code below:".into());
+        lines.push("".into());
+
+        let code_display = if state.value.is_empty() {
+            "Paste {code}#{state} here".dim().to_string()
+        } else {
+            state.value.clone()
+        };
+        lines.push(Line::from(vec![
+            "  ".into(),
+            "Code: ".dim(),
+            code_display.cyan(),
+        ]));
+        lines.push("".into());
+        lines.push("  Press Enter to submit  |  Esc to go back".dim().into());
+
+        // Show errors from both the widget and the async exchange task
+        let widget_err = self.error_message();
+        let err = widget_err.as_deref().or(state.error.as_deref());
+        if let Some(err) = err {
+            lines.push("".into());
+            lines.push(err.red().into());
+        }
+
+        Paragraph::new(lines)
+            .wrap(Wrap { trim: false })
+            .render(area, buf);
+
+        // Wrap URL with OSC 8 hyperlink
+        if !state.auth_url.is_empty() {
+            mark_url_hyperlink(buf, area, &state.auth_url);
+        }
+    }
+
+    fn render_anthropic_oauth_success(&self, area: Rect, buf: &mut Buffer) {
+        let lines: Vec<Line> = vec![
+            "".into(),
+            "  ✓ Signed in with Claude (OAuth)".fg(Color::Green).into(),
+            "".into(),
+            "  Press Enter to continue".dim().into(),
+        ];
+        Paragraph::new(lines)
+            .wrap(Wrap { trim: false })
+            .render(area, buf);
+    }
+
     fn handle_existing_chatgpt_login(&mut self) -> bool {
         if matches!(
             self.login_status,
@@ -843,10 +1414,16 @@ impl StepStateProvider for AuthModeWidget {
         match &*sign_in_state {
             SignInState::PickMode
             | SignInState::ApiKeyEntry(_)
+            | SignInState::AnthropicApiKeyEntry(_)
+            | SignInState::AnthropicPickMethod
+            | SignInState::AnthropicOAuthCodeEntry(_)
             | SignInState::ChatGptContinueInBrowser(_)
             | SignInState::ChatGptDeviceCode(_)
             | SignInState::ChatGptSuccessMessage => StepState::InProgress,
-            SignInState::ChatGptSuccess | SignInState::ApiKeyConfigured => StepState::Complete,
+            SignInState::ChatGptSuccess
+            | SignInState::ApiKeyConfigured
+            | SignInState::AnthropicApiKeyConfigured
+            | SignInState::AnthropicOAuthSuccess => StepState::Complete,
         }
     }
 }
@@ -875,6 +1452,21 @@ impl WidgetRef for AuthModeWidget {
             }
             SignInState::ApiKeyConfigured => {
                 self.render_api_key_configured(area, buf);
+            }
+            SignInState::AnthropicApiKeyEntry(state) => {
+                self.render_anthropic_api_key_entry(area, buf, state);
+            }
+            SignInState::AnthropicApiKeyConfigured => {
+                self.render_anthropic_api_key_configured(area, buf);
+            }
+            SignInState::AnthropicPickMethod => {
+                self.render_anthropic_pick_method(area, buf);
+            }
+            SignInState::AnthropicOAuthCodeEntry(state) => {
+                self.render_anthropic_oauth_code_entry(area, buf, state);
+            }
+            SignInState::AnthropicOAuthSuccess => {
+                self.render_anthropic_oauth_success(area, buf);
             }
         }
     }

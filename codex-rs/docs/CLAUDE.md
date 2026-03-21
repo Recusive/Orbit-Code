@@ -26,7 +26,7 @@ Contains technical documentation for the internal architecture, protocols, and b
 
 - `bazel.md` -- Bazel build system documentation:
   - Explains the experimental Bazel setup alongside Cargo
-  - Documents the `codex_rust_crate` macro from `defs.bzl`
+  - Documents the `orbit_code_rust_crate` macro from `defs.bzl`
   - Instructions for updating Bzlmod lockfiles and adding new crates
 
 ## What it plugs into

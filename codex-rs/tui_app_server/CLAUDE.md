@@ -1,68 +1,82 @@
 # codex-rs/tui_app_server/
 
-The `codex-tui-app-server` crate: an app-server-backed variant of the fullscreen Ratatui TUI for the Codex CLI.
+App-server-backed variant of the Ratatui TUI. Crate name: `orbit-code-tui-app-server`.
 
-## What this folder does
+## Build & Test
 
-This is a parallel implementation of the `codex-tui` crate (`codex-rs/tui/`) that communicates through the app-server protocol instead of driving `codex-core` directly. It provides the same chat-style terminal interface (streaming markdown, tool approval, session resume/fork, onboarding, voice input) but routes all agent interactions through either an embedded in-process app server or a remote WebSocket-connected app server. This architecture enables IDE integrations and remote-server deployments while reusing the same TUI surface.
+```bash
+# Build
+cargo build -p orbit-code-tui-app-server
 
-## What it plugs into
+# Run all unit tests
+cargo test -p orbit-code-tui-app-server
 
-- **codex-app-server-client**: Client library for connecting to the app server (both `InProcessAppServerClient` and `RemoteAppServerClient`).
-- **codex-app-server-protocol**: JSON-RPC request/response/notification types for the app-server wire protocol (`ThreadStart`, `TurnStart`, `TurnInterrupt`, approvals, etc.).
-- **codex-core**: Config loading, auth, feature flags, path utilities, and session metadata -- used during startup but not for live agent communication.
-- **codex-protocol**: Shared protocol types (`ThreadId`, `SandboxPolicy`, `AskForApproval`, rollout items).
-- **codex-cli**: The top-level binary dispatches into this crate when app-server mode is active.
-- **ratatui / crossterm**: Terminal rendering and keyboard input.
+# Snapshot tests (insta)
+cargo test -p orbit-code-tui-app-server
+cargo insta pending-snapshots -p orbit-code-tui-app-server
+cargo insta accept -p orbit-code-tui-app-server
 
-## Key difference from codex-rs/tui/
+# VT100 emulator integration tests
+cargo test -p orbit-code-tui-app-server --features vt100-tests
 
-The `tui/` crate drives the agent through `codex-core` directly (in-process event loop). This crate instead wraps an `AppServerSession` that sends JSON-RPC requests and receives streamed notifications, allowing the agent backend to run in a separate process or on a remote machine.
-
-## Main exports
-
-- `run_main(cli, arg0_paths, loader_overrides, remote)` -- entry point; loads config, runs onboarding, starts the ratatui event loop with an app-server backend.
-- `Cli` -- clap-derived CLI argument struct.
-- `AppExitInfo` / `ExitReason` -- return types describing how the session ended.
-- `ComposerInput` / `ComposerAction` -- public reusable text-input widget.
-- `render_markdown_text()` -- public markdown rendering helper.
-
-## Key files
-
-| File | Role |
-|------|------|
-| `Cargo.toml` | Crate manifest; depends on `codex-app-server-client`, `codex-app-server-protocol`, plus ~40 workspace crates. |
-| `src/main.rs` | Binary entry point; parses CLI and calls `run_main()`. |
-| `src/lib.rs` | Library root; declares modules, manages app-server lifecycle (embedded/remote), runs onboarding and the ratatui loop. |
-| `src/cli.rs` | `Cli` struct with clap definitions (prompt, model, sandbox, approval policy, etc.). |
-| `src/app.rs` | `App` -- central state machine processing TUI events and app-server notifications. |
-| `src/app_server_session.rs` | `AppServerSession` -- typed wrapper around the app-server client with methods for every RPC. |
-| `src/tui.rs` | Terminal lifecycle (init, restore, set_modes) and the `Tui` wrapper. |
-| `src/chatwidget.rs` | `ChatWidget` -- main chat surface; owns history cells, streaming cell, and bottom pane. |
-| `src/frames.rs` | Compile-time embedded ASCII animation frames (10 variants, 36 frames each). |
-| `frames/` | Raw ASCII art frame text files for loading animations. |
-| `tests/` | Integration tests including VT100 emulator-based rendering tests. |
-| `styles.md` | Design reference for TUI styling conventions. |
-| `tooltips.txt` | Tooltip content data. |
+# Lint
+just fix -p orbit-code-tui-app-server
+just fmt
+```
 
 ## Architecture
 
-```
-main.rs -> lib.rs::run_main()
-  -> config loading, tracing, telemetry
-  -> start_app_server() (Embedded or Remote)
-  -> onboarding (welcome, login, trust directory)
-  -> session selection (fresh / resume / fork via app-server thread RPCs)
-  -> run_ratatui_app()
-       -> App::run() event loop
-            -> AppServerSession (JSON-RPC requests/notifications)
-            -> ChatWidget (history + active cell + bottom pane)
-            -> streaming pipeline (StreamController -> chunking -> commit_tick)
-            -> terminal rendering via ratatui
-```
+### How it differs from tui/
 
-## Features
+The `tui/` crate drives the agent through `orbit-code-core` directly (in-process). This crate instead wraps an `AppServerSession` that sends JSON-RPC requests and receives streamed notifications via `orbit-code-app-server-client`. The agent backend can run in-process (embedded) or on a remote machine (WebSocket).
 
-- `default = ["voice-input"]` -- enables audio capture/transcription.
-- `vt100-tests` -- enables VT100 emulator-based integration tests.
-- `debug-logs` -- gates verbose TUI debug logging.
+Everything else -- the UI widgets, rendering, streaming pipeline, onboarding flows -- is structurally identical. **Changes in tui/ must be mirrored here and vice versa.**
+
+### Entry flow
+
+`main.rs` -> `lib.rs::run_main()` which:
+1. Loads config, sets up tracing/telemetry
+2. Starts app server: `InProcessAppServerClient` (embedded) or `RemoteAppServerClient` (WebSocket URL)
+3. Runs onboarding (welcome, login, directory trust)
+4. Session selection (fresh / resume / fork via app-server `thread/*` RPCs)
+5. Enters `App::run()` event loop
+
+### App-server session management
+
+`AppServerSession` (`app_server_session.rs`) is a typed wrapper around `AppServerClient` (from `orbit-code-app-server-client`). It provides methods for every JSON-RPC operation: `thread_start`, `turn_start`, `turn_interrupt`, `thread_list`, `thread_fork`, `thread_read`, approvals, model listing, account info, realtime audio, etc. All agent communication goes through this wrapper.
+
+`AppCommand` (`app_command.rs`) wraps protocol `Op`s and provides a command enum for translating UI actions into app-server requests. The `app/` subdir has `app_server_adapter.rs` and `app_server_requests.rs` for the adapter layer between the App event loop and the session.
+
+### Chat pipeline
+
+Same as tui/: `ChatWidget` -> `StreamController` -> chunking -> commit_tick -> `HistoryCell`s. The difference is that events come from app-server notifications instead of core `EventMsg`s.
+
+### Additional modules (not in tui/)
+
+- **`app_server_session.rs`** -- typed JSON-RPC wrapper (the core differentiator)
+- **`app_command.rs`** -- command enum bridging UI actions to protocol Ops
+- **`local_chatgpt_auth.rs`** -- loads ChatGPT auth tokens from local storage for app-server auth flows
+- **`model_catalog.rs`** -- available model listing via app-server API
+- **`app/app_server_adapter.rs`** + **`app/app_server_requests.rs`** -- adapter between App and AppServerSession
+
+## Key Considerations
+
+### Mirroring tui/
+
+This is the most important rule: the two crates share nearly identical UI code. When you change a widget, rendering function, or UI behavior in one crate, you must apply the same change to the other. Grep both `tui/src/` and `tui_app_server/src/` to verify.
+
+### Feature flags
+
+Same as tui/: `voice-input` (default), `vt100-tests`, `debug-logs`.
+
+### Snapshot testing
+
+Same workflow as tui/. Snapshots live in `src/snapshots/` and submodule `snapshots/` directories. Use `cargo insta accept -p orbit-code-tui-app-server`.
+
+### Test structure
+
+`tests/all.rs` -> `tests/suite/mod.rs` -> individual test files. Also has `tests/manager_dependency_regression.rs` as a standalone regression test.
+
+### Binary targets
+
+Two binaries: `orbit-code-tui-app-server` (main TUI) and `md-events-app-server` (markdown event debug tool in `src/bin/md-events.rs`).

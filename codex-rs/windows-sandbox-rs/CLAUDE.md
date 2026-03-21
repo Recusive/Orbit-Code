@@ -8,16 +8,16 @@ Provides the Windows-specific sandbox that runs AI-proposed commands under a res
 
 ## What it plugs into
 
-- Used by `codex-core` as the Windows sandbox backend for command execution.
-- The `codex-windows-sandbox-setup` binary performs one-time elevated setup (user creation, ACL configuration).
+- Used by `orbit-code-core` as the Windows sandbox backend for command execution.
+- The `orbit-code-windows-sandbox-setup` binary performs one-time elevated setup (user creation, ACL configuration).
 - The `codex-command-runner` binary runs as the sandbox user in the elevated path.
 
 ## Imports from
 
-- `codex-protocol` -- `SandboxPolicy`.
-- `codex-utils-pty` -- `RawConPty` for ConPTY creation.
-- `codex-utils-absolute-path` -- path normalization.
-- `codex-utils-string` -- string utilities.
+- `orbit-code-protocol` -- `SandboxPolicy`.
+- `orbit-code-utils-pty` -- `RawConPty` for ConPTY creation.
+- `orbit-code-utils-absolute-path` -- path normalization.
+- `orbit-code-utils-string` -- string utilities.
 - `windows-sys` -- Win32 API bindings (threading, security, pipes, console, etc.).
 - `windows` -- COM/WMI for firewall management.
 - `serde`, `serde_json`, `base64`, `chrono`, `rand`, `tempfile`, `dunce`.
@@ -38,5 +38,5 @@ Provides the Windows-specific sandbox that runs AI-proposed commands under a res
 - `Cargo.toml` -- crate manifest with extensive `windows-sys` feature flags.
 - `build.rs` -- Windows resource manifest embedding (winres).
 - `src/lib.rs` -- module declarations, Windows/stub conditional compilation, and `run_windows_sandbox_capture()` implementation.
-- `src/bin/setup_main.rs` -- `codex-windows-sandbox-setup` binary entrypoint.
+- `src/bin/setup_main.rs` -- `orbit-code-windows-sandbox-setup` binary entrypoint.
 - `src/bin/command_runner.rs` -- `codex-command-runner` binary entrypoint.

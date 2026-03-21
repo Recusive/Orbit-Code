@@ -1,40 +1,22 @@
 # codex-rs/shell-escalation/
 
-Unix shell-escalation protocol and `codex-execve-wrapper` binary.
+Unix shell-escalation protocol that allows a sandboxed shell to escalate commands for execution outside the sandbox. Includes the `codex-execve-wrapper` binary.
 
-## What this folder does
+## Build & Test
+```bash
+cargo build -p orbit-code-shell-escalation
+cargo test -p orbit-code-shell-escalation
+```
 
-Implements the exec-interception protocol that allows a sandboxed shell to escalate commands to run outside the sandbox. A patched bash invokes `codex-execve-wrapper` on every `exec()` call. The wrapper sends the proposed command to the escalation server over a Unix domain socket, and the server responds with Run (execute in sandbox), Escalate (forward file descriptors and execute outside sandbox), or Deny (reject the command).
+## Architecture
 
-## What it plugs into
+A patched bash invokes `codex-execve-wrapper` on every `exec()` call. The wrapper sends the proposed command to the `EscalateServer` over a Unix domain socket. The server evaluates the command against an `EscalationPolicy` and responds with Run (execute in sandbox), Escalate (forward file descriptors and execute outside sandbox), or Deny (reject). The `EscalationSession` provides the environment overlay needed for the patched shell, including the socket FD in `ESCALATE_SOCKET_ENV_VAR`.
 
-- Used by `codex-core` for sandbox command execution on Unix.
-- The `EscalateServer` is instantiated by the runtime when running shell commands with sandbox escalation.
-- The `codex-execve-wrapper` binary is set as the `EXEC_WRAPPER` / `BASH_EXEC_WRAPPER` environment variable for the patched shell.
-
-## Imports from
-
-- `codex-protocol` -- `EscalationPermissions`, `Permissions`, approval types.
-- `codex-utils-absolute-path` -- path normalization.
-- `socket2` -- Unix socket pair creation.
-- `tokio`, `tokio-util` -- async runtime, cancellation tokens.
-- `clap` -- CLI argument parsing for the wrapper binary.
-- `libc` -- low-level Unix syscalls (execv, dup2, etc.).
-
-## Exports to
-
-- `EscalateServer` -- the server that listens for escalation requests.
-- `EscalationSession` -- session handle with environment overlay for the shell process.
-- `EscalationPolicy` trait -- callers implement this to decide Run/Escalate/Deny.
-- `ShellCommandExecutor` trait -- callers implement this for process spawning.
-- `ExecParams`, `ExecResult`, `PreparedExec` -- execution parameter/result types.
-- `Stopwatch` -- pausable timer for command timeouts.
-- `main_execve_wrapper` -- entrypoint for the wrapper binary.
-- `ESCALATE_SOCKET_ENV_VAR` -- environment variable name for the socket FD.
-
-## Key files
-
-- `Cargo.toml` -- crate manifest; builds `codex-execve-wrapper` binary.
-- `README.md` -- protocol documentation and patched-bash build instructions.
-- `src/lib.rs` -- conditional compilation gate (Unix only) and public re-exports.
-- `src/unix/` -- Unix implementation.
+## Key Considerations
+- Unix-only: the entire implementation is behind `#[cfg(unix)]` -- this crate is a no-op on Windows
+- The `codex-execve-wrapper` binary is set as `EXEC_WRAPPER` / `BASH_EXEC_WRAPPER` environment variable for the patched shell
+- Uses raw `libc` syscalls (`execv`, `dup2`, file descriptor management) in the wrapper binary
+- Socket pairs are created via `socket2` for reliable Unix domain socket communication
+- `Stopwatch` provides pausable timing for command timeouts -- paused during user approval prompts
+- Callers implement both `EscalationPolicy` (decision logic) and `ShellCommandExecutor` (process spawning) traits
+- The patched bash is a separate build (not included in this repo) -- see `README.md` for build instructions

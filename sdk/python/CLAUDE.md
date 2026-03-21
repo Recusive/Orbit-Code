@@ -1,53 +1,24 @@
 # sdk/python/
 
-Python SDK for the Codex `app-server` JSON-RPC v2 protocol. Published as `codex-app-server-sdk`.
+Python SDK (`orbit-code-app-server-sdk`) providing sync and async clients that spawn `codex app-server --listen stdio://` and communicate via JSON-RPC v2 over stdin/stdout.
 
-## Purpose
-
-Provides synchronous and async Python clients that spawn `codex app-server --listen stdio://` and communicate via JSON-RPC v2 over stdin/stdout. Exposes high-level `Codex`, `Thread`, and `TurnHandle` abstractions, plus generated Pydantic models for all wire types.
-
-## Key Files
-
-| File | Role |
-|------|------|
-| `src/codex_app_server/__init__.py` | Package root; re-exports all public symbols |
-| `src/codex_app_server/api.py` | High-level SDK surface: `Codex`, `AsyncCodex`, `Thread`, `AsyncThread`, `TurnHandle`, `AsyncTurnHandle`, `RunResult` |
-| `src/codex_app_server/client.py` | `AppServerClient` -- synchronous JSON-RPC transport over subprocess stdio; `AppServerConfig` for launch options |
-| `src/codex_app_server/async_client.py` | `AsyncAppServerClient` -- async wrapper using `asyncio.to_thread` over the sync client |
-| `src/codex_app_server/_run.py` | `RunResult` dataclass and helpers to collect stream events into a completed turn |
-| `src/codex_app_server/_inputs.py` | Input type definitions (`TextInput`, `ImageInput`, `LocalImageInput`, etc.) and wire serialization |
-| `src/codex_app_server/errors.py` | Exception hierarchy: `AppServerError`, `JsonRpcError`, `ServerBusyError`, etc. |
-| `src/codex_app_server/models.py` | Shared Pydantic models: `InitializeResponse`, `Notification`, `ServerInfo`, JSON type aliases |
-| `src/codex_app_server/retry.py` | `retry_on_overload` helper with exponential backoff for transient server errors |
-| `_runtime_setup.py` | Downloads and installs the pinned `codex-cli-bin` runtime from GitHub releases |
-| `pyproject.toml` | Package metadata; version 0.2.0; depends on `pydantic>=2.12` |
-
-## Imports From
-
-- `codex-cli-bin` package (from `sdk/python-runtime/`) -- provides `bundled_codex_path()` to locate the binary
-- `pydantic` -- all wire-format models are Pydantic BaseModel subclasses
-- Generated types from `src/codex_app_server/generated/v2_all.py` (auto-generated from the Rust JSON schema)
-
-## Exports To
-
-- Consumers install `codex-app-server-sdk` and import from `codex_app_server`
-- Primary public API: `Codex`, `AsyncCodex`, `Thread`, `AsyncThread`, `RunResult`
-
-## Build / Dev Commands
+## Build & Test
 
 ```bash
-python -m pip install -e .          # editable install
-python -m pip install -e ".[dev]"   # with dev deps (pytest, ruff, datamodel-code-generator)
-pytest                              # run tests
-python scripts/update_sdk_artifacts.py generate-types  # regenerate Pydantic models from JSON schema
+pip install -e .                # editable install
+pip install -e ".[dev]"         # with dev deps (pytest, ruff, datamodel-code-generator)
+pytest -q                       # run tests
+python scripts/update_sdk_artifacts.py generate-types   # regenerate Pydantic models from JSON schema
 ```
 
-## Subdirectories
+## Architecture
 
-- `src/codex_app_server/` -- package source
-- `src/codex_app_server/generated/` -- auto-generated Pydantic models
-- `docs/` -- getting-started guide, API reference, FAQ
-- `examples/` -- 14 numbered runnable example scripts (sync + async)
-- `notebooks/` -- Jupyter walkthrough notebook
-- `scripts/` -- `update_sdk_artifacts.py` for codegen and release staging
-- `tests/` -- pytest test suite
+The SDK exposes `Codex`/`AsyncCodex` as the main entry points. Each creates `Thread`/`AsyncThread` instances that communicate with the `codex app-server` subprocess via `AppServerClient` (sync JSON-RPC transport over stdio). All wire-format models are Pydantic v2 `BaseModel` subclasses, with generated types in `src/orbit_code_app_server/generated/` auto-produced from the Rust JSON schema at `codex-rs/app-server-protocol/schema/json/`.
+
+## Key Considerations
+
+- Requires Python >=3.10 and `pydantic>=2.12`.
+- The `orbit-code-cli-bin` runtime package (from `sdk/python-runtime/`) provides `bundled_codex_path()` for binary resolution.
+- Generated models in `generated/v2_all.py` are auto-generated -- do not edit by hand. Regenerate with `update_sdk_artifacts.py generate-types`.
+- `_runtime_setup.py` handles downloading and installing the pinned runtime from GitHub releases.
+- `retry.py` implements exponential backoff for transient server errors (429, 5xx).

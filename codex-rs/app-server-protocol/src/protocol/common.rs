@@ -24,7 +24,7 @@ impl GitSha {
     }
 }
 
-/// Authentication mode for OpenAI-backed providers.
+/// Authentication mode for OpenAI-backed and Anthropic-backed providers.
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Display, JsonSchema, TS)]
 #[serde(rename_all = "lowercase")]
 pub enum AuthMode {
@@ -40,6 +40,16 @@ pub enum AuthMode {
     #[ts(rename = "chatgptAuthTokens")]
     #[strum(serialize = "chatgptAuthTokens")]
     ChatgptAuthTokens,
+    /// Anthropic API key provided by the caller and stored by Codex.
+    #[serde(rename = "anthropicApiKey")]
+    #[ts(rename = "anthropicApiKey")]
+    #[strum(serialize = "anthropicApiKey")]
+    AnthropicApiKey,
+    /// Anthropic OAuth managed by Codex (tokens persisted and refreshed by Codex).
+    #[serde(rename = "anthropicOAuth")]
+    #[ts(rename = "anthropicOAuth")]
+    #[strum(serialize = "anthropicOAuth")]
+    AnthropicOAuth,
 }
 
 macro_rules! experimental_reason_expr {
@@ -438,8 +448,13 @@ client_request_definitions! {
         response: v2::CancelLoginAccountResponse,
     },
 
+    SubmitOAuthCode => "account/oauth/submitCode" {
+        params: v2::SubmitOAuthCodeParams,
+        response: v2::SubmitOAuthCodeResponse,
+    },
+
     LogoutAccount => "account/logout" {
-        params: #[ts(type = "undefined")] #[serde(skip_serializing_if = "Option::is_none")] Option<()>,
+        params: #[serde(default)] v2::LogoutAccountParams,
         response: v2::LogoutAccountResponse,
     },
 
@@ -1320,12 +1335,15 @@ mod tests {
     fn serialize_account_logout() -> Result<()> {
         let request = ClientRequest::LogoutAccount {
             request_id: RequestId::Integer(4),
-            params: None,
+            params: v2::LogoutAccountParams { provider: None },
         };
         assert_eq!(
             json!({
                 "method": "account/logout",
                 "id": 4,
+                "params": {
+                    "provider": null
+                }
             }),
             serde_json::to_value(&request)?,
         );
@@ -1364,6 +1382,7 @@ mod tests {
             request_id: RequestId::Integer(6),
             params: v2::GetAccountParams {
                 refresh_token: false,
+                provider: None,
             },
         };
         assert_eq!(
@@ -1371,7 +1390,8 @@ mod tests {
                 "method": "account/read",
                 "id": 6,
                 "params": {
-                    "refreshToken": false
+                    "refreshToken": false,
+                    "provider": null
                 }
             }),
             serde_json::to_value(&request)?,

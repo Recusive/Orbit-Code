@@ -447,9 +447,10 @@ pub async fn run_main(
 
     let log_dir = orbit_code_core::config::log_dir(&config)?;
     std::fs::create_dir_all(&log_dir)?;
-    // Open (or create) your log file, appending to it.
+    // Open (or create) the log file. Truncate on each session start so
+    // `tail -f` only shows the current session's logs.
     let mut log_file_opts = OpenOptions::new();
-    log_file_opts.create(true).append(true);
+    log_file_opts.create(true).write(true).truncate(true);
 
     // Ensure the file is only readable and writable by the current user.
     // Doing the equivalent to `chmod 600` on Windows is quite a bit more code
@@ -1129,7 +1130,7 @@ pub enum LoginStatus {
 }
 
 fn get_login_status(config: &Config) -> LoginStatus {
-    if config.model_provider.requires_openai_auth {
+    if config.model_provider.requires_auth {
         // Reading the OpenAI API key is an async operation because it may need
         // to refresh the token. Block on it.
         let orbit_code_home = config.orbit_code_home.clone();
@@ -1204,7 +1205,7 @@ fn should_show_onboarding(
 fn should_show_login_screen(login_status: LoginStatus, config: &Config) -> bool {
     // Only show the login screen for providers that actually require OpenAI auth
     // (OpenAI or equivalents). For OSS/other providers, skip login entirely.
-    if !config.model_provider.requires_openai_auth {
+    if !config.model_provider.requires_auth {
         return false;
     }
 

@@ -9,14 +9,14 @@ Provides VS Code workspace settings, recommended extensions, and debug launch co
 | File | Role |
 |------|------|
 | `settings.json` | Workspace settings for rust-analyzer and TOML formatting. Enables clippy on save, format on save for Rust and TOML files, configures rustfmt with `imports_granularity=Item`, and sets a dedicated `rust-analyzer` target directory to avoid lock contention with Cargo builds. |
-| `launch.json` | LLDB debug configurations: (1) "Cargo launch" builds and runs `codex-tui` from `codex-rs/`, (2) "Attach to running codex CLI" attaches to a running process by PID. |
+| `launch.json` | LLDB debug configurations: (1) "Cargo launch" builds and runs `orbit-code-tui` from `codex-rs/`, (2) "Attach to running codex CLI" attaches to a running process by PID. |
 | `extensions.json` | Recommended extensions: `rust-lang.rust-analyzer` (Rust language support), `tamasfe.even-better-toml` (TOML formatting/validation), `vadimcn.vscode-lldb` (LLDB debugger for Rust). |
 
 ## What It Plugs Into
 
 - **VS Code**: These files are automatically recognized by VS Code when the repo is opened as a workspace.
 - **rust-analyzer**: `settings.json` configures it to run clippy (with `--tests`) on save and use a separate target directory (`codex-rs/target/rust-analyzer`) to avoid blocking `cargo build`.
-- **Cargo/Rust**: Debug configs build via `cargo build --bin=codex-tui` in the `codex-rs/` directory.
+- **Cargo/Rust**: Debug configs build via `cargo build --bin=orbit-code-tui` in the `codex-rs/` directory.
 - **`.devcontainer/`**: The devcontainer config also installs the same extensions (rust-analyzer, even-better-toml) inside the container.
 
 ## `settings.json` Details
@@ -35,7 +35,7 @@ Provides VS Code workspace settings, recommended extensions, and debug launch co
 
 Two LLDB debug configurations:
 
-1. **Cargo launch**: Builds `codex-tui` binary from `codex-rs/` and launches it. Working directory is `${workspaceFolder}/codex-rs`.
+1. **Cargo launch**: Builds `orbit-code-tui` binary from `codex-rs/` and launches it. Working directory is `${workspaceFolder}/codex-rs`.
 2. **Attach to running codex CLI**: Attaches the debugger to an already-running Codex process selected by PID picker. Source language set to Rust.
 
 Both require the `vadimcn.vscode-lldb` extension.

@@ -1,16 +1,8 @@
 # codex-rs/skills/src/
 
-Source code for the `codex-skills` crate.
+Embedded skill installation logic and bundled skill assets.
 
-## What this folder does
+## Module Layout
 
-Contains the library implementation and the embedded skill assets.
-
-## Key files
-
-- `lib.rs` -- the entire library implementation. Key functions: `install_system_skills()` extracts embedded skills to `CODEX_HOME/skills/.system` with fingerprint-based caching; `system_cache_root_dir()` returns the cache path; `embedded_system_skills_fingerprint()` computes a hash of all embedded files for change detection.
-- `assets/` -- contains the embedded skill samples that are compiled into the binary.
-
-## Exports to
-
-- Parent crate re-exports all public items from `lib.rs`.
+- **lib** (`lib.rs`) -- `install_system_skills()` extracts embedded skills to disk with fingerprint-based caching; `system_cache_root_dir()` returns the cache path; `embedded_system_skills_fingerprint()` computes content hash for change detection
+- **assets/** -- Embedded skill packages (agent configurations, reference docs, scripts) compiled into the binary via `include_dir`

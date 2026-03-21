@@ -6147,7 +6147,7 @@ impl ChatWidget {
     }
 
     fn should_prefetch_rate_limits(&self) -> bool {
-        if !self.config.model_provider.requires_openai_auth {
+        if !self.config.model_provider.requires_auth {
             return false;
         }
 

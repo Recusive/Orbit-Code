@@ -1,29 +1,13 @@
 # sdk/
 
-Top-level directory containing official SDK packages for embedding the Codex agent into external workflows and applications.
-
-## Purpose
-
-Provides language-specific SDK wrappers around the `codex` CLI and `codex app-server` JSON-RPC protocol. Each sub-package spawns the Codex CLI binary and communicates over stdin/stdout (JSONL for TypeScript, JSON-RPC v2 for Python).
-
-## Contents
-
-| Directory | Package | Language | Protocol |
-|-----------|---------|----------|----------|
-| `python/` | `codex-app-server-sdk` | Python >=3.10 | JSON-RPC v2 over stdio |
-| `python-runtime/` | `codex-cli-bin` | Python >=3.10 | N/A (binary distribution) |
-| `typescript/` | `@openai/codex-sdk` | TypeScript/Node 18+ | JSONL over stdio |
+Client SDKs for embedding the Orbit Code agent into external applications. Contains TypeScript, Python, and Python runtime sub-packages.
 
 ## Architecture
 
-All SDKs follow the same pattern:
-1. Locate or resolve the `codex` CLI binary (platform-specific)
-2. Spawn `codex exec` (TypeScript) or `codex app-server` (Python) as a child process
-3. Exchange structured messages over stdin/stdout
-4. Expose typed Thread/Turn abstractions to the consumer
+All SDKs follow the same pattern: locate the `codex` CLI binary, spawn it as a child process (`codex exec` for TypeScript, `codex app-server` for Python), exchange structured messages over stdin/stdout, and expose typed Thread/Turn abstractions to the consumer.
 
-## Relationship to Other Modules
+## Module Layout
 
-- Depends on the Rust CLI binary built from `codex-rs/` (the `codex` executable)
-- The Python SDK generated types come from the JSON schema at `codex-rs/app-server-protocol/schema/json/`
-- The TypeScript SDK event types mirror `codex-rs/exec/src/exec_events.rs`
+- **typescript/** -- `@orbit.build/orbit-code-sdk`: Node.js SDK using JSONL over stdio
+- **python/** -- `orbit-code-app-server-sdk`: Python SDK using JSON-RPC v2 over stdio
+- **python-runtime/** -- `orbit-code-cli-bin`: wheel-only package that bundles the platform-specific `codex` binary for Python distribution

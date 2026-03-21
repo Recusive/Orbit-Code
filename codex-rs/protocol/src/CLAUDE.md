@@ -1,40 +1,17 @@
-# codex-rs/protocol/src/
+# protocol/src
 
-Source code for the `codex-protocol` crate -- core type definitions for the Codex CLI protocol.
+## Module Categories
 
-## What this folder does
+**Session protocol:** `protocol.rs` -- `Op` (submission queue) and `EventMsg` (event queue), plus `SandboxPolicy`, `AskForApproval`, `ReviewDecision`, `SessionSource`, and supporting types. This is the largest file (~150K) and the central interface.
 
-Contains all Rust source modules that define the session protocol, configuration types, model types, permission types, prompt templates, and supporting utilities.
+**Config types:** `config_types.rs` -- enums and structs mirroring TOML config fields (`SandboxMode`, `ModeKind`, `CollaborationMode`, `Personality`, `WebSearchMode`, `ServiceTier`, `TrustLevel`).
 
-## Module structure
+**Model types:** `models.rs` -- `ResponseItem`, `ContentItem`, `BaseInstructions`, `PermissionProfile`. `openai_models.rs` -- `ReasoningEffort` and model metadata.
 
-- `lib.rs` -- crate root; declares all public modules and re-exports `ThreadId`
-- `protocol.rs` -- primary protocol types: `Op` (submission queue entries), `EventMsg` (event queue entries), `SandboxPolicy`, `AskForApproval`, `ReviewDecision`, `SessionSource`, `W3cTraceContext`, `WritableRoot`, `FileChange`, `NetworkAccess`, `ReadOnlyAccess`, and many more. Also re-exports approval and permission types.
-- `config_types.rs` -- configuration enums/structs: `ReasoningSummary`, `Verbosity`, `SandboxMode`, `ApprovalsReviewer`, `Personality`, `WebSearchMode`, `WebSearchToolConfig`, `ServiceTier`, `TrustLevel`, `AltScreenMode`, `ModeKind`, `CollaborationMode`, `CollaborationModeMask`
-- `models.rs` -- `ResponseItem` (Message, Reasoning, FunctionCall, LocalShellCall, WebSearchCall, etc.), `ContentItem`, `BaseInstructions`, `PermissionProfile`, `MessagePhase`, `WebSearchAction`
-- `permissions.rs` -- `FileSystemSandboxPolicy`, `NetworkSandboxPolicy`, `FileSystemAccessMode`, `FileSystemPath`, `FileSystemSpecialPath`, `FileSystemSandboxEntry`; includes resolution logic for path-based access control and legacy policy conversion
-- `items.rs` -- `TurnItem` variants: `UserMessageItem`, `AgentMessageItem`, `PlanItem`, `ReasoningItem`, `WebSearchItem`, `ImageGenerationItem`, `ContextCompactionItem`; each has `as_legacy_event()` conversion
-- `approvals.rs` -- `ExecApprovalRequestEvent`, `ApplyPatchApprovalRequestEvent`, `ElicitationRequest`, `ElicitationRequestEvent`, `GuardianAssessmentEvent`, `ExecPolicyAmendment`, `NetworkApprovalContext`, `NetworkPolicyAmendment`
-- `user_input.rs` -- `UserInput` enum (Text, Image, LocalImage), `TextElement`, `ByteRange`
-- `custom_prompts.rs` -- `CustomPrompt` struct with name, path, content, description, argument hint
-- `dynamic_tools.rs` -- `DynamicToolSpec`, `DynamicToolCallRequest`, `DynamicToolResponse`
-- `mcp.rs` -- MCP (Model Context Protocol) types: `Tool`, `Resource`, `ResourceTemplate`, `CallToolResult`, `RequestId`
-- `message_history.rs` -- `HistoryEntry` for conversation history persistence
-- `openai_models.rs` -- `ReasoningEffort` and OpenAI model metadata
-- `parse_command.rs` -- `ParsedCommand` for shell command parsing
-- `plan_tool.rs` -- `UpdatePlanArgs` for the plan/TODO tool
-- `request_permissions.rs` / `request_user_input.rs` -- permission request and user input request events
-- `account.rs` -- account-related types
-- `thread_id.rs` -- `ThreadId` (UUID-based conversation identifier)
-- `num_format.rs` -- locale-aware number formatting with separators
-- `memory_citation.rs` -- `MemoryCitation` for memory-linked responses
-- `prompts/` -- embedded markdown prompt templates
+**Permission types:** `permissions.rs` -- `FileSystemSandboxPolicy`, `NetworkSandboxPolicy`, path resolution logic. Contains significant runtime validation, not just type definitions.
 
-## Imports from
+**Turn/event types:** `items.rs` (turn items), `approvals.rs` (approval request events), `user_input.rs` (text/image input), `mcp.rs` (MCP tool/resource types), `dynamic_tools.rs` (dynamic tool specs and calls), `message_history.rs` (conversation history).
 
-- `codex-execpolicy`, `codex-git`, `codex-utils-absolute-path`, `codex-utils-image`
-- `serde`, `serde_json`, `serde_with`, `schemars`, `ts-rs`, `uuid`, `strum`, `strum_macros`, `tracing`
+**Supporting:** `thread_id.rs` (UUID-based `ThreadId`), `custom_prompts.rs`, `plan_tool.rs`, `parse_command.rs`, `num_format.rs`, `memory_citation.rs`, `account.rs`, `request_permissions.rs`, `request_user_input.rs`.
 
-## Exports to
-
-All modules are `pub` and consumed by `codex-core`, `codex-otel`, `codex-tui`, `codex-exec`, `codex-config`, `codex-app-server`, and other workspace crates.
+**Prompt templates:** `prompts/` -- markdown files embedded at compile time via `include_str!`. Organized into `base_instructions/`, `permissions/approval_policy/`, `permissions/sandbox_mode/`, and `realtime/`.

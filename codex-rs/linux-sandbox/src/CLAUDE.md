@@ -1,6 +1,6 @@
 # codex-rs/linux-sandbox/src/
 
-Source directory for the `codex-linux-sandbox` crate. All modules are conditionally compiled for `target_os = "linux"` only.
+Source directory for the `orbit-code-linux-sandbox` crate. All modules are conditionally compiled for `target_os = "linux"` only.
 
 ## What this folder does
 
@@ -18,7 +18,7 @@ The sandbox operates in a two-stage pipeline:
 | File | Purpose |
 |------|---------|
 | `lib.rs` | Library entry point; declares modules, exports `run_main()` |
-| `main.rs` | Binary entry point; calls `codex_linux_sandbox::run_main()` |
+| `main.rs` | Binary entry point; calls `orbit_code_linux_sandbox::run_main()` |
 | `bwrap.rs` | Generates bubblewrap CLI argument vectors from `FileSystemSandboxPolicy`. Handles mount ordering: read-only root, `/dev`, writable roots, read-only subpaths, unreadable carveouts. Includes `BwrapOptions` and `BwrapNetworkMode` types |
 | `landlock.rs` | Applies in-process sandbox primitives: `PR_SET_NO_NEW_PRIVS` via `prctl`, seccomp BPF filters for network syscall restriction (Restricted and ProxyRouted modes), and legacy Landlock filesystem rules |
 | `launcher.rs` | Decides between system bwrap (`/usr/bin/bwrap`) and vendored bwrap; handles `execv` and fd inheritance (`clear_cloexec`) for preserved files |
@@ -29,6 +29,6 @@ The sandbox operates in a two-stage pipeline:
 
 ## Imports / exports
 
-- **Imports from workspace**: `codex-core` (error types), `codex-protocol` (sandbox policy types), `codex-utils-absolute-path`
+- **Imports from workspace**: `orbit-code-core` (error types), `orbit-code-protocol` (sandbox policy types), `orbit-code-utils-absolute-path`
 - **External deps**: `clap`, `landlock`, `seccompiler`, `libc`, `serde`, `serde_json`, `url`
 - **Exports**: `run_main()` function (the binary entry point)

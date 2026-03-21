@@ -234,7 +234,7 @@ impl StatusHistoryCell {
         };
         let agents_summary = compose_agents_summary(config);
         let model_provider = format_model_provider(config);
-        let account = compose_account_display(auth_manager, plan_type);
+        let account = compose_account_display(auth_manager, plan_type, &config.model_provider_id);
         let session_id = session_id.as_ref().map(std::string::ToString::to_string);
         let forked_from = forked_from.map(|id| id.to_string());
         let default_usage = TokenUsage::default();
@@ -450,6 +450,8 @@ impl HistoryCell for StatusHistoryCell {
             StatusAccountDisplay::ApiKey => {
                 "API key configured (run codex login to use ChatGPT)".to_string()
             }
+            StatusAccountDisplay::AnthropicApiKey => "Anthropic API key configured".to_string(),
+            StatusAccountDisplay::AnthropicOAuth => "Claude Pro/Max (OAuth)".to_string(),
         });
 
         let mut labels: Vec<String> = vec!["Model", "Directory", "Permissions", "Agents.md"]

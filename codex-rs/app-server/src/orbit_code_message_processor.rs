@@ -70,6 +70,7 @@ use orbit_code_app_server_protocol::ListMcpServerStatusResponse;
 use orbit_code_app_server_protocol::LoginAccountParams;
 use orbit_code_app_server_protocol::LoginAccountResponse;
 use orbit_code_app_server_protocol::LoginApiKeyParams;
+use orbit_code_app_server_protocol::LogoutAccountParams;
 use orbit_code_app_server_protocol::LogoutAccountResponse;
 use orbit_code_app_server_protocol::MarketplaceInterface;
 use orbit_code_app_server_protocol::McpServerOauthLoginCompletedNotification;
@@ -107,6 +108,8 @@ use orbit_code_app_server_protocol::SkillsConfigWriteParams;
 use orbit_code_app_server_protocol::SkillsConfigWriteResponse;
 use orbit_code_app_server_protocol::SkillsListParams;
 use orbit_code_app_server_protocol::SkillsListResponse;
+use orbit_code_app_server_protocol::SubmitOAuthCodeParams;
+use orbit_code_app_server_protocol::SubmitOAuthCodeResponse;
 use orbit_code_app_server_protocol::Thread;
 use orbit_code_app_server_protocol::ThreadArchiveParams;
 use orbit_code_app_server_protocol::ThreadArchiveResponse;
@@ -357,6 +360,54 @@ impl Drop for ActiveLogin {
     }
 }
 
+/// TTL for pending OAuth login entries before they are considered expired.
+const PENDING_LOGIN_TTL: Duration = Duration::from_secs(600);
+
+struct PendingOAuthLogin {
+    verifier: String,
+    created_at: std::time::Instant,
+}
+
+/// Manages pending Anthropic OAuth login sessions, mapping login IDs to PKCE
+/// verifiers with automatic expiration.
+struct OAuthLoginManager {
+    pending: HashMap<String, PendingOAuthLogin>,
+}
+
+impl OAuthLoginManager {
+    fn new() -> Self {
+        Self {
+            pending: HashMap::new(),
+        }
+    }
+
+    fn insert(&mut self, login_id: String, verifier: String) {
+        self.cleanup_expired();
+        self.pending.insert(
+            login_id,
+            PendingOAuthLogin {
+                verifier,
+                created_at: std::time::Instant::now(),
+            },
+        );
+    }
+
+    /// Takes the verifier for a pending login. Returns `Ok(verifier)` on success,
+    /// `Err(true)` if the entry existed but expired, or `Err(false)` if not found.
+    fn take(&mut self, login_id: &str) -> Result<String, bool> {
+        match self.pending.remove(login_id) {
+            Some(p) if p.created_at.elapsed() < PENDING_LOGIN_TTL => Ok(p.verifier),
+            Some(_) => Err(true),
+            None => Err(false),
+        }
+    }
+
+    fn cleanup_expired(&mut self) {
+        self.pending
+            .retain(|_, v| v.created_at.elapsed() < PENDING_LOGIN_TTL);
+    }
+}
+
 /// Handles JSON-RPC messages for Codex threads (and legacy conversation APIs).
 pub(crate) struct CodexMessageProcessor {
     auth_manager: Arc<AuthManager>,
@@ -374,6 +425,7 @@ pub(crate) struct CodexMessageProcessor {
     pending_fuzzy_searches: Arc<Mutex<HashMap<String, Arc<AtomicBool>>>>,
     fuzzy_search_sessions: Arc<Mutex<HashMap<String, FuzzyFileSearchSession>>>,
     background_tasks: TaskTracker,
+    oauth_login_manager: OAuthLoginManager,
     feedback: CodexFeedback,
     log_db: Option<LogDbLayer>,
 }
@@ -434,10 +486,25 @@ impl CodexMessageProcessor {
     }
 
     fn current_account_updated_notification(&self) -> AccountUpdatedNotification {
+        // Check general cached auth first (OpenAI/ChatGPT path).
         let auth = self.auth_manager.auth_cached();
+        if auth.is_some() {
+            return AccountUpdatedNotification {
+                auth_mode: auth.as_ref().map(CodexAuth::api_auth_mode),
+                plan_type: auth.as_ref().and_then(CodexAuth::account_plan_type),
+                provider: None,
+            };
+        }
+        // Cached auth is None for Anthropic-only users (load_auth uses to_v1_openai).
+        // Check Anthropic provider directly.
+        use orbit_code_core::auth::ProviderName;
+        let anthropic_auth = self
+            .auth_manager
+            .auth_cached_for_provider(ProviderName::Anthropic);
         AccountUpdatedNotification {
-            auth_mode: auth.as_ref().map(CodexAuth::api_auth_mode),
-            plan_type: auth.as_ref().and_then(CodexAuth::account_plan_type),
+            auth_mode: anthropic_auth.as_ref().map(CodexAuth::api_auth_mode),
+            plan_type: None,
+            provider: None,
         }
     }
 
@@ -492,6 +559,7 @@ impl CodexMessageProcessor {
             pending_fuzzy_searches: Arc::new(Mutex::new(HashMap::new())),
             fuzzy_search_sessions: Arc::new(Mutex::new(HashMap::new())),
             background_tasks: TaskTracker::new(),
+            oauth_login_manager: OAuthLoginManager::new(),
             feedback,
             log_db,
         }
@@ -814,14 +882,16 @@ impl CodexMessageProcessor {
                 self.login_v2(to_connection_request_id(request_id), params)
                     .await;
             }
-            ClientRequest::LogoutAccount {
-                request_id,
-                params: _,
-            } => {
-                self.logout_v2(to_connection_request_id(request_id)).await;
+            ClientRequest::LogoutAccount { request_id, params } => {
+                self.logout_v2(to_connection_request_id(request_id), params)
+                    .await;
             }
             ClientRequest::CancelLoginAccount { request_id, params } => {
                 self.cancel_login_v2(to_connection_request_id(request_id), params)
+                    .await;
+            }
+            ClientRequest::SubmitOAuthCode { request_id, params } => {
+                self.submit_oauth_code_v2(to_connection_request_id(request_id), params)
                     .await;
             }
             ClientRequest::GetAccount { request_id, params } => {
@@ -925,6 +995,12 @@ impl CodexMessageProcessor {
                 )
                 .await;
             }
+            LoginAccountParams::AnthropicApiKey { api_key } => {
+                self.login_anthropic_api_key_v2(request_id, api_key).await;
+            }
+            LoginAccountParams::AnthropicOAuth => {
+                self.login_anthropic_oauth_v2(request_id).await;
+            }
         }
     }
 
@@ -1010,6 +1086,201 @@ impl CodexMessageProcessor {
             }
             Err(error) => {
                 self.outgoing.send_error(request_id, error).await;
+            }
+        }
+    }
+
+    async fn login_anthropic_api_key_v2(
+        &mut self,
+        request_id: ConnectionRequestId,
+        api_key: String,
+    ) {
+        use orbit_code_core::auth::AuthDotJsonV2;
+        use orbit_code_core::auth::ProviderAuth;
+        use orbit_code_core::auth::ProviderName;
+        use orbit_code_core::auth::load_auth_dot_json_v2;
+        use orbit_code_core::auth::save_auth_v2;
+
+        let mut v2 = match load_auth_dot_json_v2(
+            &self.config.orbit_code_home,
+            self.config.cli_auth_credentials_store_mode,
+        ) {
+            Ok(Some(v2)) => v2,
+            _ => AuthDotJsonV2::new(),
+        };
+        v2.set_provider_auth(
+            ProviderName::Anthropic,
+            ProviderAuth::AnthropicApiKey { key: api_key },
+        );
+        if let Err(e) = save_auth_v2(
+            &self.config.orbit_code_home,
+            &v2,
+            self.config.cli_auth_credentials_store_mode,
+        ) {
+            let error = JSONRPCErrorError {
+                code: INVALID_REQUEST_ERROR_CODE,
+                message: format!("Failed to save Anthropic auth: {e}"),
+                data: None,
+            };
+            self.outgoing.send_error(request_id, error).await;
+            return;
+        }
+
+        self.auth_manager.reload();
+
+        self.outgoing
+            .send_response(request_id, LoginAccountResponse::AnthropicApiKey {})
+            .await;
+
+        let payload_login_completed = AccountLoginCompletedNotification {
+            login_id: None,
+            success: true,
+            error: None,
+        };
+        self.outgoing
+            .send_server_notification(ServerNotification::AccountLoginCompleted(
+                payload_login_completed,
+            ))
+            .await;
+
+        self.outgoing
+            .send_server_notification(ServerNotification::AccountUpdated(
+                self.current_account_updated_notification(),
+            ))
+            .await;
+    }
+
+    async fn login_anthropic_oauth_v2(&mut self, request_id: ConnectionRequestId) {
+        use orbit_code_login::AnthropicAuthMode;
+        use orbit_code_login::anthropic_authorize_url;
+
+        let (auth_url, verifier) = match anthropic_authorize_url(AnthropicAuthMode::MaxSubscription)
+        {
+            Ok(result) => result,
+            Err(e) => {
+                let error = JSONRPCErrorError {
+                    code: INVALID_PARAMS_ERROR_CODE,
+                    message: format!("Failed to generate Anthropic OAuth URL: {e}"),
+                    data: None,
+                };
+                self.outgoing.send_error(request_id, error).await;
+                return;
+            }
+        };
+        let login_id = Uuid::new_v4().to_string();
+
+        self.oauth_login_manager.insert(login_id.clone(), verifier);
+
+        self.outgoing
+            .send_response(
+                request_id,
+                LoginAccountResponse::AnthropicOAuth {
+                    login_id,
+                    auth_url,
+                    instructions: "Open the URL above, authorize, then paste the code below."
+                        .to_string(),
+                },
+            )
+            .await;
+    }
+
+    async fn submit_oauth_code_v2(
+        &mut self,
+        request_id: ConnectionRequestId,
+        params: SubmitOAuthCodeParams,
+    ) {
+        use orbit_code_core::auth::AuthDotJsonV2;
+        use orbit_code_core::auth::ProviderAuth;
+        use orbit_code_core::auth::ProviderName;
+        use orbit_code_core::auth::load_auth_dot_json_v2;
+        use orbit_code_core::auth::save_auth_v2;
+        use orbit_code_login::anthropic_exchange_code;
+
+        let verifier = match self.oauth_login_manager.take(&params.login_id) {
+            Ok(v) => v,
+            Err(true) => {
+                self.outgoing
+                    .send_response(request_id, SubmitOAuthCodeResponse::Expired)
+                    .await;
+                return;
+            }
+            Err(false) => {
+                self.outgoing
+                    .send_response(request_id, SubmitOAuthCodeResponse::NotFound)
+                    .await;
+                return;
+            }
+        };
+
+        match anthropic_exchange_code(&params.code, &verifier).await {
+            Ok(tokens) => {
+                let now = chrono::Utc::now().timestamp();
+                let expires_in_secs = i64::try_from(tokens.expires_in).unwrap_or(3600);
+                let expires_at = now.saturating_add(expires_in_secs);
+
+                let mut v2 = match load_auth_dot_json_v2(
+                    &self.config.orbit_code_home,
+                    self.config.cli_auth_credentials_store_mode,
+                ) {
+                    Ok(Some(v2)) => v2,
+                    _ => AuthDotJsonV2::new(),
+                };
+                v2.set_provider_auth(
+                    ProviderName::Anthropic,
+                    ProviderAuth::AnthropicOAuth {
+                        access_token: tokens.access_token,
+                        refresh_token: tokens.refresh_token,
+                        expires_at,
+                    },
+                );
+                if let Err(e) = save_auth_v2(
+                    &self.config.orbit_code_home,
+                    &v2,
+                    self.config.cli_auth_credentials_store_mode,
+                ) {
+                    self.outgoing
+                        .send_response(
+                            request_id,
+                            SubmitOAuthCodeResponse::Failed {
+                                message: format!("Failed to save tokens: {e}"),
+                            },
+                        )
+                        .await;
+                    return;
+                }
+
+                self.auth_manager.reload();
+
+                self.outgoing
+                    .send_response(request_id, SubmitOAuthCodeResponse::Success)
+                    .await;
+
+                let payload_login_completed = AccountLoginCompletedNotification {
+                    login_id: None,
+                    success: true,
+                    error: None,
+                };
+                self.outgoing
+                    .send_server_notification(ServerNotification::AccountLoginCompleted(
+                        payload_login_completed,
+                    ))
+                    .await;
+
+                self.outgoing
+                    .send_server_notification(ServerNotification::AccountUpdated(
+                        self.current_account_updated_notification(),
+                    ))
+                    .await;
+            }
+            Err(e) => {
+                self.outgoing
+                    .send_response(
+                        request_id,
+                        SubmitOAuthCodeResponse::Failed {
+                            message: e.to_string(),
+                        },
+                    )
+                    .await;
             }
         }
     }
@@ -1109,6 +1380,7 @@ impl CodexMessageProcessor {
                             let payload_v2 = AccountUpdatedNotification {
                                 auth_mode: auth.as_ref().map(CodexAuth::api_auth_mode),
                                 plan_type: auth.as_ref().and_then(CodexAuth::account_plan_type),
+                                provider: None,
                             };
                             outgoing_clone
                                 .send_server_notification(ServerNotification::AccountUpdated(
@@ -1298,8 +1570,113 @@ impl CodexMessageProcessor {
             .map(CodexAuth::api_auth_mode))
     }
 
-    async fn logout_v2(&mut self, request_id: ConnectionRequestId) {
-        match self.logout_common().await {
+    async fn logout_v2(&mut self, request_id: ConnectionRequestId, params: LogoutAccountParams) {
+        use orbit_code_core::auth::ProviderName;
+        use orbit_code_core::auth::load_auth_dot_json_v2;
+        use orbit_code_core::auth::save_auth_v2;
+
+        let result = match params.provider.as_deref() {
+            Some("anthropic") => {
+                // Remove Anthropic entry from storage while preserving other providers.
+                let removal_result: std::result::Result<(), JSONRPCErrorError> = (|| {
+                    let mut v2 = match load_auth_dot_json_v2(
+                        &self.config.orbit_code_home,
+                        self.config.cli_auth_credentials_store_mode,
+                    ) {
+                        Ok(Some(v2)) => v2,
+                        Ok(None) => return Ok(()),
+                        Err(e) => {
+                            return Err(JSONRPCErrorError {
+                                code: INTERNAL_ERROR_CODE,
+                                message: format!("logout failed: {e}"),
+                                data: None,
+                            });
+                        }
+                    };
+                    v2.remove_provider_auth(ProviderName::Anthropic);
+                    if v2.has_any_auth() {
+                        save_auth_v2(
+                            &self.config.orbit_code_home,
+                            &v2,
+                            self.config.cli_auth_credentials_store_mode,
+                        )
+                        .map_err(|e| JSONRPCErrorError {
+                            code: INTERNAL_ERROR_CODE,
+                            message: format!("logout failed: {e}"),
+                            data: None,
+                        })?;
+                    } else if let Err(e) = self.auth_manager.logout() {
+                        return Err(JSONRPCErrorError {
+                            code: INTERNAL_ERROR_CODE,
+                            message: format!("logout failed: {e}"),
+                            data: None,
+                        });
+                    }
+                    self.auth_manager.reload();
+                    Ok(())
+                })(
+                );
+                removal_result.map(|()| {
+                    self.auth_manager
+                        .auth_cached()
+                        .as_ref()
+                        .map(CodexAuth::api_auth_mode)
+                })
+            }
+            Some("openai") => {
+                // Remove OpenAI entry from storage while preserving other providers.
+                let removal_result: std::result::Result<(), JSONRPCErrorError> = (|| {
+                    let mut v2 = match load_auth_dot_json_v2(
+                        &self.config.orbit_code_home,
+                        self.config.cli_auth_credentials_store_mode,
+                    ) {
+                        Ok(Some(v2)) => v2,
+                        Ok(None) => return Ok(()),
+                        Err(e) => {
+                            return Err(JSONRPCErrorError {
+                                code: INTERNAL_ERROR_CODE,
+                                message: format!("logout failed: {e}"),
+                                data: None,
+                            });
+                        }
+                    };
+                    v2.remove_provider_auth(ProviderName::OpenAI);
+                    if v2.has_any_auth() {
+                        save_auth_v2(
+                            &self.config.orbit_code_home,
+                            &v2,
+                            self.config.cli_auth_credentials_store_mode,
+                        )
+                        .map_err(|e| JSONRPCErrorError {
+                            code: INTERNAL_ERROR_CODE,
+                            message: format!("logout failed: {e}"),
+                            data: None,
+                        })?;
+                    } else if let Err(e) = self.auth_manager.logout() {
+                        return Err(JSONRPCErrorError {
+                            code: INTERNAL_ERROR_CODE,
+                            message: format!("logout failed: {e}"),
+                            data: None,
+                        });
+                    }
+                    self.auth_manager.reload();
+                    Ok(())
+                })(
+                );
+                removal_result.map(|()| {
+                    self.auth_manager
+                        .auth_cached()
+                        .as_ref()
+                        .map(CodexAuth::api_auth_mode)
+                })
+            }
+            None | Some(_) => {
+                // Default: logout all (existing behavior).
+                self.logout_common().await
+            }
+        };
+
+        match result {
             Ok(current_auth_method) => {
                 self.outgoing
                     .send_response(request_id, LogoutAccountResponse {})
@@ -1308,6 +1685,7 @@ impl CodexMessageProcessor {
                 let payload_v2 = AccountUpdatedNotification {
                     auth_mode: current_auth_method,
                     plan_type: None,
+                    provider: None,
                 };
                 self.outgoing
                     .send_server_notification(ServerNotification::AccountUpdated(payload_v2))
@@ -1335,11 +1713,11 @@ impl CodexMessageProcessor {
         self.refresh_token_if_requested(do_refresh).await;
 
         // Determine whether auth is required based on the active model provider.
-        // If a custom provider is configured with `requires_openai_auth == false`,
+        // If a custom provider is configured with `requires_auth == false`,
         // then no auth step is required; otherwise, default to requiring auth.
-        let requires_openai_auth = self.config.model_provider.requires_openai_auth;
+        let requires_auth = self.config.model_provider.requires_auth;
 
-        let response = if !requires_openai_auth {
+        let response = if !requires_auth {
             GetAuthStatusResponse {
                 auth_method: None,
                 auth_token: None,
@@ -1383,18 +1761,24 @@ impl CodexMessageProcessor {
         self.refresh_token_if_requested(do_refresh).await;
 
         // Whether auth is required for the active model provider.
-        let requires_openai_auth = self.config.model_provider.requires_openai_auth;
+        let requires_auth = self.config.model_provider.requires_auth;
 
-        if !requires_openai_auth {
+        // Check general cached auth, then fall back to Anthropic provider.
+        let auth = self.auth_manager.auth_cached().or_else(|| {
+            use orbit_code_core::auth::ProviderName;
+            self.auth_manager
+                .auth_cached_for_provider(ProviderName::Anthropic)
+        });
+
+        if !requires_auth && auth.is_none() {
             let response = GetAccountResponse {
                 account: None,
-                requires_openai_auth,
+                requires_auth,
             };
             self.outgoing.send_response(request_id, response).await;
             return;
         }
-
-        let account = match self.auth_manager.auth_cached() {
+        let account = match auth {
             Some(auth) => match auth.auth_mode() {
                 CoreAuthMode::ApiKey => Some(Account::ApiKey {}),
                 CoreAuthMode::Chatgpt => {
@@ -1418,13 +1802,15 @@ impl CodexMessageProcessor {
                         }
                     }
                 }
+                CoreAuthMode::AnthropicApiKey => Some(Account::AnthropicApiKey {}),
+                CoreAuthMode::AnthropicOAuth => Some(Account::AnthropicOAuth {}),
             },
             None => None,
         };
 
         let response = GetAccountResponse {
             account,
-            requires_openai_auth,
+            requires_auth,
         };
         self.outgoing.send_response(request_id, response).await;
     }

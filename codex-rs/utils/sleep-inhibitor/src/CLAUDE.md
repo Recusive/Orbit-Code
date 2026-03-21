@@ -1,20 +1,13 @@
 # codex-rs/utils/sleep-inhibitor/src/
 
-Source directory for the `codex-utils-sleep-inhibitor` crate.
+Prevents system idle sleep during active agent turns using native platform APIs (macOS IOKit, Linux systemd-inhibit/gnome-session-inhibit, Windows PowerCreateRequest). Falls back to a no-op on unsupported platforms.
 
-## Key files
+## Build & Test
+```bash
+cargo build -p orbit-code-utils-sleep-inhibitor
+cargo test -p orbit-code-utils-sleep-inhibitor
+```
 
-- `lib.rs` -- public API:
-  - `SleepInhibitor` struct with fields: `enabled`, `turn_running`, `platform` (platform-specific impl)
-  - `new(enabled: bool)` -- constructor
-  - `set_turn_running(bool)` -- acquires/releases sleep prevention based on enabled + turn state
-  - `is_turn_running()` -- getter
-  - Conditional compilation selects the platform backend via `use ... as imp`
-  - Tests for toggle behavior, disabled mode, idempotent calls, and multiple toggles
-- `macos.rs` -- macOS implementation:
-  - `MacSleepAssertion` -- creates `IOPMAssertionCreateWithName` with `PreventUserIdleSystemSleep`; releases on `Drop`
-  - Wraps IOKit FFI from `iokit_bindings.rs` via `core_foundation::string::CFString`
-- `iokit_bindings.rs` -- generated IOKit FFI bindings (included by macos.rs)
-- `linux_inhibitor.rs` -- Linux implementation using subprocess inhibitors
-- `windows_inhibitor.rs` -- Windows implementation using `PowerCreateRequest`/`PowerSetRequest`
-- `dummy.rs` -- no-op implementation for unsupported platforms
+## Key Considerations
+- Platform backends are selected via conditional compilation; each lives in its own module (`macos.rs`, `linux_inhibitor.rs`, `windows_inhibitor.rs`, `dummy.rs`).
+- `iokit_bindings.rs` contains generated FFI bindings -- do not hand-edit.

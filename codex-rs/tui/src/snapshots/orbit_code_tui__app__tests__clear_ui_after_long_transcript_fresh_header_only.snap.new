@@ -1,6 +1,6 @@
 ---
 source: tui/src/app.rs
-assertion_line: 6435
+assertion_line: 6429
 expression: rendered
 ---
 ╭─────────────────────────────────────────────╮

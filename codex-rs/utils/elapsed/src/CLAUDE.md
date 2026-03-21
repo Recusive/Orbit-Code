@@ -1,11 +1,9 @@
 # codex-rs/utils/elapsed/src/
 
-Source directory for the `codex-utils-elapsed` crate.
+Human-readable elapsed time formatting: milliseconds for sub-second, two-decimal seconds for under a minute, and `Xm YYs` for longer durations. No external dependencies.
 
-## Key files
-
-- `lib.rs` -- single-file implementation containing:
-  - `format_elapsed(start_time: Instant) -> String` -- convenience wrapper
-  - `format_duration(duration: Duration) -> String` -- public API
-  - `format_elapsed_millis(millis: i64) -> String` -- internal formatter with rules: `<1000ms` -> `"Xms"`, `<60000ms` -> `"X.XXs"`, `>=60000ms` -> `"Xm YYs"`
-  - Tests covering sub-second, second-range, minute-range, and boundary cases
+## Build & Test
+```bash
+cargo build -p orbit-code-utils-elapsed
+cargo test -p orbit-code-utils-elapsed
+```

@@ -1,7 +1,15 @@
+pub mod anthropic;
 mod device_code_auth;
 mod pkce;
 mod server;
 
+pub use anthropic::AnthropicAuthMode;
+pub use anthropic::AnthropicLoginError;
+pub use anthropic::AnthropicTokens;
+pub use anthropic::anthropic_authorize_url;
+pub use anthropic::anthropic_create_api_key;
+pub use anthropic::anthropic_exchange_code;
+pub use anthropic::anthropic_refresh_token;
 pub use device_code_auth::DeviceCode;
 pub use device_code_auth::complete_device_code_login;
 pub use device_code_auth::request_device_code;
