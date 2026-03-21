@@ -30,13 +30,14 @@ use std::sync::OnceLock;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 
+use crate::anthropic_auth::apply_oauth_modifications;
+use crate::anthropic_auth::resolve_auth as resolve_anthropic_auth;
 use crate::anthropic_bridge::anthropic_model_defaults;
 use crate::anthropic_bridge::build_messages_request;
 use crate::anthropic_bridge::is_known_anthropic_model;
 use crate::anthropic_bridge::map_anthropic_error;
 use crate::anthropic_bridge::map_anthropic_to_response_stream;
 use crate::anthropic_bridge::merge_anthropic_beta_headers;
-use crate::anthropic_bridge::prefix_tool_names_for_oauth;
 use crate::api_bridge::CoreAuthProvider;
 use crate::api_bridge::auth_provider_from_auth;
 use crate::api_bridge::map_api_error;
@@ -107,7 +108,6 @@ use crate::client_common::ResponseEvent;
 use crate::client_common::ResponseStream;
 use crate::default_client::build_reqwest_client;
 use crate::error::CodexErr;
-use crate::error::EnvVarError;
 use crate::error::Result;
 use crate::flags::ORBIT_RS_SSE_FIXTURE;
 use crate::model_provider_info::ModelProviderInfo;
@@ -1462,7 +1462,11 @@ impl ModelClientSession {
 
         // Resolve Anthropic auth: AuthManager (stored credentials) > provider
         // headers > env var > experimental_bearer_token.
-        let anthropic_auth = self.resolve_anthropic_auth(provider, &extra_headers)?;
+        let anthropic_auth = resolve_anthropic_auth(
+            self.client.state.auth_manager.as_deref(),
+            provider,
+            &extra_headers,
+        )?;
         let is_oauth = matches!(anthropic_auth, AnthropicAuth::BearerToken(_));
         tracing::info!(
             is_oauth = is_oauth,
@@ -1484,20 +1488,7 @@ impl ModelClientSession {
         // If OAuth mode, prefix tool names and prepend required system prompt
         let mut request = request;
         if is_oauth {
-            prefix_tool_names_for_oauth(&mut request);
-            // The OAuth endpoint requires "You are Claude Code..." as a separate
-            // first system block for access to premium models (opus-4-6, sonnet-4-6).
-            let prefix_block = orbit_code_anthropic::SystemBlock {
-                r#type: "text".to_string(),
-                text: "You are Claude Code, Anthropic's official CLI for Claude.".to_string(),
-                cache_control: None,
-            };
-            if let Some(system) = &mut request.system {
-                // Prepend as separate first block (must not be concatenated)
-                system.insert(0, prefix_block);
-            } else {
-                request.system = Some(vec![prefix_block]);
-            }
+            apply_oauth_modifications(&mut request);
         }
 
         tracing::info!(
@@ -1518,59 +1509,6 @@ impl ModelClientSession {
             .await
             .map_err(map_anthropic_error)?;
         Ok(map_anthropic_to_response_stream(stream, is_oauth))
-    }
-
-    /// Resolve Anthropic authentication from AuthManager, falling back to
-    /// provider config headers and env vars.
-    fn resolve_anthropic_auth(
-        &self,
-        provider: &ModelProviderInfo,
-        extra_headers: &ApiHeaderMap,
-    ) -> Result<AnthropicAuth> {
-        // 1. Check AuthManager for stored Anthropic credentials
-        if let Some(manager) = self.client.state.auth_manager.as_ref() {
-            let found = manager.auth_cached_for_provider(ProviderName::Anthropic);
-            tracing::info!(
-                found = found.is_some(),
-                auth_mode = ?found.as_ref().map(super::auth::CodexAuth::auth_mode),
-                "resolve_anthropic_auth: checking AuthManager"
-            );
-            if let Some(auth) = found {
-                match auth {
-                    CodexAuth::AnthropicOAuth(ref oauth) => {
-                        return Ok(AnthropicAuth::BearerToken(oauth.access_token().to_string()));
-                    }
-                    CodexAuth::AnthropicApiKey(ref api_key_auth) => {
-                        return Ok(AnthropicAuth::ApiKey(api_key_auth.api_key().to_string()));
-                    }
-                    _ => {
-                        tracing::warn!(auth_mode = ?auth.auth_mode(), "resolve_anthropic_auth: unexpected variant");
-                    }
-                }
-            }
-        } else {
-            tracing::warn!("resolve_anthropic_auth: no AuthManager available");
-        }
-
-        // 2. Fall back to provider config headers or env var (existing 3a behavior)
-        if let Some(api_key) = extra_headers
-            .get("x-api-key")
-            .and_then(|v| v.to_str().ok())
-            .map(str::to_string)
-            .or(provider.api_key()?)
-        {
-            return Ok(AnthropicAuth::ApiKey(api_key));
-        }
-
-        // 3. Check experimental bearer token
-        if let Some(bearer) = &provider.experimental_bearer_token {
-            return Ok(AnthropicAuth::BearerToken(bearer.clone()));
-        }
-
-        Err(CodexErr::EnvVar(EnvVarError {
-            var: "ANTHROPIC_API_KEY".to_string(),
-            instructions: provider.env_key_instructions.clone(),
-        }))
     }
 }
 

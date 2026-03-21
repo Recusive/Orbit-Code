@@ -3,6 +3,7 @@
 use crate::Prompt;
 use crate::ResponseEvent;
 use crate::ResponseStream;
+use crate::anthropic_auth::strip_oauth_tool_prefix;
 use crate::client_common::tools::FreeformTool;
 use crate::client_common::tools::ResponsesApiTool;
 use crate::client_common::tools::ToolSpec;
@@ -45,7 +46,6 @@ const ANTHROPIC_1M_HEADER_ERROR_PREFIX: &str =
     "Anthropic stage 3a failed to add required beta header";
 const DEFAULT_ANTHROPIC_MAX_TOKENS: u64 = 32_000;
 const RESPONSE_STREAM_CHANNEL_CAPACITY: usize = 128;
-const OAUTH_TOOL_PREFIX: &str = "mcp_";
 
 pub(crate) struct AnthropicModelDefaults {
     pub(crate) max_tokens: u64,
@@ -56,39 +56,6 @@ pub(crate) struct AnthropicModelDefaults {
 
 pub fn is_known_anthropic_model(model: &str) -> bool {
     model.starts_with("claude-")
-}
-
-/// Prefix tool names with `mcp_` for OAuth mode (Anthropic requirement).
-/// Must prefix BOTH tool definitions AND tool_use blocks in message history.
-pub(crate) fn prefix_tool_names_for_oauth(request: &mut MessagesRequest) {
-    // 1. Prefix tool definitions
-    if let Some(tools) = &mut request.tools {
-        for tool in tools {
-            if !tool.name.starts_with(OAUTH_TOOL_PREFIX) {
-                tool.name = format!("{OAUTH_TOOL_PREFIX}{}", tool.name);
-            }
-        }
-    }
-
-    // 2. Prefix tool_use blocks in message history
-    for message in &mut request.messages {
-        if let Content::Blocks(blocks) = &mut message.content {
-            for block in blocks {
-                if let ContentBlock::ToolUse { name, .. } = block
-                    && !name.starts_with(OAUTH_TOOL_PREFIX)
-                {
-                    *name = format!("{OAUTH_TOOL_PREFIX}{name}");
-                }
-            }
-        }
-    }
-}
-
-/// Strip `mcp_` prefix from tool names in responses (Anthropic requirement).
-fn strip_oauth_tool_prefix(name: &str) -> String {
-    name.strip_prefix(OAUTH_TOOL_PREFIX)
-        .unwrap_or(name)
-        .to_string()
 }
 
 pub(crate) fn anthropic_model_defaults(

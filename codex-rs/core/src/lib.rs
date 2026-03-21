@@ -6,6 +6,7 @@
 #![deny(clippy::print_stdout, clippy::print_stderr)]
 
 mod analytics_client;
+pub(crate) mod anthropic_auth;
 pub mod anthropic_bridge;
 pub mod api_bridge;
 mod apply_patch;

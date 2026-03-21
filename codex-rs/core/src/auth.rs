@@ -1,4 +1,3 @@
-pub mod anthropic;
 mod storage;
 
 use async_trait::async_trait;
@@ -20,15 +19,15 @@ use orbit_code_app_server_protocol::AuthMode as ApiAuthMode;
 use orbit_code_otel::TelemetryAuthMode;
 use orbit_code_protocol::config_types::ForcedLoginMethod;
 
-pub use crate::auth::anthropic::AnthropicApiKeyAuth;
-pub use crate::auth::anthropic::AnthropicOAuthAuth;
+pub use crate::anthropic_auth::AnthropicApiKeyAuth;
+pub use crate::anthropic_auth::AnthropicOAuthAuth;
 pub use crate::auth::storage::AuthCredentialsStoreMode;
 pub use crate::auth::storage::AuthDotJson;
 pub use crate::auth::storage::AuthDotJsonV2;
-use crate::auth::storage::AuthStorageBackend;
+pub(crate) use crate::auth::storage::AuthStorageBackend;
 pub use crate::auth::storage::ProviderAuth;
 pub use crate::auth::storage::ProviderName;
-use crate::auth::storage::create_auth_storage;
+pub(crate) use crate::auth::storage::create_auth_storage;
 use crate::config::Config;
 use crate::error::RefreshTokenFailedError;
 use crate::error::RefreshTokenFailedReason;
@@ -743,7 +742,7 @@ fn codex_auth_from_provider_auth(provider_auth: &ProviderAuth) -> Option<CodexAu
             refresh_token,
             expires_at,
         } => Some(CodexAuth::AnthropicOAuth(
-            crate::auth::anthropic::AnthropicOAuthAuth {
+            crate::anthropic_auth::AnthropicOAuthAuth {
                 access_token: access_token.clone(),
                 refresh_token: refresh_token.clone(),
                 expires_at: *expires_at,
@@ -1493,6 +1492,16 @@ impl AuthManager {
         self.enable_orbit_code_api_key_env
     }
 
+    /// The Orbit Code home directory used to locate auth storage.
+    pub fn orbit_code_home(&self) -> &Path {
+        &self.orbit_code_home
+    }
+
+    /// The credential storage mode (file, keyring, auto, ephemeral).
+    pub fn auth_credentials_store_mode(&self) -> AuthCredentialsStoreMode {
+        self.auth_credentials_store_mode
+    }
+
     /// Convenience constructor returning an `Arc` wrapper.
     pub fn shared(
         orbit_code_home: PathBuf,
@@ -1584,62 +1593,7 @@ impl AuthManager {
     /// Best-effort: failures are logged but don't prevent the request from proceeding
     /// (the stale token might still work, and 401 recovery handles the rest).
     pub async fn refresh_anthropic_oauth_if_needed(&self) {
-        let auth = match self.auth_cached_for_provider(ProviderName::Anthropic) {
-            Some(CodexAuth::AnthropicOAuth(ref oauth)) => oauth.clone(),
-            _ => return,
-        };
-
-        if !auth.is_expiring_within(anthropic::ANTHROPIC_TOKEN_REFRESH_BUFFER_SECONDS) {
-            return;
-        }
-
-        tracing::info!("Anthropic OAuth token expiring soon, refreshing proactively");
-        let client = crate::default_client::build_reqwest_client();
-        match orbit_code_anthropic::refresh_anthropic_token(&client, auth.refresh_token()).await {
-            Ok(tokens) => {
-                let now = chrono::Utc::now().timestamp();
-                let expires_at =
-                    now.saturating_add(i64::try_from(tokens.expires_in).unwrap_or(3600));
-                // Persist refreshed tokens. ONLY reload cache after a successful save.
-                let storage = create_auth_storage(
-                    self.orbit_code_home.clone(),
-                    self.auth_credentials_store_mode,
-                );
-                match storage.load() {
-                    Ok(Some(mut v2)) => {
-                        v2.set_provider_auth(
-                            ProviderName::Anthropic,
-                            ProviderAuth::AnthropicOAuth {
-                                access_token: tokens.access_token,
-                                refresh_token: tokens.refresh_token,
-                                expires_at,
-                            },
-                        );
-                        match storage.save(&v2) {
-                            Ok(()) => {
-                                self.reload();
-                            }
-                            Err(e) => tracing::warn!(
-                                "Anthropic refresh succeeded but persist failed: {e}"
-                            ),
-                        }
-                    }
-                    Ok(None) => {
-                        tracing::warn!(
-                            "Anthropic refresh succeeded but no auth storage found; keeping cached token"
-                        );
-                    }
-                    Err(e) => {
-                        tracing::warn!(
-                            "Anthropic refresh succeeded but storage unreadable: {e}; keeping cached token"
-                        );
-                    }
-                }
-            }
-            Err(e) => {
-                tracing::warn!("Proactive Anthropic OAuth refresh failed: {e}");
-            }
-        }
+        crate::anthropic_auth::refresh_if_needed(self).await;
     }
 
     /// Force-refresh an Anthropic OAuth token. Unlike proactive refresh, this
@@ -1647,49 +1601,7 @@ impl AuthManager {
     pub async fn force_refresh_anthropic_oauth(
         &self,
     ) -> std::result::Result<(), RefreshTokenError> {
-        let auth = self.auth_cached_for_provider(ProviderName::Anthropic);
-        let Some(CodexAuth::AnthropicOAuth(ref oauth)) = auth else {
-            return Err(RefreshTokenError::Permanent(RefreshTokenFailedError::new(
-                RefreshTokenFailedReason::Other,
-                "not AnthropicOAuth",
-            )));
-        };
-        let client = crate::default_client::build_reqwest_client();
-        let tokens = orbit_code_anthropic::refresh_anthropic_token(&client, oauth.refresh_token())
-            .await
-            .map_err(|e| RefreshTokenError::Transient(std::io::Error::other(e.to_string())))?;
-
-        let now = chrono::Utc::now().timestamp();
-        let expires_at = now.saturating_add(i64::try_from(tokens.expires_in).unwrap_or(3600));
-        let storage = create_auth_storage(
-            self.orbit_code_home.clone(),
-            self.auth_credentials_store_mode,
-        );
-        match storage.load() {
-            Ok(Some(mut v2)) => {
-                v2.set_provider_auth(
-                    ProviderName::Anthropic,
-                    ProviderAuth::AnthropicOAuth {
-                        access_token: tokens.access_token,
-                        refresh_token: tokens.refresh_token,
-                        expires_at,
-                    },
-                );
-                storage.save(&v2).map_err(RefreshTokenError::Transient)?;
-                self.reload();
-                Ok(())
-            }
-            Ok(None) => {
-                tracing::warn!("Force refresh succeeded but no auth storage; keeping cached token");
-                Err(RefreshTokenError::Transient(std::io::Error::other(
-                    "no auth storage after refresh",
-                )))
-            }
-            Err(e) => {
-                tracing::warn!("Force refresh succeeded but storage unreadable: {e}");
-                Err(RefreshTokenError::Transient(e))
-            }
-        }
+        crate::anthropic_auth::force_refresh(self).await
     }
 
     pub fn get_api_auth_mode(&self) -> Option<ApiAuthMode> {

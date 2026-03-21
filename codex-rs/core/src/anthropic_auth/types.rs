@@ -1,4 +1,8 @@
-//! Anthropic-specific authentication types and token refresh logic.
+//! Anthropic-specific authentication types.
+//!
+//! These types represent the two Anthropic auth mechanisms: API key and OAuth.
+//! They are persisted by the auth storage layer and consumed by the request
+//! pipeline when talking to the Anthropic Messages API.
 
 /// Anthropic API key auth (persisted in auth storage).
 #[derive(Debug, Clone)]
