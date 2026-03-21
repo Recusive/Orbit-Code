@@ -599,3 +599,150 @@ fn auth_cached_for_provider_openai_finds_openai_in_v2_storage() {
         "OpenAI lookup should find OpenAI auth from v2 storage"
     );
 }
+
+/// Scenario: User logs in with ChatGPT, then adds Anthropic OAuth.
+/// Both providers must survive in storage.
+#[test]
+fn save_auth_preserves_existing_providers_on_chatgpt_then_anthropic() {
+    let dir = tempdir().expect("tempdir");
+    let store_mode = AuthCredentialsStoreMode::File;
+
+    // Step 1: Save ChatGPT auth (simulates ChatGPT login)
+    let chatgpt_auth = AuthDotJson {
+        auth_mode: Some(ApiAuthMode::ApiKey),
+        openai_api_key: Some("sk-openai-test".to_string()),
+        tokens: None,
+        last_refresh: None,
+    };
+    super::save_auth(dir.path(), &chatgpt_auth, store_mode).expect("save chatgpt");
+
+    // Verify ChatGPT was saved
+    let v2 = super::load_auth_dot_json_v2(dir.path(), store_mode)
+        .expect("load v2")
+        .expect("v2 should exist");
+    assert!(
+        v2.provider_auth(ProviderName::OpenAI).is_some(),
+        "OpenAI should exist after ChatGPT login"
+    );
+
+    // Step 2: Save Anthropic OAuth (simulates Anthropic onboarding)
+    // This is what the TUI onboarding does: load v2, merge, save_auth_v2
+    let mut v2_for_anthropic = super::load_auth_dot_json_v2(dir.path(), store_mode)
+        .expect("load v2")
+        .unwrap_or_else(AuthDotJsonV2::new);
+    v2_for_anthropic.set_provider_auth(
+        ProviderName::Anthropic,
+        ProviderAuth::AnthropicOAuth {
+            access_token: "sk-ant-oat01-test".to_string(),
+            refresh_token: "sk-ant-ort01-test".to_string(),
+            expires_at: 9999999999,
+        },
+    );
+    super::save_auth_v2(dir.path(), &v2_for_anthropic, store_mode).expect("save anthropic");
+
+    // Step 3: Verify BOTH providers exist
+    let final_v2 = super::load_auth_dot_json_v2(dir.path(), store_mode)
+        .expect("load final v2")
+        .expect("final v2 should exist");
+    assert!(
+        final_v2.provider_auth(ProviderName::OpenAI).is_some(),
+        "OpenAI should STILL exist after Anthropic save"
+    );
+    assert!(
+        final_v2.provider_auth(ProviderName::Anthropic).is_some(),
+        "Anthropic should exist after Anthropic save"
+    );
+}
+
+/// Scenario: User has Anthropic OAuth, then logs in with ChatGPT.
+/// Both providers must survive in storage.
+#[test]
+fn save_auth_preserves_existing_providers_on_anthropic_then_chatgpt() {
+    let dir = tempdir().expect("tempdir");
+    let store_mode = AuthCredentialsStoreMode::File;
+
+    // Step 1: Write Anthropic OAuth directly to v2
+    let mut v2 = AuthDotJsonV2::new();
+    v2.set_provider_auth(
+        ProviderName::Anthropic,
+        ProviderAuth::AnthropicOAuth {
+            access_token: "sk-ant-oat01-test".to_string(),
+            refresh_token: "sk-ant-ort01-test".to_string(),
+            expires_at: 9999999999,
+        },
+    );
+    super::save_auth_v2(dir.path(), &v2, store_mode).expect("save anthropic");
+
+    // Step 2: Save ChatGPT auth via save_auth (v1 path — the one that was clobbering)
+    let chatgpt_auth = AuthDotJson {
+        auth_mode: Some(ApiAuthMode::ApiKey),
+        openai_api_key: Some("sk-openai-test".to_string()),
+        tokens: None,
+        last_refresh: None,
+    };
+    super::save_auth(dir.path(), &chatgpt_auth, store_mode).expect("save chatgpt");
+
+    // Step 3: Verify BOTH providers exist
+    let final_v2 = super::load_auth_dot_json_v2(dir.path(), store_mode)
+        .expect("load final v2")
+        .expect("final v2 should exist");
+    assert!(
+        final_v2.provider_auth(ProviderName::Anthropic).is_some(),
+        "Anthropic should STILL exist after ChatGPT save"
+    );
+    assert!(
+        final_v2.provider_auth(ProviderName::OpenAI).is_some(),
+        "OpenAI should exist after ChatGPT save"
+    );
+}
+
+/// Scenario: save_auth_v2 with only Anthropic should NOT clobber existing OpenAI.
+#[test]
+fn save_auth_v2_preserves_existing_providers() {
+    let dir = tempdir().expect("tempdir");
+    let store_mode = AuthCredentialsStoreMode::File;
+
+    // Step 1: Write both providers to storage
+    let auth_path = dir.path().join("auth.json");
+    let both = json!({
+        "version": 2,
+        "providers": {
+            "openai": {
+                "type": "openai_api_key",
+                "key": "sk-openai-test"
+            },
+            "anthropic": {
+                "type": "anthropic_oauth",
+                "access_token": "sk-ant-oat01-old",
+                "refresh_token": "sk-ant-ort01-old",
+                "expires_at": 9999999999_i64
+            }
+        }
+    });
+    std::fs::write(&auth_path, serde_json::to_string(&both).expect("json")).expect("write");
+
+    // Step 2: save_auth_v2 with ONLY a refreshed Anthropic token
+    let mut anthropic_only = AuthDotJsonV2::new();
+    anthropic_only.set_provider_auth(
+        ProviderName::Anthropic,
+        ProviderAuth::AnthropicOAuth {
+            access_token: "sk-ant-oat01-refreshed".to_string(),
+            refresh_token: "sk-ant-ort01-refreshed".to_string(),
+            expires_at: 9999999999,
+        },
+    );
+    super::save_auth_v2(dir.path(), &anthropic_only, store_mode).expect("save v2");
+
+    // Step 3: Verify OpenAI survived and Anthropic was updated
+    let final_v2 = super::load_auth_dot_json_v2(dir.path(), store_mode)
+        .expect("load final v2")
+        .expect("final v2 should exist");
+    assert!(
+        final_v2.provider_auth(ProviderName::OpenAI).is_some(),
+        "OpenAI should STILL exist after save_auth_v2 with only Anthropic"
+    );
+    assert!(
+        final_v2.provider_auth(ProviderName::Anthropic).is_some(),
+        "Anthropic should exist after save_auth_v2"
+    );
+}

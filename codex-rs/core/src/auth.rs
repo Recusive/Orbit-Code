@@ -503,14 +503,24 @@ pub fn save_auth(
     storage.save(&merged)
 }
 
-/// Persist a v2 auth payload directly using the specified backend.
+/// Persist a v2 auth payload using the specified backend.
+/// Merges into existing storage to preserve credentials for other providers.
 pub fn save_auth_v2(
     orbit_code_home: &Path,
     auth: &AuthDotJsonV2,
     auth_credentials_store_mode: AuthCredentialsStoreMode,
 ) -> std::io::Result<()> {
     let storage = create_auth_storage(orbit_code_home.to_path_buf(), auth_credentials_store_mode);
-    storage.save(auth)
+    let merged = match storage.load()? {
+        Some(mut existing) => {
+            for (provider, provider_auth) in &auth.providers {
+                existing.set_provider_auth(*provider, provider_auth.clone());
+            }
+            existing
+        }
+        None => auth.clone(),
+    };
+    storage.save(&merged)
 }
 
 /// Load CLI auth data using the configured credential store backend.
