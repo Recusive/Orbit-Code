@@ -1,7 +1,0 @@
----
-source: tui_app_server/src/status_indicator_widget.rs
-assertion_line: 328
-expression: terminal.backend()
----
-"• Working (0s • esc to interrupt)                                               "
-"                                                                                "

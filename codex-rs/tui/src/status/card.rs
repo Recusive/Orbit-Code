@@ -600,7 +600,7 @@ fn anthropic_model_context_window(slug: &str) -> Option<i64> {
         return None;
     }
     // 1M models require the context-1m beta header.
-    if matches!(slug, "claude-sonnet-4-6" | "claude-opus-4-6") {
+    if matches!(slug, "claude-opus-4-6") {
         Some(1_000_000)
     } else {
         // All other Claude models default to 200K.

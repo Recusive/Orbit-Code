@@ -1,6 +1,0 @@
----
-source: tui/src/history_cell.rs
-assertion_line: 2869
-expression: rendered
----
-■ Message exceeds the maximum length of 1048576 characters (1048577 provided).

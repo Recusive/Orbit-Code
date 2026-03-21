@@ -1,7 +1,0 @@
----
-source: tui/src/history_cell.rs
-assertion_line: 3675
-expression: rendered
----
-• Ran echo ok
-  └ (no output)

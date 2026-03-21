@@ -1,6 +1,0 @@
----
-source: tui_app_server/src/chatwidget/tests.rs
-assertion_line: 5961
-expression: combined
----
-• Waited for background terminal · just fix

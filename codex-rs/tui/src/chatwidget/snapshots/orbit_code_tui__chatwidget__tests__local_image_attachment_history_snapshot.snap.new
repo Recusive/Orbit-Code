@@ -1,7 +1,0 @@
----
-source: tui/src/chatwidget/tests.rs
-assertion_line: 6447
-expression: combined
----
-• Viewed Image
-  └ example.png

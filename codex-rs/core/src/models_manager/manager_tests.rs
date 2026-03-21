@@ -729,7 +729,7 @@ fn bundled_models_json_roundtrips() {
 }
 
 #[test]
-fn bundled_claude_models_stay_hidden_and_do_not_become_defaults() {
+fn bundled_claude_models_are_visible_and_correctly_ordered() {
     let file_contents = include_str!("../../models.json");
     let response: ModelsResponse =
         serde_json::from_str(file_contents).expect("bundled models.json should deserialize");
@@ -744,13 +744,14 @@ fn bundled_claude_models_stay_hidden_and_do_not_become_defaults() {
 
     assert!(
         !claude_presets.is_empty(),
-        "bundled models.json should contain hidden Claude presets"
+        "bundled models.json should contain Claude presets"
     );
-    assert!(claude_presets.iter().all(|preset| !preset.show_in_picker));
+    assert!(claude_presets.iter().all(|preset| preset.show_in_picker));
 
+    // GPT models (lower priority) should still be the offline default.
     let default_model = ModelsManager::get_model_offline_for_tests(None);
     assert!(
         !default_model.starts_with("claude-"),
-        "hidden Claude presets must not become the offline default"
+        "GPT models should remain the offline default when all providers are present"
     );
 }

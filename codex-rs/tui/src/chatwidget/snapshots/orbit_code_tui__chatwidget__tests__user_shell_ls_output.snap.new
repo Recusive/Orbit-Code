@@ -1,8 +1,0 @@
----
-source: tui/src/chatwidget/tests.rs
-assertion_line: 8244
-expression: blob
----
-• You ran ls
-  └ file1
-    file2

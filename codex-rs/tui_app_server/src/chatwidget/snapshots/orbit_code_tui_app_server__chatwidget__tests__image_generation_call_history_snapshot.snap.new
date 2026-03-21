@@ -1,8 +1,0 @@
----
-source: tui_app_server/src/chatwidget/tests.rs
-assertion_line: 7110
-expression: combined
----
-• Generated Image:
-  └ A tiny blue square
-  └ Saved to: /tmp

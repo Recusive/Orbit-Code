@@ -1,9 +1,0 @@
----
-source: tui/src/history_cell.rs
-assertion_line: 3874
-expression: rendered
----
-
-  [Image #1]
-
-› describe these

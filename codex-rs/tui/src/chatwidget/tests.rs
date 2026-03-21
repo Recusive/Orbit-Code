@@ -2194,7 +2194,7 @@ async fn rate_limit_snapshot_keeps_prior_credits_when_missing_from_headers() {
     }));
     let initial_balance = chat
         .rate_limit_snapshots_by_limit_id
-        .get("codex")
+        .get("orbit-code")
         .and_then(|snapshot| snapshot.credits.as_ref())
         .and_then(|credits| credits.balance.as_deref());
     assert_eq!(initial_balance, Some("17.5"));
@@ -2214,7 +2214,7 @@ async fn rate_limit_snapshot_keeps_prior_credits_when_missing_from_headers() {
 
     let display = chat
         .rate_limit_snapshots_by_limit_id
-        .get("codex")
+        .get("orbit-code")
         .expect("rate limits should be cached");
     let credits = display
         .credits
@@ -8068,8 +8068,8 @@ async fn reasoning_popup_shows_extra_high_with_space() {
 
     let popup = render_bottom_popup(&chat, 120);
     assert!(
-        popup.contains("Extra high"),
-        "expected popup to include 'Extra high'; popup: {popup}"
+        popup.contains("Max"),
+        "expected popup to include 'Max'; popup: {popup}"
     );
     assert!(
         !popup.contains("Extrahigh"),

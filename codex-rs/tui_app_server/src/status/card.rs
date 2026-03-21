@@ -594,7 +594,7 @@ fn anthropic_model_context_window(slug: &str) -> Option<i64> {
     if !slug.starts_with("claude-") {
         return None;
     }
-    if matches!(slug, "claude-sonnet-4-6" | "claude-opus-4-6") {
+    if matches!(slug, "claude-opus-4-6") {
         Some(1_000_000)
     } else {
         Some(200_000)
