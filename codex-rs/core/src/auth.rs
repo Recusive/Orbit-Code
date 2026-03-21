@@ -763,7 +763,9 @@ fn codex_auth_from_provider_auth(
             ))
         }
         // OpenAI variants are handled by the existing load_auth() path
-        _ => None,
+        ProviderAuth::OpenAiApiKey { .. }
+        | ProviderAuth::Chatgpt { .. }
+        | ProviderAuth::ChatgptAuthTokens { .. } => None,
     }
 }
 

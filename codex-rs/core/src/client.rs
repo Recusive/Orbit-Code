@@ -40,6 +40,7 @@ use crate::anthropic_bridge::prefix_tool_names_for_oauth;
 use crate::api_bridge::CoreAuthProvider;
 use crate::api_bridge::auth_provider_from_auth;
 use crate::api_bridge::map_api_error;
+use crate::auth::ProviderName;
 use crate::auth::UnauthorizedRecovery;
 use crate::auth_env_telemetry::AuthEnvTelemetry;
 use crate::auth_env_telemetry::collect_auth_env_telemetry;
@@ -546,7 +547,6 @@ impl ModelClient {
         // instead of using the cached session auth (which belongs to the original provider).
         let auth = match self.state.auth_manager.as_ref() {
             Some(manager) if provider_override.is_some() => {
-                use crate::auth::ProviderName;
                 // Derive provider name from the override's wire_api
                 let provider_name = if provider.wire_api == WireApi::AnthropicMessages {
                     ProviderName::Anthropic
@@ -1532,8 +1532,6 @@ impl ModelClientSession {
         provider: &ModelProviderInfo,
         extra_headers: &ApiHeaderMap,
     ) -> Result<AnthropicAuth> {
-        use crate::auth::ProviderName;
-
         // 1. Check AuthManager for stored Anthropic credentials
         if let Some(manager) = self.client.state.auth_manager.as_ref() {
             let found = manager.auth_cached_for_provider(ProviderName::Anthropic);
