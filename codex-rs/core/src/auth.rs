@@ -688,11 +688,7 @@ fn load_auth(
 
     // Check for Anthropic provider auth in the v2 data.
     if let Some(provider_auth) = v2.provider_auth(ProviderName::Anthropic)
-        && let Some(auth) = codex_auth_from_provider_auth(
-            provider_auth,
-            orbit_code_home,
-            auth_credentials_store_mode,
-        )
+        && let Some(auth) = codex_auth_from_provider_auth(provider_auth)
     {
         tracing::info!("load_auth: loaded Anthropic auth from v2 storage");
         return Ok(Some(auth));
@@ -737,11 +733,7 @@ fn persist_tokens(
 }
 
 /// Convert a ProviderAuth entry from storage to a CodexAuth instance.
-fn codex_auth_from_provider_auth(
-    provider_auth: &ProviderAuth,
-    orbit_code_home: &Path,
-    auth_credentials_store_mode: AuthCredentialsStoreMode,
-) -> Option<CodexAuth> {
+fn codex_auth_from_provider_auth(provider_auth: &ProviderAuth) -> Option<CodexAuth> {
     match provider_auth {
         ProviderAuth::AnthropicApiKey { key } => Some(CodexAuth::AnthropicApiKey(
             AnthropicApiKeyAuth::new(key.clone()),
@@ -750,18 +742,13 @@ fn codex_auth_from_provider_auth(
             access_token,
             refresh_token,
             expires_at,
-        } => {
-            let storage =
-                create_auth_storage(orbit_code_home.to_path_buf(), auth_credentials_store_mode);
-            Some(CodexAuth::AnthropicOAuth(
-                crate::auth::anthropic::AnthropicOAuthAuth {
-                    access_token: access_token.clone(),
-                    refresh_token: refresh_token.clone(),
-                    expires_at: *expires_at,
-                    storage,
-                },
-            ))
-        }
+        } => Some(CodexAuth::AnthropicOAuth(
+            crate::auth::anthropic::AnthropicOAuthAuth {
+                access_token: access_token.clone(),
+                refresh_token: refresh_token.clone(),
+                expires_at: *expires_at,
+            },
+        )),
         // OpenAI variants are handled by the existing load_auth() path
         ProviderAuth::OpenAiApiKey { .. }
         | ProviderAuth::Chatgpt { .. }
@@ -1328,11 +1315,7 @@ impl AuthManager {
                     load_auth_dot_json_v2(&self.orbit_code_home, self.auth_credentials_store_mode)
                     && let Some(provider_auth) = v2.provider_auth(ProviderName::Anthropic)
                 {
-                    return codex_auth_from_provider_auth(
-                        provider_auth,
-                        &self.orbit_code_home,
-                        self.auth_credentials_store_mode,
-                    );
+                    return codex_auth_from_provider_auth(provider_auth);
                 }
                 // Fall back to ANTHROPIC_API_KEY env var
                 if let Ok(key) = std::env::var("ANTHROPIC_API_KEY")
