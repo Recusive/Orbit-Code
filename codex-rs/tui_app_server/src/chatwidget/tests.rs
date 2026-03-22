@@ -2885,6 +2885,72 @@ async fn plan_reasoning_scope_popup_mentions_built_in_plan_default_when_no_overr
 }
 
 #[tokio::test]
+async fn plan_reasoning_scope_popup_shows_extra_high_for_openai() {
+    let (mut chat, _rx, _op_rx) = make_chatwidget_manual(Some("gpt-5.1-codex-max")).await;
+    chat.open_plan_reasoning_scope_prompt(
+        "gpt-5.1-codex-max".to_string(),
+        Some(ReasoningEffortConfig::XHigh),
+    );
+    let popup = render_bottom_popup(&chat, 100);
+    assert!(
+        popup.contains("extra high reasoning"),
+        "OpenAI XHigh should produce 'extra high reasoning' in plan scope; popup: {popup}"
+    );
+    assert!(
+        popup.contains("Always use extra high reasoning in Plan mode."),
+        "Plan-only description should use 'extra high'; popup: {popup}"
+    );
+}
+
+#[tokio::test]
+async fn plan_reasoning_scope_popup_shows_max_for_claude() {
+    let (mut chat, _rx, _op_rx) = make_chatwidget_manual(Some("claude-opus-4-6")).await;
+    chat.open_plan_reasoning_scope_prompt(
+        "claude-opus-4-6".to_string(),
+        Some(ReasoningEffortConfig::XHigh),
+    );
+    let popup = render_bottom_popup(&chat, 100);
+    assert!(
+        popup.contains("max reasoning"),
+        "Claude XHigh should produce 'max reasoning' in plan scope; popup: {popup}"
+    );
+    assert!(
+        popup.contains("Always use max reasoning in Plan mode."),
+        "Plan-only description should use 'max'; popup: {popup}"
+    );
+}
+
+#[tokio::test]
+async fn plan_reasoning_scope_popup_xhigh_override_shows_extra_high_for_openai() {
+    let (mut chat, _rx, _op_rx) = make_chatwidget_manual(Some("gpt-5.1-codex-max")).await;
+    chat.set_plan_mode_reasoning_effort(Some(ReasoningEffortConfig::XHigh));
+    chat.open_plan_reasoning_scope_prompt(
+        "gpt-5.1-codex-max".to_string(),
+        Some(ReasoningEffortConfig::Medium),
+    );
+    let popup = render_bottom_popup(&chat, 140);
+    assert!(
+        popup.contains("user-chosen Plan override (extra high)"),
+        "OpenAI XHigh override should show 'extra high' in source text; popup: {popup}"
+    );
+}
+
+#[tokio::test]
+async fn plan_reasoning_scope_popup_xhigh_override_shows_max_for_claude() {
+    let (mut chat, _rx, _op_rx) = make_chatwidget_manual(Some("claude-opus-4-6")).await;
+    chat.set_plan_mode_reasoning_effort(Some(ReasoningEffortConfig::XHigh));
+    chat.open_plan_reasoning_scope_prompt(
+        "claude-opus-4-6".to_string(),
+        Some(ReasoningEffortConfig::Medium),
+    );
+    let popup = render_bottom_popup(&chat, 140);
+    assert!(
+        popup.contains("user-chosen Plan override (max)"),
+        "Claude XHigh override should show 'max' in source text; popup: {popup}"
+    );
+}
+
+#[tokio::test]
 async fn plan_reasoning_scope_popup_plan_only_does_not_update_all_modes_reasoning() {
     let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(Some("gpt-5.1-codex-max")).await;
     chat.open_plan_reasoning_scope_prompt(
@@ -8666,12 +8732,30 @@ async fn reasoning_popup_shows_extra_high_with_space() {
 
     let popup = render_bottom_popup(&chat, 120);
     assert!(
-        popup.contains("Max"),
-        "expected popup to include 'Max'; popup: {popup}"
+        popup.contains("Extra High"),
+        "expected popup to include 'Extra High'; popup: {popup}"
     );
     assert!(
         !popup.contains("Extrahigh"),
         "expected popup not to include 'Extrahigh'; popup: {popup}"
+    );
+}
+
+#[tokio::test]
+async fn reasoning_popup_shows_max_for_claude_opus() {
+    let (mut chat, _rx, _op_rx) = make_chatwidget_manual(Some("claude-opus-4-6")).await;
+
+    let preset = get_available_model(&chat, "claude-opus-4-6");
+    chat.open_reasoning_popup(preset);
+
+    let popup = render_bottom_popup(&chat, 120);
+    assert!(
+        popup.contains("Max"),
+        "Claude Opus should show 'Max' for XHigh; popup: {popup}"
+    );
+    assert!(
+        !popup.contains("Extra High"),
+        "Claude Opus should not show 'Extra High'; popup: {popup}"
     );
 }
 

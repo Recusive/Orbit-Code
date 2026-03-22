@@ -7872,7 +7872,7 @@ impl ChatWidget {
             Some(selected_effort) => {
                 format!(
                     "{} reasoning",
-                    Self::reasoning_effort_label(selected_effort).to_lowercase()
+                    Self::reasoning_effort_label_for_model(selected_effort, &model).to_lowercase()
                 )
             }
             None => "the selected reasoning".to_string(),
@@ -7883,14 +7883,14 @@ impl ChatWidget {
         {
             format!(
                 "user-chosen Plan override ({})",
-                Self::reasoning_effort_label(plan_override).to_lowercase()
+                Self::reasoning_effort_label_for_model(plan_override, &model).to_lowercase()
             )
         } else if let Some(plan_mask) = collaboration_modes::plan_mask(self.model_catalog.as_ref())
         {
             match plan_mask.reasoning_effort.flatten() {
                 Some(plan_effort) => format!(
                     "built-in Plan default ({})",
-                    Self::reasoning_effort_label(plan_effort).to_lowercase()
+                    Self::reasoning_effort_label_for_model(plan_effort, &model).to_lowercase()
                 ),
                 None => "built-in Plan default (no reasoning)".to_string(),
             }
@@ -7969,7 +7969,7 @@ impl ChatWidget {
             None
         };
         let warning_text = warn_effort.map(|effort| {
-            let effort_label = Self::reasoning_effort_label(effort);
+            let effort_label = Self::reasoning_effort_label_for_model(effort, &preset.model);
             format!("⚠ {effort_label} reasoning effort can quickly consume Plus plan rate limits.")
         });
         let warn_for_model = preset.model.starts_with("gpt-5.1-codex")
@@ -8043,7 +8043,8 @@ impl ChatWidget {
         let mut items: Vec<SelectionItem> = Vec::new();
         for choice in choices.iter() {
             let effort = choice.display;
-            let mut effort_label = Self::reasoning_effort_label(effort).to_string();
+            let mut effort_label =
+                Self::reasoning_effort_label_for_model(effort, &model_slug).to_string();
             if choice.stored == default_choice {
                 effort_label.push_str(" (default)");
             }
@@ -8123,6 +8124,25 @@ impl ChatWidget {
             ReasoningEffortConfig::Medium => "Medium",
             ReasoningEffortConfig::High => "High",
             ReasoningEffortConfig::XHigh => "Max",
+        }
+    }
+
+    /// Returns the display label for a reasoning effort, using provider-specific
+    /// naming for XHigh: "Max" for Anthropic, "Extra High" for all others.
+    /// Uses the same slug heuristic as `tui/src/chatwidget/auth_popup.rs:28`.
+    fn reasoning_effort_label_for_model(
+        effort: ReasoningEffortConfig,
+        model_slug: &str,
+    ) -> &'static str {
+        match effort {
+            ReasoningEffortConfig::XHigh => {
+                if model_slug.starts_with("claude-") || model_slug.starts_with("claude3") {
+                    "Max"
+                } else {
+                    "Extra High"
+                }
+            }
+            other => Self::reasoning_effort_label(other),
         }
     }
 
