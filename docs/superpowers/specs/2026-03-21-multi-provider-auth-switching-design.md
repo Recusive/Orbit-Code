@@ -67,6 +67,18 @@ pub struct AuthDotJsonV2 {
 
 ### How the swap works
 
+**The key insight: `set_provider_auth()` itself auto-preserves the old credential.**
+
+```rust
+pub fn set_provider_auth(&mut self, provider: ProviderName, auth: ProviderAuth) {
+    if let Some(old) = self.providers.insert(provider, auth) {
+        self.alternate_credentials.insert(provider, old);
+    }
+}
+```
+
+This one-line change means ALL existing callers — onboarding, CLI login, app-server, Anthropic OAuth refresh — automatically preserve the old credential when writing a new one. No caller changes needed anywhere in the codebase.
+
 When user switches from API key to OAuth for Anthropic:
 
 ```
@@ -74,7 +86,7 @@ Before:
   providers:              { Anthropic: AnthropicApiKey { key: "sk-ant-..." } }
   alternate_credentials:  {}
 
-After:
+After (set_provider_auth automatically moves old to alternate):
   providers:              { Anthropic: AnthropicOAuth { access_token: ..., refresh_token: ..., expires_at: ... } }
   alternate_credentials:  { Anthropic: AnthropicApiKey { key: "sk-ant-..." } }
   preferred_auth_modes:   { Anthropic: AnthropicOAuth }
@@ -90,6 +102,8 @@ After:
 ```
 
 The swap ensures `providers` always holds the active credential. Existing code that reads `providers` keeps working unchanged.
+
+**Same-provider overwrites are also safe.** If onboarding writes a new Anthropic API key via `set_provider_auth()`, the old API key moves to `alternate_credentials`. If the user later runs onboarding again with OAuth, the API key is preserved as alternate. No caller needs to know about `alternate_credentials`.
 
 ### Backward compatibility
 
@@ -290,15 +304,17 @@ Manage Anthropic
 | `tui/src/chatwidget.rs` | Wire auth step into model-switch. Wire `/auth` command. Delegate to `auth_popup` submodule. |
 | `tui/src/chatwidget/tests.rs` | Snapshot tests for auth popups. |
 
-### No changes needed
+### No changes needed (auto-preserved by `set_provider_auth()` swap)
 
-| File | Why |
-|------|-----|
-| `tui/src/onboarding/auth.rs` | Uses `save_auth()` which auto-preserves new fields via load-merge-save |
-| `tui_app_server/src/onboarding/auth.rs` | Same reason. Phase 2 for UI changes. |
-| `cli/src/login.rs` | Uses `login_with_api_key()` -> `save_auth()` |
-| `app-server/orbit_code_message_processor.rs` | Uses `save_auth_v2()` |
-| `core/src/anthropic_auth/refresh.rs` | Uses `save_auth_v2()` |
+These callers write credentials via `set_provider_auth()` (directly or through `save_auth`/`save_auth_v2`). Because `set_provider_auth()` now auto-moves the old credential to `alternate_credentials`, all of them preserve existing credentials without any code changes:
+
+| File | Write path | Why safe |
+|------|-----------|----------|
+| `tui/src/onboarding/auth.rs` | `save_auth()` -> `set_provider_auth()` | Old credential auto-moved to alternate |
+| `tui_app_server/src/onboarding/auth.rs` | Same path | Same reason. Phase 2 for UI changes. |
+| `cli/src/login.rs` | `login_with_api_key()` -> `save_auth()` -> `set_provider_auth()` | Old credential auto-moved to alternate |
+| `app-server/orbit_code_message_processor.rs` | `save_auth_v2()` -> `set_provider_auth()` | Old credential auto-moved to alternate |
+| `core/src/anthropic_auth/refresh.rs` | `save_auth_v2()` -> `set_provider_auth()` | Old credential auto-moved to alternate |
 | Protocol (`Op`, `EventMsg`) | No changes |
 | `anthropic_bridge.rs` | No changes |
 | `client.rs` | Uses `auth_cached_for_provider()` which we update |

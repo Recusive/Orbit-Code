@@ -108,7 +108,49 @@ pub fn new() -> Self {
 Run: `cargo test -p orbit-code-core -- storage_tests::alternate_credentials_and_preferred_modes_round_trip`
 Expected: PASS
 
-- [ ] **Step 5: Write backward-compat test (V2 without new fields)**
+- [ ] **Step 5: Update `set_provider_auth()` to auto-preserve old credential**
+
+This is the critical change that makes ALL existing callers safe. When a new credential is written for a provider, the old one automatically moves to `alternate_credentials`:
+
+```rust
+pub fn set_provider_auth(&mut self, provider: ProviderName, auth: ProviderAuth) {
+    if let Some(old) = self.providers.insert(provider, auth) {
+        self.alternate_credentials.insert(provider, old);
+    }
+}
+```
+
+- [ ] **Step 6: Write test for auto-preserve behavior**
+
+```rust
+#[test]
+fn set_provider_auth_preserves_old_as_alternate() {
+    let mut v2 = AuthDotJsonV2::new();
+    v2.set_provider_auth(
+        ProviderName::Anthropic,
+        ProviderAuth::AnthropicApiKey { key: "sk-ant-old".to_string() },
+    );
+    v2.set_provider_auth(
+        ProviderName::Anthropic,
+        ProviderAuth::AnthropicOAuth {
+            access_token: "at".to_string(),
+            refresh_token: "rt".to_string(),
+            expires_at: 999,
+        },
+    );
+
+    // Active should be OAuth
+    assert!(matches!(v2.provider_auth(ProviderName::Anthropic), Some(ProviderAuth::AnthropicOAuth { .. })));
+    // Old API key should be in alternate
+    assert!(matches!(v2.alternate_credentials.get(&ProviderName::Anthropic), Some(ProviderAuth::AnthropicApiKey { .. })));
+}
+```
+
+- [ ] **Step 7: Run test to verify it passes**
+
+Expected: PASS
+
+- [ ] **Step 8: Write backward-compat test (V2 without new fields)**
 
 ```rust
 #[test]
@@ -120,73 +162,73 @@ fn v2_without_new_fields_deserializes_with_empty_defaults() {
 }
 ```
 
-- [ ] **Step 6: Run test to verify it passes**
+- [ ] **Step 9: Run test to verify it passes**
 
 Expected: PASS (due to `#[serde(default)]`).
 
-- [ ] **Step 7: Run `just fmt` and commit**
+- [ ] **Step 10: Run `just fmt` and commit**
 
 ```bash
 just fmt
 git add codex-rs/core/src/auth/storage.rs codex-rs/core/src/auth/storage_tests.rs
-git commit -m "feat(auth): add alternate_credentials and preferred_auth_modes to AuthDotJsonV2"
+git commit -m "feat(auth): add alternate_credentials, preferred_auth_modes, and auto-preserve to AuthDotJsonV2"
 ```
 
 ---
 
-### Task 2: Add swap helper and backup
+### Task 2: Add `restore_alternate_credential` and `remove_all_credentials` helpers
 
 **Files:**
 - Modify: `codex-rs/core/src/auth/storage.rs`
 - Modify: `codex-rs/core/src/auth/storage_tests.rs`
 
-- [ ] **Step 1: Write failing test for swap operation**
+Note: `set_provider_auth()` (updated in Task 1) already handles the forward swap — writing a new credential auto-preserves the old one. This task adds the reverse operation (restore alternate as active) and full removal.
+
+- [ ] **Step 1: Write failing test for restore_alternate**
 
 ```rust
 #[test]
-fn swap_auth_method_moves_active_to_alternate() {
+fn restore_alternate_swaps_back() {
     let mut v2 = AuthDotJsonV2::new();
+    // First set: API key becomes active
     v2.set_provider_auth(
         ProviderName::Anthropic,
         ProviderAuth::AnthropicApiKey { key: "sk-ant-key".to_string() },
     );
-    let new_oauth = ProviderAuth::AnthropicOAuth {
-        access_token: "at".to_string(),
-        refresh_token: "rt".to_string(),
-        expires_at: 999,
-    };
+    // Second set: OAuth becomes active, API key auto-moves to alternate
+    v2.set_provider_auth(
+        ProviderName::Anthropic,
+        ProviderAuth::AnthropicOAuth {
+            access_token: "at".to_string(),
+            refresh_token: "rt".to_string(),
+            expires_at: 999,
+        },
+    );
+    // Restore: API key should become active again, OAuth moves to alternate
+    v2.restore_alternate_credential(ProviderName::Anthropic);
 
-    v2.swap_active_credential(ProviderName::Anthropic, new_oauth.clone());
-
-    // Active should be OAuth now
-    assert_eq!(v2.provider_auth(ProviderName::Anthropic), Some(&new_oauth));
-    // Old API key should be in alternate
+    assert!(matches!(
+        v2.provider_auth(ProviderName::Anthropic),
+        Some(ProviderAuth::AnthropicApiKey { .. })
+    ));
     assert!(matches!(
         v2.alternate_credentials.get(&ProviderName::Anthropic),
-        Some(ProviderAuth::AnthropicApiKey { .. })
+        Some(ProviderAuth::AnthropicOAuth { .. })
     ));
 }
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Expected: FAIL — `swap_active_credential` doesn't exist.
+Expected: FAIL — `restore_alternate_credential` doesn't exist.
 
-- [ ] **Step 3: Implement `swap_active_credential()`**
+- [ ] **Step 3: Implement helpers**
 
 Add to `impl AuthDotJsonV2`:
 
 ```rust
-/// Swap the active credential for a provider. The old active credential
-/// moves to `alternate_credentials`, and `new_auth` becomes the active one.
-pub fn swap_active_credential(&mut self, provider: ProviderName, new_auth: ProviderAuth) {
-    if let Some(old_active) = self.providers.remove(&provider) {
-        self.alternate_credentials.insert(provider, old_active);
-    }
-    self.providers.insert(provider, new_auth);
-}
-
-/// Restore the alternate credential as active. Returns true if a swap occurred.
+/// Restore the alternate credential as active. The current active
+/// credential moves to alternate. Returns true if a swap occurred.
 pub fn restore_alternate_credential(&mut self, provider: ProviderName) -> bool {
     if let Some(alternate) = self.alternate_credentials.remove(&provider) {
         if let Some(current) = self.providers.remove(&provider) {
@@ -207,29 +249,31 @@ pub fn remove_all_credentials(&mut self, provider: ProviderName) {
 }
 ```
 
-- [ ] **Step 4: Write test for restore_alternate**
+- [ ] **Step 4: Write test for remove_all_credentials**
 
 ```rust
 #[test]
-fn restore_alternate_swaps_back() {
+fn remove_all_credentials_clears_everything() {
     let mut v2 = AuthDotJsonV2::new();
     v2.set_provider_auth(
         ProviderName::Anthropic,
         ProviderAuth::AnthropicApiKey { key: "sk-ant-key".to_string() },
     );
-    let oauth = ProviderAuth::AnthropicOAuth {
-        access_token: "at".to_string(),
-        refresh_token: "rt".to_string(),
-        expires_at: 999,
-    };
-    v2.swap_active_credential(ProviderName::Anthropic, oauth);
-    v2.restore_alternate_credential(ProviderName::Anthropic);
+    v2.set_provider_auth(
+        ProviderName::Anthropic,
+        ProviderAuth::AnthropicOAuth {
+            access_token: "at".to_string(),
+            refresh_token: "rt".to_string(),
+            expires_at: 999,
+        },
+    );
+    v2.preferred_auth_modes.insert(ProviderName::Anthropic, AuthMode::AnthropicOAuth);
 
-    // API key should be active again
-    assert!(matches!(
-        v2.provider_auth(ProviderName::Anthropic),
-        Some(ProviderAuth::AnthropicApiKey { .. })
-    ));
+    v2.remove_all_credentials(ProviderName::Anthropic);
+
+    assert!(v2.provider_auth(ProviderName::Anthropic).is_none());
+    assert!(v2.alternate_credentials.get(&ProviderName::Anthropic).is_none());
+    assert!(v2.preferred_auth_modes.get(&ProviderName::Anthropic).is_none());
 }
 ```
 
@@ -239,7 +283,7 @@ fn restore_alternate_swaps_back() {
 just fmt
 cargo test -p orbit-code-core -- storage_tests
 git add codex-rs/core/src/auth/storage.rs codex-rs/core/src/auth/storage_tests.rs
-git commit -m "feat(auth): add swap_active_credential and restore_alternate helpers"
+git commit -m "feat(auth): add restore_alternate_credential and remove_all_credentials helpers"
 ```
 
 ---
