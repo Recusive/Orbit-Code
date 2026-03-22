@@ -130,6 +130,24 @@ The swap ensures `providers` always holds the active credential. Existing code t
   - The active credential in `providers` is always the correct one for old code
 - **New binaries reading old file:** New fields default to empty. No migration needed.
 
+### Backup trigger (`backup_before_alternate_write`)
+
+Backup happens **once** — the first time `alternate_credentials` transitions from empty to non-empty for any provider. Implementation: inside `set_provider_auth()`, before inserting into `alternate_credentials`, check if the map was empty. If so, write `auth.json.bak` (same pattern as existing `backup_v1_if_needed()`). Subsequent method switches do not create additional backups. The backup is a safety net for the format extension, not an ongoing operation.
+
+### Global `load_auth()` / `auth_mode()` resolution for OpenAI
+
+When both API key and ChatGPT OAuth exist for OpenAI (one active, one alternate), global resolution always uses the **active credential in `providers`**:
+
+- `load_auth()` calls `to_v1_openai()` which reads from `providers` — always correct
+- `auth_mode()` derives from the active credential — always correct
+- `preferred_auth_modes` only affects the auth popup pre-highlight, NOT runtime resolution
+
+Test assertion: set both OpenAI API key and ChatGPT OAuth (one active, one alternate), verify `load_auth()` returns whichever is in `providers`, not the alternate.
+
+### Same-method-family switch behavior
+
+When a user replaces an API key with a different API key (same discriminant), the old key is simply overwritten. No alternate is preserved, no history is kept, no user-visible messaging. The `/auth` command shows current state only — no change history. Audit trail is out of scope for Phase 1.
+
 ### `auth_cached_for_provider()` changes
 
 Minimal change — the method already loads from V2 storage. The only addition: when loading from storage for a provider, check `preferred_auth_modes` to decide whether to return the credential from `providers` or `alternate_credentials`:
