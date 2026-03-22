@@ -27,8 +27,8 @@ We must remove all of this **before** copying the repo into the Orbit project. T
 
 ## Context & Constraints
 
-- **What stays:** CLI binary, TUI (ratatui), core agent engine, exec (headless mode), auth (including Anthropic OAuth we added), sandboxing, config, hooks, state, all tools, local model support (LMStudio, Ollama), MCP client support
-- **What goes:** Everything else — SDKs, npm, telemetry, MCP server mode, app-server as user-facing feature, Bazel, docs, scripts
+- **What stays:** CLI binary, TUI (ratatui), TUI app-server variant (for Orbit IDE integration), core agent engine, exec (headless mode), auth (including Anthropic OAuth we added), sandboxing, config, hooks, state, all tools, local model support (LMStudio, Ollama), MCP client support
+- **What goes:** Everything else — SDKs, npm, telemetry, MCP server mode, Bazel, docs, scripts
 - **Critical dependency chain:** `exec/` → `app-server-client/` → `app-server/` → `app-server-protocol/`. We CANNOT remove `app-server/` without rewriting `exec/`. For now, we keep the chain but remove `app-server` as a user-facing CLI subcommand.
 - **`app-server-protocol/`** contains shared types used by `core/` (ConfigLayerSource, MCP elicitation types, AppInfo) and `tui/`. Must be kept regardless.
 - **`core/` has 28 files** importing from `otel`/`feedback` — these are metrics recording, trace context propagation, and telemetry initialization scattered across auth, state, tasks, tools, memories, and session management. Removal requires deleting those callsites and any functions that exist solely to pass telemetry objects.
@@ -119,7 +119,7 @@ These crates are either unused by any kept crate, or are only used by other crat
 ### Task 2.1: Delete cleanly removable crate directories
 
 **Files:**
-- Delete: `codex-rs/tui_app_server/` (duplicate TUI — we have `tui/`)
+- **KEEP: `codex-rs/tui_app_server/`** — needed for Orbit IDE integration (TUI variant that communicates through app-server protocol)
 - Delete: `codex-rs/mcp-server/` (serving MCP — we consume, not serve)
 - Delete: `codex-rs/exec-server/` (execution server variant)
 - Delete: `codex-rs/feedback/` (Sentry telemetry to OpenAI)
@@ -135,13 +135,13 @@ These crates are either unused by any kept crate, or are only used by other crat
 
 ```bash
 cd codex-rs
-rm -rf tui_app_server/ mcp-server/ exec-server/ feedback/ otel/ debug-client/ app-server-test-client/ execpolicy-legacy/ test-macros/ stdio-to-uds/
+rm -rf mcp-server/ exec-server/ feedback/ otel/ debug-client/ app-server-test-client/ execpolicy-legacy/ test-macros/ stdio-to-uds/
 ```
 
 - [ ] **Step 2: Commit**
 
 ```bash
-git add -A && git commit -m "chore: remove 10 unused Rust crates (telemetry, app-server extras, legacy)"
+git add -A && git commit -m "chore: remove 9 unused Rust crates (telemetry, app-server extras, legacy)"
 ```
 
 ### Task 2.2: Update workspace Cargo.toml — remove deleted members
@@ -162,7 +162,6 @@ Remove these entries from the `members = [...]` array in `codex-rs/Cargo.toml`:
 "mcp-server"
 "otel"
 "stdio-to-uds"
-"tui_app_server"
 "test-macros"
 ```
 
@@ -175,7 +174,6 @@ Remove these lines from `[workspace.dependencies]` (use exact names — grep the
 ```toml
 orbit-code-feedback = { path = "feedback" }
 orbit-code-otel = { path = "otel" }
-orbit-code-tui-app-server = { path = "tui_app_server" }
 orbit-code-test-macros = { path = "test-macros" }
 orbit-code-stdio-to-uds = { path = "stdio-to-uds" }
 ```
@@ -318,7 +316,7 @@ git add -A && git commit -m "chore: strip otel and feedback telemetry from core 
 ### Task 3.2: Strip `feedback` and `otel` from `tui/`
 
 **Files:**
-- Modify: `codex-rs/tui/Cargo.toml` — remove `orbit-code-feedback`, `orbit-code-otel`, `orbit-code-tui-app-server`
+- Modify: `codex-rs/tui/Cargo.toml` — remove `orbit-code-feedback`, `orbit-code-otel`
 - Modify: `codex-rs/tui/src/bottom_pane/feedback_view.rs` — delete or gut the feedback submission UI
 - Modify: `codex-rs/tui/src/history_cell.rs` — remove `RuntimeMetricsSummary` / `RuntimeMetricTotals` rendering
 - Modify: `codex-rs/tui/src/chatwidget.rs` — remove otel metrics display, `SessionTelemetry` usage
@@ -331,7 +329,6 @@ git add -A && git commit -m "chore: strip otel and feedback telemetry from core 
 In `codex-rs/tui/Cargo.toml`:
 - Remove `orbit-code-feedback = { workspace = true }`
 - Remove `orbit-code-otel = { workspace = true }`
-- Remove `orbit-code-tui-app-server = { workspace = true }` (if present — tui_app_server is deleted)
 
 - [ ] **Step 2: Remove feedback UI**
 
@@ -398,9 +395,39 @@ cargo check -p orbit-code-exec 2>&1 | head -30
 git add -A && git commit -m "chore: strip otel and feedback from exec crate"
 ```
 
-### Task 3.4: Strip `feedback` and `otel` from `app-server/` and `app-server-client/`
+### Task 3.4: Strip `feedback` and `otel` from `tui_app_server/`
 
-These crates are kept (exec depends on them) but still import feedback/otel.
+This crate is kept for IDE integration and mirrors `tui/` — same telemetry stripping applies.
+
+**Files:**
+- Modify: `codex-rs/tui_app_server/Cargo.toml` — remove `orbit-code-feedback`, `orbit-code-otel`
+- Modify: source files in `codex-rs/tui_app_server/src/` referencing feedback/otel (mirrors tui/ changes)
+
+- [ ] **Step 1: Remove dependencies from Cargo.toml**
+
+- [ ] **Step 2: Grep and fix source files**
+
+```bash
+grep -rn "orbit_code_feedback\|orbit_code_otel" codex-rs/tui_app_server/src/
+```
+
+Apply the same fixes as Task 3.2 (tui/) — remove feedback UI, otel metrics rendering, SessionTelemetry initialization. The mirror rule means these files are nearly identical.
+
+- [ ] **Step 3: Verify it compiles**
+
+```bash
+cargo check -p orbit-code-tui-app-server 2>&1 | head -30
+```
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add -A && git commit -m "chore: strip otel and feedback from tui_app_server crate"
+```
+
+### Task 3.5: Strip `feedback` and `otel` from `app-server/` and `app-server-client/`
+
+These crates are kept (exec and tui_app_server depend on them) but still import feedback/otel.
 
 **Files:**
 - Modify: `codex-rs/app-server/Cargo.toml` — remove `orbit-code-feedback`, `orbit-code-otel`
@@ -446,12 +473,12 @@ git add -A && git commit -m "chore: strip otel and feedback from app-server and 
 Remove:
 - `orbit-code-mcp-server = { workspace = true }`
 - `orbit-code-stdio-to-uds = { workspace = true }`
-- `orbit-code-tui-app-server = { workspace = true }`
 - `orbit-code-app-server-test-client = { workspace = true }`
 
-Keep (still needed by exec integration):
+Keep (still needed by exec and IDE integration):
 - `orbit-code-app-server = { workspace = true }`
 - `orbit-code-app-server-protocol = { workspace = true }`
+- `orbit-code-tui-app-server = { workspace = true }`
 
 - [ ] **Step 2: Remove subcommand variants from `Subcommand` enum in main.rs**
 
@@ -480,9 +507,9 @@ Remove the match arms that dispatched to deleted subcommands:
 - `Subcommand::App(cmd) => { ... }` (macOS only)
 - Debug app-server send-message-v2 dispatch
 
-- [ ] **Step 4: Remove the `InteractiveRemoteOptions` TUI-app-server path**
+- [ ] **Step 4: KEEP the `InteractiveRemoteOptions` TUI-app-server path**
 
-In `cli_main()`, there's logic around lines 1052-1138 that dispatches to `orbit_code_tui_app_server::run_main()` when remote options are provided. Remove this entire code path. The `InteractiveRemoteOptions` struct and `--remote` flag can be removed from `MultitoolCli`.
+The logic around lines 1052-1138 that dispatches to `orbit_code_tui_app_server::run_main()` is **kept** — this is the IDE integration path that Orbit uses. Do not remove `InteractiveRemoteOptions` or the `--remote` flag.
 
 - [ ] **Step 5: Delete dead source files**
 
@@ -713,18 +740,18 @@ git add -A && git commit -m "chore: fork trimming complete — CLI, TUI, and bac
 | Category | Removed Items |
 |---|---|
 | **Top-level dirs** | `sdk/`, `shell-tool-mcp/`, `codex-cli/`, `scripts/`, `tools/`, `third_party/`, `patches/`, `reference/`, `lancedb/`, `reviews/`, `.devcontainer/`, `.codex/`, `docs/` (most of it) |
-| **Rust crates** | `tui_app_server/`, `mcp-server/`, `exec-server/`, `feedback/`, `otel/`, `debug-client/`, `app-server-test-client/`, `execpolicy-legacy/`, `codex-experimental-api-macros/`, `test-macros/`, `stdio-to-uds/` |
+| **Rust crates** | `mcp-server/`, `exec-server/`, `feedback/`, `otel/`, `debug-client/`, `app-server-test-client/`, `execpolicy-legacy/`, `test-macros/`, `stdio-to-uds/` |
 | **Build systems** | All BUILD.bazel (87 files), MODULE.bazel, Bazel config |
 | **Config files** | npm, pnpm, Nix, prettier, cliff, announcement_tip |
 | **CLI subcommands** | `mcp-server`, `app`, `debug app-server`, `stdio-to-uds` |
-| **Functionality** | Sentry crash reports, OpenTelemetry to OpenAI, npm distribution, Python/TS SDKs, MCP server mode, macOS app launcher, remote TUI mode |
+| **Functionality** | Sentry crash reports, OpenTelemetry to OpenAI, npm distribution, Python/TS SDKs, MCP server mode, macOS app launcher |
 
 ### Kept (~40 crate dirs)
 
 | Category | Kept Items |
 |---|---|
-| **Binary + UI** | `cli/`, `tui/`, `exec/` |
-| **Engine** | `core/`, `protocol/`, `app-server-protocol/`, `app-server/`, `app-server-client/` |
+| **Binary + UI** | `cli/`, `tui/`, `tui_app_server/`, `exec/` |
+| **Engine** | `core/`, `protocol/`, `app-server-protocol/`, `app-server/`, `app-server-client/`, `codex-experimental-api-macros/` |
 | **Auth** | `login/`, `secrets/`, `keyring-store/` |
 | **Config** | `config/`, `hooks/`, `execpolicy/` |
 | **State** | `state/` |
@@ -736,7 +763,20 @@ git add -A && git commit -m "chore: fork trimming complete — CLI, TUI, and bac
 
 ### Future Work (Not In This Plan)
 
-- **Rewrite `exec/` to talk to core directly** — eliminates dependency on `app-server/`, `app-server-client/`, and `app-server-protocol/`. This is a separate project.
+- **Rewrite `exec/` to talk to core directly** — eliminates dependency on `app-server/`, `app-server-client/`, `app-server-protocol/`, and `codex-experimental-api-macros/`. This is a separate project.
 - **Move shared types from `app-server-protocol/` to `protocol/`** — cleaner separation. Do after exec rewrite.
+- **Remove `codex-experimental-api-macros/`** — once `app-server-protocol` no longer needs it (after exec rewrite + type migration), this proc macro crate can go.
 - **Add Open Router / VLLM provider crates** — new model providers alongside `anthropic/`, `lmstudio/`, `ollama/`.
 - **Replace OpenAI Responses API with multi-provider abstraction** — the core engine currently speaks OpenAI's Responses API format. Needs abstraction layer for Claude, Llama, etc.
+
+---
+
+## Review Log
+
+**Review 1 (2026-03-21):** Plan reviewed by automated subagent. Issues found and fixed:
+- **FIXED:** `codex-experimental-api-macros` was listed for removal but `app-server-protocol` depends on it → moved to KEEP
+- **FIXED:** `mcp_test_support` workspace dependency (pointing to deleted `mcp-server/tests/common`) was missing from cleanup → added to Task 2.2
+- **FIXED:** Task 3.1 listed only 9 files for otel cleanup in `core/`; actual count is 28 → expanded with full file list
+- **FIXED:** Three phantom workspace dependency names listed for removal that don't exist → corrected
+- **FIXED:** Naming error (`orbit-code-codex-experimental-api-macros` vs actual `orbit-code-experimental-api-macros`) → corrected
+- **FIXED:** Orphaned external crate dependencies (opentelemetry, sentry, tracing-opentelemetry) not addressed → added Step 3 to Task 2.2
