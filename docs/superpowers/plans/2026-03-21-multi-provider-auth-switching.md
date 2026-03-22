@@ -108,23 +108,31 @@ pub fn new() -> Self {
 Run: `cargo test -p orbit-code-core -- storage_tests::alternate_credentials_and_preferred_modes_round_trip`
 Expected: PASS
 
-- [ ] **Step 5: Update `set_provider_auth()` to auto-preserve old credential**
+- [ ] **Step 5: Update `set_provider_auth()` to auto-preserve on method change only**
 
-This is the critical change that makes ALL existing callers safe. When a new credential is written for a provider, the old one automatically moves to `alternate_credentials`:
+This is the critical change. When a credential with a DIFFERENT auth method type is written, the old one auto-moves to `alternate_credentials`. Same-method rewrites (e.g., OAuth refresh) replace in place without touching alternate:
 
 ```rust
 pub fn set_provider_auth(&mut self, provider: ProviderName, auth: ProviderAuth) {
     if let Some(old) = self.providers.insert(provider, auth) {
-        self.alternate_credentials.insert(provider, old);
+        // Only preserve as alternate when the auth method type changes.
+        // Same-method rewrites (OAuth refresh, key rotation) replace in place.
+        if std::mem::discriminant(&old)
+            != std::mem::discriminant(
+                self.providers.get(&provider).expect("just inserted"),
+            )
+        {
+            self.alternate_credentials.insert(provider, old);
+        }
     }
 }
 ```
 
-- [ ] **Step 6: Write test for auto-preserve behavior**
+- [ ] **Step 6: Write test for cross-method auto-preserve**
 
 ```rust
 #[test]
-fn set_provider_auth_preserves_old_as_alternate() {
+fn set_provider_auth_preserves_old_on_method_switch() {
     let mut v2 = AuthDotJsonV2::new();
     v2.set_provider_auth(
         ProviderName::Anthropic,
@@ -146,11 +154,54 @@ fn set_provider_auth_preserves_old_as_alternate() {
 }
 ```
 
-- [ ] **Step 7: Run test to verify it passes**
+- [ ] **Step 7: Write test for same-method rewrite NOT touching alternate**
+
+```rust
+#[test]
+fn set_provider_auth_same_method_rewrite_preserves_alternate() {
+    let mut v2 = AuthDotJsonV2::new();
+    // Set API key, then switch to OAuth (API key moves to alternate)
+    v2.set_provider_auth(
+        ProviderName::Anthropic,
+        ProviderAuth::AnthropicApiKey { key: "sk-ant-key".to_string() },
+    );
+    v2.set_provider_auth(
+        ProviderName::Anthropic,
+        ProviderAuth::AnthropicOAuth {
+            access_token: "at-old".to_string(),
+            refresh_token: "rt".to_string(),
+            expires_at: 999,
+        },
+    );
+    // Now simulate OAuth refresh — same method type, new token
+    v2.set_provider_auth(
+        ProviderName::Anthropic,
+        ProviderAuth::AnthropicOAuth {
+            access_token: "at-refreshed".to_string(),
+            refresh_token: "rt-new".to_string(),
+            expires_at: 2000,
+        },
+    );
+
+    // Active should be refreshed OAuth
+    if let Some(ProviderAuth::AnthropicOAuth { access_token, .. }) = v2.provider_auth(ProviderName::Anthropic) {
+        assert_eq!(access_token, "at-refreshed");
+    } else {
+        panic!("expected AnthropicOAuth");
+    }
+    // Alternate should still be the original API key (NOT the old OAuth)
+    assert!(matches!(
+        v2.alternate_credentials.get(&ProviderName::Anthropic),
+        Some(ProviderAuth::AnthropicApiKey { .. })
+    ));
+}
+```
+
+- [ ] **Step 8: Run tests to verify both pass**
 
 Expected: PASS
 
-- [ ] **Step 8: Write backward-compat test (V2 without new fields)**
+- [ ] **Step 9: Write backward-compat test (V2 without new fields)**
 
 ```rust
 #[test]
@@ -162,16 +213,16 @@ fn v2_without_new_fields_deserializes_with_empty_defaults() {
 }
 ```
 
-- [ ] **Step 9: Run test to verify it passes**
+- [ ] **Step 10: Run test to verify it passes**
 
 Expected: PASS (due to `#[serde(default)]`).
 
-- [ ] **Step 10: Run `just fmt` and commit**
+- [ ] **Step 11: Run `just fmt` and commit**
 
 ```bash
 just fmt
 git add codex-rs/core/src/auth/storage.rs codex-rs/core/src/auth/storage_tests.rs
-git commit -m "feat(auth): add alternate_credentials, preferred_auth_modes, and auto-preserve to AuthDotJsonV2"
+git commit -m "feat(auth): add alternate_credentials, preferred_auth_modes, and discriminant-aware auto-preserve to AuthDotJsonV2"
 ```
 
 ---

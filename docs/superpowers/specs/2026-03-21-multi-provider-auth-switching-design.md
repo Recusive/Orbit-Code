@@ -72,12 +72,26 @@ pub struct AuthDotJsonV2 {
 ```rust
 pub fn set_provider_auth(&mut self, provider: ProviderName, auth: ProviderAuth) {
     if let Some(old) = self.providers.insert(provider, auth) {
-        self.alternate_credentials.insert(provider, old);
+        // Only preserve as alternate when the auth METHOD TYPE changes
+        // (e.g., API key -> OAuth). Same-method rewrites (e.g., OAuth token
+        // refresh, API key rotation) replace in place without touching alternate.
+        if std::mem::discriminant(&old)
+            != std::mem::discriminant(
+                self.providers.get(&provider).expect("just inserted"),
+            )
+        {
+            self.alternate_credentials.insert(provider, old);
+        }
     }
 }
 ```
 
-This one-line change means ALL existing callers — onboarding, CLI login, app-server, Anthropic OAuth refresh — automatically preserve the old credential when writing a new one. No caller changes needed anywhere in the codebase.
+The `discriminant` check means:
+- **OAuth refresh** writes new `AnthropicOAuth` over old `AnthropicOAuth` → same discriminant → alternate (API key) untouched
+- **API key rotation** writes new `AnthropicApiKey` over old `AnthropicApiKey` → same discriminant → alternate untouched
+- **Method switch** writes `AnthropicOAuth` over `AnthropicApiKey` → different discriminant → old API key moves to alternate
+
+ALL existing callers get correct behavior without any code changes.
 
 When user switches from API key to OAuth for Anthropic:
 
@@ -103,7 +117,9 @@ After:
 
 The swap ensures `providers` always holds the active credential. Existing code that reads `providers` keeps working unchanged.
 
-**Same-provider overwrites are also safe.** If onboarding writes a new Anthropic API key via `set_provider_auth()`, the old API key moves to `alternate_credentials`. If the user later runs onboarding again with OAuth, the API key is preserved as alternate. No caller needs to know about `alternate_credentials`.
+**Same-method rewrites are safe.** If Anthropic OAuth refresh writes a new token via `set_provider_auth()`, the discriminant matches (`AnthropicOAuth` -> `AnthropicOAuth`), so alternate credentials are untouched. The stored API key alternate survives refresh cycles.
+
+**Cross-method switches are also safe.** If onboarding writes an Anthropic OAuth credential when an API key was active, the discriminant differs (`AnthropicApiKey` -> `AnthropicOAuth`), so the old API key auto-moves to alternate. No caller needs to know about `alternate_credentials`.
 
 ### Backward compatibility
 
