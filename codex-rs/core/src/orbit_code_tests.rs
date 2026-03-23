@@ -2291,7 +2291,6 @@ async fn session_new_fails_when_zsh_fork_enabled_without_zsh_path() {
         config.orbit_code_home.clone(),
         auth_manager.clone(),
         None,
-        CollaborationModesConfig::default(),
     ));
     let model = ModelsManager::get_model_offline_for_tests(config.model.as_deref());
     let model_info = ModelsManager::construct_model_info_offline_for_tests(model.as_str(), &config);
@@ -2382,7 +2381,6 @@ pub(crate) async fn make_session_and_context() -> (Session, TurnContext) {
         config.orbit_code_home.clone(),
         auth_manager.clone(),
         None,
-        CollaborationModesConfig::default(),
     ));
     let agent_control = AgentControl::default();
     let exec_policy = Arc::new(ExecPolicyManager::default());
@@ -3177,7 +3175,6 @@ pub(crate) async fn make_session_and_context_with_dynamic_tools_and_rx(
         config.orbit_code_home.clone(),
         auth_manager.clone(),
         None,
-        CollaborationModesConfig::default(),
     ));
     let agent_control = AgentControl::default();
     let exec_policy = Arc::new(ExecPolicyManager::default());

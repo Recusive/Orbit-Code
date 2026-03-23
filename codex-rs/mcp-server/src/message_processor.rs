@@ -6,7 +6,6 @@ use orbit_code_core::ThreadManager;
 use orbit_code_core::config::Config;
 use orbit_code_core::default_client::USER_AGENT_SUFFIX;
 use orbit_code_core::default_client::get_orbit_code_user_agent;
-use orbit_code_core::models_manager::collaboration_mode_presets::CollaborationModesConfig;
 use orbit_code_protocol::ThreadId;
 use orbit_code_protocol::protocol::SessionSource;
 use orbit_code_protocol::protocol::Submission;
@@ -62,11 +61,6 @@ impl MessageProcessor {
             config.as_ref(),
             auth_manager,
             SessionSource::Mcp,
-            CollaborationModesConfig {
-                default_mode_request_user_input: config
-                    .features
-                    .enabled(orbit_code_core::features::Feature::DefaultModeRequestUserInput),
-            },
         ));
         Self {
             outgoing,

@@ -39,7 +39,6 @@ use orbit_code_core::config_loader::ConfigRequirementsToml;
 use orbit_code_core::config_loader::RequirementSource;
 use orbit_code_core::features::FEATURES;
 use orbit_code_core::features::Feature;
-use orbit_code_core::models_manager::collaboration_mode_presets::CollaborationModesConfig;
 use orbit_code_core::models_manager::manager::ModelsManager;
 use orbit_code_core::skills::model::SkillMetadata;
 use orbit_code_core::terminal::TerminalName;
@@ -1838,7 +1837,6 @@ async fn make_chatwidget_manual(
         orbit_code_home,
         auth_manager.clone(),
         None,
-        CollaborationModesConfig::default(),
     ));
     let reasoning_effort = None;
     let base_mode = CollaborationMode {
@@ -1998,7 +1996,6 @@ pub(crate) fn set_chatgpt_auth(chat: &mut ChatWidget) {
         chat.config.orbit_code_home.clone(),
         chat.auth_manager.clone(),
         None,
-        CollaborationModesConfig::default(),
     ));
 }
 

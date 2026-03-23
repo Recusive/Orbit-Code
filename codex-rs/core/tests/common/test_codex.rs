@@ -12,7 +12,6 @@ use orbit_code_core::ThreadManager;
 use orbit_code_core::built_in_model_providers;
 use orbit_code_core::config::Config;
 use orbit_code_core::features::Feature;
-use orbit_code_core::models_manager::collaboration_mode_presets::CollaborationModesConfig;
 use orbit_code_core::shell::Shell;
 use orbit_code_core::shell::get_shell_by_model_provided_path;
 use orbit_code_protocol::config_types::ServiceTier;
@@ -202,7 +201,6 @@ impl TestCodexBuilder {
                 &config,
                 orbit_code_core::test_support::auth_manager_from_auth(auth.clone()),
                 SessionSource::Exec,
-                CollaborationModesConfig::default(),
             )
         } else {
             orbit_code_core::test_support::thread_manager_with_models_provider_and_home(

@@ -63,7 +63,6 @@ use orbit_code_core::default_client::USER_AGENT_SUFFIX;
 use orbit_code_core::default_client::get_orbit_code_user_agent;
 use orbit_code_core::default_client::set_default_client_residency_requirement;
 use orbit_code_core::default_client::set_default_originator;
-use orbit_code_core::models_manager::collaboration_mode_presets::CollaborationModesConfig;
 use orbit_code_feedback::CodexFeedback;
 use orbit_code_protocol::ThreadId;
 use orbit_code_protocol::protocol::SessionSource;
@@ -209,11 +208,6 @@ impl MessageProcessor {
                     config.as_ref(),
                     auth_manager.clone(),
                     session_source,
-                    CollaborationModesConfig {
-                        default_mode_request_user_input: config.features.enabled(
-                            orbit_code_core::features::Feature::DefaultModeRequestUserInput,
-                        ),
-                    },
                 ));
                 (auth_manager, thread_manager)
             }

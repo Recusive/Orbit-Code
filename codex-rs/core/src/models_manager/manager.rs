@@ -11,7 +11,6 @@ use crate::default_client::build_reqwest_client;
 use crate::error::CodexErr;
 use crate::error::Result as CoreResult;
 use crate::model_provider_info::ModelProviderInfo;
-use crate::models_manager::collaboration_mode_presets::CollaborationModesConfig;
 use crate::models_manager::collaboration_mode_presets::builtin_collaboration_mode_presets;
 use crate::models_manager::model_info;
 use crate::response_debug_context::extract_response_debug_context;
@@ -176,7 +175,6 @@ enum CatalogMode {
 pub struct ModelsManager {
     remote_models: RwLock<Vec<ModelInfo>>,
     catalog_mode: CatalogMode,
-    collaboration_modes_config: CollaborationModesConfig,
     auth_manager: Arc<AuthManager>,
     etag: RwLock<Option<String>>,
     cache_manager: ModelsCacheManager,
@@ -193,13 +191,11 @@ impl ModelsManager {
         orbit_code_home: PathBuf,
         auth_manager: Arc<AuthManager>,
         model_catalog: Option<ModelsResponse>,
-        collaboration_modes_config: CollaborationModesConfig,
     ) -> Self {
         Self::new_with_provider(
             orbit_code_home,
             auth_manager,
             model_catalog,
-            collaboration_modes_config,
             ModelProviderInfo::create_openai_provider(/*base_url*/ None),
         )
     }
@@ -209,7 +205,6 @@ impl ModelsManager {
         orbit_code_home: PathBuf,
         auth_manager: Arc<AuthManager>,
         model_catalog: Option<ModelsResponse>,
-        collaboration_modes_config: CollaborationModesConfig,
         provider: ModelProviderInfo,
     ) -> Self {
         let cache_path = orbit_code_home.join(MODEL_CACHE_FILE);
@@ -228,7 +223,6 @@ impl ModelsManager {
         Self {
             remote_models: RwLock::new(remote_models),
             catalog_mode,
-            collaboration_modes_config,
             auth_manager,
             etag: RwLock::new(None),
             cache_manager,
@@ -256,14 +250,7 @@ impl ModelsManager {
     ///
     /// Returns a static set of presets seeded with the configured model.
     pub fn list_collaboration_modes(&self) -> Vec<CollaborationModeMask> {
-        self.list_collaboration_modes_for_config(self.collaboration_modes_config)
-    }
-
-    pub fn list_collaboration_modes_for_config(
-        &self,
-        collaboration_modes_config: CollaborationModesConfig,
-    ) -> Vec<CollaborationModeMask> {
-        builtin_collaboration_mode_presets(collaboration_modes_config)
+        builtin_collaboration_mode_presets()
     }
 
     /// Attempt to list models without blocking, using the current cached state.
@@ -549,7 +536,6 @@ impl ModelsManager {
             orbit_code_home,
             auth_manager,
             /*model_catalog*/ None,
-            CollaborationModesConfig::default(),
             provider,
         )
     }

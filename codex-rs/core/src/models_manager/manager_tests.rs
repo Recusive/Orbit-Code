@@ -142,12 +142,7 @@ async fn get_model_info_tracks_fallback_usage() {
         .await
         .expect("load default test config");
     let auth_manager = AuthManager::from_auth_for_testing(CodexAuth::from_api_key("Test API Key"));
-    let manager = ModelsManager::new(
-        orbit_code_home.path().to_path_buf(),
-        auth_manager,
-        None,
-        CollaborationModesConfig::default(),
-    );
+    let manager = ModelsManager::new(orbit_code_home.path().to_path_buf(), auth_manager, None);
     let known_slug = manager
         .get_remote_models()
         .await
@@ -185,7 +180,6 @@ async fn get_model_info_uses_custom_catalog() {
         Some(ModelsResponse {
             models: vec![overlay],
         }),
-        CollaborationModesConfig::default(),
     );
 
     let model_info = manager
@@ -217,7 +211,6 @@ async fn get_model_info_matches_namespaced_suffix() {
         Some(ModelsResponse {
             models: vec![remote],
         }),
-        CollaborationModesConfig::default(),
     );
     let namespaced_model = "custom/gpt-image".to_string();
 
@@ -237,12 +230,7 @@ async fn get_model_info_rejects_multi_segment_namespace_suffix_matching() {
         .await
         .expect("load default test config");
     let auth_manager = AuthManager::from_auth_for_testing(CodexAuth::from_api_key("Test API Key"));
-    let manager = ModelsManager::new(
-        orbit_code_home.path().to_path_buf(),
-        auth_manager,
-        None,
-        CollaborationModesConfig::default(),
-    );
+    let manager = ModelsManager::new(orbit_code_home.path().to_path_buf(), auth_manager, None);
     let known_slug = manager
         .get_remote_models()
         .await

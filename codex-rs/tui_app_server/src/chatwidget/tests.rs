@@ -63,7 +63,6 @@ use orbit_code_core::config_loader::ConfigRequirementsToml;
 use orbit_code_core::config_loader::RequirementSource;
 use orbit_code_core::features::FEATURES;
 use orbit_code_core::features::Feature;
-use orbit_code_core::models_manager::collaboration_mode_presets::CollaborationModesConfig;
 use orbit_code_core::skills::model::SkillMetadata;
 use orbit_code_core::terminal::TerminalName;
 use orbit_code_otel::RuntimeMetricsSummary;
@@ -1818,15 +1817,9 @@ fn test_session_telemetry(config: &Config, model: &str) -> SessionTelemetry {
     )
 }
 
-fn test_model_catalog(config: &Config) -> Arc<ModelCatalog> {
-    let collaboration_modes_config = CollaborationModesConfig {
-        default_mode_request_user_input: config
-            .features
-            .enabled(Feature::DefaultModeRequestUserInput),
-    };
+fn test_model_catalog(_config: &Config) -> Arc<ModelCatalog> {
     Arc::new(ModelCatalog::new(
         orbit_code_core::test_support::all_model_presets().clone(),
-        collaboration_modes_config,
     ))
 }
 

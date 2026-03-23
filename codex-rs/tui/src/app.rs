@@ -57,7 +57,6 @@ use orbit_code_core::config::types::ApprovalsReviewer;
 use orbit_code_core::config::types::ModelAvailabilityNuxConfig;
 use orbit_code_core::config_loader::ConfigLayerStackOrdering;
 use orbit_code_core::features::Feature;
-use orbit_code_core::models_manager::collaboration_mode_presets::CollaborationModesConfig;
 use orbit_code_core::models_manager::manager::RefreshStrategy;
 use orbit_code_core::models_manager::model_presets::HIDE_GPT_5_1_ORBIT_MAX_MIGRATION_PROMPT_CONFIG;
 use orbit_code_core::models_manager::model_presets::HIDE_GPT5_1_MIGRATION_PROMPT_CONFIG;
@@ -2015,11 +2014,6 @@ impl App {
             &config,
             auth_manager.clone(),
             SessionSource::Cli,
-            CollaborationModesConfig {
-                default_mode_request_user_input: config
-                    .features
-                    .enabled(Feature::DefaultModeRequestUserInput),
-            },
         ));
         // TODO(xl): Move into PluginManager once this no longer depends on config feature gating.
         thread_manager

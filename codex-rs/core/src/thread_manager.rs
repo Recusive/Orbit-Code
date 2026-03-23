@@ -13,7 +13,6 @@ use crate::error::Result as CodexResult;
 use crate::file_watcher::FileWatcher;
 use crate::file_watcher::FileWatcherEvent;
 use crate::mcp::McpManager;
-use crate::models_manager::collaboration_mode_presets::CollaborationModesConfig;
 use crate::models_manager::manager::ModelsManager;
 use crate::orbit_code_thread::CodexThread;
 use crate::plugins::PluginsManager;
@@ -169,7 +168,6 @@ impl ThreadManager {
         config: &Config,
         auth_manager: Arc<AuthManager>,
         session_source: SessionSource,
-        collaboration_modes_config: CollaborationModesConfig,
     ) -> Self {
         let orbit_code_home = config.orbit_code_home.clone();
         let openai_models_provider = config
@@ -194,7 +192,6 @@ impl ThreadManager {
                     orbit_code_home,
                     auth_manager.clone(),
                     config.model_catalog.clone(),
-                    collaboration_modes_config,
                     openai_models_provider,
                 )),
                 skills_manager,

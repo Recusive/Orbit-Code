@@ -46,7 +46,6 @@ use orbit_code_core::ThreadManager;
 use orbit_code_core::config::Config;
 use orbit_code_core::config_loader::CloudRequirementsLoader;
 use orbit_code_core::config_loader::LoaderOverrides;
-use orbit_code_core::models_manager::collaboration_mode_presets::CollaborationModesConfig;
 use orbit_code_feedback::CodexFeedback;
 use orbit_code_protocol::protocol::SessionSource;
 use serde::de::DeserializeOwned;
@@ -211,12 +210,6 @@ impl InProcessClientStartArgs {
             self.config.as_ref(),
             auth_manager.clone(),
             self.session_source.clone(),
-            CollaborationModesConfig {
-                default_mode_request_user_input: self
-                    .config
-                    .features
-                    .enabled(orbit_code_core::features::Feature::DefaultModeRequestUserInput),
-            },
         ));
 
         SharedCoreManagers {
@@ -1486,11 +1479,6 @@ mod tests {
             &config,
             auth_manager.clone(),
             SessionSource::Exec,
-            CollaborationModesConfig {
-                default_mode_request_user_input: config
-                    .features
-                    .enabled(orbit_code_core::features::Feature::DefaultModeRequestUserInput),
-            },
         ));
         event_tx
             .send(InProcessServerEvent::Lagged { skipped: 3 })

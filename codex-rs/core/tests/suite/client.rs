@@ -29,7 +29,6 @@ use orbit_code_core::built_in_model_providers;
 use orbit_code_core::default_client::originator;
 use orbit_code_core::error::CodexErr;
 use orbit_code_core::features::Feature;
-use orbit_code_core::models_manager::collaboration_mode_presets::CollaborationModesConfig;
 use orbit_code_otel::SessionTelemetry;
 use orbit_code_otel::TelemetryAuthMode;
 use orbit_code_protocol::ThreadId;
@@ -821,16 +820,7 @@ async fn prefers_apikey_when_config_prefers_apikey_even_with_chatgpt_tokens() {
         Ok(None) => panic!("No CodexAuth found in orbit_code_home"),
         Err(e) => panic!("Failed to load CodexAuth: {e}"),
     };
-    let thread_manager = ThreadManager::new(
-        &config,
-        auth_manager,
-        SessionSource::Exec,
-        CollaborationModesConfig {
-            default_mode_request_user_input: config
-                .features
-                .enabled(Feature::DefaultModeRequestUserInput),
-        },
-    );
+    let thread_manager = ThreadManager::new(&config, auth_manager, SessionSource::Exec);
     let NewThread { thread: codex, .. } = thread_manager
         .start_thread(config)
         .await

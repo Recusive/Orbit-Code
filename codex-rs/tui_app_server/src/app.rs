@@ -75,7 +75,6 @@ use orbit_code_core::config::types::ModelAvailabilityNuxConfig;
 use orbit_code_core::config_loader::ConfigLayerStackOrdering;
 use orbit_code_core::features::Feature;
 use orbit_code_core::message_history;
-use orbit_code_core::models_manager::collaboration_mode_presets::CollaborationModesConfig;
 use orbit_code_core::models_manager::model_presets::HIDE_GPT_5_1_ORBIT_MAX_MIGRATION_PROMPT_CONFIG;
 use orbit_code_core::models_manager::model_presets::HIDE_GPT5_1_MIGRATION_PROMPT_CONFIG;
 #[cfg(target_os = "windows")]
@@ -2948,14 +2947,7 @@ impl App {
         if let Some(updated_model) = config.model.clone() {
             model = updated_model;
         }
-        let model_catalog = Arc::new(ModelCatalog::new(
-            available_models.clone(),
-            CollaborationModesConfig {
-                default_mode_request_user_input: config
-                    .features
-                    .enabled(Feature::DefaultModeRequestUserInput),
-            },
-        ));
+        let model_catalog = Arc::new(ModelCatalog::new(available_models.clone()));
         let feedback_audience = bootstrap.feedback_audience;
         let auth_mode = bootstrap.auth_mode;
         let has_chatgpt_account = bootstrap.has_chatgpt_account;

@@ -85,29 +85,7 @@ Remove `CollaborationModesConfig { ... }` construction from:
 - `turn/start` built-in Default-mode instructions change content — any test asserting on that text needs updating.
 - `experimentalFeature/list` will report `default_mode_request_user_input` as `removed` instead of `underDevelopment`. Verify any client or doc expectations around this metadata still hold. Add a targeted assertion if tests exist for the feature list response.
 
-### 8. Handle stale instructions in resumed/forked threads
-
-**Problem (two layers):**
-1. **`reference_context_item`** — persisted `TurnContextItem.collaboration_mode.settings.developer_instructions` contains old "request_user_input is unavailable" text, used as the diff baseline.
-2. **History `ResponseItem`s** — developer messages with `<collaboration_mode>...unavailable...</collaboration_mode>` are persisted in rollout and replayed into history on resume. The resume system appends only — never removes old messages.
-
-On the first turn after resume, `build_collaboration_mode_update_item()` detects the diff (old instructions vs session's `developer_instructions: None`), but `DeveloperInstructions::from_collaboration_mode()` returns `None` when instructions are empty — so no replacement is emitted. Stale text stays in history with nothing to supersede it.
-
-**Functional impact: NONE** — the handler no longer checks mode, so the tool works regardless. The tool schema description says it's available.
-
-**UX impact: LOW** — model sees conflicting signals but weights recent context and tool schemas more heavily. Compaction or new sessions naturally fix it.
-
-**Runtime fix in `core/src/codex/rollout_reconstruction.rs`:**
-- When restoring `reference_context_item` from a persisted `TurnContextItem`, compare the persisted `collaboration_mode.settings.developer_instructions` against the current builtin preset for that mode (obtained from `builtin_collaboration_mode_presets()`).
-- If they differ (stale builtin instructions detected), set `reference_context_item` to `None` instead of the persisted value.
-- This forces `build_initial_context()` (not `build_settings_update_items()`) on the first turn after resume, which injects fresh collaboration mode instructions that appear AFTER the stale ones in history. The model sees the fresh text most recently.
-- **Does NOT affect custom instructions:** the comparison is only against known builtin presets for that `ModeKind`. Sessions with user-provided `developer_instructions` won't match any builtin and pass through unchanged.
-- **Does NOT modify persisted history:** old developer messages stay in history but are superseded by the fresh injection appended at the end. Compaction eventually cleans them up.
-
-**Regression test:**
-- Add an integration test that resumes a thread with old Default-mode history containing a developer `ResponseItem` with "request_user_input is unavailable" text, starts a new turn, and asserts the model request includes fresh collaboration mode instructions without the stale restriction.
-
-### 9. Remove template placeholders
+### 8. Remove template placeholders
 **`core/templates/collaboration_mode/default.md`** — Remove the `{{REQUEST_USER_INPUT_AVAILABILITY}}` placeholder and its `## request_user_input availability` section entirely. The tool is now unconditionally available so mode-specific availability text is dead weight. Inline the `{{ASKING_QUESTIONS_GUIDANCE}}` content directly as static text: "prefer using the `request_user_input` tool rather than writing a multiple choice question as a textual assistant message." Remove the corresponding placeholder constants and `.replace()` calls from `collaboration_mode_presets.rs` and `tui_app_server/src/model_catalog.rs`.
 
 ## Verification
@@ -139,11 +117,10 @@ just fmt
 Build bottom-up to avoid breaking intermediate compilation states:
 1. **Protocol layer** — `config_types.rs` (remove `allows_request_user_input()`)
 2. **Core engine** — features, handler, spec, models_manager, thread_manager
-3. **Resume normalization** — `rollout_reconstruction.rs` (stale instruction fix)
-4. **Consumer crates** — tui, tui_app_server, app-server, app-server-client, mcp-server
-5. **Template** — `default.md` (remove placeholders, inline static text)
-6. **Tests** — update/delete across all crates + grep closure for `CollaborationModesConfig`
-7. **Schema + format** — `just write-config-schema`, `just fmt`
+3. **Consumer crates** — tui, tui_app_server, app-server, app-server-client, mcp-server
+4. **Template** — `default.md` (remove placeholders, inline static text)
+5. **Tests** — update/delete across all crates + grep closure for `CollaborationModesConfig`
+6. **Schema + format** — `just write-config-schema`, `just fmt`
 
 ## Assumptions
 
@@ -151,3 +128,9 @@ Build bottom-up to avoid breaking intermediate compilation states:
 - SubAgent exclusion is orthogonal and untouched.
 - Template placeholders for mode-specific availability are removed (not kept with static substitutions) — if the text is unconditional, a placeholder adds complexity for no benefit.
 - `plan.md` is left unchanged — it already has the correct `request_user_input` guidance with no mode restriction language.
+- **No persisted session migration needed** — this is pre-launch, so no existing user sessions carry stale "request_user_input is unavailable" text. Local dev rollout artifacts can be cleared manually if encountered.
+
+## Edge Cases
+
+- **`features.default_mode_request_user_input = false` in config or `ThreadStartParams`:** Parses without error (`Stage::Removed` keeps the key in the schema). Has no runtime effect — all code paths that checked this feature are removed. The tool works regardless of the flag value.
+- **Stale local dev rollout files:** Developers who ran pre-change builds may have local rollout files with old Default-mode instructions. These are dev artifacts, not user data. Starting a new session or deleting the local state directory clears them.

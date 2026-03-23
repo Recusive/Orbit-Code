@@ -220,7 +220,6 @@ use orbit_code_core::mcp::auth::discover_supported_scopes;
 use orbit_code_core::mcp::auth::resolve_oauth_scopes;
 use orbit_code_core::mcp::collect_mcp_snapshot;
 use orbit_code_core::mcp::group_tools_by_server;
-use orbit_code_core::models_manager::collaboration_mode_presets::CollaborationModesConfig;
 use orbit_code_core::parse_cursor;
 use orbit_code_core::plugins::MarketplaceError;
 use orbit_code_core::plugins::MarketplacePluginSource;
@@ -598,13 +597,12 @@ impl CodexMessageProcessor {
     fn normalize_turn_start_collaboration_mode(
         &self,
         mut collaboration_mode: CollaborationMode,
-        collaboration_modes_config: CollaborationModesConfig,
     ) -> CollaborationMode {
         if collaboration_mode.settings.developer_instructions.is_none()
             && let Some(instructions) = self
                 .thread_manager
                 .get_models_manager()
-                .list_collaboration_modes_for_config(collaboration_modes_config)
+                .list_collaboration_modes()
                 .into_iter()
                 .find(|preset| preset.mode == Some(collaboration_mode.mode))
                 .and_then(|preset| preset.developer_instructions.flatten())
@@ -6274,12 +6272,9 @@ impl CodexMessageProcessor {
             return;
         }
 
-        let collaboration_modes_config = CollaborationModesConfig {
-            default_mode_request_user_input: thread.enabled(Feature::DefaultModeRequestUserInput),
-        };
-        let collaboration_mode = params.collaboration_mode.map(|mode| {
-            self.normalize_turn_start_collaboration_mode(mode, collaboration_modes_config)
-        });
+        let collaboration_mode = params
+            .collaboration_mode
+            .map(|mode| self.normalize_turn_start_collaboration_mode(mode));
 
         // Map v2 input items to core input items.
         let mapped_items: Vec<CoreInputItem> = params

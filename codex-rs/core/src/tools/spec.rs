@@ -7,7 +7,6 @@ use crate::features::Feature;
 use crate::features::Features;
 use crate::mcp::ORBIT_APPS_MCP_SERVER_NAME;
 use crate::mcp_connection_manager::ToolInfo;
-use crate::models_manager::collaboration_mode_presets::CollaborationModesConfig;
 use crate::original_image_detail::can_request_original_image_detail;
 use crate::shell::Shell;
 use crate::shell::ShellType;
@@ -278,7 +277,6 @@ pub(crate) struct ToolsConfig {
     pub collab_tools: bool,
     pub artifact_tools: bool,
     pub request_user_input: bool,
-    pub default_mode_request_user_input: bool,
     pub experimental_supported_tools: Vec<String>,
     pub agent_jobs_tools: bool,
     pub agent_jobs_worker_tools: bool,
@@ -327,8 +325,6 @@ impl ToolsConfig {
         let include_collab_tools = features.enabled(Feature::Collab);
         let include_agent_jobs = features.enabled(Feature::SpawnCsv);
         let include_request_user_input = !matches!(session_source, SessionSource::SubAgent(_));
-        let include_default_mode_request_user_input =
-            include_request_user_input && features.enabled(Feature::DefaultModeRequestUserInput);
         let include_search_tool = model_info.supports_search_tool;
         let include_tool_suggest = include_search_tool && features.enabled(Feature::ToolSuggest);
         let include_original_image_detail = can_request_original_image_detail(features, model_info);
@@ -410,7 +406,6 @@ impl ToolsConfig {
             collab_tools: include_collab_tools,
             artifact_tools: include_artifact_tools,
             request_user_input: include_request_user_input,
-            default_mode_request_user_input: include_default_mode_request_user_input,
             experimental_supported_tools: model_info.experimental_supported_tools.clone(),
             agent_jobs_tools: include_agent_jobs,
             agent_jobs_worker_tools,
@@ -1413,9 +1408,7 @@ fn create_wait_agent_tool() -> ToolSpec {
     })
 }
 
-fn create_request_user_input_tool(
-    collaboration_modes_config: CollaborationModesConfig,
-) -> ToolSpec {
+fn create_request_user_input_tool() -> ToolSpec {
     let mut option_props = BTreeMap::new();
     option_props.insert(
         "label".to_string(),
@@ -1486,9 +1479,7 @@ fn create_request_user_input_tool(
 
     ToolSpec::Function(ResponsesApiTool {
         name: "request_user_input".to_string(),
-        description: request_user_input_tool_description(
-            collaboration_modes_config.default_mode_request_user_input,
-        ),
+        description: request_user_input_tool_description().to_string(),
         strict: false,
         defer_loading: None,
         parameters: JsonSchema::Object {
@@ -2566,9 +2557,7 @@ pub(crate) fn build_specs_with_discoverable_tools(
     let mcp_resource_handler = Arc::new(McpResourceHandler);
     let shell_command_handler = Arc::new(ShellCommandHandler::from(config.shell_command_backend));
     let request_permissions_handler = Arc::new(RequestPermissionsHandler);
-    let request_user_input_handler = Arc::new(RequestUserInputHandler {
-        default_mode_request_user_input: config.default_mode_request_user_input,
-    });
+    let request_user_input_handler = Arc::new(RequestUserInputHandler);
     let tool_suggest_handler = Arc::new(ToolSuggestHandler);
     let code_mode_handler = Arc::new(CodeModeExecuteHandler);
     let code_mode_wait_handler = Arc::new(CodeModeWaitHandler);
@@ -2730,9 +2719,7 @@ pub(crate) fn build_specs_with_discoverable_tools(
     if config.request_user_input {
         push_tool_spec(
             &mut builder,
-            create_request_user_input_tool(CollaborationModesConfig {
-                default_mode_request_user_input: config.default_mode_request_user_input,
-            }),
+            create_request_user_input_tool(),
             /*supports_parallel_tool_calls*/ false,
             config.code_mode_enabled,
         );

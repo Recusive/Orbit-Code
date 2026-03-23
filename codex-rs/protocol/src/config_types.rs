@@ -348,10 +348,6 @@ impl ModeKind {
     pub const fn is_tui_visible(self) -> bool {
         matches!(self, Self::Plan | Self::Default)
     }
-
-    pub const fn allows_request_user_input(self) -> bool {
-        matches!(self, Self::Plan)
-    }
 }
 
 /// Collaboration mode for a Codex session.

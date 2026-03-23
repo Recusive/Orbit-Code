@@ -1,7 +1,6 @@
 use super::*;
 use crate::codex::make_session_and_context;
 use crate::config::test_config;
-use crate::models_manager::collaboration_mode_presets::CollaborationModesConfig;
 use crate::models_manager::manager::RefreshStrategy;
 use assert_matches::assert_matches;
 use core_test_support::responses::mount_models_once;
@@ -175,12 +174,7 @@ async fn new_uses_configured_openai_provider_for_model_refresh() {
 
     let auth_manager =
         AuthManager::from_auth_for_testing(CodexAuth::create_dummy_chatgpt_auth_for_testing());
-    let manager = ThreadManager::new(
-        &config,
-        auth_manager,
-        SessionSource::Exec,
-        CollaborationModesConfig::default(),
-    );
+    let manager = ThreadManager::new(&config, auth_manager, SessionSource::Exec);
 
     let _ = manager.list_models(RefreshStrategy::Online).await;
     assert_eq!(models_mock.requests().len(), 1);

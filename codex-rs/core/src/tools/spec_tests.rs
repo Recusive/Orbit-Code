@@ -453,7 +453,7 @@ fn test_full_toolset_specs_for_gpt5_orbit_code_unified_exec_web_search() {
         create_exec_command_tool(true, false),
         create_write_stdin_tool(),
         PLAN_TOOL.clone(),
-        create_request_user_input_tool(CollaborationModesConfig::default()),
+        create_request_user_input_tool(),
         create_apply_patch_freeform_tool(),
         ToolSpec::WebSearch {
             external_web_access: Some(true),
@@ -670,10 +670,10 @@ fn test_build_specs_agent_job_worker_tools_enabled() {
 }
 
 #[test]
-fn request_user_input_description_reflects_default_mode_feature_flag() {
+fn request_user_input_description_is_unconditional() {
     let config = test_config();
     let model_info = ModelsManager::construct_model_info_offline_for_tests("gpt-5-codex", &config);
-    let mut features = Features::with_defaults();
+    let features = Features::with_defaults();
     let available_models = Vec::new();
     let tools_config = ToolsConfig::new(&ToolsConfigParams {
         model_info: &model_info,
@@ -688,27 +688,7 @@ fn request_user_input_description_reflects_default_mode_feature_flag() {
     let request_user_input_tool = find_tool(&tools, "request_user_input");
     assert_eq!(
         request_user_input_tool.spec,
-        create_request_user_input_tool(CollaborationModesConfig::default())
-    );
-
-    features.enable(Feature::DefaultModeRequestUserInput);
-    let available_models = Vec::new();
-    let tools_config = ToolsConfig::new(&ToolsConfigParams {
-        model_info: &model_info,
-        available_models: &available_models,
-        features: &features,
-        web_search_mode: Some(WebSearchMode::Cached),
-        session_source: SessionSource::Cli,
-        sandbox_policy: &SandboxPolicy::DangerFullAccess,
-        windows_sandbox_level: WindowsSandboxLevel::Disabled,
-    });
-    let (tools, _) = build_specs(&tools_config, None, None, &[]).build();
-    let request_user_input_tool = find_tool(&tools, "request_user_input");
-    assert_eq!(
-        request_user_input_tool.spec,
-        create_request_user_input_tool(CollaborationModesConfig {
-            default_mode_request_user_input: true,
-        })
+        create_request_user_input_tool()
     );
 }
 
