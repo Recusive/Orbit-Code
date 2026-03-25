@@ -130,10 +130,6 @@ use orbit_code_protocol::protocol::AgentMessageEvent;
 use orbit_code_protocol::protocol::AgentReasoningDeltaEvent;
 #[cfg(test)]
 use orbit_code_protocol::protocol::AgentReasoningEvent;
-#[cfg(test)]
-use orbit_code_protocol::protocol::AgentReasoningRawContentDeltaEvent;
-#[cfg(test)]
-use orbit_code_protocol::protocol::AgentReasoningRawContentEvent;
 use orbit_code_protocol::protocol::AgentStatus;
 use orbit_code_protocol::protocol::ApplyPatchApprovalRequestEvent;
 #[cfg(test)]
@@ -335,6 +331,7 @@ use crate::streaming::commit_tick::CommitTickScope;
 use crate::streaming::commit_tick::run_commit_tick;
 use crate::streaming::controller::PlanStreamController;
 use crate::streaming::controller::StreamController;
+use crate::streaming::controller::ThinkingStreamController;
 
 use chrono::Local;
 use orbit_code_file_search::FileMatch;
@@ -724,6 +721,8 @@ pub(crate) struct ChatWidget {
     stream_controller: Option<StreamController>,
     // Stream lifecycle controller for proposed plan output.
     plan_stream_controller: Option<PlanStreamController>,
+    // Stream lifecycle controller for raw thinking tokens (plain-text, italic magenta).
+    thinking_stream_controller: Option<ThinkingStreamController>,
     // Latest completed user-visible Codex output that `/copy` should place on the clipboard.
     last_copyable_output: Option<String>,
     running_commands: HashMap<String, RunningCommand>,
@@ -1508,6 +1507,11 @@ impl ChatWidget {
                 .as_ref()
                 .map(|controller| controller.queued_lines() == 0)
                 .unwrap_or(true)
+            && self
+                .thinking_stream_controller
+                .as_ref()
+                .map(|controller| controller.queued_lines() == 0)
+                .unwrap_or(true)
     }
 
     /// Restore the status indicator only after commentary completion is pending,
@@ -1969,6 +1973,12 @@ impl ChatWidget {
     }
 
     fn on_agent_message_delta(&mut self, delta: String) {
+        // If thinking was streaming, finalize it before the first text delta
+        // so thinking appears above the response in the transcript.
+        if self.thinking_stream_controller.is_some() {
+            tracing::debug!("[thinking] finalizing thinking on first text delta");
+            self.handle_thinking_finalize();
+        }
         self.handle_streaming_delta(delta);
     }
 
@@ -2078,7 +2088,39 @@ impl ChatWidget {
         self.reasoning_buffer.clear();
     }
 
-    // Raw reasoning uses the same flow as summarized reasoning
+    /// Handle a raw thinking token delta. Routes to the thinking stream controller,
+    /// never touching `reasoning_buffer` (complete state separation from summary).
+    fn handle_thinking_delta(&mut self, delta: String) {
+        tracing::debug!("[thinking] delta received: {} bytes", delta.len());
+        let reduced_motion = self.config.prefers_reduced_motion;
+        let controller = self
+            .thinking_stream_controller
+            .get_or_insert_with(|| ThinkingStreamController::new(reduced_motion));
+        if controller.push(&delta) {
+            self.app_event_tx.send(AppEvent::StartCommitAnimation);
+            self.run_catch_up_commit_tick();
+        }
+        self.request_redraw();
+    }
+
+    /// Finalize the thinking stream — take the controller and flush remaining content into history.
+    fn handle_thinking_finalize(&mut self) {
+        if let Some(mut controller) = self.thinking_stream_controller.take()
+            && let Some(cell) = controller.finalize()
+        {
+            tracing::debug!("[thinking] finalized thinking stream into history cell");
+            self.add_boxed_history(cell);
+        } else {
+            tracing::debug!("[thinking] finalize called but no content to flush");
+        }
+    }
+
+    /// Insert a visual section break in the thinking stream without finalizing it.
+    fn handle_thinking_section_break(&mut self) {
+        if let Some(controller) = self.thinking_stream_controller.as_mut() {
+            controller.push_section_break();
+        }
+    }
 
     fn on_task_started(&mut self) {
         self.agent_turn_running = true;
@@ -2090,6 +2132,7 @@ impl ChatWidget {
         self.plan_item_active = false;
         self.adaptive_chunking.reset();
         self.plan_stream_controller = None;
+        self.thinking_stream_controller = None;
         self.turn_runtime_metrics = RuntimeMetricsSummary::default();
         self.session_telemetry.reset_runtime_metrics();
         self.bottom_pane.clear_quit_shortcut_hint();
@@ -2116,6 +2159,12 @@ impl ChatWidget {
         // If a stream is currently active, finalize it.
         self.flush_answer_stream_with_separator();
         if let Some(mut controller) = self.plan_stream_controller.take()
+            && let Some(cell) = controller.finalize()
+        {
+            self.add_boxed_history(cell);
+        }
+        // Fallback finalization for thinking controller (interrupted/aborted turns).
+        if let Some(mut controller) = self.thinking_stream_controller.take()
             && let Some(cell) = controller.finalize()
         {
             self.add_boxed_history(cell);
@@ -2460,6 +2509,7 @@ impl ChatWidget {
         self.adaptive_chunking.reset();
         self.stream_controller = None;
         self.plan_stream_controller = None;
+        self.thinking_stream_controller = None;
         self.pending_status_indicator_restore = false;
         self.request_status_line_branch_refresh();
         self.maybe_show_pending_rate_limit_prompt();
@@ -3650,8 +3700,10 @@ impl ChatWidget {
             &mut self.adaptive_chunking,
             self.stream_controller.as_mut(),
             self.plan_stream_controller.as_mut(),
+            self.thinking_stream_controller.as_mut(),
             scope,
             now,
+            self.config.prefers_reduced_motion,
         );
         for cell in outcome.cells {
             self.bottom_pane.hide_status_indicator();
@@ -4203,6 +4255,7 @@ impl ChatWidget {
             adaptive_chunking: AdaptiveChunkingPolicy::default(),
             stream_controller: None,
             plan_stream_controller: None,
+            thinking_stream_controller: None,
             last_copyable_output: None,
             running_commands: HashMap::new(),
             pending_collab_spawn_requests: HashMap::new(),
@@ -4628,6 +4681,9 @@ impl ChatWidget {
                     return;
                 }
                 self.open_realtime_audio_popup();
+            }
+            SlashCommand::Config => {
+                self.open_config_popup();
             }
             SlashCommand::Personality => {
                 self.open_personality_popup();
@@ -5555,9 +5611,12 @@ impl ChatWidget {
                     self.on_agent_reasoning_delta(delta);
                 }
                 if self.config.show_raw_agent_reasoning {
+                    // Replay: push all content through thinking controller, then immediately
+                    // finalize. No animation — this is historical data being restored.
                     for delta in content {
-                        self.on_agent_reasoning_delta(delta);
+                        self.handle_thinking_delta(delta);
                     }
+                    self.handle_thinking_finalize();
                 }
                 self.on_agent_reasoning_final();
             }
@@ -5876,10 +5935,13 @@ impl ChatWidget {
             }
             ServerNotification::ReasoningTextDelta(notification) => {
                 if self.config.show_raw_agent_reasoning {
-                    self.on_agent_reasoning_delta(notification.delta);
+                    self.handle_thinking_delta(notification.delta);
                 }
             }
-            ServerNotification::ReasoningSummaryPartAdded(_) => self.on_reasoning_section_break(),
+            ServerNotification::ReasoningSummaryPartAdded(_) => {
+                self.on_reasoning_section_break();
+                self.handle_thinking_section_break();
+            }
             ServerNotification::TerminalInteraction(notification) => {
                 self.on_terminal_interaction(TerminalInteractionEvent {
                     call_id: notification.item_id,
@@ -6342,6 +6404,7 @@ impl ChatWidget {
             EventMsg::AgentMessageDelta(_)
             | EventMsg::PlanDelta(_)
             | EventMsg::AgentReasoningDelta(_)
+            | EventMsg::AgentReasoningRawContentDelta(_)
             | EventMsg::TerminalInteraction(_)
             | EventMsg::ExecCommandOutputDelta(_) => {}
             _ => {
@@ -6368,16 +6431,24 @@ impl ChatWidget {
                 self.on_agent_message_delta(delta)
             }
             EventMsg::PlanDelta(event) => self.on_plan_delta(event.delta),
-            EventMsg::AgentReasoningDelta(AgentReasoningDeltaEvent { delta })
-            | EventMsg::AgentReasoningRawContentDelta(AgentReasoningRawContentDeltaEvent {
-                delta,
-            }) => self.on_agent_reasoning_delta(delta),
-            EventMsg::AgentReasoning(AgentReasoningEvent { .. }) => self.on_agent_reasoning_final(),
-            EventMsg::AgentReasoningRawContent(AgentReasoningRawContentEvent { text }) => {
-                self.on_agent_reasoning_delta(text);
-                self.on_agent_reasoning_final();
+            EventMsg::AgentReasoningDelta(AgentReasoningDeltaEvent { delta }) => {
+                // Summary deltas → shimmer header + transcript buffer ONLY.
+                self.on_agent_reasoning_delta(delta);
             }
-            EventMsg::AgentReasoningSectionBreak(_) => self.on_reasoning_section_break(),
+            EventMsg::AgentReasoningRawContentDelta(event) => {
+                // Thinking deltas from both OpenAI and Claude flow through here
+                // via the legacy event path (as_legacy_events).
+                self.handle_thinking_delta(event.delta);
+            }
+            EventMsg::AgentReasoning(AgentReasoningEvent { .. }) => self.on_agent_reasoning_final(),
+            EventMsg::AgentReasoningRawContent(_) => {
+                // Finalized thinking block — finalize the controller.
+                self.handle_thinking_finalize();
+            }
+            EventMsg::AgentReasoningSectionBreak(_) => {
+                self.on_reasoning_section_break();
+                self.handle_thinking_section_break();
+            }
             EventMsg::TurnStarted(event) => {
                 if !is_resume_initial_replay {
                     self.apply_turn_started_context_window(event.model_context_window);
@@ -6541,11 +6612,11 @@ impl ChatWidget {
                     });
                 }
             }
-            EventMsg::RawResponseItem(_)
+            EventMsg::ReasoningContentDelta(_)
+            | EventMsg::ReasoningRawContentDelta(_)
+            | EventMsg::RawResponseItem(_)
             | EventMsg::ItemStarted(_)
             | EventMsg::AgentMessageContentDelta(_)
-            | EventMsg::ReasoningContentDelta(_)
-            | EventMsg::ReasoningRawContentDelta(_)
             | EventMsg::DynamicToolCallRequest(_)
             | EventMsg::DynamicToolCallResponse(_) => {}
             EventMsg::HookStarted(event) => self.on_hook_started(event),
@@ -7366,6 +7437,36 @@ impl ChatWidget {
             }
         };
         self.open_model_popup_with_presets(presets);
+    }
+
+    fn open_config_popup(&mut self) {
+        let reduced_motion = self.config.prefers_reduced_motion;
+
+        let items: Vec<SelectionItem> = vec![SelectionItem {
+            name: "Reduced Motion".to_string(),
+            description: Some(if reduced_motion {
+                "ON — streaming animation disabled".to_string()
+            } else {
+                "OFF — streaming animation enabled".to_string()
+            }),
+            is_current: reduced_motion,
+            actions: vec![Box::new(move |tx| {
+                tx.send(AppEvent::ToggleReducedMotion);
+            })],
+            dismiss_on_select: true,
+            ..Default::default()
+        }];
+
+        let mut header = ColumnRenderable::new();
+        header.push(Line::from("Preferences".bold()));
+        header.push(Line::from("Toggle TUI settings.".dim()));
+
+        self.bottom_pane.show_selection_view(SelectionViewParams {
+            header: Box::new(header),
+            footer_hint: Some(standard_popup_hint_line()),
+            items,
+            ..Default::default()
+        });
     }
 
     pub(crate) fn open_personality_popup(&mut self) {
@@ -9087,6 +9188,11 @@ impl ChatWidget {
     /// Set the personality in the widget's config copy.
     pub(crate) fn set_personality(&mut self, personality: Personality) {
         self.config.personality = Some(personality);
+    }
+
+    /// Set the reduced motion preference in the widget's config copy.
+    pub(crate) fn set_prefers_reduced_motion(&mut self, value: bool) {
+        self.config.prefers_reduced_motion = value;
     }
 
     /// Set Fast mode in the widget's config copy.

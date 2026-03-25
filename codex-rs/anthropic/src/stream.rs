@@ -307,7 +307,20 @@ mod tests {
 
     #[test]
     fn adaptive_thinking_serializes_without_effort() {
-        let value = serde_json::to_value(crate::ThinkingConfig::Adaptive {}).expect("serialize");
+        let value = serde_json::to_value(crate::ThinkingConfig::Adaptive { display: None })
+            .expect("serialize");
         assert_eq!(value, serde_json::json!({ "type": "adaptive" }));
+    }
+
+    #[test]
+    fn adaptive_thinking_with_display_serializes_correctly() {
+        let value = serde_json::to_value(crate::ThinkingConfig::Adaptive {
+            display: Some(crate::ThinkingDisplay::Summarized),
+        })
+        .expect("serialize");
+        assert_eq!(
+            value,
+            serde_json::json!({ "type": "adaptive", "display": "summarized" })
+        );
     }
 }

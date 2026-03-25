@@ -769,6 +769,64 @@ async fn chatgpt_auth_sends_correct_request() {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn show_raw_agent_reasoning_includes_reasoning_content() {
+    skip_if_no_network!();
+
+    let server = MockServer::start().await;
+    let resp_mock = mount_sse_once(
+        &server,
+        sse(vec![ev_response_created("resp1"), ev_completed("resp1")]),
+    )
+    .await;
+
+    let mut model_provider = built_in_model_providers(/* openai_base_url */ None)["openai"].clone();
+    model_provider.base_url = Some(format!("{}/api/codex", server.uri()));
+    model_provider.supports_websockets = false;
+    let mut builder = test_codex()
+        .with_auth(create_dummy_orbit_code_auth())
+        .with_config(move |config| {
+            config.model_provider = model_provider;
+            config.show_raw_agent_reasoning = true;
+        });
+    let test = builder
+        .build(&server)
+        .await
+        .expect("create new conversation");
+    let codex = test.codex.clone();
+
+    codex
+        .submit(Op::UserInput {
+            items: vec![UserInput::Text {
+                text: "hello".into(),
+                text_elements: Vec::new(),
+            }],
+            final_output_json_schema: None,
+        })
+        .await
+        .unwrap();
+
+    wait_for_event(&codex, |ev| matches!(ev, EventMsg::TurnComplete(_))).await;
+
+    let request = resp_mock.single_request();
+    let request_body = request.body_json();
+    let include = request_body["include"]
+        .as_array()
+        .expect("include should be an array");
+    assert!(
+        include
+            .iter()
+            .any(|v| v.as_str() == Some("reasoning.encrypted_content")),
+        "include should contain reasoning.encrypted_content"
+    );
+    assert!(
+        include
+            .iter()
+            .any(|v| v.as_str() == Some("reasoning.content")),
+        "include should contain reasoning.content when show_raw_agent_reasoning is enabled"
+    );
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn prefers_apikey_when_config_prefers_apikey_even_with_chatgpt_tokens() {
     skip_if_no_network!();
 
@@ -1829,6 +1887,7 @@ async fn azure_responses_request_includes_store_and_reasoning_ids() {
         config.model_verbosity,
         false,
         false,
+        /*show_raw_agent_reasoning*/ false,
         None,
     );
     let mut client_session = client.new_session();

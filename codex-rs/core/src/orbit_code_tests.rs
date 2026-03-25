@@ -236,6 +236,7 @@ fn test_model_client_session() -> crate::client::ModelClientSession {
         None,
         false,
         false,
+        /*show_raw_agent_reasoning*/ false,
         None,
     )
     .new_session()
@@ -2497,6 +2498,7 @@ pub(crate) async fn make_session_and_context() -> (Session, TurnContext) {
             config.model_verbosity,
             config.features.enabled(Feature::EnableRequestCompression),
             config.features.enabled(Feature::RuntimeMetrics),
+            config.show_raw_agent_reasoning,
             Session::build_model_client_beta_features_header(config.as_ref()),
         ),
         code_mode_service: crate::tools::code_mode::CodeModeService::new(
@@ -3291,6 +3293,7 @@ pub(crate) async fn make_session_and_context_with_dynamic_tools_and_rx(
             config.model_verbosity,
             config.features.enabled(Feature::EnableRequestCompression),
             config.features.enabled(Feature::RuntimeMetrics),
+            config.show_raw_agent_reasoning,
             Session::build_model_client_beta_features_header(config.as_ref()),
         ),
         code_mode_service: crate::tools::code_mode::CodeModeService::new(

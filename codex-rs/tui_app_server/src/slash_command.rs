@@ -38,6 +38,7 @@ pub enum SlashCommand {
     Mention,
     Status,
     DebugConfig,
+    Config,
     Statusline,
     Theme,
     Mcp,
@@ -85,6 +86,7 @@ impl SlashCommand {
             SlashCommand::Skills => "use skills to improve how Codex performs specific tasks",
             SlashCommand::Status => "show current session configuration and token usage",
             SlashCommand::DebugConfig => "show config layers and requirement sources for debugging",
+            SlashCommand::Config => "toggle TUI preferences (reduced motion)",
             SlashCommand::Statusline => "configure which items appear in the status line",
             SlashCommand::Theme => "choose a syntax highlighting theme",
             SlashCommand::Ps => "list background terminals",
@@ -175,6 +177,7 @@ impl SlashCommand {
             SlashCommand::Settings => true,
             SlashCommand::Collab => true,
             SlashCommand::Agent | SlashCommand::MultiAgents => true,
+            SlashCommand::Config => false,
             SlashCommand::Statusline => false,
             SlashCommand::Theme => false,
         }

@@ -288,6 +288,10 @@ pub struct Config {
     /// Defaults to `false`.
     pub show_raw_agent_reasoning: bool,
 
+    /// When set to `true`, streaming animation (line-by-line typing effect) is disabled.
+    /// All streamed content appears instantly. Defaults to `false`.
+    pub prefers_reduced_motion: bool,
+
     /// User-provided instructions from AGENTS.md.
     pub user_instructions: Option<String>,
 
@@ -1373,6 +1377,10 @@ pub struct ConfigToml {
     /// When set to `true`, `AgentReasoningRawContentEvent` events will be shown in the UI/output.
     /// Defaults to `false`.
     pub show_raw_agent_reasoning: Option<bool>,
+
+    /// When set to `true`, streaming animation (line-by-line typing effect) is disabled.
+    /// All streamed content appears instantly. Defaults to `false`.
+    pub prefers_reduced_motion: Option<bool>,
 
     pub model_reasoning_effort: Option<ReasoningEffort>,
     pub plan_mode_reasoning_effort: Option<ReasoningEffort>,
@@ -2780,6 +2788,7 @@ impl Config {
                 .show_raw_agent_reasoning
                 .or(show_raw_agent_reasoning)
                 .unwrap_or(false),
+            prefers_reduced_motion: cfg.prefers_reduced_motion.unwrap_or(false),
             guardian_developer_instructions,
             model_reasoning_effort: config_profile
                 .model_reasoning_effort

@@ -1,0 +1,40 @@
+# Flow: Select Claude model, send prompt, verify response
+# Full end-to-end: open model picker → pick Claude → send message → check response
+
+WAIT 10
+
+# Open model picker
+TYPE /model
+ENTER
+WAIT 10
+CAPTURE model-picker-open
+EXPECT claude
+
+# Select claude-opus (should be near bottom of list)
+# Navigate to it — press Down until we reach it, then Enter
+KEY Down
+KEY Down
+KEY Down
+KEY Down
+KEY Down
+KEY Down
+KEY Down
+KEY Down
+KEY Down
+KEY Down
+WAIT 1
+CAPTURE model-selected
+ENTER
+WAIT 2
+
+# Press Escape to dismiss reasoning picker if it appears
+ESCAPE
+WAIT 2
+CAPTURE model-confirmed
+
+# Now send a prompt
+TYPE what is 1 plus 1? answer with just the number
+ENTER
+WAIT 15
+CAPTURE response
+EXPECT 2

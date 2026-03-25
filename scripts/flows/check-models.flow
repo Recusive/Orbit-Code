@@ -1,0 +1,17 @@
+# Flow: Check model picker shows Claude + GPT models
+# Verifies model list loads and contains expected models
+
+WAIT 10
+CAPTURE startup
+EXPECT Orbit Code
+
+TYPE /model
+ENTER
+WAIT 10
+CAPTURE model-picker
+EXPECT claude-opus
+EXPECT claude-sonnet
+EXPECT gpt-5
+
+ESCAPE
+WAIT 1

@@ -2199,6 +2199,45 @@ impl HistoryCell for ProposedPlanStreamCell {
     }
 }
 
+pub(crate) fn new_thinking_stream(
+    lines: Vec<Line<'static>>,
+    is_stream_continuation: bool,
+) -> ThinkingStreamCell {
+    ThinkingStreamCell {
+        lines,
+        is_stream_continuation,
+    }
+}
+
+#[derive(Debug)]
+pub(crate) struct ThinkingStreamCell {
+    lines: Vec<Line<'static>>,
+    is_stream_continuation: bool,
+}
+
+impl HistoryCell for ThinkingStreamCell {
+    fn display_lines(&self, width: u16) -> Vec<Line<'static>> {
+        adaptive_wrap_lines(
+            &self.lines,
+            RtOptions::new(width as usize)
+                .initial_indent(if !self.is_stream_continuation {
+                    "| ".magenta().into()
+                } else {
+                    "  ".into()
+                })
+                .subsequent_indent("  ".into()),
+        )
+    }
+
+    fn transcript_lines(&self, _width: u16) -> Vec<Line<'static>> {
+        Vec::new()
+    }
+
+    fn is_stream_continuation(&self) -> bool {
+        self.is_stream_continuation
+    }
+}
+
 #[derive(Debug)]
 pub(crate) struct PlanUpdateCell {
     explanation: Option<String>,

@@ -25,6 +25,7 @@ use super::chunking::DrainPlan;
 use super::chunking::QueueSnapshot;
 use super::controller::PlanStreamController;
 use super::controller::StreamController;
+use super::controller::ThinkingStreamController;
 
 /// Describes whether a commit tick may run in all modes or only in catch-up mode.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -70,12 +71,26 @@ pub(crate) fn run_commit_tick(
     policy: &mut AdaptiveChunkingPolicy,
     stream_controller: Option<&mut StreamController>,
     plan_stream_controller: Option<&mut PlanStreamController>,
+    thinking_stream_controller: Option<&mut ThinkingStreamController>,
     scope: CommitTickScope,
     now: Instant,
+    reduced_motion: bool,
 ) -> CommitTickOutput {
+    // When reduced motion is on, skip the adaptive policy and drain all queued
+    // lines immediately so content appears instantly without animation.
+    if reduced_motion {
+        return apply_commit_tick_plan(
+            DrainPlan::Batch(usize::MAX),
+            stream_controller,
+            plan_stream_controller,
+            thinking_stream_controller,
+        );
+    }
+
     let snapshot = stream_queue_snapshot(
         stream_controller.as_deref(),
         plan_stream_controller.as_deref(),
+        thinking_stream_controller.as_deref(),
         now,
     );
     let decision = resolve_chunking_plan(policy, snapshot, now);
@@ -87,6 +102,7 @@ pub(crate) fn run_commit_tick(
         decision.drain_plan,
         stream_controller,
         plan_stream_controller,
+        thinking_stream_controller,
     )
 }
 
@@ -97,6 +113,7 @@ pub(crate) fn run_commit_tick(
 fn stream_queue_snapshot(
     stream_controller: Option<&StreamController>,
     plan_stream_controller: Option<&PlanStreamController>,
+    thinking_stream_controller: Option<&ThinkingStreamController>,
     now: Instant,
 ) -> QueueSnapshot {
     let mut queued_lines = 0usize;
@@ -107,6 +124,10 @@ fn stream_queue_snapshot(
         oldest_age = max_duration(oldest_age, controller.oldest_queued_age(now));
     }
     if let Some(controller) = plan_stream_controller {
+        queued_lines += controller.queued_lines();
+        oldest_age = max_duration(oldest_age, controller.oldest_queued_age(now));
+    }
+    if let Some(controller) = thinking_stream_controller {
         queued_lines += controller.queued_lines();
         oldest_age = max_duration(oldest_age, controller.oldest_queued_age(now));
     }
@@ -149,12 +170,14 @@ fn apply_commit_tick_plan(
     drain_plan: DrainPlan,
     stream_controller: Option<&mut StreamController>,
     plan_stream_controller: Option<&mut PlanStreamController>,
+    thinking_stream_controller: Option<&mut ThinkingStreamController>,
 ) -> CommitTickOutput {
     let mut output = CommitTickOutput::default();
 
-    if let Some(controller) = stream_controller {
+    // Drain order: thinking first (appears above), then plan, then stream/message last.
+    if let Some(controller) = thinking_stream_controller {
         output.has_controller = true;
-        let (cell, is_idle) = drain_stream_controller(controller, drain_plan);
+        let (cell, is_idle) = drain_thinking_stream_controller(controller, drain_plan);
         if let Some(cell) = cell {
             output.cells.push(cell);
         }
@@ -163,6 +186,14 @@ fn apply_commit_tick_plan(
     if let Some(controller) = plan_stream_controller {
         output.has_controller = true;
         let (cell, is_idle) = drain_plan_stream_controller(controller, drain_plan);
+        if let Some(cell) = cell {
+            output.cells.push(cell);
+        }
+        output.all_idle &= is_idle;
+    }
+    if let Some(controller) = stream_controller {
+        output.has_controller = true;
+        let (cell, is_idle) = drain_stream_controller(controller, drain_plan);
         if let Some(cell) = cell {
             output.cells.push(cell);
         }
@@ -179,6 +210,20 @@ fn apply_commit_tick_plan(
 /// queued backlog).
 fn drain_stream_controller(
     controller: &mut StreamController,
+    drain_plan: DrainPlan,
+) -> (Option<Box<dyn HistoryCell>>, bool) {
+    match drain_plan {
+        DrainPlan::Single => controller.on_commit_tick(),
+        DrainPlan::Batch(max_lines) => controller.on_commit_tick_batch(max_lines),
+    }
+}
+
+/// Applies one drain step to the thinking stream controller.
+///
+/// This mirrors [`drain_stream_controller`] so all controller types follow the
+/// same chunking policy decisions.
+fn drain_thinking_stream_controller(
+    controller: &mut ThinkingStreamController,
     drain_plan: DrainPlan,
 ) -> (Option<Box<dyn HistoryCell>>, bool) {
     match drain_plan {

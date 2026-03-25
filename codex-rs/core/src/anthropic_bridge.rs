@@ -83,7 +83,9 @@ pub(crate) fn anthropic_model_defaults(
     let normalized_effort = effort.unwrap_or(ReasoningEffortConfig::Medium);
 
     let thinking = if model_info.thinking_style == ThinkingStyle::Adaptive {
-        Some(ThinkingConfig::Adaptive {})
+        Some(ThinkingConfig::Adaptive {
+            display: Some(orbit_code_anthropic::ThinkingDisplay::Summarized),
+        })
     } else {
         budgeted_thinking_config(max_tokens, normalized_effort)
     };
@@ -447,6 +449,10 @@ where
                             );
                         }
                         orbit_code_anthropic::ContentBlockType::Thinking { thinking } => {
+                            tracing::debug!(
+                                "[thinking] content_block_start(thinking): {} bytes",
+                                thinking.len()
+                            );
                             if !thinking.is_empty()
                                 && tx_event
                                     .send(Ok(ResponseEvent::ReasoningContentDelta {
@@ -485,6 +491,7 @@ where
                         }
                     }
                     orbit_code_anthropic::DeltaType::Thinking { thinking } => {
+                        tracing::debug!("[thinking] thinking_delta: {} bytes", thinking.len());
                         if tx_event
                             .send(Ok(ResponseEvent::ReasoningContentDelta {
                                 delta: thinking,
@@ -618,7 +625,10 @@ fn budgeted_thinking_config(
         ReasoningEffortConfig::High => max_tokens.saturating_div(2).saturating_sub(1).min(16_000),
         ReasoningEffortConfig::XHigh => max_tokens.saturating_sub(1).min(31_999),
     };
-    Some(ThinkingConfig::Enabled { budget_tokens })
+    Some(ThinkingConfig::Enabled {
+        budget_tokens,
+        display: Some(orbit_code_anthropic::ThinkingDisplay::Summarized),
+    })
 }
 
 fn translate_input_to_messages(

@@ -208,6 +208,9 @@ pub(crate) enum AppEvent {
         personality: Personality,
     },
 
+    /// Toggle reduced motion preference and persist to config.
+    ToggleReducedMotion,
+
     /// Persist the selected service tier to the appropriate config.
     PersistServiceTierSelection {
         service_tier: Option<ServiceTier>,

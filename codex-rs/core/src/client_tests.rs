@@ -23,6 +23,7 @@ fn test_model_client(session_source: SessionSource) -> ModelClient {
         None,
         false,
         false,
+        /*show_raw_agent_reasoning*/ false,
         None,
     )
 }

@@ -35,6 +35,7 @@ pub use types::OutputConfig;
 pub use types::Role;
 pub use types::SystemBlock;
 pub use types::ThinkingConfig;
+pub use types::ThinkingDisplay;
 pub use types::Tool;
 pub use types::ToolChoice;
 

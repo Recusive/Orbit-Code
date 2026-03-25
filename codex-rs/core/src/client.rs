@@ -150,6 +150,7 @@ struct ModelClientState {
     model_verbosity: Option<VerbosityConfig>,
     enable_request_compression: bool,
     include_timing_metrics: bool,
+    show_raw_agent_reasoning: bool,
     beta_features_header: Option<String>,
     disable_websockets: AtomicBool,
     cached_websocket_session: StdMutex<WebsocketSession>,
@@ -270,6 +271,7 @@ impl ModelClient {
         model_verbosity: Option<VerbosityConfig>,
         enable_request_compression: bool,
         include_timing_metrics: bool,
+        show_raw_agent_reasoning: bool,
         beta_features_header: Option<String>,
     ) -> Self {
         let orbit_code_api_key_env_enabled = auth_manager
@@ -287,6 +289,7 @@ impl ModelClient {
                 model_verbosity,
                 enable_request_compression,
                 include_timing_metrics,
+                show_raw_agent_reasoning,
                 beta_features_header,
                 disable_websockets: AtomicBool::new(false),
                 cached_websocket_session: StdMutex::new(WebsocketSession::default()),
@@ -746,7 +749,14 @@ impl ModelClientSession {
             None
         };
         let include = if reasoning.is_some() {
-            vec!["reasoning.encrypted_content".to_string()]
+            let mut inc = vec!["reasoning.encrypted_content".to_string()];
+            // The ChatGPT backend proxy does not support reasoning.content —
+            // it returns 400 "Invalid value". Only add it for the direct API.
+            let is_chatgpt_backend = provider.base_url.contains("chatgpt.com");
+            if self.client.state.show_raw_agent_reasoning && !is_chatgpt_backend {
+                inc.push("reasoning.content".to_string());
+            }
+            inc
         } else {
             Vec::new()
         };

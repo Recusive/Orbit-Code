@@ -14,6 +14,8 @@ Contains 3 subdirectories (audited, done, todo).
 - `ask-user-sub-agent-model-selection.md` — Ask user for sub-agent model/reasoning selection before spawning
 - `anthropic-model-metadata-pipeline.md` — Proper Anthropic model metadata pipeline mirroring the GPT architecture
 - `remove-codex-legacy-go-orbit-only.md` — Remove `.codex` legacy fallback — go `.orbit` only
+- `show-thinking-tokens-in-tui.md` — Show thinking tokens live in TUI (italic magenta, plain text) — Claude working, OpenAI blocked by ChatGPT proxy encrypting all reasoning
+- `request-reasoning-content-from-api.md` — Request `reasoning.content` from Responses API so thinking tokens reach the TUI
 
 ## Todo
 

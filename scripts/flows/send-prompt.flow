@@ -1,0 +1,15 @@
+# Flow: Send a prompt and verify response
+# Sends a simple prompt, waits for response, checks output
+
+WAIT 8
+CAPTURE startup
+EXPECT Orbit Code
+
+TYPE say hello in exactly 3 words
+ENTER
+WAIT 15
+CAPTURE after-prompt
+EXPECT hello
+
+# Check the agent responded (should not still show the input prompt placeholder)
+CAPTURE response-check

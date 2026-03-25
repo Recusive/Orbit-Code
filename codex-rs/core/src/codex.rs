@@ -1824,6 +1824,7 @@ impl Session {
                 config.model_verbosity,
                 config.features.enabled(Feature::EnableRequestCompression),
                 config.features.enabled(Feature::RuntimeMetrics),
+                config.show_raw_agent_reasoning,
                 Self::build_model_client_beta_features_header(config.as_ref()),
             ),
             code_mode_service: crate::tools::code_mode::CodeModeService::new(

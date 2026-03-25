@@ -3254,6 +3254,34 @@ impl App {
                     }
                 }
             }
+            AppEvent::ToggleReducedMotion => {
+                let new_value = !self.config.prefers_reduced_motion;
+                self.config.prefers_reduced_motion = new_value;
+                self.chat_widget.set_prefers_reduced_motion(new_value);
+                let profile = self.active_profile.as_deref();
+                match ConfigEditsBuilder::new(&self.config.orbit_code_home)
+                    .with_profile(profile)
+                    .with_edits([ConfigEdit::SetPath {
+                        segments: vec!["prefers_reduced_motion".to_string()],
+                        value: new_value.into(),
+                    }])
+                    .apply()
+                    .await
+                {
+                    Ok(()) => {
+                        let label = if new_value { "enabled" } else { "disabled" };
+                        self.chat_widget.add_info_message(
+                            format!("Reduced motion {label}."),
+                            /*hint*/ None,
+                        );
+                    }
+                    Err(err) => {
+                        tracing::error!("failed to persist reduced motion: {err}");
+                        self.chat_widget
+                            .add_error_message(format!("Failed to save preference: {err}"));
+                    }
+                }
+            }
             AppEvent::PersistServiceTierSelection { service_tier } => {
                 self.refresh_status_line();
                 let profile = self.active_profile.as_deref();

@@ -1,0 +1,20 @@
+# Flow: Check authentication status
+# Auth is accessed through /model → provider management
+
+WAIT 8
+CAPTURE startup
+EXPECT Orbit Code
+
+# Open model picker
+TYPE /model
+WAIT 1
+ENTER
+WAIT 10
+CAPTURE model-picker
+EXPECT claude
+
+# Press Escape to close model picker
+ESCAPE
+WAIT 2
+CAPTURE back-to-main
+EXPECT Orbit Code

@@ -1902,6 +1902,7 @@ async fn make_chatwidget_manual(
         adaptive_chunking: crate::streaming::chunking::AdaptiveChunkingPolicy::default(),
         stream_controller: None,
         plan_stream_controller: None,
+        thinking_stream_controller: None,
         pending_guardian_review_status: PendingGuardianReviewStatus::default(),
         last_copyable_output: None,
         running_commands: HashMap::new(),
@@ -4859,11 +4860,19 @@ async fn replayed_reasoning_item_shows_raw_reasoning_when_enabled() {
         ReplayKind::ThreadSnapshot,
     );
 
-    let rendered = match rx.try_recv() {
-        Ok(AppEvent::InsertHistoryCell(cell)) => lines_to_single_string(&cell.transcript_lines(80)),
-        other => panic!("expected InsertHistoryCell, got {other:?}"),
-    };
-    assert!(rendered.contains("Raw reasoning"));
+    // Raw thinking now routes through ThinkingStreamController → ThinkingStreamCell which is
+    // display-only (transcript_lines returns empty). Check display_lines instead.
+    let mut found_raw_reasoning = false;
+    while let Ok(AppEvent::InsertHistoryCell(cell)) = rx.try_recv() {
+        let displayed = lines_to_single_string(&cell.display_lines(80));
+        if displayed.contains("Raw reasoning") {
+            found_raw_reasoning = true;
+        }
+    }
+    assert!(
+        found_raw_reasoning,
+        "expected ThinkingStreamCell with raw reasoning in display_lines"
+    );
 }
 
 #[test]

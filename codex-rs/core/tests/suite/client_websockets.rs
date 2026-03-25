@@ -1759,6 +1759,7 @@ async fn websocket_harness_with_provider_options(
         config.model_verbosity,
         false,
         runtime_metrics_enabled,
+        /*show_raw_agent_reasoning*/ false,
         None,
     );
 
