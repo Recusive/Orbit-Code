@@ -18,7 +18,7 @@ This directory contains 19 independent Cargo library crates that provide shared 
 | `orbit-code-utils-elapsed` | `elapsed/` | Human-readable elapsed time formatting |
 | `orbit-code-utils-fuzzy-match` | `fuzzy-match/` | Case-insensitive fuzzy subsequence matching with scoring |
 | `orbit-code-git` | `git/` | Git operations: ghost commits, patch apply, branch merge-base, symlinks |
-| `orbit-code-utils-home-dir` | `home-dir/` | Locate the Codex config home directory (`~/.codex` or `$CODEX_HOME`) |
+| `orbit-code-utils-home-dir` | `home-dir/` | Locate the Codex config home directory (`~/.orbit` or `$ORBIT_HOME`) |
 | `orbit-code-utils-image` | `image/` | Image loading, resizing, and base64 encoding for LLM prompts |
 | `orbit-code-utils-json-to-toml` | `json-to-toml/` | Convert `serde_json::Value` to `toml::Value` |
 | `orbit-code-utils-oss` | `oss/` | OSS provider helpers for LM Studio and Ollama |

@@ -657,7 +657,7 @@ just fix                                              # Clippy fix for entire wo
 
 ### Hermetic Test Isolation
 
-Every integration test gets its own `TempDir` for home directory, config, and state. Tests never touch `~/.codex` or the real filesystem. The `TestCodexBuilder` handles this automatically.
+Every integration test gets its own `TempDir` for home directory, config, and state. Tests never touch `~/.orbit` or the real filesystem. The `TestCodexBuilder` handles this automatically.
 
 **Never mutate process environment in tests.** Pass environment-derived flags as parameters, not env vars. This prevents test pollution across parallel test runs.
 

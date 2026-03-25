@@ -23,7 +23,7 @@ Key responsibilities:
 - **PluginsManager** (`manager.rs`): Central manager for plugin discovery, loading, installation, and uninstallation. Maintains the mapping between plugins and their capabilities (MCP servers, app connectors).
 - **Marketplace** (`marketplace.rs`): Integration with plugin marketplaces for browsing, searching, and installing plugins. Supports auth policies and install policies.
 - **Manifest** (`manifest.rs`): Plugin manifest parsing (`PluginManifestInterface`) -- reads plugin metadata, capabilities, and configuration from manifest files.
-- **Store** (`store.rs`): Local plugin storage on disk, managing installed plugin directories under `$CODEX_HOME/plugins/`.
+- **Store** (`store.rs`): Local plugin storage on disk, managing installed plugin directories under `$ORBIT_HOME/plugins/`.
 - **Discovery** (`discoverable.rs`): Lists plugins that can be suggested to users via the `tool_suggest` tool.
 - **Injection** (`injection.rs`): Builds plugin instruction injections for the model context.
 - **Rendering** (`render.rs`): Renders plugin sections for system prompts.

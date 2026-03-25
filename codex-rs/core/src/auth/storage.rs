@@ -432,7 +432,6 @@ impl AuthStorageBackend for FileAuthStorage {
 }
 
 const KEYRING_SERVICE: &str = "Orbit Code Auth";
-const LEGACY_KEYRING_SERVICE: &str = "Codex Auth";
 
 // Turns the Orbit Code home path into a stable, short key string.
 fn compute_store_key(orbit_code_home: &Path) -> std::io::Result<String> {
@@ -446,23 +445,6 @@ fn compute_store_key(orbit_code_home: &Path) -> std::io::Result<String> {
     let hex = format!("{digest:x}");
     let truncated = hex.get(..16).unwrap_or(&hex);
     Ok(format!("cli|{truncated}"))
-}
-
-fn candidate_store_keys(orbit_code_home: &Path) -> std::io::Result<Vec<String>> {
-    let current_key = compute_store_key(orbit_code_home)?;
-    let mut keys = vec![current_key.clone()];
-
-    if let Some(file_name) = orbit_code_home.file_name()
-        && file_name == ".orbit"
-        && let Some(parent) = orbit_code_home.parent()
-    {
-        let legacy_key = compute_store_key(&parent.join(".codex"))?;
-        if legacy_key != current_key {
-            keys.push(legacy_key);
-        }
-    }
-
-    Ok(keys)
 }
 
 #[derive(Clone, Debug)]
@@ -515,16 +497,8 @@ impl KeyringAuthStorage {
 
 impl AuthStorageBackend for KeyringAuthStorage {
     fn load(&self) -> std::io::Result<Option<AuthDotJsonV2>> {
-        for key in candidate_store_keys(&self.orbit_code_home)? {
-            if let Some(auth) = self.load_from_keyring(KEYRING_SERVICE, &key)? {
-                return Ok(Some(auth));
-            }
-            if let Some(auth) = self.load_from_keyring(LEGACY_KEYRING_SERVICE, &key)? {
-                return Ok(Some(auth));
-            }
-        }
-
-        Ok(None)
+        let key = compute_store_key(&self.orbit_code_home)?;
+        self.load_from_keyring(KEYRING_SERVICE, &key)
     }
 
     fn save(&self, auth: &AuthDotJsonV2) -> std::io::Result<()> {
@@ -538,19 +512,14 @@ impl AuthStorageBackend for KeyringAuthStorage {
     }
 
     fn delete(&self) -> std::io::Result<bool> {
-        let mut keyring_removed = false;
-        for key in candidate_store_keys(&self.orbit_code_home)? {
-            for service in [KEYRING_SERVICE, LEGACY_KEYRING_SERVICE] {
-                match self.keyring_store.delete(service, &key) {
-                    Ok(removed) => {
-                        keyring_removed |= removed;
-                    }
-                    Err(err) => {
-                        warn!("failed to delete auth from keyring service {service}: {err}");
-                    }
-                }
+        let key = compute_store_key(&self.orbit_code_home)?;
+        let keyring_removed = match self.keyring_store.delete(KEYRING_SERVICE, &key) {
+            Ok(removed) => removed,
+            Err(err) => {
+                warn!("failed to delete auth from keyring service {KEYRING_SERVICE}: {err}");
+                false
             }
-        }
+        };
         let file_removed = delete_file_if_exists(&self.orbit_code_home)?;
         Ok(keyring_removed || file_removed)
     }

@@ -32,7 +32,7 @@ def _request(url: str) -> bytes:
 
 
 def _orbit_code_home() -> str:
-    return os.environ.get("ORBIT_HOME", os.path.expanduser("~/.codex"))
+    return os.environ.get("ORBIT_HOME", os.path.expanduser("~/.orbit"))
 
 
 def _installed_skills() -> set[str]:

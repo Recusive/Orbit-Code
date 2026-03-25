@@ -45,7 +45,7 @@ Key responsibilities:
 ### Directory layout
 
 ```
-$CODEX_HOME/
+$ORBIT_HOME/
   sessions/
     YYYY/MM/DD/
       <thread_id>.jsonl    # Active rollout files

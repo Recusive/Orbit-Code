@@ -371,31 +371,11 @@ fn keyring_auth_storage_load_returns_deserialized_v2() -> anyhow::Result<()> {
 
 #[test]
 fn keyring_auth_storage_compute_store_key_for_home_directory() -> anyhow::Result<()> {
-    let orbit_code_home = PathBuf::from("~/.codex");
+    let orbit_code_home = PathBuf::from("~/.orbit");
 
     let key = compute_store_key(orbit_code_home.as_path())?;
 
-    assert_eq!(key, "cli|940db7b1d0e4eb40");
-    Ok(())
-}
-
-#[test]
-fn keyring_auth_storage_load_falls_back_to_legacy_service_and_default_codex_path()
--> anyhow::Result<()> {
-    let parent_home = tempdir()?;
-    let orbit_code_home = parent_home.path().join(".orbit");
-    std::fs::create_dir_all(&orbit_code_home)?;
-    let legacy_codex_home = parent_home.path().join(".codex");
-
-    let mock_keyring = MockKeyringStore::default();
-    let storage = KeyringAuthStorage::new(orbit_code_home, Arc::new(mock_keyring.clone()));
-    let expected = v2_chatgpt("legacy-service");
-    let key = compute_store_key(&legacy_codex_home)?;
-    let serialized = serde_json::to_string(&expected)?;
-    mock_keyring.save(LEGACY_KEYRING_SERVICE, &key, &serialized)?;
-
-    let loaded = storage.load()?;
-    assert_eq!(Some(expected), loaded);
+    assert_eq!(key, "cli|0efc44581026bf57");
     Ok(())
 }
 

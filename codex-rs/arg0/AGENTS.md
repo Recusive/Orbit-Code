@@ -21,7 +21,7 @@ Implements the "arg0 trick" -- a technique where a single binary behaves differe
 Key responsibilities:
 1. **Arg0 dispatch**: Checks the executable name and dispatches to the appropriate sub-tool (Linux sandbox, apply-patch, execve wrapper)
 2. **PATH setup**: Creates a temporary directory with symlinks (Unix) or batch scripts (Windows) pointing back to the main executable, prepends it to PATH so child processes can find helper tools
-3. **Dotenv loading**: Loads environment variables from `~/.codex/.env` before threads are spawned (filtering out `CODEX_`-prefixed vars for security)
+3. **Dotenv loading**: Loads environment variables from `~/.orbit/.env` before threads are spawned (filtering out `CODEX_`-prefixed vars for security)
 4. **Tokio runtime**: Builds a multi-thread Tokio runtime with 16 MB worker stack size
 5. **Cleanup**: Implements a janitor that removes stale temporary directories from previous sessions using file locks
 
@@ -42,7 +42,7 @@ Key responsibilities:
 - `codex-apply-patch` -- Apply-patch tool implementation
 - `codex-linux-sandbox` -- Linux sandbox implementation
 - `codex-shell-escalation` -- Execve wrapper for shell escalation
-- `codex-utils-home-dir` -- Finds `~/.codex` home directory
+- `codex-utils-home-dir` -- Finds `~/.orbit` home directory
 - `dotenvy` -- `.env` file loading
 - `tempfile` -- Temporary directory creation
 - `tokio` -- Async runtime

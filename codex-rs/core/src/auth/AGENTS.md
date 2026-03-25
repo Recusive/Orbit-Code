@@ -19,7 +19,7 @@ Credential storage backends for Codex CLI authentication.
 
 Implements the pluggable storage layer for persisting authentication credentials (API keys, OAuth tokens). Supports four storage modes:
 
-- **File** (`FileAuthStorage`): Reads/writes `auth.json` in `$CODEX_HOME/` with 0600 permissions on Unix.
+- **File** (`FileAuthStorage`): Reads/writes `auth.json` in `$ORBIT_HOME/` with 0600 permissions on Unix.
 - **Keyring** (`KeyringAuthStorage`): Stores credentials in the OS keyring (macOS Keychain, Linux Secret Service, Windows Credential Manager). Uses a SHA-256 hash of the codex_home path as the keyring entry key.
 - **Auto** (`AutoAuthStorage`): Tries keyring first, falls back to file storage on failure.
 - **Ephemeral** (`EphemeralAuthStorage`): In-memory only, using a global `Mutex<HashMap>`. No persistence across process restarts.

@@ -1,6 +1,6 @@
 # codex-rs/skills/
 
-Embedded system skills: compiles skill assets (agent configs, reference docs, scripts) into the binary and extracts them to `CODEX_HOME/skills/.system` on startup.
+Embedded system skills: compiles skill assets (agent configs, reference docs, scripts) into the binary and extracts them to `ORBIT_HOME/skills/.system` on startup.
 
 ## Build & Test
 ```bash
@@ -10,7 +10,7 @@ cargo test -p orbit-code-skills
 
 ## Architecture
 
-The crate uses `include_dir` to embed the contents of `src/assets/samples/` at compile time. On startup, `install_system_skills()` computes a fingerprint (hash of all embedded files) and compares it against a marker file in the target directory. If the fingerprint differs, it extracts all embedded files to `CODEX_HOME/skills/.system`, overwriting stale content. If the fingerprint matches, extraction is skipped entirely.
+The crate uses `include_dir` to embed the contents of `src/assets/samples/` at compile time. On startup, `install_system_skills()` computes a fingerprint (hash of all embedded files) and compares it against a marker file in the target directory. If the fingerprint differs, it extracts all embedded files to `ORBIT_HOME/skills/.system`, overwriting stale content. If the fingerprint matches, extraction is skipped entirely.
 
 ## Key Considerations
 

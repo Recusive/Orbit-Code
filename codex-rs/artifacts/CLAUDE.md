@@ -1,6 +1,6 @@
 # codex-rs/artifacts/
 
-Locates, validates, downloads, and executes the pinned artifact runtime (`@oai/artifact-tool`) for artifact generation. Wraps `orbit-code-package-manager` to manage cached runtime installations under `~/.codex/packages/artifacts/`.
+Locates, validates, downloads, and executes the pinned artifact runtime (`@oai/artifact-tool`) for artifact generation. Wraps `orbit-code-package-manager` to manage cached runtime installations under `~/.orbit/packages/artifacts/`.
 
 ## Build & Test
 ```bash

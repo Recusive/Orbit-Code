@@ -24,7 +24,7 @@ Contains the actual integration test modules for the Linux sandbox. Each module 
 | File | What it tests |
 |------|---------------|
 | `mod.rs` | Aggregates `landlock` and `managed_proxy` modules |
-| `landlock.rs` | Comprehensive bwrap + seccomp integration tests: filesystem read/write policies, writable roots, `/dev` node availability, `.git`/`.codex` write protection, symlink attacks, split-policy carveouts, network blocking (curl, wget, ping, nc, ssh, getent, `/dev/tcp`), `NoNewPrivs`, timeout enforcement |
+| `landlock.rs` | Comprehensive bwrap + seccomp integration tests: filesystem read/write policies, writable roots, `/dev` node availability, `.git`/`.orbit` write protection, symlink attacks, split-policy carveouts, network blocking (curl, wget, ping, nc, ssh, getent, `/dev/tcp`), `NoNewPrivs`, timeout enforcement |
 | `managed_proxy.rs` | Tests for managed proxy routing mode: fail-closed behavior without proxy env vars, bridge routing through a mock proxy server, direct egress blocking, AF_UNIX socket creation denial in proxy-routed mode |
 
 ### How the tests work

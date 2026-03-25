@@ -19,7 +19,7 @@ Skill loading, management, rendering, injection, and invocation for the Codex ag
 
 Skills are reusable, composable instruction sets that extend the agent's capabilities. This module handles the complete skill lifecycle:
 
-- **Loading** (`loader.rs`): Discovers and loads skill definitions from `.codex/skills/` directories at project, user, and system levels.
+- **Loading** (`loader.rs`): Discovers and loads skill definitions from `.orbit/skills/` directories at project, user, and system levels.
 - **Management** (`manager.rs`): `SkillsManager` -- central coordinator for skill lifecycle, caching, and availability queries.
 - **Model** (`model.rs`): `SkillMetadata`, `SkillLoadOutcome`, `SkillPolicy`, `SkillError` -- data types for skill definitions.
 - **Rendering** (`render.rs`): `render_skills_section()` -- generates the system prompt section listing available skills.

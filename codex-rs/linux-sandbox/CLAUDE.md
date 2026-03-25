@@ -6,7 +6,7 @@ Linux-specific process sandbox for the Codex CLI. Ships as both a library (`orbi
 
 Provides filesystem and network isolation for commands executed by the Codex agent on Linux. It composes three complementary mechanisms:
 
-1. **Bubblewrap (bwrap)** -- constructs a restricted filesystem namespace with read-only defaults, explicit writable roots, and protected subpaths (`.git`, `.codex`).
+1. **Bubblewrap (bwrap)** -- constructs a restricted filesystem namespace with read-only defaults, explicit writable roots, and protected subpaths (`.git`, `.orbit`).
 2. **Seccomp** -- installs a BPF filter that blocks or restricts network-related syscalls (`connect`, `socket`, `bind`, etc.) depending on the policy.
 3. **Landlock** -- legacy/backup filesystem restriction kept for fallback use.
 

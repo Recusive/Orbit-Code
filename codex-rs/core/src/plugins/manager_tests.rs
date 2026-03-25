@@ -1825,14 +1825,14 @@ fn load_plugins_ignores_project_config_files() {
         r#"{"name":"sample"}"#,
     );
     write_file(
-        &project_root.join(".codex/config.toml"),
+        &project_root.join(".orbit/config.toml"),
         &plugin_config_toml(true, true),
     );
 
     let stack = ConfigLayerStack::new(
         vec![ConfigLayerEntry::new(
             ConfigLayerSource::Project {
-                dot_orbit_code_folder: AbsolutePathBuf::try_from(project_root.join(".codex"))
+                dot_orbit_code_folder: AbsolutePathBuf::try_from(project_root.join(".orbit"))
                     .unwrap(),
             },
             toml::from_str(&plugin_config_toml(true, true)).expect("project config should parse"),

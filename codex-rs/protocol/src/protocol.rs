@@ -786,7 +786,7 @@ pub enum SandboxPolicy {
 /// A writable root path accompanied by a list of subpaths that should remain
 /// read‑only even when the root is writable. This is primarily used to ensure
 /// that folders containing files that could be modified to escalate the
-/// privileges of the agent (e.g. `.codex`, `.git`, notably `.git/hooks`) under
+/// privileges of the agent (e.g. `.orbit`, `.git`, notably `.git/hooks`) under
 /// a writable root are not modified by the agent.
 #[derive(Debug, Clone, PartialEq, Eq, JsonSchema)]
 pub struct WritableRoot {
@@ -1035,13 +1035,13 @@ fn default_read_only_subpaths_for_writable_root(
         subpaths.push(top_level_git);
     }
 
-    // Make .agents/skills and .codex/config.toml and related files read-only
+    // Make .agents/skills and .orbit/config.toml and related files read-only
     // to the agent, by default.
-    for subdir in &[".agents", ".codex"] {
+    for subdir in &[".agents", ".orbit"] {
         #[allow(clippy::expect_used)]
-        let top_level_codex = writable_root.join(subdir).expect("valid relative path");
-        if top_level_codex.as_path().is_dir() {
-            subpaths.push(top_level_codex);
+        let top_level_orbit = writable_root.join(subdir).expect("valid relative path");
+        if top_level_orbit.as_path().is_dir() {
+            subpaths.push(top_level_orbit);
         }
     }
 
@@ -3725,7 +3725,7 @@ mod tests {
     fn restricted_file_system_policy_derives_effective_paths() {
         let cwd = TempDir::new().expect("tempdir");
         std::fs::create_dir_all(cwd.path().join(".agents")).expect("create .agents");
-        std::fs::create_dir_all(cwd.path().join(".codex")).expect("create .codex");
+        std::fs::create_dir_all(cwd.path().join(".orbit")).expect("create .orbit");
         let canonical_cwd = cwd.path().canonicalize().expect("canonicalize cwd");
         let cwd_absolute =
             AbsolutePathBuf::from_absolute_path(&canonical_cwd).expect("absolute tempdir");
@@ -3735,8 +3735,8 @@ mod tests {
             .expect("canonical secret");
         let expected_agents = AbsolutePathBuf::from_absolute_path(canonical_cwd.join(".agents"))
             .expect("canonical .agents");
-        let expected_codex = AbsolutePathBuf::from_absolute_path(canonical_cwd.join(".codex"))
-            .expect("canonical .codex");
+        let expected_orbit = AbsolutePathBuf::from_absolute_path(canonical_cwd.join(".orbit"))
+            .expect("canonical .orbit");
         let policy = FileSystemSandboxPolicy::restricted(vec![
             FileSystemSandboxEntry {
                 path: FileSystemPath::Special {
@@ -3787,7 +3787,7 @@ mod tests {
             writable_roots[0]
                 .read_only_subpaths
                 .iter()
-                .any(|path| path.as_path() == expected_codex.as_path())
+                .any(|path| path.as_path() == expected_orbit.as_path())
         );
     }
 
@@ -4325,6 +4325,7 @@ mod tests {
                 "history_log_id": 0,
                 "history_entry_count": 0,
                 "rollout_path": format!("{}", rollout_file.path().display()),
+                "model_context_window": 200_000,
             }
         });
         assert_eq!(expected, serde_json::to_value(&event)?);

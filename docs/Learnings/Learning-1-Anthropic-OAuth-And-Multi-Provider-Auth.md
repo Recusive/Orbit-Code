@@ -159,9 +159,7 @@ Claude Code uses `claude-cli/2.1.81 (external, cli)` as the user-agent for OAuth
 
 ### Home Directory
 
-Resolution: `ORBIT_HOME` > `CODEX_HOME` > `~/.orbit` > `~/.codex`
-
-Current: `~/.orbit` (both exist, `~/.orbit` takes priority)
+Resolution: `ORBIT_HOME` > `~/.orbit`
 
 ---
 

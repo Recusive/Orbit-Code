@@ -10,7 +10,7 @@ cargo test -p orbit-code-secrets
 
 ## Architecture
 
-`SecretsManager` is the high-level API for storing/retrieving/deleting secrets, backed by the `SecretsBackend` trait. The default `LocalSecretsBackend` stores all secrets in a single age-encrypted file (`~/.codex/secrets/local.age`) as a JSON `BTreeMap`. The encryption passphrase is generated randomly and persisted in the OS keyring via `orbit-code-keyring-store`.
+`SecretsManager` is the high-level API for storing/retrieving/deleting secrets, backed by the `SecretsBackend` trait. The default `LocalSecretsBackend` stores all secrets in a single age-encrypted file (`~/.orbit/secrets/local.age`) as a JSON `BTreeMap`. The encryption passphrase is generated randomly and persisted in the OS keyring via `orbit-code-keyring-store`.
 
 Secrets are scoped via `SecretScope` -- either `Global` or `Environment(id)`, where the environment ID is derived from the git repo name or a SHA-256 hash of the working directory. The `sanitizer` module provides `redact_secrets()` for best-effort redaction of common secret patterns (API keys, bearer tokens, AWS keys) from text output.
 

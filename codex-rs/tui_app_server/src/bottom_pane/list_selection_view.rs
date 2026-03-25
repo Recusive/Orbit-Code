@@ -1169,7 +1169,7 @@ mod tests {
         let (tx_raw, _rx) = unbounded_channel::<AppEvent>();
         let tx = AppEventSender::new(tx_raw);
         let home = dirs::home_dir().expect("home directory should be available");
-        let orbit_code_home = home.join(".codex");
+        let orbit_code_home = home.join(".orbit");
         let params =
             crate::theme_picker::build_theme_picker_params(None, Some(&orbit_code_home), Some(94));
         let view = ListSelectionView::new(params, tx);

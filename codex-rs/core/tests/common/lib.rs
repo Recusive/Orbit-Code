@@ -141,7 +141,7 @@ pub fn fetch_dotslash_file(
 
 /// Returns a default `Config` whose on-disk state is confined to the provided
 /// temporary directory. Using a per-test directory keeps tests hermetic and
-/// avoids clobbering a developer’s real `~/.codex`.
+/// avoids clobbering a developer’s real `~/.orbit`.
 pub async fn load_default_config_for_test(orbit_code_home: &TempDir) -> Config {
     ConfigBuilder::default()
         .orbit_code_home(orbit_code_home.path().to_path_buf())

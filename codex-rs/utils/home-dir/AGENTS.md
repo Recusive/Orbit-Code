@@ -16,11 +16,11 @@ Crate `codex-utils-home-dir` -- locate the Codex configuration home directory.
 
 ### What this folder does
 
-Provides the `find_codex_home()` function that resolves the Codex configuration directory. Honors the `CODEX_HOME` environment variable (which must point to an existing directory) and falls back to `~/.codex`.
+Provides the `find_codex_home()` function that resolves the Codex configuration directory. Honors the `ORBIT_HOME` environment variable (which must point to an existing directory) and falls back to `~/.orbit`.
 
 ### Key types and functions
 
-- `find_codex_home() -> io::Result<PathBuf>` -- main entry point; reads `CODEX_HOME` env var, validates it exists and is a directory, canonicalizes it; falls back to `~/.codex`
+- `find_codex_home() -> io::Result<PathBuf>` -- main entry point; reads `ORBIT_HOME` env var, validates it exists and is a directory, canonicalizes it; falls back to `~/.orbit`
 
 ### Imports from
 

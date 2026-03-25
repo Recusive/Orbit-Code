@@ -23,7 +23,7 @@ Contains all integration test modules, aggregated into a single test binary via 
 
 The `mod.rs` file sets up test infrastructure:
 - Creates `CODEX_ALIASES_TEMP_DIR` via `ctor` for arg0 dispatch (apply_patch, codex-linux-sandbox)
-- Manages `CODEX_HOME` environment variable for isolated test environments
+- Manages `ORBIT_HOME` environment variable for isolated test environments
 
 ### Test modules (selected highlights)
 

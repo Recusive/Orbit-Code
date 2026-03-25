@@ -43,7 +43,7 @@ class InstallError(Exception):
 
 
 def _orbit_code_home() -> str:
-    return os.environ.get("ORBIT_HOME", os.path.expanduser("~/.codex"))
+    return os.environ.get("ORBIT_HOME", os.path.expanduser("~/.orbit"))
 
 
 def _tmp_root() -> str:

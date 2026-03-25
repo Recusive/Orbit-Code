@@ -9,7 +9,7 @@ cargo test -p orbit-code-arg0
 ```
 
 ## Key Considerations
-- Creates a temp directory under `~/.codex/tmp/arg0/` with symlinks (Unix) or `.bat` wrappers (Windows) and prepends it to PATH so child processes find helper tools.
-- Loads `~/.codex/.env` but filters out `CODEX_`-prefixed variables for security.
+- Creates a temp directory under `~/.orbit/tmp/arg0/` with symlinks (Unix) or `.bat` wrappers (Windows) and prepends it to PATH so child processes find helper tools.
+- Loads `~/.orbit/.env` but filters out `CODEX_`-prefixed variables for security.
 - Tokio runtime uses 16 MB worker stack size.
 - A janitor cleans stale temp directories from previous sessions using file locks.

@@ -33,7 +33,7 @@ Contains the implementation of encrypted secrets management, including the backe
   - `keyring_service()` -- Returns the constant `"codex"`
 
 - `local.rs` -- `LocalSecretsBackend`:
-  - Stores secrets in `~/.codex/secrets/local.age` (age-encrypted JSON file)
+  - Stores secrets in `~/.orbit/secrets/local.age` (age-encrypted JSON file)
   - Passphrase management: generates random 32-byte passphrase, stores in OS keyring via `KeyringStore`
   - Uses `age::scrypt` for encryption/decryption with `SecretString` passphrases
   - `SecretsFile` -- Internal versioned JSON structure (`version: 1`, `secrets: BTreeMap<String, String>`)

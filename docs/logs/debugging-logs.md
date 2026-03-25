@@ -2,7 +2,7 @@
 
 ## Log File Location
 
-The TUI writes logs to `~/.orbit/log/codex-tui.log` (or `~/.codex/log/codex-tui.log` if using legacy home dir).
+The TUI writes logs to `~/.orbit/log/codex-tui.log`.
 
 The file is **truncated on each CLI launch** — only the current session's logs are preserved.
 
@@ -74,4 +74,4 @@ Example:
 ## Implementation
 
 Log setup: `tui_app_server/src/lib.rs` (lines 781-812) and `tui/src/lib.rs` (mirrored).
-Home dir resolution: `utils/home-dir/src/lib.rs` — prefers `~/.orbit`, falls back to `~/.codex`.
+Home dir resolution: `utils/home-dir/src/lib.rs` — resolves to `~/.orbit`.

@@ -24,7 +24,7 @@ use std::path::Path;
 use tempfile::TempDir;
 use toml::Value as TomlValue;
 
-const REPO_ROOT_CONFIG_DIR_NAME: &str = ".codex";
+const REPO_ROOT_CONFIG_DIR_NAME: &str = ".orbit";
 
 async fn make_config(orbit_code_home: &TempDir) -> Config {
     make_config_for_cwd(orbit_code_home, orbit_code_home.path().to_path_buf()).await
@@ -149,11 +149,11 @@ fn skill_roots_from_layer_stack_includes_disabled_project_layers() -> anyhow::Re
     fs::create_dir_all(&user_folder)?;
 
     let project_root = tmp.path().join("repo");
-    let dot_codex = project_root.join(".codex");
-    fs::create_dir_all(&dot_codex)?;
+    let dot_orbit = project_root.join(".orbit");
+    fs::create_dir_all(&dot_orbit)?;
 
     let user_file = AbsolutePathBuf::from_absolute_path(user_folder.join("config.toml"))?;
-    let project_dot_codex = AbsolutePathBuf::from_absolute_path(&dot_codex)?;
+    let project_dot_orbit = AbsolutePathBuf::from_absolute_path(&dot_orbit)?;
 
     let layers = vec![
         ConfigLayerEntry::new(
@@ -162,7 +162,7 @@ fn skill_roots_from_layer_stack_includes_disabled_project_layers() -> anyhow::Re
         ),
         ConfigLayerEntry::new_disabled(
             ConfigLayerSource::Project {
-                dot_orbit_code_folder: project_dot_codex,
+                dot_orbit_code_folder: project_dot_orbit,
             },
             TomlValue::Table(toml::map::Map::new()),
             "marked untrusted",
@@ -182,7 +182,7 @@ fn skill_roots_from_layer_stack_includes_disabled_project_layers() -> anyhow::Re
     assert_eq!(
         got,
         vec![
-            (SkillScope::Repo, dot_codex.join("skills")),
+            (SkillScope::Repo, dot_orbit.join("skills")),
             (SkillScope::User, user_folder.join("skills")),
             (
                 SkillScope::User,

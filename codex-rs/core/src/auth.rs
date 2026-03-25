@@ -216,7 +216,6 @@ pub trait ExternalAuthRefresher: Send + Sync {
 
 pub const OPENAI_API_KEY_ENV_VAR: &str = "OPENAI_API_KEY";
 pub const ORBIT_API_KEY_ENV_VAR: &str = "ORBIT_API_KEY";
-pub const LEGACY_CODEX_API_KEY_ENV_VAR: &str = "CODEX_API_KEY";
 
 pub fn read_openai_api_key_from_env() -> Option<String> {
     env::var(OPENAI_API_KEY_ENV_VAR)
@@ -230,12 +229,6 @@ pub fn read_orbit_api_key_from_env() -> Option<String> {
         .ok()
         .map(|value| value.trim().to_string())
         .filter(|value| !value.is_empty())
-        .or_else(|| {
-            env::var(LEGACY_CODEX_API_KEY_ENV_VAR)
-                .ok()
-                .map(|value| value.trim().to_string())
-                .filter(|value| !value.is_empty())
-        })
 }
 
 pub fn read_orbit_code_api_key_from_env() -> Option<String> {

@@ -54,8 +54,8 @@ This document is the local implementation reference for stage 3a. Do not require
 **Usage for stage 3a:**
 ```bash
 export ANTHROPIC_API_KEY="sk-ant-..."
-echo 'model_provider = "anthropic"' >> ~/.codex/config.toml
-echo 'model = "claude-sonnet-4-6"' >> ~/.codex/config.toml
+echo 'model_provider = "anthropic"' >> ~/.orbit/config.toml
+echo 'model = "claude-sonnet-4-6"' >> ~/.orbit/config.toml
 orbit-code
 
 # Or provide the Claude model explicitly on the command line

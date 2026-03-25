@@ -33,7 +33,7 @@ fn expected_absolute_path(path: &PathBuf) -> String {
 #[test]
 fn normalize_path_for_skill_id_repo_scoped_uses_relative_path() {
     let repo_root = PathBuf::from("/repo/root");
-    let skill_path = PathBuf::from("/repo/root/.codex/skills/doc/SKILL.md");
+    let skill_path = PathBuf::from("/repo/root/.orbit/skills/doc/SKILL.md");
 
     let path = normalize_path_for_skill_id(
         Some("https://example.com/repo.git"),
@@ -41,12 +41,12 @@ fn normalize_path_for_skill_id_repo_scoped_uses_relative_path() {
         skill_path.as_path(),
     );
 
-    assert_eq!(path, ".codex/skills/doc/SKILL.md");
+    assert_eq!(path, ".orbit/skills/doc/SKILL.md");
 }
 
 #[test]
 fn normalize_path_for_skill_id_user_scoped_uses_absolute_path() {
-    let skill_path = PathBuf::from("/Users/abc/.codex/skills/doc/SKILL.md");
+    let skill_path = PathBuf::from("/Users/abc/.orbit/skills/doc/SKILL.md");
 
     let path = normalize_path_for_skill_id(None, None, skill_path.as_path());
     let expected = expected_absolute_path(&skill_path);
@@ -67,7 +67,7 @@ fn normalize_path_for_skill_id_admin_scoped_uses_absolute_path() {
 #[test]
 fn normalize_path_for_skill_id_repo_root_not_in_skill_path_uses_absolute_path() {
     let repo_root = PathBuf::from("/repo/root");
-    let skill_path = PathBuf::from("/other/path/.codex/skills/doc/SKILL.md");
+    let skill_path = PathBuf::from("/other/path/.orbit/skills/doc/SKILL.md");
 
     let path = normalize_path_for_skill_id(
         Some("https://example.com/repo.git"),

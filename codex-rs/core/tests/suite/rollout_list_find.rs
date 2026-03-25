@@ -96,9 +96,9 @@ async fn find_locates_rollout_file_by_id() {
 #[tokio::test]
 async fn find_handles_gitignore_covering_orbit_code_home_directory() {
     let repo = TempDir::new().unwrap();
-    let orbit_code_home = repo.path().join(".codex");
+    let orbit_code_home = repo.path().join(".orbit");
     std::fs::create_dir_all(&orbit_code_home).unwrap();
-    std::fs::write(repo.path().join(".gitignore"), ".codex/**\n").unwrap();
+    std::fs::write(repo.path().join(".gitignore"), ".orbit/**\n").unwrap();
     let id = Uuid::new_v4();
     let expected = write_minimal_rollout_with_id(&orbit_code_home, id);
 

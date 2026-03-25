@@ -426,27 +426,6 @@ async fn enforce_login_restrictions_blocks_env_api_key_when_chatgpt_required() {
 }
 
 #[test]
-#[serial(orbit_code_api_key)]
-fn read_orbit_api_key_from_env_prefers_orbit_over_legacy_codex_env_var() {
-    let _orbit_guard = EnvVarGuard::set(ORBIT_API_KEY_ENV_VAR, "sk-orbit");
-    let _legacy_guard = EnvVarGuard::set(LEGACY_CODEX_API_KEY_ENV_VAR, "sk-codex");
-
-    let api_key = super::read_orbit_api_key_from_env();
-
-    assert_eq!(api_key.as_deref(), Some("sk-orbit"));
-}
-
-#[test]
-#[serial(orbit_code_api_key)]
-fn read_orbit_api_key_from_env_falls_back_to_legacy_codex_env_var() {
-    let _legacy_guard = EnvVarGuard::set(LEGACY_CODEX_API_KEY_ENV_VAR, "sk-codex");
-
-    let api_key = super::read_orbit_api_key_from_env();
-
-    assert_eq!(api_key.as_deref(), Some("sk-codex"));
-}
-
-#[test]
 fn plan_type_maps_known_plan() {
     let orbit_code_home = tempdir().unwrap();
     let _jwt = write_auth_file(

@@ -99,8 +99,8 @@ pub(crate) async fn first_layer_config_error_from_entries(
 ///   `%ProgramData%\OpenAI\Codex\config.toml` (Windows)
 /// - user      `${ORBIT_HOME}/config.toml`
 /// - cwd       `${PWD}/config.toml` (loaded but disabled when the directory is untrusted)
-/// - tree      parent directories up to root looking for `./.codex/config.toml` (loaded but disabled when untrusted)
-/// - repo      `$(git rev-parse --show-toplevel)/.codex/config.toml` (loaded but disabled when untrusted)
+/// - tree      parent directories up to root looking for `./.orbit/config.toml` (loaded but disabled when untrusted)
+/// - repo      `$(git rev-parse --show-toplevel)/.orbit/config.toml` (loaded but disabled when untrusted)
 /// - runtime   e.g., --config flags, model selector in UI
 ///
 /// (*) Only available on macOS via managed device profiles.
@@ -819,7 +819,7 @@ async fn load_project_layers(
     for dir in dirs {
         let layer_dir = AbsolutePathBuf::from_absolute_path(dir)?;
         let decision = trust_context.decision_for_dir(&layer_dir);
-        for config_dir_name in [".codex", ".orbit"] {
+        for config_dir_name in [".orbit"] {
             let project_config_dir = dir.join(config_dir_name);
             if !tokio::fs::metadata(&project_config_dir)
                 .await

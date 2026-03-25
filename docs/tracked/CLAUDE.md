@@ -13,6 +13,7 @@ Contains 3 subdirectories (audited, done, todo).
 - `ungate-request-user-input.md` — Ungate request_user_input: available in all collaboration modes
 - `ask-user-sub-agent-model-selection.md` — Ask user for sub-agent model/reasoning selection before spawning
 - `anthropic-model-metadata-pipeline.md` — Proper Anthropic model metadata pipeline mirroring the GPT architecture
+- `remove-codex-legacy-go-orbit-only.md` — Remove `.codex` legacy fallback — go `.orbit` only
 
 ## Todo
 

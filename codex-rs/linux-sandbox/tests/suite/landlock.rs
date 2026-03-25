@@ -454,12 +454,12 @@ async fn sandbox_blocks_git_and_orbit_code_writes_inside_writable_root() {
 
     let tmpdir = tempfile::tempdir().expect("tempdir");
     let dot_git = tmpdir.path().join(".git");
-    let dot_codex = tmpdir.path().join(".codex");
+    let dot_orbit = tmpdir.path().join(".orbit");
     std::fs::create_dir_all(&dot_git).expect("create .git");
-    std::fs::create_dir_all(&dot_codex).expect("create .codex");
+    std::fs::create_dir_all(&dot_orbit).expect("create .orbit");
 
     let git_target = dot_git.join("config");
-    let orbit_code_target = dot_codex.join("config.toml");
+    let orbit_code_target = dot_orbit.join("config.toml");
 
     let git_output = expect_denied(
         run_cmd_result_with_writable_roots(
@@ -490,7 +490,7 @@ async fn sandbox_blocks_git_and_orbit_code_writes_inside_writable_root() {
             true,
         )
         .await,
-        ".codex write should be denied under bubblewrap",
+        ".orbit write should be denied under bubblewrap",
     );
     assert_ne!(git_output.exit_code, 0);
     assert_ne!(orbit_code_output.exit_code, 0);
@@ -506,13 +506,13 @@ async fn sandbox_blocks_orbit_code_symlink_replacement_attack() {
     use std::os::unix::fs::symlink;
 
     let tmpdir = tempfile::tempdir().expect("tempdir");
-    let decoy = tmpdir.path().join("decoy-codex");
+    let decoy = tmpdir.path().join("decoy-orbit");
     std::fs::create_dir_all(&decoy).expect("create decoy dir");
 
-    let dot_codex = tmpdir.path().join(".codex");
-    symlink(&decoy, &dot_codex).expect("create .codex symlink");
+    let dot_orbit = tmpdir.path().join(".orbit");
+    symlink(&decoy, &dot_orbit).expect("create .orbit symlink");
 
-    let orbit_code_target = dot_codex.join("config.toml");
+    let orbit_code_target = dot_orbit.join("config.toml");
 
     let orbit_code_output = expect_denied(
         run_cmd_result_with_writable_roots(
@@ -527,7 +527,7 @@ async fn sandbox_blocks_orbit_code_symlink_replacement_attack() {
             true,
         )
         .await,
-        ".codex symlink replacement should be denied",
+        ".orbit symlink replacement should be denied",
     );
     assert_ne!(orbit_code_output.exit_code, 0);
 }

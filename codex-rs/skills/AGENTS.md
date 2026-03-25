@@ -17,7 +17,7 @@ Embedded system skills management for Codex.
 
 ### What this folder does
 
-Bundles and installs built-in "system skills" (agent configurations, reference docs, scripts) into `CODEX_HOME/skills/.system`. Skills are embedded at compile time using `include_dir` and extracted to disk on startup. A fingerprint-based marker file avoids re-extraction when the embedded content has not changed.
+Bundles and installs built-in "system skills" (agent configurations, reference docs, scripts) into `ORBIT_HOME/skills/.system`. Skills are embedded at compile time using `include_dir` and extracted to disk on startup. A fingerprint-based marker file avoids re-extraction when the embedded content has not changed.
 
 ### What it plugs into
 

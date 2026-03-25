@@ -5,15 +5,12 @@
 Logs live under the Orbit Code home directory. Resolution order:
 
 1. `ORBIT_HOME` env var
-2. `CODEX_HOME` env var (legacy)
-3. `~/.orbit` if it exists
-4. `~/.codex` if it exists (legacy)
-5. `~/.orbit` for fresh installs
+2. `~/.orbit`
 
 Check which one you're using:
 
 ```bash
-ls -d ~/.orbit ~/.codex 2>/dev/null
+ls -d ~/.orbit 2>/dev/null
 ```
 
 ## TUI Logs
@@ -97,4 +94,4 @@ cargo run -p orbit-code --features orbit-code-tui/debug-logs
 | Record session events | `ORBIT_TUI_RECORD_SESSION=1 cargo run -p orbit-code` |
 | Verbose tracing | `RUST_LOG=debug cargo run -p orbit-code` |
 | Replay SSE fixture | `ORBIT_RS_SSE_FIXTURE=file.txt cargo run -p orbit-code` |
-| Find log directory | `ls ~/.orbit/log/ 2>/dev/null \|\| ls ~/.codex/log/` |
+| Find log directory | `ls ~/.orbit/log/` |

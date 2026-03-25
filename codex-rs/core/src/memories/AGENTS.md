@@ -35,7 +35,7 @@ Implements a two-phase memory pipeline that runs at session startup to extract a
 #### Key design decisions
 - Jobs use lease-based ownership (1 hour leases) with retry backoff
 - Phase-2 uses heartbeat-based liveness (90-second intervals)
-- Memory artifacts stored under `$CODEX_HOME/memories/`
+- Memory artifacts stored under `$ORBIT_HOME/memories/`
 - Thread scan limited to 5,000 threads
 - Rollout truncation based on model context window (70% utilization target)
 

@@ -418,8 +418,8 @@ impl FileSystemSandboxPolicy {
             // as separate WritableRoot values and are checked independently.
             // Preserve symlink path components that live under the writable root
             // so downstream sandboxes can still mask the symlink inode itself.
-            // Example: if `<root>/.codex -> <root>/decoy`, bwrap must still see
-            // `<root>/.codex`, not only the resolved `<root>/decoy`.
+            // Example: if `<root>/.orbit -> <root>/decoy`, bwrap must still see
+            // `<root>/.orbit`, not only the resolved `<root>/decoy`.
             read_only_subpaths.extend(
                 resolved_entries
                     .iter()
@@ -474,7 +474,7 @@ impl FileSystemSandboxPolicy {
             WritableRoot {
                 root,
                 // Preserve literal in-root protected paths like `.git` and
-                // `.codex` so downstream sandboxes can still detect and mask
+                // `.orbit` so downstream sandboxes can still detect and mask
                 // the symlink itself instead of only its resolved target.
                 read_only_subpaths: dedup_absolute_paths(
                     read_only_subpaths,
@@ -1047,13 +1047,13 @@ fn default_read_only_subpaths_for_writable_root(
         subpaths.push(top_level_git);
     }
 
-    // Make .agents/skills and .codex/config.toml and related files read-only
+    // Make .agents/skills and .orbit/config.toml and related files read-only
     // to the agent, by default.
-    for subdir in &[".agents", ".codex"] {
+    for subdir in &[".agents", ".orbit"] {
         #[allow(clippy::expect_used)]
-        let top_level_codex = writable_root.join(subdir).expect("valid relative path");
-        if top_level_codex.as_path().is_dir() {
-            subpaths.push(top_level_codex);
+        let top_level_orbit = writable_root.join(subdir).expect("valid relative path");
+        if top_level_orbit.as_path().is_dir() {
+            subpaths.push(top_level_orbit);
         }
     }
 
@@ -1176,10 +1176,10 @@ mod tests {
         let real_root = cwd.path().join("real");
         let link_root = cwd.path().join("link");
         let blocked = real_root.join("blocked");
-        let orbit_code_dir = real_root.join(".codex");
+        let orbit_code_dir = real_root.join(".orbit");
 
         fs::create_dir_all(&blocked).expect("create blocked");
-        fs::create_dir_all(&orbit_code_dir).expect("create .codex");
+        fs::create_dir_all(&orbit_code_dir).expect("create .orbit");
         symlink_dir(&real_root, &link_root).expect("create symlinked root");
 
         let link_root =
@@ -1193,10 +1193,10 @@ mod tests {
             blocked.canonicalize().expect("canonicalize blocked"),
         )
         .expect("absolute canonical blocked");
-        let expected_codex = AbsolutePathBuf::from_absolute_path(
-            orbit_code_dir.canonicalize().expect("canonicalize .codex"),
+        let expected_orbit = AbsolutePathBuf::from_absolute_path(
+            orbit_code_dir.canonicalize().expect("canonicalize .orbit"),
         )
-        .expect("absolute canonical .codex");
+        .expect("absolute canonical .orbit");
 
         let policy = FileSystemSandboxPolicy::restricted(vec![
             FileSystemSandboxEntry {
@@ -1225,7 +1225,7 @@ mod tests {
         assert!(
             writable_roots[0]
                 .read_only_subpaths
-                .contains(&expected_codex)
+                .contains(&expected_orbit)
         );
     }
 
@@ -1237,11 +1237,11 @@ mod tests {
         let link_root = cwd.path().join("link");
         let blocked = real_root.join("blocked");
         let agents_dir = real_root.join(".agents");
-        let orbit_code_dir = real_root.join(".codex");
+        let orbit_code_dir = real_root.join(".orbit");
 
         fs::create_dir_all(&blocked).expect("create blocked");
         fs::create_dir_all(&agents_dir).expect("create .agents");
-        fs::create_dir_all(&orbit_code_dir).expect("create .codex");
+        fs::create_dir_all(&orbit_code_dir).expect("create .orbit");
         symlink_dir(&real_root, &link_root).expect("create symlinked cwd");
 
         let link_blocked =
@@ -1258,10 +1258,10 @@ mod tests {
             agents_dir.canonicalize().expect("canonicalize .agents"),
         )
         .expect("absolute canonical .agents");
-        let expected_codex = AbsolutePathBuf::from_absolute_path(
-            orbit_code_dir.canonicalize().expect("canonicalize .codex"),
+        let expected_orbit = AbsolutePathBuf::from_absolute_path(
+            orbit_code_dir.canonicalize().expect("canonicalize .orbit"),
         )
-        .expect("absolute canonical .codex");
+        .expect("absolute canonical .orbit");
 
         let policy = FileSystemSandboxPolicy::restricted(vec![
             FileSystemSandboxEntry {
@@ -1307,7 +1307,7 @@ mod tests {
         assert!(
             writable_roots[0]
                 .read_only_subpaths
-                .contains(&expected_codex)
+                .contains(&expected_orbit)
         );
     }
 
@@ -1316,19 +1316,19 @@ mod tests {
     fn writable_roots_preserve_symlinked_protected_subpaths() {
         let cwd = TempDir::new().expect("tempdir");
         let root = cwd.path().join("root");
-        let decoy = root.join("decoy-codex");
-        let dot_codex = root.join(".codex");
+        let decoy = root.join("decoy-orbit");
+        let dot_orbit = root.join(".orbit");
         fs::create_dir_all(&decoy).expect("create decoy");
-        symlink_dir(&decoy, &dot_codex).expect("create .codex symlink");
+        symlink_dir(&decoy, &dot_orbit).expect("create .orbit symlink");
 
         let root = AbsolutePathBuf::from_absolute_path(&root).expect("absolute root");
-        let expected_dot_codex = AbsolutePathBuf::from_absolute_path(
+        let expected_dot_orbit = AbsolutePathBuf::from_absolute_path(
             root.as_path()
                 .canonicalize()
                 .expect("canonicalize root")
-                .join(".codex"),
+                .join(".orbit"),
         )
-        .expect("absolute .codex symlink");
+        .expect("absolute .orbit symlink");
         let unexpected_decoy =
             AbsolutePathBuf::from_absolute_path(decoy.canonicalize().expect("canonicalize decoy"))
                 .expect("absolute canonical decoy");
@@ -1342,7 +1342,7 @@ mod tests {
         assert_eq!(writable_roots.len(), 1);
         assert_eq!(
             writable_roots[0].read_only_subpaths,
-            vec![expected_dot_codex]
+            vec![expected_dot_orbit]
         );
         assert!(
             !writable_roots[0]
@@ -1518,10 +1518,10 @@ mod tests {
         let real_tmpdir = cwd.path().join("real-tmpdir");
         let link_tmpdir = cwd.path().join("link-tmpdir");
         let blocked = real_tmpdir.join("blocked");
-        let orbit_code_dir = real_tmpdir.join(".codex");
+        let orbit_code_dir = real_tmpdir.join(".orbit");
 
         fs::create_dir_all(&blocked).expect("create blocked");
-        fs::create_dir_all(&orbit_code_dir).expect("create .codex");
+        fs::create_dir_all(&orbit_code_dir).expect("create .orbit");
         symlink_dir(&real_tmpdir, &link_tmpdir).expect("create symlinked tmpdir");
 
         let link_blocked =
@@ -1536,10 +1536,10 @@ mod tests {
             blocked.canonicalize().expect("canonicalize blocked"),
         )
         .expect("absolute canonical blocked");
-        let expected_codex = AbsolutePathBuf::from_absolute_path(
-            orbit_code_dir.canonicalize().expect("canonicalize .codex"),
+        let expected_orbit = AbsolutePathBuf::from_absolute_path(
+            orbit_code_dir.canonicalize().expect("canonicalize .orbit"),
         )
-        .expect("absolute canonical .codex");
+        .expect("absolute canonical .orbit");
 
         unsafe {
             std::env::set_var("TMPDIR", &link_tmpdir);
@@ -1574,7 +1574,7 @@ mod tests {
         assert!(
             writable_roots[0]
                 .read_only_subpaths
-                .contains(&expected_codex)
+                .contains(&expected_orbit)
         );
     }
 

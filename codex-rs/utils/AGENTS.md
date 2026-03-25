@@ -29,7 +29,7 @@ This directory contains 19 independent Cargo library crates that provide shared 
 | `codex-utils-elapsed` | `elapsed/` | Human-readable elapsed time formatting |
 | `codex-utils-fuzzy-match` | `fuzzy-match/` | Case-insensitive fuzzy subsequence matching with scoring |
 | `codex-git` | `git/` | Git operations: ghost commits, patch apply, branch merge-base, symlinks |
-| `codex-utils-home-dir` | `home-dir/` | Locate the Codex config home directory (`~/.codex` or `$CODEX_HOME`) |
+| `codex-utils-home-dir` | `home-dir/` | Locate the Codex config home directory (`~/.orbit` or `$ORBIT_HOME`) |
 | `codex-utils-image` | `image/` | Image loading, resizing, and base64 encoding for LLM prompts |
 | `codex-utils-json-to-toml` | `json-to-toml/` | Convert `serde_json::Value` to `toml::Value` |
 | `codex-utils-oss` | `oss/` | OSS provider helpers for LM Studio and Ollama |

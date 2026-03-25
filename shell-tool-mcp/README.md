@@ -36,7 +36,7 @@ codex --disable shell_tool \
   --config 'mcp_servers.bash={command = "npx", args = ["-y", "@openai/codex-shell-tool-mcp"]}'
 ```
 
-To configure this permanently so you can use the MCP while running `codex` without additional command-line flags, add the following to your `~/.codex/config.toml`:
+To configure this permanently so you can use the MCP while running `codex` without additional command-line flags, add the following to your `~/.orbit/config.toml`:
 
 ```toml
 [features]

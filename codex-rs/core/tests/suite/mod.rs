@@ -27,7 +27,7 @@ pub static ORBIT_ALIASES_TEMP_DIR: TestCodexAliasesGuard = unsafe {
         .unwrap();
     let previous_orbit_code_home = std::env::var_os(ORBIT_HOME_ENV_VAR);
     // arg0_dispatch() creates helper links under ORBIT_HOME/tmp. Point it at a
-    // test-owned temp dir so startup never mutates the developer's real ~/.codex.
+    // test-owned temp dir so startup never mutates the developer's real ~/.orbit.
     //
     // Safety: #[ctor] runs before tests start, so no test threads exist yet.
     unsafe {

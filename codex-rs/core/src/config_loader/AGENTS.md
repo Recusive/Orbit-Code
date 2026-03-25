@@ -22,8 +22,8 @@ Implements the multi-layer config loading pipeline that builds a `ConfigLayerSta
 1. **Cloud requirements** -- Managed cloud constraints (highest precedence for requirements)
 2. **Admin/MDM** -- macOS managed device profiles (via `macos.rs`)
 3. **System** -- `/etc/codex/config.toml` (Unix) or `%ProgramData%\OpenAI\Codex\config.toml` (Windows)
-4. **User** -- `$CODEX_HOME/config.toml`
-5. **Project** -- `.codex/config.toml` files from cwd up to project root (trust-gated)
+4. **User** -- `$ORBIT_HOME/config.toml`
+5. **Project** -- `.orbit/config.toml` files from cwd up to project root (trust-gated)
 6. **Runtime** -- CLI flags, UI overrides (lowest layer, highest precedence for config)
 
 Key features:

@@ -30,7 +30,7 @@ Provides a secrets management system that allows users to store, retrieve, and d
 - `SecretListEntry` -- Entry in a secret listing (scope + name)
 - `SecretsBackendKind` -- Backend selection enum (currently only `Local`)
 - `SecretsBackend` trait -- Backend abstraction with `set`, `get`, `delete`, `list`
-- `LocalSecretsBackend` -- Default backend that stores secrets in an age-encrypted file (`local.age`) under `~/.codex/secrets/`
+- `LocalSecretsBackend` -- Default backend that stores secrets in an age-encrypted file (`local.age`) under `~/.orbit/secrets/`
 - `redact_secrets(input: String) -> String` -- Best-effort redaction of secrets from text output using regex patterns
 
 ### Key behaviors

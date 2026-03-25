@@ -27,7 +27,7 @@ This crate has two main responsibilities:
 ## Public API
 
 - `ArtifactRuntimeManager`
-  Resolves or installs a runtime package into `~/.codex/packages/artifacts/...`.
+  Resolves or installs a runtime package into `~/.orbit/packages/artifacts/...`.
 - `load_cached_runtime`
   Reads a previously installed runtime from a caller-provided cache root without attempting a download.
 - `is_js_runtime_available`

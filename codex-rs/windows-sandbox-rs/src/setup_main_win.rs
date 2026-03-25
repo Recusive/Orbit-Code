@@ -812,27 +812,27 @@ fn run_setup_full(payload: &Payload, log: &mut File, sbx_dir: &Path) -> Result<(
         }
     }
 
-    // Protect the current workspace's `.codex` and `.agents` directories from tampering
+    // Protect the current workspace's `.orbit` and `.agents` directories from tampering
     // (write/delete) by using a workspace-specific capability SID. If a directory doesn't exist
     // yet, skip it (it will be picked up on the next refresh).
     match unsafe { protect_workspace_orbit_code_dir(&payload.command_cwd, workspace_psid) } {
         Ok(true) => {
-            let cwd_codex = payload.command_cwd.join(".codex");
+            let cwd_orbit = payload.command_cwd.join(".orbit");
             log_line(
                 log,
                 &format!(
-                    "applied deny ACE to protect workspace .codex {}",
-                    cwd_codex.display()
+                    "applied deny ACE to protect workspace .orbit {}",
+                    cwd_orbit.display()
                 ),
             )?;
         }
         Ok(false) => {}
         Err(err) => {
-            let cwd_codex = payload.command_cwd.join(".codex");
-            refresh_errors.push(format!("deny ACE failed on {}: {err}", cwd_codex.display()));
+            let cwd_orbit = payload.command_cwd.join(".orbit");
+            refresh_errors.push(format!("deny ACE failed on {}: {err}", cwd_orbit.display()));
             log_line(
                 log,
-                &format!("deny ACE failed on {}: {err}", cwd_codex.display()),
+                &format!("deny ACE failed on {}: {err}", cwd_orbit.display()),
             )?;
         }
     }

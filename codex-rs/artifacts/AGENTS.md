@@ -16,7 +16,7 @@ Runtime and process-management helpers for Codex artifact generation.
 
 ### What this folder does
 
-This crate handles locating, validating, downloading, and executing the pinned artifact runtime -- a JavaScript-based build tool (`@oai/artifact-tool`) used for artifact generation. It wraps the `codex-package-manager` crate to manage cached runtime installations under `~/.codex/packages/artifacts/`.
+This crate handles locating, validating, downloading, and executing the pinned artifact runtime -- a JavaScript-based build tool (`@oai/artifact-tool`) used for artifact generation. It wraps the `codex-package-manager` crate to manage cached runtime installations under `~/.orbit/packages/artifacts/`.
 
 ### Where it plugs in
 

@@ -30,7 +30,7 @@ The tests verify:
 - Filesystem read/write restrictions (bubblewrap)
 - `/dev/null` writeability and minimal device node availability
 - Writable root enforcement, including missing roots
-- `.git` and `.codex` subpath protection (including symlink replacement attacks)
+- `.git` and `.orbit` subpath protection (including symlink replacement attacks)
 - Explicit split-policy carveouts under bwrap
 - Network blocking (curl, wget, ping, nc, ssh, getent, `/dev/tcp`)
 - `NoNewPrivs` is active in sandboxed processes

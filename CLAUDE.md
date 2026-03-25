@@ -34,7 +34,9 @@ Orbit Code is the terminal-based coding agent for the Orbit ecosystem. A fork of
 ```bash
 # Core development
 just codex                   # Run Orbit Code from source (alias: just c)
-just test                    # Run Rust tests (nextest, --no-fail-fast)
+just test                    # Run Rust tests (nextest, --no-fail-fast) — see docs/test-suite/test.md
+# macOS-safe test run (avoids syspolicyd CPU storm):
+# cd codex-rs && cargo nextest run --no-fail-fast -P slow
 just fmt                     # Format Rust code
 just fix                     # Run clippy fixes
 just fix -p <crate>          # Clippy fix scoped to one crate
@@ -64,6 +66,27 @@ just argument-comment-lint   # Run /*param*/ comment lint
 # SDK development
 cd sdk/typescript && pnpm install && pnpm test   # TypeScript SDK
 cd sdk/python && pip install -e . && pytest -q   # Python SDK
+
+# Crate analysis (on-demand deep dive into any Rust crate)
+./scripts/crate-map.sh codex-rs/<crate>          # Full crate map to stdout
+```
+
+### Crate Map Tool
+
+Run `./scripts/crate-map.sh <crate-dir>` to generate a full analysis of any Rust crate. Use this whenever you need to understand a crate before making changes. Output includes:
+
+1. **Dependency graph** — workspace crates this depends on + who depends on it (blast radius)
+2. **Module tree** — public (▸) and private modules with sub-module hierarchy
+3. **Public API surface** — re-exports, types, functions, constants
+4. **Test map** — unit test files with counts, integration tests, total
+5. **Call graph** — entry points, internal dispatch targets, cross-module references
+
+```bash
+# Examples
+./scripts/crate-map.sh codex-rs/core        # Engine crate (the big one)
+./scripts/crate-map.sh codex-rs/protocol    # Foundation types
+./scripts/crate-map.sh codex-rs/tui         # Terminal UI
+./scripts/crate-map.sh codex-rs/hooks       # Lifecycle hooks
 ```
 
 ## Architecture Overview
