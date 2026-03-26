@@ -1113,6 +1113,11 @@ impl ChatWidget {
     }
 
     fn flush_answer_stream_with_separator(&mut self) {
+        // Finalize thinking stream first so thinking appears above any
+        // tool calls or other visual sections that follow.
+        if self.thinking_stream_controller.is_some() {
+            self.handle_thinking_finalize();
+        }
         if let Some(mut controller) = self.stream_controller.take()
             && let Some(cell) = controller.finalize()
         {
@@ -2770,6 +2775,10 @@ impl ChatWidget {
     }
 
     fn on_patch_apply_begin(&mut self, event: PatchApplyBeginEvent) {
+        // Finalize thinking stream so thinking appears above the patch cell.
+        if self.thinking_stream_controller.is_some() {
+            self.handle_thinking_finalize();
+        }
         self.add_to_history(history_cell::new_patch_event(
             event.changes,
             &self.config.cwd,
