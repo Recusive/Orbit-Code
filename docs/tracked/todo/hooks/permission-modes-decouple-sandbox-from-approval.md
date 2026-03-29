@@ -1,19 +1,19 @@
-# Permission Modes — Decouple Sandbox from Approval
+# Collaboration Modes — Accept & Bypass
 
 ## Context
 
-Orbit Code currently couples the sandbox (filesystem access scope) with the approval system (permission dialogs). When a user sets `sandbox_mode = "danger-full-access"` to give the agent access to all paths on the machine, the approval prompts also stop firing — because `render_decision_for_unmatched_command()` in `core/src/exec_policy.rs:582-589` interprets `FileSystemSandboxKind::Unrestricted` as "just run commands without asking."
+Orbit Code currently couples the sandbox (filesystem access scope) with the approval system (permission dialogs). When a user sets `sandbox_mode = "danger-full-access"`, the approval prompts also stop firing — because `render_decision_for_unmatched_command()` in `core/src/exec_policy.rs:538-617` interprets `FileSystemSandboxKind::Unrestricted` as "just run commands without asking."
 
-Four modes:
+This plan adds two new collaboration modes to `ModeKind` — **Accept** and **Bypass** — that control approval posture independently of the sandbox. Sandbox and collaboration mode are fully orthogonal:
 
-- **Default** — respects user's sandbox_mode and approval_policy config; preserves existing behavior exactly
-- **Accept** — forces DangerFullAccess sandbox; auto-approves file mutations only, prompts for shell commands and other tools (MCP, etc.), forbids dangerous unmatched commands
-- **Bypass** — forces DangerFullAccess sandbox; auto-approves non-dangerous commands, forbids dangerous unmatched commands (mirrors `AskForApproval::Never` semantics)
-- **Plan** — already exists, no tool execution
+- **Sandbox** = WHERE (filesystem scope): on → repo only, off → full system
+- **Collaboration mode** = HOW (workflow + approval posture): Default, Accept, Bypass, Plan
 
-**Reference:** Claude Code implements this via `permission_mode` field (`default`, `acceptEdits`, `plan`, `dontAsk`, `bypassPermissions`) passed to hooks. Orbit Code already has a superior approval mechanism (in-process oneshot channels + TUI overlay) that just needs its decision logic corrected.
+Any mode works with any sandbox setting. Accept in a sandbox still auto-approves writes — within the sandbox boundary. Bypass in a sandbox runs everything — within the sandbox boundary.
 
-**Last verified against codebase:** 2026-03-26
+**Reference:** Claude Code implements permission posture via `permission_mode` field (`default`, `acceptEdits`, `plan`, `dontAsk`, `bypassPermissions`) passed to hooks. Orbit Code already has a superior approval mechanism (in-process oneshot channels + TUI overlay) that just needs its decision logic extended for new modes.
+
+**Last verified against codebase:** 2026-03-28
 
 ---
 
@@ -21,60 +21,108 @@ Four modes:
 
 This is the single source of truth. All prose, pseudocode, and tests must match this table. "Existing logic" means the current `render_decision_for_unmatched_command()` / `assess_patch_safety()` / `default_exec_approval_requirement()` code runs unchanged.
 
-| Mode | Safe read (`ls`) | Non-dangerous shell (`npm test`) | Dangerous shell (`rm -rf`) | Safe apply_patch | Non-safe apply_patch | Other tool (MCP etc.) |
-|------|-----------------|--------------------------------|---------------------------|-----------------|--------------------|-----------------------|
-| **Default** | Allow | Existing logic | Existing logic (Prompt) | Existing logic (AutoApprove) | Existing logic (AskUser) | Existing logic |
-| **Accept** | Allow | Prompt | Forbidden | Skip (auto) | Skip (auto) | Prompt |
-| **Bypass** | Allow | Allow | Forbidden | Skip (auto) | Skip (auto) | Skip (auto) |
-| **Plan** | Forbidden | Forbidden | Forbidden | Forbidden | Forbidden | Forbidden |
+| Mode | Read tools (`ls`, `grep`, `find`) | Write tools (edit, write, apply_patch) | Non-dangerous bash (`npm test`) | Dangerous bash (`rm -rf`) | MCP / other tools |
+|------|----------------------------------|---------------------------------------|--------------------------------|--------------------------|-------------------|
+| **Default** | Allow | Prompt | Allow | Prompt | Existing logic |
+| **Accept** | Allow | Auto-approve | Auto-approve | Prompt | Auto-approve |
+| **Bypass** | Allow | Auto-approve | Auto-approve | Auto-approve | Auto-approve |
+| **Plan** | Unchanged (no tools) | Unchanged (no tools) | Unchanged (no tools) | Unchanged (no tools) | Unchanged (no tools) |
 
-Key invariant: **Dangerous unmatched commands are never auto-approved.** Default prompts (existing behavior). Accept and Bypass return Forbidden — users wanting to allow specific dangerous commands use `.rules` allow entries.
+Key points:
+- **Default** prompts for anything that writes or could be destructive. Read-only operations are free.
+- **Accept** auto-approves everything except dangerous bash commands (irreversible operations like `rm -rf`, `git push --force`). Those still prompt.
+- **Bypass** auto-approves everything. No prompts. Equivalent to current "Full Access" behavior.
+- **Plan** is unchanged — no tool execution, planning only.
+- **Sandbox is independent.** Modes control approval posture. Sandbox controls filesystem scope. They compose freely.
 
 ---
 
 ## Why ModeKind, Not a Separate Abstraction
 
-The repo already has a permission posture abstraction: `ApprovalPreset` in `codex-rs/utils/approval-presets/src/lib.rs`, which pairs `AskForApproval` + `SandboxPolicy`. There's also the TUI's `/permissions` popup that lets users pick "Read Only" / "Default" / "Full Access" presets.
+We intentionally expand `ModeKind` rather than creating a new `PermissionMode` axis:
 
-We intentionally expand `ModeKind` rather than creating a new abstraction because:
+1. **ModeKind already controls tool execution.** Plan mode prevents tool calls entirely — that's an approval decision, not a workflow decision. Adding Accept/Bypass extends this existing axis.
 
-1. **ModeKind already controls tool execution.** Plan mode prevents tool calls entirely — that's a permission decision, not a developer-instruction decision. Adding Accept/Bypass extends this existing axis.
+2. **One UI surface.** Users switch modes via Shift+Tab and `/collab`. Having two independent mode systems (collaboration + permission) creates contradictory UI state and requires new Op transport, session state, and event plumbing for the second axis. ModeKind already has all this infrastructure.
 
-2. **Collaboration modes are the primary user-facing UX.** Users switch modes via Shift+Tab and `/collab`. Having two independent mode systems creates contradictory UI state.
+3. **The independent selection buys nothing.** Plan overrides everything, so Plan + Accept = Plan + Default = Plan. The useful combinations reduce to a single cycle: Default → Accept → Bypass → Plan.
 
-3. **ApprovalPresets are presentation-layer, not behavior-layer.** `ApprovalPreset` holds `AskForApproval` + `SandboxPolicy` values for the `/permissions` popup — it doesn't drive behavior. The behavior chain is `ModeKind` → `TurnContext` → tool execution.
+4. **Existing infrastructure rides for free.** `CollaborationModeMask`, `set_collaboration_mask()`, Shift+Tab cycling, `collaborationMode/list` API, `TurnStartedEvent.collaboration_mode_kind` — all work with new ModeKind variants without new plumbing.
 
-4. **Hook `permission_mode` maps from approval state, not a separate concept.** The hook system already derives `permission_mode` from `AskForApproval` — it's a projection.
+5. **Hook `permission_mode` already maps from mode state.** The hook system derives `permission_mode` as a projection — it doesn't need a separate source of truth.
 
 **Trade-offs accepted:** `ModeKind` variants now appear in `TurnStartedEvent.collaboration_mode_kind`, `collaborationMode/list` API, and developer-instruction preset resolution. Every consumer of `ModeKind` must handle the new variants. The consumers are enumerated in Phase 2 and Phase 7.
 
 ---
 
-## Mode Surface: How Modes Are Set
+## What Exists Today vs What Changes
 
 ### What exists today
 
-`ModeKind` is **runtime session state**, not config state. There is no `mode` field in `Config` or `ConfigToml`. Current entry points:
+| Concept | Current Location | Current Behavior |
+|---|---|---|
+| `ModeKind` | `protocol/src/config_types.rs:314` | Enum: `Plan`, `Default`, `PairProgramming` (hidden), `Execute` (hidden) |
+| `TUI_VISIBLE_COLLABORATION_MODES` | `protocol/src/config_types.rs` | `[ModeKind::Default, ModeKind::Plan]` — 2-element array |
+| `CollaborationMode` | `protocol/src/config_types.rs:356` | Struct: `mode: ModeKind`, `settings: Settings` |
+| `CollaborationModeMask` | `protocol/src/config_types.rs:434` | Preset mask applied at runtime via Shift+Tab / `set_collaboration_mask()` |
+| Collaboration presets | `core/src/models_manager/collaboration_mode_presets.rs` | Two presets: `plan_preset()`, `default_preset()` |
+| Collaboration templates | `core/templates/collaboration_mode/` | `default.md`, `plan.md`, `pair_programming.md`, `execute.md` |
+| `ApprovalPreset` / `/permissions` | `utils/approval-presets/src/lib.rs`, `tui/src/chatwidget.rs` | Three presets: "Read Only", "Default", "Full Access". Popup applies `AskForApproval` + `SandboxPolicy`. |
+| `render_decision_for_unmatched_command()` | `core/src/exec_policy.rs:538-617` | Decides based on `AskForApproval` + `SandboxPolicy` — no mode awareness |
+| `default_exec_approval_requirement()` | `core/src/tools/sandboxing.rs:167` | Decides based on `AskForApproval` + `FileSystemSandboxPolicy` — no mode awareness |
+| `ExecApprovalRequest` | `core/src/exec_policy.rs:196` | No `mode_kind` field |
+| Hook `permission_mode` | `core/src/hook_runtime.rs:267` | Derived from `AskForApproval` — `Never` → `"bypassPermissions"`, else → `"default"` |
+| Stop hook `permission_mode` | `core/src/codex.rs:5760` | Inline match on `AskForApproval` — duplicates hook_runtime logic |
+| Model instructions | `protocol/src/models.rs:475-663` | `DeveloperInstructions::from()` selects approval_policy templates; `from_collaboration_mode()` wraps developer_instructions |
+| App-server API | `app-server-protocol/src/protocol/common.rs:409` | `collaborationMode/list` (experimental) |
+| `TurnStartedEvent` | `protocol/src/protocol.rs:1772` | Contains `collaboration_mode_kind: ModeKind` |
+| `TurnStartedNotification` | `app-server-protocol/src/protocol/v2.rs` | Manually mapped from `TurnStartedEvent` in `bespoke_event_handling.rs` |
+| Shift+Tab cycling | `tui/src/collaboration_modes.rs` | Cycles `TUI_VISIBLE_COLLABORATION_MODES` via `next_mask()` |
 
-- **TUI Shift+Tab / `/collab`** — cycles through `CollaborationModeMask` presets at runtime via `collaboration_modes::next_mask()`
-- **App-server `collaborationMode/apply`** — applies a `CollaborationModeMask` to the session
-- **`--full-auto`** CLI flag — sets `(WorkspaceWrite, OnRequest)` directly in `tui/src/lib.rs:268` and `tui_app_server/src/lib.rs:594`
-- **`--dangerously-bypass-approvals-and-sandbox`** CLI flag — sets `(DangerFullAccess, Never)` directly
+### What this plan changes
 
-### What this plan adds
+| Concept | Change |
+|---|---|
+| `ModeKind` | **Add Accept, Bypass variants.** Update `display_name()`, `is_tui_visible()`, exhaustive matches. |
+| `TUI_VISIBLE_COLLABORATION_MODES` | **Expand to 4 elements:** `[Default, Accept, Bypass, Plan]` |
+| Collaboration presets | **Add `accept_preset()`, `bypass_preset()`** with their own `developer_instructions` |
+| Collaboration templates | **New files:** `accept.md`, `bypass.md` under `core/templates/collaboration_mode/` |
+| `ExecApprovalRequest` | **New field:** `mode_kind: ModeKind` |
+| `render_decision_for_unmatched_command()` | **New parameter:** `mode_kind`. Branch on Accept/Bypass. |
+| `default_exec_approval_requirement()` | **New parameter:** `mode_kind`. Bypass short-circuits. |
+| Orchestrator | **Mode override:** Accept auto-approves write tools, Bypass auto-approves all. |
+| Model instructions | **Accept/Bypass suppress approval_policy prompt.** Developer_instructions from preset handle permission guidance. Sandbox prompt remains. |
+| Hook `permission_mode` | **Derived from `ModeKind`**, not `AskForApproval`. |
+| `/permissions` popup | **Becomes sandbox toggle.** No longer drives approval posture — that's the collaboration mode's job. |
+| Plan mode | **Unchanged.** Existing behavior preserved exactly. |
+| All existing transport | **Unchanged.** `Op::UserTurn`, `SessionSettingsUpdate`, `AppEvent`, `AppCommand`, `TurnStartedEvent.collaboration_mode_kind` — all carry ModeKind already. |
 
-New modes are set the same way existing modes are — via collaboration mode presets applied at runtime:
+---
 
-1. **TUI Shift+Tab / `/collab`** — existing cycling automatically includes Accept/Bypass when presets and `is_tui_visible()` are updated (Phase 2)
-2. **TUI `/accept` and `/bypass`** — direct slash commands (Phase 7)
-3. **App-server `collaborationMode/apply`** — existing API, new preset values
-4. **No config.toml field** — modes are not persisted. On restart/resume, mode resets to Default.
-5. **No `--mode` CLI flag in v1** — defer to a follow-up. Existing `--dangerously-bypass-approvals-and-sandbox` already covers the CLI bypass case.
+## Sandbox Independence
 
-### Interaction with existing bypass flags
+### Current coupling problem
 
-- `--full-auto` sets `(WorkspaceWrite, OnRequest)` — unrelated to ModeKind, continues to work as-is
-- `--dangerously-bypass-approvals-and-sandbox` sets `(DangerFullAccess, Never)` — closest to Bypass mode but operates on `approval_policy` + `sandbox_policy` directly. Both can coexist: the flag sets the policy values, ModeKind operates at the tool-execution layer above those values.
+Today, `render_decision_for_unmatched_command()` checks `FileSystemSandboxKind::Unrestricted` and interprets it as "don't ask for approval." This means setting `DangerFullAccess` sandbox also disables approval prompts — the two concerns are fused.
+
+### Fix
+
+The decision logic must check `mode_kind` for approval posture and the sandbox for filesystem scope. They are independent:
+
+```
+Approval decision = f(mode_kind, command_danger_level)
+Filesystem scope  = f(sandbox_policy)
+```
+
+In Default mode, the existing `approval_policy` + `sandbox_policy` logic continues to run as-is (preserving current behavior). In Accept/Bypass mode, `mode_kind` determines approval posture directly — the sandbox only affects what paths the tool can reach.
+
+### `/permissions` popup rework
+
+The `/permissions` popup currently conflates sandbox scope with approval posture (the "Full Access" preset sets both `DangerFullAccess` and `Never`). After this change:
+
+- `/permissions` becomes a **sandbox toggle**: sandbox on (repo-scoped) vs sandbox off (full system access)
+- Approval posture is controlled by collaboration mode (Shift+Tab: Default → Accept → Bypass → Plan)
+- The existing Guardian Approvals, full-access confirmation warnings, and Windows sandbox setup flows remain on the `/permissions` popup since they are sandbox concerns, not approval concerns
 
 ---
 
@@ -82,87 +130,29 @@ New modes are set the same way existing modes are — via collaboration mode pre
 
 ### Current architecture
 
-Model-facing permission instructions are assembled in `protocol/src/models.rs` via two functions:
-- `build_approval_policy_prompt(approval_policy)` — selects from `include_str!` templates in `protocol/src/prompts/permissions/approval_policy/`
-- `build_sandbox_policy_prompt(sandbox_policy)` — selects from `protocol/src/prompts/permissions/sandbox_mode/`
+Model-facing permission instructions are assembled in `protocol/src/models.rs` via:
+- `DeveloperInstructions::from()` / `from_policy()` — selects from `include_str!` templates in `protocol/src/prompts/permissions/approval_policy/` and `protocol/src/prompts/permissions/sandbox_mode/`
+- `DeveloperInstructions::from_collaboration_mode()` — wraps collaboration mode `developer_instructions` in `<collaboration_mode>` tags
 
 These run based on `approval_policy` and `sandbox_policy` values in `TurnContext`, independent of `ModeKind`.
-
-Collaboration mode developer_instructions are a SEPARATE layer, loaded from `core/templates/collaboration_mode/*.md` presets.
 
 ### Problem
 
 The existing `AskForApproval` prompt templates do NOT describe Accept/Bypass behavior:
-- `OnRequest` template (`on_request_rule.md`) describes sandbox escalation, prefix rules, and `sandbox_permissions` parameters — none of which apply in Accept mode.
-- `Never` template (`never.md`) says "commands will be rejected" — the exact opposite of Bypass, where commands auto-approve.
-
-Mapping Accept → OnRequest or Bypass → Never would send the model contradictory instructions.
+- `OnRequest` template (`on_request_rule.md`) describes sandbox escalation, prefix rules, and `sandbox_permissions` parameters — none of which apply in Accept mode
+- `Never` template (`never.md`) says "commands will be rejected" — the opposite of Bypass
 
 ### Solution
 
-In Accept and Bypass mode, **suppress the approval_policy prompt entirely**. The collaboration mode developer_instructions (from `core/templates/collaboration_mode/accept.md` / `bypass.md`) handle all permission-related guidance instead. The sandbox_policy prompt (`danger_full_access.md`: "No filesystem sandboxing - all commands are permitted") remains accurate and is still included.
+In Accept and Bypass mode, **suppress the approval_policy prompt entirely**. The collaboration mode `developer_instructions` (from `core/templates/collaboration_mode/accept.md` / `bypass.md`) handle all permission-related guidance instead. The `sandbox_policy` prompt remains — it accurately describes the filesystem scope regardless of mode.
 
 This means:
-- **Accept mode** → model sees `danger_full_access` sandbox prompt + Accept developer instructions (which describe: file ops auto-approved, shell prompts, no escalation parameters needed)
-- **Bypass mode** → model sees `danger_full_access` sandbox prompt + Bypass developer instructions (which describe: all tools auto-approved, proceed autonomously)
-- **Default/Plan** → existing approval + sandbox prompts unchanged
+- **Accept mode** → model sees: sandbox prompt + Accept developer_instructions (file ops auto, dangerous prompts)
+- **Bypass mode** → model sees: sandbox prompt + Bypass developer_instructions (everything auto, no prompts)
+- **Default mode** → existing approval + sandbox prompts unchanged
+- **Plan mode** → unchanged
 
-The collaboration mode templates in Phase 2.1 (`accept.md`, `bypass.md`) must cover the permission guidance that the suppressed approval prompt would have provided. See Phase 4.5 for the implementation.
-
----
-
-## Constraint Handling
-
-### During mode switch (TUI / app-server)
-
-When a user switches to Accept or Bypass, the mode forces `DangerFullAccess`. This must pass the `Constrained<SandboxPolicy>` ceiling:
-
-```rust
-fn try_switch_mode(mode_kind: ModeKind, permissions: &Permissions) -> Result<(), String> {
-    if mode_kind.forces_full_access() {
-        if let Err(err) = permissions.sandbox_policy.can_set(&SandboxPolicy::DangerFullAccess) {
-            return Err(format!(
-                "Cannot switch to {} mode: {}",
-                mode_kind.display_name(),
-                err,
-            ));
-        }
-    }
-    Ok(())
-}
-```
-
-Use `can_set()` (probe API) — NOT `try_set()` which doesn't exist. The actual sandbox override happens in `codex.rs` when `TurnContext` is built (Phase 4.4).
-
-### Failed mode switch UX
-
-If the switch fails due to requirements ceiling:
-- **TUI:** Show a notification: "Cannot switch to Bypass mode: requirements restrict sandbox to read-only"
-- **App-server:** Return error response on `collaborationMode/apply`
-- The mode stays at its current value (no silent downgrade)
-
-This is cleaner than silent downgrade because:
-1. The user sees exactly why their request failed
-2. No hidden state mismatch between what user requested and what runs
-3. Consistent with how `Constrained::set()` works elsewhere
-
----
-
-## Permissions Popup + Status Card
-
-### Problem
-
-The `/permissions` popup renders `ApprovalPreset` choices based on `approval_policy` + `sandbox_policy`. The status card shows these values too. In Accept/Bypass mode, ModeKind overrides behavior at the tool-execution layer, so these displays would show stale values.
-
-### Solution
-
-When in Accept or Bypass mode:
-
-1. **Status card** — show the mode name and effective posture, not the raw config values. Files: `tui/src/status/card.rs`, `tui_app_server/src/status/card.rs`.
-
-2. **Permissions popup** — disable with a message: "Permissions are controlled by [Accept/Bypass] collaboration mode. Switch to Default mode to use the permissions popup." This prevents contradictory state between two independent controls.
-
-3. **Mode indicator** — the existing `CollaborationModeIndicator` in `chatwidget.rs` already shows the active mode. It just needs new match arms for Accept/Bypass.
+The collaboration mode templates in Phase 2.1 (`accept.md`, `bypass.md`) must cover the permission guidance that the suppressed approval prompt would have provided.
 
 ---
 
@@ -171,25 +161,26 @@ When in Accept or Bypass mode:
 ```
 TUI / App-server
      │
-     ├── User switches to Accept/Bypass via Shift+Tab or /accept or /bypass
-     │   └── can_set() check on Constrained<SandboxPolicy>
-     │       ├── fails → show error, stay on current mode
-     │       └── passes → apply CollaborationModeMask with mode=Accept/Bypass
+     ├── User presses Shift+Tab or types /collab or /accept or /bypass
+     │   └── collaboration_modes::next_mask() cycles Default → Accept → Bypass → Plan
+     │       └── set_collaboration_mask() applies the mask (existing infrastructure)
      │
      ▼
-CollaborationMode.mode = ModeKind::Accept (runtime session state)
+CollaborationMode.mode = ModeKind::Accept (runtime session state, existing field)
+     │
+     ├── Flows through existing Op::UserTurn / Op::OverrideTurnContext / SessionSettingsUpdate
+     │   (no new transport needed — ModeKind is already carried on these paths)
      │
      ▼
 Turn starts → TurnContext built (core/src/codex.rs)
      │
-     ├── Sandbox override: if forces_full_access() → constrained_sandbox_policy.set(DangerFullAccess)
+     ├── TurnContext.collaboration_mode.mode = ModeKind::Accept (existing field)
      │
-     ├── Model instructions: effective approval/sandbox derived from ModeKind
-     │   → build_approval_policy_prompt(effective_approval)
-     │   → build_sandbox_policy_prompt(effective_sandbox)
-     │   → collaboration mode developer_instructions from preset
+     ├── Model instructions: mode selects developer_instructions from preset
+     │   → Accept/Bypass: suppress approval_policy prompt, use mode developer_instructions
+     │   → Default/Plan: existing prompts unchanged
      │
-     ├── Hook permission_mode: derived from ModeKind (not AskForApproval)
+     ├── Hook permission_mode: derived from ModeKind
      │
      ▼
 Tool call arrives
@@ -205,7 +196,7 @@ Tool call arrives
      │   (2 callsites in orchestrator.rs: initial + retry)
      │
      └── orchestrator mode override (ToolCategory-based)
-         (Accept auto-approves FileMutation, Bypass auto-approves all)
+         (Accept auto-approves write tools, Bypass auto-approves all)
 ```
 
 ---
@@ -231,24 +222,18 @@ pub enum ModeKind {
 ```
 
 Update all match arms exhaustively (Rule 33):
-- `display_name()` — Accept → "Accept", Bypass → "Bypass"
-- `is_tui_visible()` — include Accept/Bypass → true
-- `TUI_VISIBLE_COLLABORATION_MODES` — 4-element array
+- `display_name()` — Accept → `"Accept"`, Bypass → `"Bypass"`
+- `is_tui_visible()` — include Accept and Bypass → `true`
+- `TUI_VISIBLE_COLLABORATION_MODES` — 4-element array: `[Default, Accept, Bypass, Plan]`
 
 ### 1.2 Add helper methods
 
 ```rust
 impl ModeKind {
-    pub const fn forces_full_access(self) -> bool {
+    pub const fn auto_approves_writes(self) -> bool {
         matches!(self, Self::Accept | Self::Bypass)
     }
-    pub const fn allows_tool_execution(self) -> bool {
-        !matches!(self, Self::Plan)
-    }
-    pub const fn auto_approves_file_ops(self) -> bool {
-        matches!(self, Self::Accept | Self::Bypass)
-    }
-    pub const fn auto_approves_shell(self) -> bool {
+    pub const fn auto_approves_dangerous(self) -> bool {
         matches!(self, Self::Bypass)
     }
 }
@@ -258,7 +243,7 @@ impl ModeKind {
 
 ```rust
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum ToolCategory { ReadOnly, FileMutation, Shell, Other }
+pub enum ToolCategory { ReadOnly, WriteMutation, Shell, Other }
 ```
 
 ### 1.4 Schema regeneration
@@ -266,6 +251,7 @@ pub enum ToolCategory { ReadOnly, FileMutation, Shell, Other }
 ```bash
 just write-config-schema
 just write-app-server-schema
+just write-app-server-schema --experimental
 ```
 
 ---
@@ -278,9 +264,13 @@ just write-app-server-schema
 
 Follow the existing pattern from `default.md`: include `<collaboration_mode>` marker, `{{KNOWN_MODE_NAMES}}` placeholder, and mode-specific behavior guidance.
 
+Content guidelines:
+- `accept.md` — "Accept mode is active. File edits and writes are auto-approved. Non-dangerous shell commands are auto-approved. Dangerous commands (rm -rf, git push --force, etc.) require user approval — do not attempt to bypass this. Read-only operations are unrestricted."
+- `bypass.md` — "Bypass mode is active. All tools and commands are auto-approved. Proceed autonomously without requesting approval. The user has granted full trust for this session."
+
 ### 2.2 Update `core/BUILD.bazel`
 
-Currently exports only `default.md` and `plan.md`. Add:
+Currently exports `default.md` and `plan.md`. Add:
 ```python
 "templates/collaboration_mode/accept.md",
 "templates/collaboration_mode/bypass.md",
@@ -293,6 +283,10 @@ Currently exports only `default.md` and `plan.md`. Add:
 Presets MUST populate `developer_instructions: Some(Some(...))` — setting `None` breaks `app-server/src/orbit_code_message_processor.rs:595-611` `normalize_turn_start_collaboration_mode()`.
 
 ```rust
+pub(crate) fn builtin_collaboration_mode_presets() -> Vec<CollaborationModeMask> {
+    vec![default_preset(), accept_preset(), bypass_preset(), plan_preset()]
+}
+
 fn accept_preset() -> CollaborationModeMask {
     CollaborationModeMask {
         name: ModeKind::Accept.display_name().to_string(),
@@ -302,9 +296,19 @@ fn accept_preset() -> CollaborationModeMask {
         developer_instructions: Some(Some(accept_mode_instructions())),
     }
 }
+
+fn bypass_preset() -> CollaborationModeMask {
+    CollaborationModeMask {
+        name: ModeKind::Bypass.display_name().to_string(),
+        mode: Some(ModeKind::Bypass),
+        model: None,
+        reasoning_effort: None,
+        developer_instructions: Some(Some(bypass_mode_instructions())),
+    }
+}
 ```
 
-Load via `include_str!("../../templates/collaboration_mode/accept.md")`.
+Load via `include_str!("../../templates/collaboration_mode/accept.md")` and `include_str!("../../templates/collaboration_mode/bypass.md")`.
 
 ### 2.4 Mirror in `tui_app_server/src/model_catalog.rs`
 
@@ -322,7 +326,11 @@ Add identical presets with identical developer_instructions.
 pub(crate) struct ExecApprovalRequest<'a> {
     pub(crate) command: &'a [String],
     pub(crate) mode_kind: ModeKind,  // NEW
-    // ... rest unchanged
+    pub(crate) approval_policy: AskForApproval,
+    pub(crate) sandbox_policy: &'a SandboxPolicy,
+    pub(crate) file_system_sandbox_policy: &'a FileSystemSandboxPolicy,
+    pub(crate) sandbox_permissions: SandboxPermissions,
+    pub(crate) prefix_rule: Option<Vec<String>>,
 }
 ```
 
@@ -338,7 +346,7 @@ pub(crate) struct ExecApprovalRequest<'a> {
 
 **File:** `core/src/tools/runtimes/shell/unix_escalation.rs:784-792`
 
-Thread `mode_kind` to the function's parameter list and pass to `render_decision_for_unmatched_command()`. Trace: the caller must receive `mode_kind` from `TurnContext`.
+Thread `mode_kind` to the function's parameter list and pass to `render_decision_for_unmatched_command()`.
 
 ### 3.4 Add `ToolCategory` to `ToolRuntime` trait
 
@@ -348,7 +356,7 @@ Thread `mode_kind` to the function's parameter list and pass to `render_decision
 fn tool_category(&self) -> ToolCategory { ToolCategory::Other }
 ```
 
-Implement: `shell.rs` → Shell, `unified_exec.rs` → Shell, `apply_patch.rs` → FileMutation.
+Implement: `shell.rs` → Shell, `unified_exec.rs` → Shell, `apply_patch.rs` → WriteMutation.
 
 ---
 
@@ -370,26 +378,34 @@ pub fn render_decision_for_unmatched_command(
     sandbox_permissions: SandboxPermissions,
     used_complex_parsing: bool,
 ) -> Decision {
+    // Safe read commands: always allow (all modes except Plan)
     if is_known_safe_command(command) && !used_complex_parsing {
-        return match mode_kind {
-            ModeKind::Plan => Decision::Forbidden,
-            _ => Decision::Allow,
-        };
+        return Decision::Allow;
     }
 
+    // Dangerous commands
     if command_might_be_dangerous(command) {
         return match mode_kind {
-            ModeKind::Bypass | ModeKind::Accept | ModeKind::Plan => Decision::Forbidden,
+            // Bypass: auto-approve everything including dangerous
+            ModeKind::Bypass => Decision::Allow,
+            // Accept: dangerous commands still prompt
+            ModeKind::Accept => Decision::Prompt,
+            // Default + hidden variants: existing behavior
             ModeKind::Default | ModeKind::PairProgramming | ModeKind::Execute => {
-                // Preserve existing behavior — delegates to approval_policy
                 existing_dangerous_command_logic(approval_policy)
             }
+            // Plan: should not reach here (tools blocked upstream)
+            ModeKind::Plan => Decision::Forbidden,
         };
     }
 
+    // Non-dangerous commands
     match mode_kind {
+        // Bypass: auto-approve
         ModeKind::Bypass => Decision::Allow,
-        ModeKind::Accept => Decision::Prompt,
+        // Accept: auto-approve non-dangerous
+        ModeKind::Accept => Decision::Allow,
+        // Default + hidden: existing logic
         ModeKind::Default | ModeKind::PairProgramming | ModeKind::Execute => {
             render_decision_for_default_mode(
                 approval_policy, sandbox_policy, file_system_sandbox_policy,
@@ -407,7 +423,7 @@ Extract `render_decision_for_default_mode()` — exact copy of current lines 550
 
 **File:** `core/src/tools/sandboxing.rs:167`
 
-Add `mode_kind: ModeKind` parameter. Only Bypass short-circuits here — Accept is NOT included because Accept only auto-approves `FileMutation` tools, and this function doesn't know the tool category. The Accept + FileMutation override happens in the orchestrator (Phase 4.3) which has access to `tool.tool_category()`.
+Add `mode_kind: ModeKind` parameter. Bypass short-circuits to skip all approval. Accept falls through — its write-tool override happens in the orchestrator (Phase 4.3).
 
 ```rust
 pub(crate) fn default_exec_approval_requirement(
@@ -418,19 +434,18 @@ pub(crate) fn default_exec_approval_requirement(
     match mode_kind {
         ModeKind::Bypass => {
             return ExecApprovalRequirement::Skip {
-                bypass_sandbox: true,
+                bypass_sandbox: false,
                 proposed_execpolicy_amendment: None,
             };
         }
         ModeKind::Accept | ModeKind::Default | ModeKind::Plan
-        | ModeKind::PairProgramming | ModeKind::Execute => {
-            // Accept falls through — its FileMutation override is in the orchestrator.
-            // Default/Plan/deprecated use existing logic.
-        }
+        | ModeKind::PairProgramming | ModeKind::Execute => {}
     }
     // ... existing logic unchanged ...
 }
 ```
+
+Note: `bypass_sandbox: false` — sandbox scope is independent of mode. The sandbox continues to enforce filesystem boundaries regardless of approval posture.
 
 **Callsite 1:** `orchestrator.rs:121` (initial approval)
 **Callsite 2:** `orchestrator.rs:252` (retry after sandbox denial)
@@ -443,84 +458,51 @@ Both receive `turn_ctx` and can access `turn_ctx.collaboration_mode.mode`.
 
 ```rust
 let requirement = match (turn_ctx.collaboration_mode.mode, tool.tool_category()) {
+    // Bypass: auto-approve everything
     (ModeKind::Bypass, _) => ExecApprovalRequirement::Skip {
-        bypass_sandbox: true, proposed_execpolicy_amendment: None,
+        bypass_sandbox: false, proposed_execpolicy_amendment: None,
     },
-    (ModeKind::Accept, ToolCategory::FileMutation) => ExecApprovalRequirement::Skip {
-        bypass_sandbox: true, proposed_execpolicy_amendment: None,
+    // Accept: auto-approve write tools (edit, write, apply_patch)
+    (ModeKind::Accept, ToolCategory::WriteMutation) => ExecApprovalRequirement::Skip {
+        bypass_sandbox: false, proposed_execpolicy_amendment: None,
+    },
+    // Accept: auto-approve non-dangerous shell (dangerous handled by exec_policy)
+    (ModeKind::Accept, ToolCategory::Shell) => ExecApprovalRequirement::Skip {
+        bypass_sandbox: false, proposed_execpolicy_amendment: None,
+    },
+    // Accept: auto-approve other tools (MCP, etc.)
+    (ModeKind::Accept, ToolCategory::Other) => ExecApprovalRequirement::Skip {
+        bypass_sandbox: false, proposed_execpolicy_amendment: None,
     },
     _ => requirement,
 };
 ```
 
-### 4.4 Sandbox override in session/turn layer
+Note: Accept + Shell skips approval here, but `render_decision_for_unmatched_command()` (Phase 4.1) already returned `Decision::Prompt` for dangerous commands before the orchestrator runs. The orchestrator override only applies to commands that passed the exec_policy check.
 
-**File:** `core/src/codex.rs` — where `TurnContext` is built from `SessionConfiguration`
-
-`ModeKind` is runtime session state, not config state. The sandbox override must happen in the session/turn layer (codex.rs) where `TurnContext` is assembled, NOT in `config/mod.rs` which runs at config-load time before a session exists.
-
-Apply the override after the `Constrained<SandboxPolicy>` is resolved and before it's stored in `TurnContext`:
-
-```rust
-// In TurnContext construction, after sandbox_policy is resolved from config:
-let mode_kind = session_configuration.collaboration_mode.mode;
-if mode_kind.forces_full_access() {
-    if let Err(err) = constrained_sandbox_policy.set(SandboxPolicy::DangerFullAccess) {
-        tracing::warn!(
-            "mode {mode_kind:?} requires DangerFullAccess but requirements prevent it: {err}"
-        );
-        // Mode was already validated at switch time via can_set().
-        // If we get here, requirements changed between switch and turn start.
-        // Fall back to existing sandbox_policy — the mode's approval behavior
-        // still applies (via exec_policy + orchestrator overrides), just without
-        // the full-access sandbox.
-    }
-}
-```
-
-Uses `Constrained::set()` (the real API). This also correctly feeds the overridden sandbox into `TurnContext.file_system_sandbox_policy`, `TurnContext.network_sandbox_policy`, and the `ToolsConfig` that the orchestrator reads.
-
-**NOT in `config/mod.rs`:** Config loading builds a `SessionConfiguration`, not a `TurnContext`. The `ModeKind` lives on `CollaborationMode` which is session state applied via `CollaborationModeMask`. By the time config/mod.rs runs, no collaboration mode is active yet.
-
-### 4.5 Model-facing instruction override
+### 4.4 Model-facing instruction override
 
 **File:** `core/src/codex.rs` — where model prompt is assembled
 
-The existing `AskForApproval` templates do NOT describe Accept/Bypass behavior accurately:
-- `OnRequest` template (`on_request_rule.md`) describes sandbox escalation, prefix rules, and `sandbox_permissions` parameters — none of which apply in Accept mode where file ops auto-approve.
-- `Never` template (`never.md`) says "commands will be rejected" — the opposite of Bypass, where commands auto-approve.
-
-**Solution:** In Accept and Bypass mode, **suppress** the `approval_policy` prompt entirely. The collaboration mode developer_instructions (from `core/templates/collaboration_mode/accept.md` / `bypass.md`) handle all permission-related guidance instead. The `sandbox_policy` prompt (`danger_full_access.md`) is still accurate and should be included.
+In Accept and Bypass mode, **suppress** the `approval_policy` prompt entirely. The collaboration mode developer_instructions handle permission guidance.
 
 ```rust
 let mode_kind = turn_context.collaboration_mode.mode;
-
-// Sandbox prompt: use DangerFullAccess for Accept/Bypass, existing for others
-let effective_sandbox = if mode_kind.forces_full_access() {
-    SandboxMode::DangerFullAccess
-} else {
-    turn_context.sandbox_mode()
-};
 
 // Approval prompt: suppress for Accept/Bypass (developer_instructions handle it)
 let approval_prompt = match mode_kind {
     ModeKind::Accept | ModeKind::Bypass => None,
     ModeKind::Default | ModeKind::Plan
     | ModeKind::PairProgramming | ModeKind::Execute => {
-        Some(DeveloperInstructions::approval_text(
-            turn_context.approval_policy.value(),
+        Some(DeveloperInstructions::from_policy(
             // ... existing params ...
         ))
     }
 };
+
+// Sandbox prompt: always included (sandbox is independent of mode)
+let sandbox_prompt = build_sandbox_policy_prompt(turn_context.sandbox_mode());
 ```
-
-This means the model receives:
-- **Accept:** sandbox prompt ("no filesystem sandboxing") + developer instructions ("file ops auto-approved, shell prompts") — no misleading escalation guidance.
-- **Bypass:** sandbox prompt ("no filesystem sandboxing") + developer instructions ("all tools auto-approved") — no "commands will be rejected" contradiction.
-- **Default/Plan:** existing approval + sandbox prompts unchanged.
-
-The collaboration mode templates (`accept.md`, `bypass.md`) in Phase 2.1 must cover the permission guidance that the suppressed approval prompt would have provided.
 
 ---
 
@@ -555,35 +537,32 @@ let stop_hook_permission_mode = crate::hook_runtime::hook_permission_mode(&turn_
 
 ### 5.3 No hook schema changes needed
 
-`hooks/src/schema.rs:306-314` already enumerates all required values.
+`hooks/src/schema.rs:306-314` already enumerates all required values: `"default"`, `"acceptEdits"`, `"plan"`, `"dontAsk"`, `"bypassPermissions"`.
 
 ---
 
-## Phase 6: Permissions Popup + Status Card
+## Phase 6: `/permissions` Popup Rework
 
-### 6.1 Disable `/permissions` in Accept/Bypass
+### 6.1 Rework into sandbox toggle
 
 **Files:** `tui/src/chatwidget.rs`, `tui_app_server/src/chatwidget.rs`
 
-When the user runs `/permissions` while in Accept or Bypass mode:
-```rust
-if matches!(self.active_collaboration_mode_kind(), ModeKind::Accept | ModeKind::Bypass) {
-    self.push_system_notification(
-        "Permissions are controlled by the current collaboration mode. \
-         Switch to Default mode to use the permissions popup."
-    );
-    return;
-}
-```
+The `/permissions` popup stops driving approval posture (that's the collaboration mode's job now). It becomes a sandbox scope selector:
 
-### 6.2 Status card shows effective posture
+| Option | Sandbox | Description |
+|--------|---------|-------------|
+| **Sandbox On** | Repo-scoped (WorkspaceWrite or ReadOnly) | Agent can only access files in the current repo |
+| **Sandbox Off** | DangerFullAccess | Agent has full system access |
+
+The existing Guardian Approvals flow, full-access confirmation warnings, Windows sandbox setup, and world-writable path warnings **remain** on this popup — they are sandbox concerns, not approval concerns.
+
+### 6.2 Status card shows mode + sandbox independently
 
 **Files:** `tui/src/status/card.rs`, `tui_app_server/src/status/card.rs`
 
-When rendering approval/sandbox in the status card, check the active ModeKind:
-- Accept → show "Accept mode (file ops auto-approved, shell prompts)"
-- Bypass → show "Bypass mode (all auto-approved, dangerous forbidden)"
-- Default/Plan → show existing approval_policy + sandbox_policy rendering
+Status card renders two independent lines:
+- **Mode:** Default / Accept / Bypass / Plan (from `collaboration_mode_kind`)
+- **Sandbox:** On (repo-scoped) / Off (full access) (from `sandbox_policy`)
 
 ### 6.3 Mode indicator exhaustive match
 
@@ -597,79 +576,135 @@ When rendering approval/sandbox in the status card, check the active ModeKind:
 
 ### 7.1 Mode cycling
 
-Existing `collaboration_modes::next_mask()` auto-includes new modes via `is_tui_visible()` filter + new presets. No code change needed in `collaboration_modes.rs`.
+Existing `collaboration_modes::next_mask()` auto-includes new modes via `is_tui_visible()` filter + new presets. Cycle order: Default → Accept → Bypass → Plan → Default.
+
+No code change needed in `collaboration_modes.rs` — it reads from `TUI_VISIBLE_COLLABORATION_MODES` and the preset list, both updated in Phase 1 and Phase 2.
 
 ### 7.2 Slash commands
 
 **File:** `tui/src/slash_command.rs` — add `Accept`, `Bypass` variants
-**File:** `tui/src/chatwidget.rs` — route via `mask_for_kind()` → `switch_collaboration_mode()`
+**File:** `tui/src/chatwidget.rs` — route via `mask_for_kind()` → `set_collaboration_mask()`
 
-Before switching, validate with `can_set()`:
 ```rust
-SlashCommand::Bypass => {
-    if let Err(msg) = try_switch_mode(ModeKind::Bypass, &self.config.permissions) {
-        self.push_system_notification(&msg);
-        return;
+SlashCommand::Accept => {
+    if let Some(mask) = collaboration_modes::mask_for_kind(models_manager, ModeKind::Accept) {
+        self.set_collaboration_mask(mask);
     }
+}
+SlashCommand::Bypass => {
     if let Some(mask) = collaboration_modes::mask_for_kind(models_manager, ModeKind::Bypass) {
-        self.switch_collaboration_mode(mask);
+        self.set_collaboration_mask(mask);
     }
 }
 ```
+
+Uses the existing `set_collaboration_mask()` — no new state plumbing needed.
 
 ### 7.3 Mirror ALL TUI changes in `tui_app_server/`
 
 | tui/ file | tui_app_server/ equivalent | Change |
 |---|---|---|
 | `src/slash_command.rs` | `src/slash_command.rs` | Add Accept, Bypass variants |
-| `src/chatwidget.rs` | `src/chatwidget.rs` | Dispatch, mode indicator, permissions popup gate |
-| `src/status/card.rs` | `src/status/card.rs` | Effective posture rendering |
+| `src/chatwidget.rs` | `src/chatwidget.rs` | Dispatch, mode indicator, /permissions rework |
+| `src/status/card.rs` | `src/status/card.rs` | Mode + sandbox rendering |
 | Snapshots | Snapshots | Accept new snapshots |
 
 ---
 
-## Phase 8: Testing
+## Phase 8: App-Server Integration
 
-### 8.1 Unit tests — exec_policy
+### 8.1 `collaborationMode/list` — automatic
+
+The existing `collaborationMode/list` handler returns presets from `thread_manager.list_collaboration_modes()`. Since we add Accept and Bypass presets in Phase 2.3, they automatically appear in the list. No handler changes needed.
+
+### 8.2 `turn/start` collaboration_mode — automatic
+
+The existing `collaboration_mode` field on `TurnStartParams` accepts a `CollaborationMode` with `mode: ModeKind`. Clients can already set `mode: "accept"` or `mode: "bypass"` once the ModeKind variants exist. No new field needed.
+
+### 8.3 `TurnStartedEvent` → `TurnStartedNotification` mapping
+
+**File:** `app-server/src/bespoke_event_handling.rs`
+
+The `TurnStartedEvent.collaboration_mode_kind` field (which already carries `ModeKind`) must be mapped to `TurnStartedNotification`. Verify that the bespoke mapper passes through the new variants correctly.
+
+### 8.4 Schema and SDK regeneration
+
+```bash
+just write-app-server-schema
+just write-app-server-schema --experimental
+cargo test -p orbit-code-app-server-protocol
+cd sdk/python && python scripts/update_sdk_artifacts.py generate-types && pytest -q
+```
+
+### 8.5 Update `app-server/README.md`
+
+Document Accept and Bypass as new collaboration mode values in the API reference.
+
+---
+
+## Phase 9: Testing
+
+### 9.1 Unit tests — exec_policy
 
 **File:** `core/src/exec_policy_tests.rs` (existing)
 
-Test every cell of the Authoritative Behavior Matrix.
+Test every cell of the Authoritative Behavior Matrix:
+- Default mode: preserves all existing behavior
+- Accept mode: read allows, write allows (non-dangerous shell), dangerous prompts
+- Bypass mode: everything allows including dangerous
+- Plan mode: forbidden (if reached)
 
-### 8.2 Unit tests — sandboxing
+### 9.2 Unit tests — sandboxing
 
 **File:** `core/src/tools/sandboxing_tests.rs` (existing)
 
 Test `default_exec_approval_requirement` with each ModeKind.
 
-### 8.3 Unit tests — unix escalation
+### 9.3 Unit tests — unix escalation
 
 Test `render_decision_for_unmatched_command` direct call respects mode_kind.
 
-### 8.4 Integration tests — hooks
+### 9.4 Integration tests — hooks
 
 **File:** `core/tests/suite/hooks.rs` (existing)
 
-Assert SessionStart, UserPromptSubmit, and Stop hooks receive correct `permission_mode` for each ModeKind.
+Assert SessionStart, UserPromptSubmit, and Stop hooks receive correct `permission_mode`:
+- Default → `"default"`
+- Accept → `"acceptEdits"`
+- Bypass → `"bypassPermissions"`
+- Plan → `"plan"`
 
-### 8.5 Integration tests — approval flows
+### 9.5 Integration tests — approval flows
 
 **File:** `core/tests/suite/permission_modes.rs` (new, add to `tests/suite/mod.rs`)
 
 TestCodexBuilder end-to-end for each mode.
 
-### 8.6 TUI tests
+### 9.6 TUI tests
 
 **Files:** `tui/src/chatwidget/tests.rs`, `tui_app_server/src/chatwidget/tests.rs`
 
-Mode indicator, slash command dispatch, permissions popup gate.
+Mode indicator, slash command dispatch, /permissions popup rework.
 
-### 8.7 Snapshot tests
+### 9.7 Snapshot tests
 
 ```bash
 cargo test -p orbit-code-tui
 cargo insta accept -p orbit-code-tui
+cargo test -p orbit-code-tui-app-server
+cargo insta accept -p orbit-code-tui-app-server
 ```
+
+### 9.8 `TurnStartedEvent` constructor sites
+
+The new ModeKind variants must be handled at all `TurnStartedEvent` construction sites:
+- `core/src/tasks/regular.rs`
+- `core/src/tasks/user_shell.rs`
+- `core/src/compact.rs`
+- `core/src/compact_remote.rs`
+- `app-server-protocol/src/protocol/thread_history.rs` (tests)
+
+These sites already pass `collaboration_mode_kind` from `TurnContext` — no code change needed, but they must be verified to handle new variants without panicking.
 
 ---
 
@@ -689,20 +724,22 @@ cargo insta accept -p orbit-code-tui
 | `core/src/tools/runtimes/shell/unix_escalation.rs` | Thread mode_kind to direct fallback |
 | `core/src/tools/runtimes/shell.rs` | tool_category() → Shell |
 | `core/src/tools/runtimes/unified_exec.rs` | tool_category() → Shell |
-| `core/src/tools/runtimes/apply_patch.rs` | tool_category() → FileMutation |
-| `core/src/codex.rs` | Sandbox override via Constrained::set(); ExecApprovalRequest mode_kind; effective approval/sandbox for prompts; stop hook |
+| `core/src/tools/runtimes/apply_patch.rs` | tool_category() → WriteMutation |
+| `core/src/codex.rs` | ExecApprovalRequest mode_kind; approval prompt suppression for Accept/Bypass; stop hook centralization |
 | `core/src/unified_exec/process_manager.rs` | ExecApprovalRequest mode_kind |
 | `core/src/hook_runtime.rs` | Rewrite hook_permission_mode from ModeKind |
+| `app-server/src/bespoke_event_handling.rs` | Verify TurnStartedNotification mapping handles new variants |
+| `app-server/README.md` | Document Accept, Bypass as collaboration mode values |
 | `tui/src/slash_command.rs` | Add Accept, Bypass |
-| `tui/src/chatwidget.rs` | Dispatch, indicator, permissions popup gate |
-| `tui/src/status/card.rs` | Effective posture rendering |
+| `tui/src/chatwidget.rs` | Dispatch, indicator, /permissions rework to sandbox toggle |
+| `tui/src/status/card.rs` | Mode + sandbox independent rendering |
 | `tui_app_server/src/model_catalog.rs` | Mirror presets |
 | `tui_app_server/src/slash_command.rs` | Mirror slash commands |
-| `tui_app_server/src/chatwidget.rs` | Mirror dispatch, indicator, popup gate |
+| `tui_app_server/src/chatwidget.rs` | Mirror dispatch, indicator, /permissions rework |
 | `tui_app_server/src/status/card.rs` | Mirror status card |
 | `core/src/exec_policy_tests.rs` | Behavior matrix tests |
 | `core/src/tools/sandboxing_tests.rs` | Mode override tests |
-| `core/tests/suite/permission_modes.rs` | Integration tests |
+| `core/tests/suite/permission_modes.rs` | Integration tests (new) |
 | `core/tests/suite/hooks.rs` | Hook permission_mode assertions |
 
 ---
@@ -713,20 +750,25 @@ cargo insta accept -p orbit-code-tui
 |---|---|
 | No config.toml `mode` field | Modes are runtime session state. No config field in v1. |
 | No `--mode` CLI flag | Defer to follow-up. Use `--dangerously-bypass-approvals-and-sandbox` for CLI bypass. |
-| Requirements ceiling prevents DangerFullAccess | Mode switch rejected with error message (not silent downgrade). |
-| Requirements change between mode switch and turn start | `Constrained::set()` in config phase will fail; fall back to existing sandbox. |
 | Mode persistence across resume | Modes do NOT persist. Reset to Default on resume. |
-| Mode switch mid-turn | Takes effect on next turn. |
-| `.rules` deny vs Bypass | `.rules` evaluated first, denials override. |
-| Default semantics for apply_patch | Existing behavior preserved (safe patches auto-approve). |
-| `/permissions` in Accept/Bypass | Disabled with message. |
-| Status card in Accept/Bypass | Shows mode-derived effective posture. |
-| Hook `permission_mode` after failed downgrade | If mode switch was rejected, mode stays at Default, hook emits "default". |
-| Accept + non-file-mutation tool (MCP, etc.) | Prompts for approval (see behavior matrix — Accept only auto-approves FileMutation). |
-| App-server `collaborationMode/apply` failure | Return JSON-RPC error with `message` explaining the requirements ceiling. Client renders the error message. |
-| `--full-auto` + `/accept` in-session | `--full-auto` sets approval/sandbox at startup. `/accept` overrides behavior at the tool-execution layer. Both coexist — ModeKind operates above the config-set values. |
-| `--dangerously-bypass-approvals-and-sandbox` + `/bypass` | Functionally equivalent but independent: the flag sets `(DangerFullAccess, Never)`, `/bypass` sets ModeKind. Both result in no prompts + dangerous forbidden. |
-| Bypass user-facing copy | "All non-dangerous tools auto-approved. Dangerous unmatched commands are forbidden — use .rules allow entries to permit specific dangerous commands." |
+| Mode switch mid-turn | Takes effect on next turn (existing collaboration mode behavior). |
+| `.rules` deny vs Bypass | `.rules` evaluated first — denials always override any mode. |
+| Sandbox + mode independence | Sandbox controls filesystem scope. Mode controls approval posture. They compose freely. |
+| `/permissions` popup | Becomes sandbox toggle. Guardian, warnings, Windows setup stay — they are sandbox concerns. |
+| Status card | Shows mode and sandbox as two separate fields. |
+| App-server `collaborationMode/list` | Automatically includes Accept/Bypass presets (no handler change). |
+| App-server `turn/start` | Existing `collaboration_mode.mode` field accepts new variants (no new field). |
+| `TurnStartedNotification` | Verify bespoke mapper in `bespoke_event_handling.rs` passes through new ModeKind variants. |
+| Python SDK | Regenerate generated models after schema change. Run `pytest -q`. |
+| `--full-auto` + `/accept` in-session | `--full-auto` sets approval/sandbox at startup. `/accept` overrides at mode layer. |
+| `--dangerously-bypass-approvals-and-sandbox` + `/bypass` | Functionally equivalent but independent layers. |
+| Bypass dangerous commands | Bypass auto-approves dangerous commands. This matches current "Full Access" behavior. Users choosing Bypass accept full risk. |
+| Accept + MCP tool | Auto-approve (MCP tools are "other tools" — auto-approved in Accept). |
+| Default semantics for apply_patch | Existing behavior preserved (safe patches auto-approve via existing logic). |
+| Hook `permission_mode` after Plan selected | Reports `"plan"` — matches Claude Code behavior. |
+| Plan mode behavior | Completely unchanged. Do not touch. |
+| Op transport | No new transport needed. ModeKind is already carried on Op::UserTurn, Op::OverrideTurnContext, SessionSettingsUpdate, AppEvent, AppCommand. |
+| `bypass_sandbox` in ExecApprovalRequirement | Always `false`. Mode controls approval, not sandbox scope. Sandbox scope is determined by sandbox_policy independently. |
 
 ---
 
@@ -739,10 +781,14 @@ just fix -p orbit-code-protocol
 just fix -p orbit-code-core
 just fix -p orbit-code-tui
 just fix -p orbit-code-tui-app-server
+just fix -p orbit-code-app-server-protocol
+just fix -p orbit-code-app-server
 cargo test -p orbit-code-protocol
 cargo test -p orbit-code-core
 cargo test -p orbit-code-tui
+cargo test -p orbit-code-tui-app-server
 cargo test -p orbit-code-app-server-protocol
+cargo test -p orbit-code-app-server
 ```
 
 Targeted:
@@ -751,16 +797,34 @@ cargo test -p orbit-code-core -- exec_policy
 cargo test -p orbit-code-core -- sandboxing
 cargo test -p orbit-code-core -- unix_escalation
 cargo test -p orbit-code-core -- suite::hooks
-cargo test -p orbit-code-core -- suite::exec_policy
-cargo test -p orbit-code-core -- suite::approvals
+cargo test -p orbit-code-core -- suite::permission_modes
 cargo test -p orbit-code-tui -- chatwidget
 cargo test -p orbit-code-tui-app-server -- chatwidget
 ```
 
+Schema + SDK:
+```bash
+just write-config-schema
+just write-app-server-schema
+just write-app-server-schema --experimental
+cargo test -p orbit-code-app-server-protocol
+cd sdk/python && python scripts/update_sdk_artifacts.py generate-types && pytest -q
+```
+
+Snapshots:
+```bash
+cargo insta pending-snapshots -p orbit-code-tui
+cargo insta pending-snapshots -p orbit-code-tui-app-server
+cargo insta accept -p orbit-code-tui
+cargo insta accept -p orbit-code-tui-app-server
+```
+
 End-to-end:
 ```bash
-just codex   # Default: should prompt for shell commands
-# Then /accept → file ops auto-approve, shell prompts
-# Then /bypass → all auto-approve, dangerous forbidden
-# Then /default → back to normal
+just codex
+# Shift+Tab → cycles Default → Accept → Bypass → Plan → Default
+# /accept → write tools auto-approve, dangerous bash prompts
+# /bypass → everything auto-approved, no prompts
+# /permissions → sandbox toggle (repo-scoped vs full system)
+# /default → back to standard behavior
 ```
