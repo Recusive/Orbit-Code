@@ -1,0 +1,15 @@
+[package]
+edition.workspace = true
+license.workspace = true
+name = "orbit-code-utils-output-truncation"
+version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+orbit-code-protocol = { workspace = true }
+orbit-code-utils-string = { workspace = true }
+
+[dev-dependencies]
+pretty_assertions = { workspace = true }

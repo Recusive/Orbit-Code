@@ -26,6 +26,7 @@ members = [
     "execpolicy-legacy",
     "keyring-store",
     "file-search",
+    "git-utils",
     "linux-sandbox",
     "lmstudio",
     "login",
@@ -37,6 +38,7 @@ members = [
     "rmcp-client",
     "stdio-to-uds",
     "otel",
+    "terminal-detection",
     "tui",
     "tui_app_server",
     "utils/absolute-path",
@@ -46,10 +48,13 @@ members = [
     "utils/image",
     "utils/json-to-toml",
     "utils/home-dir",
+    "utils/output-truncation",
+    "utils/path-utils",
     "utils/pty",
     "utils/readiness",
     "utils/rustls-provider",
     "utils/string",
+    "utils/template",
     "utils/cli",
     "utils/elapsed",
     "utils/sandbox-summary",
@@ -103,6 +108,7 @@ orbit-code-experimental-api-macros = { path = "codex-experimental-api-macros" }
 orbit-code-feedback = { path = "feedback" }
 orbit-code-file-search = { path = "file-search" }
 orbit-code-git = { path = "utils/git" }
+orbit-code-git-utils = { path = "git-utils" }
 orbit-code-hooks = { path = "hooks" }
 orbit-code-keyring-store = { path = "keyring-store" }
 orbit-code-linux-sandbox = { path = "linux-sandbox" }
@@ -124,6 +130,7 @@ orbit-code-stdio-to-uds = { path = "stdio-to-uds" }
 orbit-code-test-macros = { path = "test-macros" }
 orbit-code-tui = { path = "tui" }
 orbit-code-tui-app-server = { path = "tui_app_server" }
+orbit-code-terminal-detection = { path = "terminal-detection" }
 orbit-code-utils-absolute-path = { path = "utils/absolute-path" }
 orbit-code-utils-approval-presets = { path = "utils/approval-presets" }
 orbit-code-utils-cache = { path = "utils/cache" }
@@ -135,6 +142,8 @@ orbit-code-utils-home-dir = { path = "utils/home-dir" }
 orbit-code-utils-image = { path = "utils/image" }
 orbit-code-utils-json-to-toml = { path = "utils/json-to-toml" }
 orbit-code-utils-oss = { path = "utils/oss" }
+orbit-code-utils-output-truncation = { path = "utils/output-truncation" }
+orbit-code-utils-path = { path = "utils/path-utils" }
 orbit-code-utils-pty = { path = "utils/pty" }
 orbit-code-utils-readiness = { path = "utils/readiness" }
 orbit-code-utils-rustls-provider = { path = "utils/rustls-provider" }
@@ -142,6 +151,7 @@ orbit-code-utils-sandbox-summary = { path = "utils/sandbox-summary" }
 orbit-code-utils-sleep-inhibitor = { path = "utils/sleep-inhibitor" }
 orbit-code-utils-stream-parser = { path = "utils/stream-parser" }
 orbit-code-utils-string = { path = "utils/string" }
+orbit-code-utils-template = { path = "utils/template" }
 orbit-code-windows-sandbox = { path = "windows-sandbox-rs" }
 core_test_support = { path = "core/tests/common" }
 mcp_test_support = { path = "mcp-server/tests/common" }
