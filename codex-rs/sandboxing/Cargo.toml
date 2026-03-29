@@ -1,0 +1,27 @@
+[package]
+name = "orbit-code-sandboxing"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+name = "orbit_code_sandboxing"
+path = "src/lib.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+orbit-code-network-proxy = { workspace = true }
+orbit-code-protocol = { workspace = true }
+orbit-code-utils-absolute-path = { workspace = true }
+dunce = { workspace = true }
+libc = { workspace = true }
+serde_json = { workspace = true }
+tracing = { workspace = true, features = ["log"] }
+url = { workspace = true }
+which = { workspace = true }
+
+[dev-dependencies]
+pretty_assertions = { workspace = true }
+tempfile = { workspace = true }

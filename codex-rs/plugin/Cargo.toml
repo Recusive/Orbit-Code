@@ -1,0 +1,18 @@
+[package]
+edition.workspace = true
+license.workspace = true
+name = "orbit-code-plugin"
+version.workspace = true
+
+[lib]
+doctest = false
+name = "orbit_code_plugin"
+path = "src/lib.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+orbit-code-utils-absolute-path = { workspace = true }
+orbit-code-utils-plugins = { workspace = true }
+thiserror = { workspace = true }

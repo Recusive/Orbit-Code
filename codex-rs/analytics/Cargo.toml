@@ -1,0 +1,31 @@
+[package]
+edition.workspace = true
+license.workspace = true
+name = "orbit-code-analytics"
+version.workspace = true
+
+[lib]
+doctest = false
+name = "orbit_code_analytics"
+path = "src/lib.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+orbit-code-core = { workspace = true }
+orbit-code-git-utils = { workspace = true }
+orbit-code-login = { workspace = true }
+orbit-code-plugin = { workspace = true }
+orbit-code-protocol = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+sha1 = { workspace = true }
+tokio = { workspace = true, features = [
+    "macros",
+    "rt-multi-thread",
+] }
+tracing = { workspace = true, features = ["log"] }
+
+[dev-dependencies]
+pretty_assertions = { workspace = true }
+serde_json = { workspace = true }

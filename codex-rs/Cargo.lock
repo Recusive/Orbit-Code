@@ -5243,6 +5243,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "orbit-code-analytics"
+version = "0.0.0"
+dependencies = [
+ "orbit-code-core",
+ "orbit-code-git-utils",
+ "orbit-code-login",
+ "orbit-code-plugin",
+ "orbit-code-protocol",
+ "pretty_assertions",
+ "serde",
+ "serde_json",
+ "sha1",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "orbit-code-ansi-escape"
 version = "0.0.0"
 dependencies = [
@@ -5654,6 +5671,36 @@ dependencies = [
 ]
 
 [[package]]
+name = "orbit-code-core-skills"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "dirs",
+ "dunce",
+ "orbit-code-analytics",
+ "orbit-code-app-server-protocol",
+ "orbit-code-config",
+ "orbit-code-core",
+ "orbit-code-instructions",
+ "orbit-code-login",
+ "orbit-code-otel",
+ "orbit-code-protocol",
+ "orbit-code-skills",
+ "orbit-code-utils-absolute-path",
+ "orbit-code-utils-plugins",
+ "pretty_assertions",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "shlex",
+ "tempfile",
+ "tokio",
+ "toml 0.9.11+spec-1.1.0",
+ "tracing",
+ "zip",
+]
+
+[[package]]
 name = "orbit-code-debug-client"
 version = "0.0.0"
 dependencies = [
@@ -5785,6 +5832,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "orbit-code-features"
+version = "0.0.0"
+dependencies = [
+ "orbit-code-login",
+ "orbit-code-otel",
+ "orbit-code-protocol",
+ "pretty_assertions",
+ "schemars 0.8.22",
+ "serde",
+ "toml 0.9.11+spec-1.1.0",
+ "tracing",
+]
+
+[[package]]
 name = "orbit-code-feedback"
 version = "0.0.0"
 dependencies = [
@@ -5863,6 +5924,15 @@ dependencies = [
  "serde_json",
  "tempfile",
  "tokio",
+]
+
+[[package]]
+name = "orbit-code-instructions"
+version = "0.0.0"
+dependencies = [
+ "orbit-code-protocol",
+ "pretty_assertions",
+ "serde",
 ]
 
 [[package]]
@@ -6063,6 +6133,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "orbit-code-plugin"
+version = "0.0.0"
+dependencies = [
+ "orbit-code-utils-absolute-path",
+ "orbit-code-utils-plugins",
+ "thiserror 2.0.18",
+]
+
+[[package]]
 name = "orbit-code-process-hardening"
 version = "0.0.0"
 dependencies = [
@@ -6127,6 +6206,50 @@ dependencies = [
  "tracing",
  "urlencoding",
  "webbrowser",
+ "which",
+]
+
+[[package]]
+name = "orbit-code-rollout"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "chrono",
+ "orbit-code-core",
+ "orbit-code-file-search",
+ "orbit-code-git-utils",
+ "orbit-code-login",
+ "orbit-code-otel",
+ "orbit-code-protocol",
+ "orbit-code-state",
+ "orbit-code-utils-output-truncation",
+ "orbit-code-utils-path",
+ "orbit-code-utils-string",
+ "pretty_assertions",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "time",
+ "tokio",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
+name = "orbit-code-sandboxing"
+version = "0.0.0"
+dependencies = [
+ "dunce",
+ "libc",
+ "orbit-code-network-proxy",
+ "orbit-code-protocol",
+ "orbit-code-utils-absolute-path",
+ "pretty_assertions",
+ "serde_json",
+ "tempfile",
+ "tracing",
+ "url",
  "which",
 ]
 
@@ -6538,6 +6661,15 @@ dependencies = [
  "dunce",
  "orbit-code-utils-absolute-path",
  "pretty_assertions",
+ "tempfile",
+]
+
+[[package]]
+name = "orbit-code-utils-plugins"
+version = "0.0.0"
+dependencies = [
+ "serde",
+ "serde_json",
  "tempfile",
 ]
 

@@ -1,0 +1,51 @@
+[package]
+edition.workspace = true
+license.workspace = true
+name = "orbit-code-rollout"
+version.workspace = true
+
+[lib]
+doctest = false
+name = "orbit_code_rollout"
+path = "src/lib.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+anyhow = { workspace = true }
+async-trait = { workspace = true }
+chrono = { workspace = true, features = ["serde"] }
+orbit-code-core = { workspace = true }
+orbit-code-file-search = { workspace = true }
+orbit-code-git-utils = { workspace = true }
+orbit-code-login = { workspace = true }
+orbit-code-otel = { workspace = true }
+orbit-code-protocol = { workspace = true }
+orbit-code-state = { workspace = true }
+orbit-code-utils-output-truncation = { workspace = true }
+orbit-code-utils-path = { workspace = true }
+orbit-code-utils-string = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+time = { workspace = true, features = [
+    "formatting",
+    "local-offset",
+    "macros",
+    "parsing",
+] }
+tokio = { workspace = true, features = [
+    "fs",
+    "io-util",
+    "macros",
+    "process",
+    "rt",
+    "sync",
+    "time",
+] }
+tracing = { workspace = true }
+uuid = { workspace = true }
+
+[dev-dependencies]
+pretty_assertions = { workspace = true }
+tempfile = { workspace = true }

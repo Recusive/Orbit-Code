@@ -1,0 +1,6 @@
+load("//:defs.bzl", "orbit_code_rust_crate")
+
+orbit_code_rust_crate(
+    name = "analytics",
+    crate_name = "orbit_code_analytics",
+)

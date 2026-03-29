@@ -1,0 +1,21 @@
+
+[package]
+edition.workspace = true
+license.workspace = true
+name = "orbit-code-utils-plugins"
+version.workspace = true
+
+[lib]
+doctest = false
+name = "orbit_code_utils_plugins"
+path = "src/lib.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }

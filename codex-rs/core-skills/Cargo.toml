@@ -1,0 +1,41 @@
+[package]
+edition.workspace = true
+license.workspace = true
+name = "orbit-code-core-skills"
+version.workspace = true
+
+[lib]
+doctest = false
+name = "orbit_code_core_skills"
+path = "src/lib.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+anyhow = { workspace = true }
+orbit-code-analytics = { workspace = true }
+orbit-code-app-server-protocol = { workspace = true }
+orbit-code-config = { workspace = true }
+orbit-code-core = { workspace = true }
+orbit-code-instructions = { workspace = true }
+orbit-code-login = { workspace = true }
+orbit-code-otel = { workspace = true }
+orbit-code-protocol = { workspace = true }
+orbit-code-skills = { workspace = true }
+orbit-code-utils-absolute-path = { workspace = true }
+orbit-code-utils-plugins = { workspace = true }
+dirs = { workspace = true }
+dunce = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+serde_yaml = { workspace = true }
+shlex = { workspace = true }
+tokio = { workspace = true, features = ["fs", "macros", "rt"] }
+toml = { workspace = true }
+tracing = { workspace = true }
+zip = { workspace = true }
+
+[dev-dependencies]
+pretty_assertions = { workspace = true }
+tempfile = { workspace = true }

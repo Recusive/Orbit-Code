@@ -1,0 +1,16 @@
+load("//:defs.bzl", "orbit_code_rust_crate")
+
+orbit_code_rust_crate(
+    name = "features",
+    crate_name = "orbit_code_features",
+    compile_data = glob(
+        include = ["**"],
+        exclude = [
+            "BUILD.bazel",
+            "Cargo.toml",
+        ],
+        allow_empty = True,
+    ) + [
+        "//codex-rs:node-version.txt",
+    ],
+)

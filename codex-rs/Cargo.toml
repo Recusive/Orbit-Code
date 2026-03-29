@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "ansi-escape",
+    "analytics",
     "anthropic",
     "async-utils",
     "app-server",
@@ -11,14 +12,17 @@ members = [
     "apply-patch",
     "arg0",
     "feedback",
+    "features",
     "cli",
     "config",
     "shell-command",
     "shell-escalation",
     "skills",
     "core",
+    "core-skills",
     "environment",
     "hooks",
+    "instructions",
     "secrets",
     "exec",
     "exec-server",
@@ -33,9 +37,12 @@ members = [
     "mcp-server",
     "network-proxy",
     "ollama",
+    "plugin",
     "process-hardening",
     "protocol",
     "rmcp-client",
+    "rollout",
+    "sandboxing",
     "stdio-to-uds",
     "otel",
     "terminal-detection",
@@ -50,6 +57,7 @@ members = [
     "utils/home-dir",
     "utils/output-truncation",
     "utils/path-utils",
+    "utils/plugins",
     "utils/pty",
     "utils/readiness",
     "utils/rustls-provider",
@@ -86,6 +94,7 @@ license = "Apache-2.0"
 # Internal
 app_test_support = { path = "app-server/tests/common" }
 orbit-code-ansi-escape = { path = "ansi-escape" }
+orbit-code-analytics = { path = "analytics" }
 orbit-code-api = { path = "codex-api" }
 orbit-code-anthropic = { path = "anthropic" }
 orbit-code-artifacts = { path = "artifacts" }
@@ -101,15 +110,18 @@ orbit-code-cli = { package = "orbit-code", path = "cli" }
 orbit-code-client = { path = "codex-client" }
 orbit-code-config = { path = "config" }
 orbit-code-core = { path = "core" }
+orbit-code-core-skills = { path = "core-skills" }
 orbit-code-environment = { path = "environment" }
 orbit-code-exec = { path = "exec" }
 orbit-code-execpolicy = { path = "execpolicy" }
 orbit-code-experimental-api-macros = { path = "codex-experimental-api-macros" }
 orbit-code-feedback = { path = "feedback" }
+orbit-code-features = { path = "features" }
 orbit-code-file-search = { path = "file-search" }
 orbit-code-git = { path = "utils/git" }
 orbit-code-git-utils = { path = "git-utils" }
 orbit-code-hooks = { path = "hooks" }
+orbit-code-instructions = { path = "instructions" }
 orbit-code-keyring-store = { path = "keyring-store" }
 orbit-code-linux-sandbox = { path = "linux-sandbox" }
 orbit-code-lmstudio = { path = "lmstudio" }
@@ -118,9 +130,12 @@ orbit-code-mcp-server = { path = "mcp-server" }
 orbit-code-network-proxy = { path = "network-proxy" }
 orbit-code-ollama = { path = "ollama" }
 orbit-code-otel = { path = "otel" }
+orbit-code-plugin = { path = "plugin" }
 orbit-code-process-hardening = { path = "process-hardening" }
 orbit-code-protocol = { path = "protocol" }
+orbit-code-rollout = { path = "rollout" }
 orbit-code-rmcp-client = { path = "rmcp-client" }
+orbit-code-sandboxing = { path = "sandboxing" }
 orbit-code-secrets = { path = "secrets" }
 orbit-code-shell-command = { path = "shell-command" }
 orbit-code-shell-escalation = { path = "shell-escalation" }
@@ -144,6 +159,7 @@ orbit-code-utils-json-to-toml = { path = "utils/json-to-toml" }
 orbit-code-utils-oss = { path = "utils/oss" }
 orbit-code-utils-output-truncation = { path = "utils/output-truncation" }
 orbit-code-utils-path = { path = "utils/path-utils" }
+orbit-code-utils-plugins = { path = "utils/plugins" }
 orbit-code-utils-pty = { path = "utils/pty" }
 orbit-code-utils-readiness = { path = "utils/readiness" }
 orbit-code-utils-rustls-provider = { path = "utils/rustls-provider" }
