@@ -3,12 +3,12 @@ use std::path::PathBuf;
 use std::time::Duration;
 use std::time::Instant;
 
+use futures::FutureExt as _;
 use orbit_code_rmcp_client::ElicitationAction;
 use orbit_code_rmcp_client::ElicitationResponse;
 use orbit_code_rmcp_client::OAuthCredentialsStoreMode;
 use orbit_code_rmcp_client::RmcpClient;
 use orbit_code_utils_cargo_bin::CargoBinError;
-use futures::FutureExt as _;
 use pretty_assertions::assert_eq;
 use rmcp::model::CallToolResult;
 use rmcp::model::ClientCapabilities;

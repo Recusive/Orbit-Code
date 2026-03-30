@@ -4,13 +4,13 @@ use std::process::Stdio;
 use std::time::Duration;
 
 use anyhow::anyhow;
+use futures::SinkExt;
+use futures::StreamExt;
 use orbit_code_app_server_protocol::JSONRPCMessage;
 use orbit_code_app_server_protocol::JSONRPCNotification;
 use orbit_code_app_server_protocol::JSONRPCRequest;
 use orbit_code_app_server_protocol::RequestId;
 use orbit_code_utils_cargo_bin::cargo_bin;
-use futures::SinkExt;
-use futures::StreamExt;
 use tokio::io::AsyncBufReadExt;
 use tokio::io::BufReader;
 use tokio::process::Child;

@@ -42,6 +42,7 @@ mod errors;
 mod head_tail_buffer;
 mod process;
 mod process_manager;
+mod process_state;
 
 pub(crate) fn set_deterministic_process_ids_for_tests(enabled: bool) {
     process_manager::set_deterministic_process_ids_for_tests(enabled);
@@ -167,6 +168,10 @@ pub(crate) fn generate_chunk_id() -> String {
         .collect()
 }
 
+#[cfg(test)]
+#[cfg(unix)]
+#[path = "process_tests.rs"]
+mod process_tests;
 #[cfg(test)]
 #[cfg(unix)]
 #[path = "mod_tests.rs"]

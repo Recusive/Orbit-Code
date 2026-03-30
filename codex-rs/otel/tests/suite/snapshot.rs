@@ -1,5 +1,8 @@
 use crate::harness::attributes_to_map;
 use crate::harness::find_metric;
+use opentelemetry_sdk::metrics::InMemoryMetricExporter;
+use opentelemetry_sdk::metrics::data::AggregatedMetrics;
+use opentelemetry_sdk::metrics::data::MetricData;
 use orbit_code_otel::SessionTelemetry;
 use orbit_code_otel::TelemetryAuthMode;
 use orbit_code_otel::metrics::MetricsClient;
@@ -7,9 +10,6 @@ use orbit_code_otel::metrics::MetricsConfig;
 use orbit_code_otel::metrics::Result;
 use orbit_code_protocol::ThreadId;
 use orbit_code_protocol::protocol::SessionSource;
-use opentelemetry_sdk::metrics::InMemoryMetricExporter;
-use opentelemetry_sdk::metrics::data::AggregatedMetrics;
-use opentelemetry_sdk::metrics::data::MetricData;
 use pretty_assertions::assert_eq;
 use std::collections::BTreeMap;
 

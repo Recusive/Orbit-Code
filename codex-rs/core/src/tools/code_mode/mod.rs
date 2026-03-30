@@ -1,6 +1,7 @@
 mod execute_handler;
 mod process;
 mod protocol;
+mod response_adapter;
 mod service;
 mod wait_handler;
 mod worker;

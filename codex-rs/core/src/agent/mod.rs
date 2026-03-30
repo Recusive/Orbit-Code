@@ -1,7 +1,11 @@
+pub(crate) mod agent_resolver;
 pub(crate) mod control;
 mod guards;
 pub(crate) mod role;
 pub(crate) mod status;
+
+#[cfg(test)]
+mod registry_tests;
 
 pub(crate) use control::AgentControl;
 pub(crate) use guards::exceeds_thread_spawn_depth_limit;

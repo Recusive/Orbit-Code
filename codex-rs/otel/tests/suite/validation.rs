@@ -1,8 +1,8 @@
+use opentelemetry_sdk::metrics::InMemoryMetricExporter;
 use orbit_code_otel::metrics::MetricsClient;
 use orbit_code_otel::metrics::MetricsConfig;
 use orbit_code_otel::metrics::MetricsError;
 use orbit_code_otel::metrics::Result;
-use opentelemetry_sdk::metrics::InMemoryMetricExporter;
 
 fn build_in_memory_client() -> Result<MetricsClient> {
     let exporter = InMemoryMetricExporter::default();

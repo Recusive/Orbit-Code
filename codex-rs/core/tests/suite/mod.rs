@@ -103,6 +103,7 @@ mod prompt_caching;
 mod quota_exceeded;
 mod read_file;
 mod realtime_conversation;
+mod remote_env;
 mod remote_models;
 mod request_compression;
 #[cfg(not(target_os = "windows"))]
@@ -131,6 +132,7 @@ mod subagent_notifications;
 mod text_encoding_fix;
 mod tool_harness;
 mod tool_parallelism;
+mod tool_suggest;
 mod tools;
 mod truncation;
 mod turn_state;
