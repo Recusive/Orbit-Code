@@ -485,11 +485,21 @@ impl CoreShellActionProvider {
     /// any skills.
     async fn find_skill(&self, program: &AbsolutePathBuf) -> Option<SkillMetadata> {
         let force_reload = false;
+        let skills_input = crate::skills::SkillsLoadInput::new(
+            self.turn.cwd.clone(),
+            self.session
+                .services
+                .plugins_manager
+                .plugins_for_config(self.turn.config.as_ref())
+                .effective_skill_roots(),
+            self.turn.config.config_layer_stack.clone(),
+            self.turn.config.bundled_skills_enabled(),
+        );
         let skills_outcome = self
             .session
             .services
             .skills_manager
-            .skills_for_cwd(&self.turn.cwd, self.turn.config.as_ref(), force_reload)
+            .skills_for_cwd(&skills_input, force_reload)
             .await;
 
         let program_path = program.as_path();

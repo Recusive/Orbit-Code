@@ -186,7 +186,6 @@ impl ThreadManager {
         let mcp_manager = Arc::new(McpManager::new(Arc::clone(&plugins_manager)));
         let skills_manager = Arc::new(SkillsManager::new(
             orbit_code_home.clone(),
-            Arc::clone(&plugins_manager),
             config.bundled_skills_enabled(),
         ));
         let file_watcher = build_file_watcher(orbit_code_home.clone(), Arc::clone(&skills_manager));
@@ -249,7 +248,6 @@ impl ThreadManager {
         let mcp_manager = Arc::new(McpManager::new(Arc::clone(&plugins_manager)));
         let skills_manager = Arc::new(SkillsManager::new(
             orbit_code_home.clone(),
-            Arc::clone(&plugins_manager),
             /*bundled_skills_enabled*/ true,
         ));
         let file_watcher = build_file_watcher(orbit_code_home.clone(), Arc::clone(&skills_manager));
@@ -758,9 +756,15 @@ impl ThreadManagerState {
         parent_trace: Option<W3cTraceContext>,
         user_shell_override: Option<crate::shell::Shell>,
     ) -> CodexResult<NewThread> {
-        let watch_registration = self
-            .file_watcher
-            .register_config(&config, self.skills_manager.as_ref());
+        let watch_registration = self.file_watcher.register_config(
+            &crate::skills::skills_load_input_from_config(
+                &config,
+                self.plugins_manager
+                    .plugins_for_config(&config)
+                    .effective_skill_roots(),
+            ),
+            self.skills_manager.as_ref(),
+        );
         let CodexSpawnOk {
             codex, thread_id, ..
         } = Codex::spawn(CodexSpawnArgs {

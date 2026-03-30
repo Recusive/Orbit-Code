@@ -5,7 +5,6 @@
 // the TUI or the tracing stack).
 #![deny(clippy::print_stdout, clippy::print_stderr)]
 
-mod analytics_client;
 pub(crate) mod anthropic_auth;
 pub mod anthropic_bridge;
 pub mod api_bridge;
@@ -40,7 +39,7 @@ pub mod exec;
 pub mod exec_env;
 mod exec_policy;
 pub mod external_agent_config;
-pub mod features;
+pub use orbit_code_features as features;
 mod file_watcher;
 mod flags;
 pub mod git_info;
@@ -110,7 +109,7 @@ pub type NewConversation = NewThread;
 #[deprecated(note = "use CodexThread")]
 pub type CodexConversation = CodexThread;
 // Re-export common auth types for workspace consumers
-pub use analytics_client::AnalyticsEventsClient;
+pub use orbit_code_analytics::AnalyticsEventsClient;
 pub use auth::AuthManager;
 pub use auth::CodexAuth;
 pub use orbit_code_login::default_client;
@@ -121,6 +120,25 @@ pub mod seatbelt;
 pub mod shell;
 pub mod shell_snapshot;
 pub mod skills;
+pub(crate) use skills::SkillError;
+pub(crate) use skills::SkillInjections;
+pub(crate) use skills::SkillLoadOutcome;
+pub(crate) use skills::SkillMetadata;
+pub(crate) use skills::SkillsLoadInput;
+pub(crate) use skills::SkillsManager;
+pub(crate) use skills::build_skill_injections;
+pub(crate) use skills::build_skill_name_counts;
+pub(crate) use skills::collect_env_var_dependencies;
+pub(crate) use skills::collect_explicit_skill_mentions;
+pub(crate) use skills::config_rules;
+pub(crate) use skills::injection;
+pub(crate) use skills::loader;
+pub(crate) use skills::manager;
+pub(crate) use skills::maybe_emit_implicit_skill_invocation;
+pub(crate) use skills::model;
+pub(crate) use skills::render_skills_section;
+pub(crate) use skills::resolve_skill_dependencies_for_turn;
+pub(crate) use skills::skills_load_input_from_config;
 pub mod spawn;
 pub mod state_db;
 pub use orbit_code_terminal_detection as terminal;

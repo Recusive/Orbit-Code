@@ -145,11 +145,11 @@ impl FileWatcher {
 
     pub(crate) fn register_config(
         self: &Arc<Self>,
-        config: &Config,
+        skills_input: &crate::skills::SkillsLoadInput,
         skills_manager: &SkillsManager,
     ) -> WatchRegistration {
         let deduped_roots: HashSet<PathBuf> = skills_manager
-            .skill_roots_for_config(config)
+            .skill_roots_for_config(skills_input)
             .into_iter()
             .map(|root| root.path)
             .collect();

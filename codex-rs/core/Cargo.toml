@@ -32,10 +32,13 @@ orbit-code-anthropic = { workspace = true }
 orbit-code-app-server-protocol = { workspace = true }
 orbit-code-apply-patch = { workspace = true }
 orbit-code-async-utils = { workspace = true }
+orbit-code-analytics = { workspace = true }
 orbit-code-client = { workspace = true }
 orbit-code-config = { workspace = true }
+orbit-code-core-skills = { workspace = true }
 orbit-code-environment = { workspace = true }
 orbit-code-exec-server = { workspace = true }
+orbit-code-features = { workspace = true }
 orbit-code-shell-command = { workspace = true }
 orbit-code-skills = { workspace = true }
 orbit-code-execpolicy = { workspace = true }
@@ -52,6 +55,7 @@ orbit-code-artifacts = { workspace = true }
 orbit-code-plugin = { workspace = true }
 orbit-code-protocol = { workspace = true }
 orbit-code-rmcp-client = { workspace = true }
+orbit-code-rollout = { workspace = true }
 orbit-code-sandboxing = { workspace = true }
 orbit-code-state = { workspace = true }
 orbit-code-terminal-detection = { workspace = true }

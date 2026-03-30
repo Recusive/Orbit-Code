@@ -132,7 +132,7 @@ pub async fn extract_metadata_from_rollout(
     })
 }
 
-pub(crate) async fn backfill_sessions(
+pub async fn backfill_sessions(
     runtime: &orbit_code_state::StateRuntime,
     config: &impl RolloutConfigView,
 ) {

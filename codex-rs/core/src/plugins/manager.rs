@@ -26,7 +26,6 @@ use super::store::PluginStore;
 use super::store::PluginStoreError;
 use super::sync_openai_plugins_repo;
 use crate::AuthManager;
-use crate::analytics_client::AnalyticsEventsClient;
 use crate::auth::CodexAuth;
 use crate::config::Config;
 use crate::config::ConfigService;
@@ -40,6 +39,7 @@ use crate::features::Feature;
 use crate::skills::SkillMetadata;
 use crate::skills::loader::SkillRoot;
 use crate::skills::loader::load_skills_from_roots;
+use orbit_code_analytics::AnalyticsEventsClient;
 use orbit_code_app_server_protocol::ConfigValueWriteParams;
 use orbit_code_app_server_protocol::MergeStrategy;
 use orbit_code_protocol::protocol::SkillScope;
@@ -212,6 +212,43 @@ impl PluginTelemetryMetadata {
         Self {
             plugin_id: plugin_id.clone(),
             capability_summary: None,
+        }
+    }
+}
+
+impl From<AppConnectorId> for orbit_code_plugin::AppConnectorId {
+    fn from(value: AppConnectorId) -> Self {
+        Self(value.0)
+    }
+}
+
+impl From<PluginId> for orbit_code_plugin::PluginId {
+    fn from(value: PluginId) -> Self {
+        Self {
+            plugin_name: value.plugin_name,
+            marketplace_name: value.marketplace_name,
+        }
+    }
+}
+
+impl From<PluginCapabilitySummary> for orbit_code_plugin::PluginCapabilitySummary {
+    fn from(value: PluginCapabilitySummary) -> Self {
+        Self {
+            config_name: value.config_name,
+            display_name: value.display_name,
+            description: value.description,
+            has_skills: value.has_skills,
+            mcp_server_names: value.mcp_server_names,
+            app_connector_ids: value.app_connector_ids.into_iter().map(Into::into).collect(),
+        }
+    }
+}
+
+impl From<PluginTelemetryMetadata> for orbit_code_plugin::PluginTelemetryMetadata {
+    fn from(value: PluginTelemetryMetadata) -> Self {
+        Self {
+            plugin_id: value.plugin_id.into(),
+            capability_summary: value.capability_summary.map(Into::into),
         }
     }
 }
@@ -671,7 +708,7 @@ impl PluginsManager {
             analytics_events_client.track_plugin_installed(plugin_telemetry_metadata_from_root(
                 &result.plugin_id,
                 result.installed_path.as_path(),
-            ));
+            ).into());
         }
 
         Ok(PluginInstallOutcome {
@@ -728,7 +765,7 @@ impl PluginsManager {
         if let Some(plugin_telemetry) = plugin_telemetry
             && let Some(analytics_events_client) = analytics_events_client
         {
-            analytics_events_client.track_plugin_uninstalled(plugin_telemetry);
+            analytics_events_client.track_plugin_uninstalled(plugin_telemetry.into());
         }
 
         Ok(())

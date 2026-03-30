@@ -11,6 +11,7 @@ use orbit_code_config::Sourced;
 use crate::config::ConfigToml;
 use crate::config::profile::ConfigProfile;
 use crate::features::Feature;
+use crate::features::FeatureConfigSource;
 use crate::features::FeatureOverrides;
 use crate::features::Features;
 use crate::features::canonical_feature_for_key;
@@ -304,7 +305,22 @@ pub(crate) fn validate_feature_requirements_in_config_toml(
         profile: &ConfigProfile,
         feature_requirements: Option<&Sourced<FeatureRequirementsToml>>,
     ) -> std::io::Result<()> {
-        let configured_features = Features::from_config(cfg, profile, FeatureOverrides::default());
+        let configured_features = Features::from_sources(
+            FeatureConfigSource {
+                features: cfg.features.as_ref(),
+                experimental_use_freeform_apply_patch: cfg.experimental_use_freeform_apply_patch,
+                experimental_use_unified_exec_tool: cfg.experimental_use_unified_exec_tool,
+                ..Default::default()
+            },
+            FeatureConfigSource {
+                features: profile.features.as_ref(),
+                include_apply_patch_tool: profile.include_apply_patch_tool,
+                experimental_use_freeform_apply_patch: profile
+                    .experimental_use_freeform_apply_patch,
+                experimental_use_unified_exec_tool: profile.experimental_use_unified_exec_tool,
+            },
+            FeatureOverrides::default(),
+        );
         ManagedFeatures::from_configured(configured_features, feature_requirements.cloned())
             .map(|_| ())
             .map_err(|err| {

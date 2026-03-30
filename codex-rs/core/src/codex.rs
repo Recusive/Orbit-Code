@@ -12,10 +12,6 @@ use crate::SandboxState;
 use crate::agent::AgentControl;
 use crate::agent::AgentStatus;
 use crate::agent::agent_status_from_event;
-use crate::analytics_client::AnalyticsEventsClient;
-use crate::analytics_client::AppInvocation;
-use crate::analytics_client::InvocationType;
-use crate::analytics_client::build_track_events_context;
 use crate::apps::render_apps_section;
 use crate::auth_env_telemetry::collect_auth_env_telemetry;
 use crate::commit_attribution::commit_message_trailer_instruction;
@@ -29,7 +25,7 @@ use crate::connectors;
 use crate::exec_policy::ExecPolicyManager;
 use crate::features::FEATURES;
 use crate::features::Feature;
-use crate::features::maybe_push_unstable_features_warning;
+use crate::features::unstable_features_warning_event;
 use crate::models_manager::manager::ModelsManager;
 use crate::models_manager::manager::RefreshStrategy;
 use crate::parse_command::parse_command;
@@ -58,6 +54,10 @@ use chrono::Utc;
 use futures::future::BoxFuture;
 use futures::future::Shared;
 use futures::prelude::*;
+use orbit_code_analytics::AnalyticsEventsClient;
+use orbit_code_analytics::AppInvocation;
+use orbit_code_analytics::InvocationType;
+use orbit_code_analytics::build_track_events_context;
 use futures::stream::FuturesOrdered;
 use orbit_code_app_server_protocol::McpServerElicitationRequest;
 use orbit_code_app_server_protocol::McpServerElicitationRequestParams;
@@ -436,7 +436,10 @@ impl Codex {
         let (tx_sub, rx_sub) = async_channel::bounded(SUBMISSION_CHANNEL_CAPACITY);
         let (tx_event, rx_event) = async_channel::unbounded();
 
-        let loaded_skills = skills_manager.skills_for_config(&config);
+        let loaded_skills = skills_manager.skills_for_config(&crate::skills::skills_load_input_from_config(
+            &config,
+            plugins_manager.plugins_for_config(&config).effective_skill_roots(),
+        ));
 
         for err in &loaded_skills.errors {
             error!(
@@ -1535,7 +1538,7 @@ impl Session {
         })?;
         let rollout_path = rollout_recorder
             .as_ref()
-            .map(|rec| rec.rollout_path.clone());
+            .map(|rec| rec.rollout_path().to_path_buf());
 
         let mut post_session_configured_events = Vec::<Event>::new();
 
@@ -1569,7 +1572,23 @@ impl Session {
                 }),
             });
         }
-        maybe_push_unstable_features_warning(&config, &mut post_session_configured_events);
+        let config_path = config
+            .orbit_code_home
+            .join(orbit_code_config::CONFIG_TOML_FILE)
+            .display()
+            .to_string();
+        if let Some(event) = unstable_features_warning_event(
+            config
+                .config_layer_stack
+                .effective_config()
+                .get("features")
+                .and_then(toml::Value::as_table),
+            config.suppress_unstable_features_warning,
+            config.features.get(),
+            &config_path,
+        ) {
+            post_session_configured_events.push(event);
+        }
         if config.permissions.approval_policy.value() == AskForApproval::OnFailure {
             post_session_configured_events.push(Event {
                 id: "".to_owned(),
@@ -1794,8 +1813,9 @@ impl Session {
             shell_zsh_path: config.zsh_path.clone(),
             main_execve_wrapper_exe: config.main_execve_wrapper_exe.clone(),
             analytics_events_client: AnalyticsEventsClient::new(
-                Arc::clone(&config),
                 Arc::clone(&auth_manager),
+                config.chatgpt_base_url.clone(),
+                config.analytics_enabled,
             ),
             hooks,
             rollout: Mutex::new(rollout_recorder),
@@ -2404,11 +2424,15 @@ impl Session {
                 &per_turn_config,
             )
             .await;
-        let skills_outcome = Arc::new(
-            self.services
-                .skills_manager
-                .skills_for_config(&per_turn_config),
-        );
+        let skills_outcome = Arc::new(self.services.skills_manager.skills_for_config(
+            &crate::skills::skills_load_input_from_config(
+                &per_turn_config,
+                self.services
+                    .plugins_manager
+                    .plugins_for_config(&per_turn_config)
+                    .effective_skill_roots(),
+            ),
+        ));
         let mut turn_context: TurnContext = Self::make_turn_context(
             Some(Arc::clone(&self.services.auth_manager)),
             &self.services.session_telemetry,
@@ -4841,8 +4865,17 @@ mod handlers {
         let config = sess.get_config().await;
         let mut skills = Vec::new();
         for cwd in cwds {
+            let skills_input = crate::skills::SkillsLoadInput::new(
+                cwd.clone(),
+                sess.services
+                    .plugins_manager
+                    .plugins_for_config(config.as_ref())
+                    .effective_skill_roots(),
+                config.config_layer_stack.clone(),
+                config.bundled_skills_enabled(),
+            );
             let outcome = skills_manager
-                .skills_for_cwd(&cwd, config.as_ref(), force_reload)
+                .skills_for_cwd(&skills_input, force_reload)
                 .await;
             let errors = super::errors_to_info(&outcome.errors);
             let skills_metadata = super::skills_to_info(&outcome.skills, &outcome.disabled_paths);
@@ -5599,9 +5632,9 @@ pub(crate) async fn run_turn(
         .analytics_events_client
         .track_app_mentioned(tracking.clone(), mentioned_app_invocations);
     for plugin in mentioned_plugin_metadata {
-        sess.services
-            .analytics_events_client
-            .track_plugin_used(tracking.clone(), plugin);
+    sess.services
+        .analytics_events_client
+        .track_plugin_used(tracking.clone(), plugin.into());
     }
     sess.merge_connector_selection(explicitly_enabled_connectors.clone())
         .await;
