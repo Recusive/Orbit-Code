@@ -16,6 +16,13 @@ pub struct NetworkProxyConfig {
     pub network: NetworkProxySettings,
 }
 
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
+#[serde(rename_all = "lowercase")]
+pub enum NetworkDomainPermission {
+    Allow,
+    Deny,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(default)]
 pub struct NetworkProxySettings {
@@ -63,6 +70,49 @@ impl Default for NetworkProxySettings {
             allow_local_binding: false,
             mitm: false,
         }
+    }
+}
+
+impl NetworkProxySettings {
+    pub fn allowed_domains(&self) -> Option<Vec<String>> {
+        (!self.allowed_domains.is_empty()).then(|| self.allowed_domains.clone())
+    }
+
+    pub fn denied_domains(&self) -> Option<Vec<String>> {
+        (!self.denied_domains.is_empty()).then(|| self.denied_domains.clone())
+    }
+
+    pub fn allow_unix_sockets(&self) -> Vec<String> {
+        self.allow_unix_sockets.clone()
+    }
+
+    pub fn set_allowed_domains(&mut self, allowed_domains: Vec<String>) {
+        self.allowed_domains = allowed_domains;
+    }
+
+    pub fn set_denied_domains(&mut self, denied_domains: Vec<String>) {
+        self.denied_domains = denied_domains;
+    }
+
+    pub fn upsert_domain_permission(
+        &mut self,
+        host: String,
+        permission: NetworkDomainPermission,
+        normalize: impl Fn(&str) -> String,
+    ) {
+        let normalized_host = normalize(&host);
+        self.allowed_domains
+            .retain(|entry| normalize(entry) != normalized_host);
+        self.denied_domains
+            .retain(|entry| normalize(entry) != normalized_host);
+        match permission {
+            NetworkDomainPermission::Allow => self.allowed_domains.push(host),
+            NetworkDomainPermission::Deny => self.denied_domains.push(host),
+        }
+    }
+
+    pub fn set_allow_unix_sockets(&mut self, allow_unix_sockets: Vec<String>) {
+        self.allow_unix_sockets = allow_unix_sockets;
     }
 }
 

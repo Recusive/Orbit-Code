@@ -7,5 +7,4 @@ orbit_code_rust_crate(
         "Cargo.toml",
         "orbit-code-windows-sandbox-setup.manifest",
     ],
-    crate_edition = "2021",
 )

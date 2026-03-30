@@ -9,7 +9,7 @@ use chrono::Utc;
 use std::future::Future;
 use std::sync::Arc;
 
-const AUDIT_TARGET: &str = "orbit_code_otel.network_proxy";
+const AUDIT_TARGET: &str = "codex_otel.network_proxy";
 const POLICY_DECISION_EVENT_NAME: &str = "codex.network_proxy.policy_decision";
 const POLICY_SCOPE_DOMAIN: &str = "domain";
 const POLICY_SCOPE_NON_DOMAIN: &str = "non_domain";
@@ -643,7 +643,7 @@ mod tests {
         let event = find_event_by_name(&events, POLICY_DECISION_EVENT_NAME)
             .expect("expected policy decision audit event");
         assert_eq!(event.target, AUDIT_TARGET);
-        assert!(event.target.starts_with("orbit_code_otel."));
+        assert!(event.target.starts_with("codex_otel."));
         assert_eq!(
             event.field("network.policy.scope"),
             Some(POLICY_SCOPE_DOMAIN)
@@ -676,10 +676,11 @@ mod tests {
 
     #[tokio::test(flavor = "current_thread")]
     async fn evaluate_host_policy_emits_domain_event_for_baseline_deny() {
-        let state = network_proxy_state_for_policy(NetworkProxySettings {
-            allowed_domains: vec!["example.com".to_string()],
-            denied_domains: vec!["blocked.com".to_string()],
-            ..NetworkProxySettings::default()
+        let state = network_proxy_state_for_policy({
+            let mut network = NetworkProxySettings::default();
+            network.set_allowed_domains(vec!["example.com".to_string()]);
+            network.set_denied_domains(vec!["blocked.com".to_string()]);
+            network
         });
         let request = NetworkPolicyRequest::new(NetworkPolicyRequestArgs {
             protocol: NetworkProtocol::Http,
@@ -692,7 +693,9 @@ mod tests {
         });
 
         let (decision, events) = capture_events(|| async {
-            evaluate_host_policy(&state, None, &request).await.unwrap()
+            evaluate_host_policy(&state, /*decider*/ None, &request)
+                .await
+                .unwrap()
         })
         .await;
         assert_eq!(
@@ -765,7 +768,7 @@ mod tests {
             app_version: Some("1.2.3".to_string()),
             user_account_id: Some("acct-1".to_string()),
             auth_mode: Some("Chatgpt".to_string()),
-            originator: Some("orbit_code_cli_rs".to_string()),
+            originator: Some("codex_cli_rs".to_string()),
             user_email: Some("test@example.com".to_string()),
             terminal_type: Some("iTerm.app/3.6.5".to_string()),
             model: Some("gpt-5.3-codex".to_string()),
@@ -783,7 +786,9 @@ mod tests {
         });
 
         let (_decision, events) = capture_events(|| async {
-            evaluate_host_policy(&state, None, &request).await.unwrap()
+            evaluate_host_policy(&state, /*decider*/ None, &request)
+                .await
+                .unwrap()
         })
         .await;
 
@@ -792,7 +797,7 @@ mod tests {
         assert_eq!(event.field("conversation.id"), Some("conversation-1"));
         assert_eq!(event.field("app.version"), Some("1.2.3"));
         assert_eq!(event.field("auth_mode"), Some("Chatgpt"));
-        assert_eq!(event.field("originator"), Some("orbit_code_cli_rs"));
+        assert_eq!(event.field("originator"), Some("codex_cli_rs"));
         assert_eq!(event.field("user.account_id"), Some("acct-1"));
         assert_eq!(event.field("user.email"), Some("test@example.com"));
         assert_eq!(event.field("terminal.type"), Some("iTerm.app/3.6.5"));
@@ -850,10 +855,11 @@ mod tests {
 
     #[tokio::test(flavor = "current_thread")]
     async fn evaluate_host_policy_still_denies_not_allowed_local_without_decider_override() {
-        let state = network_proxy_state_for_policy(NetworkProxySettings {
-            allowed_domains: vec!["example.com".to_string()],
-            allow_local_binding: false,
-            ..NetworkProxySettings::default()
+        let state = network_proxy_state_for_policy({
+            let mut network = NetworkProxySettings::default();
+            network.set_allowed_domains(vec!["example.com".to_string()]);
+            network.allow_local_binding = false;
+            network
         });
         let request = NetworkPolicyRequest::new(NetworkPolicyRequestArgs {
             protocol: NetworkProtocol::Http,
@@ -865,7 +871,9 @@ mod tests {
             exec_policy_hint: None,
         });
 
-        let decision = evaluate_host_policy(&state, None, &request).await.unwrap();
+        let decision = evaluate_host_policy(&state, /*decider*/ None, &request)
+            .await
+            .unwrap();
         assert_eq!(
             decision,
             NetworkDecision::Deny {

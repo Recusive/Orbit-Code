@@ -10,8 +10,8 @@ use orbit_code_app_server_protocol::AuthMode;
 use orbit_code_core::auth::AuthCredentialsStoreMode;
 use orbit_code_core::auth::AuthDotJson;
 use orbit_code_core::auth::save_auth;
-use orbit_code_core::token_data::TokenData;
-use orbit_code_core::token_data::parse_chatgpt_jwt_claims;
+use orbit_code_login::token_data::TokenData;
+use orbit_code_login::token_data::parse_chatgpt_jwt_claims;
 use serde_json::json;
 
 /// Builder for writing a fake ChatGPT auth.json in tests.
@@ -143,7 +143,7 @@ pub fn encode_id_token(claims: &ChatGptIdTokenClaims) -> Result<String> {
 }
 
 pub fn write_chatgpt_auth(
-    orbit_code_home: &Path,
+    codex_home: &Path,
     fixture: ChatGptAuthFixture,
     cli_auth_credentials_store_mode: AuthCredentialsStoreMode,
 ) -> Result<()> {
@@ -165,5 +165,5 @@ pub fn write_chatgpt_auth(
         last_refresh,
     };
 
-    save_auth(orbit_code_home, &auth, cli_auth_credentials_store_mode).context("write auth.json")
+    save_auth(codex_home, &auth, cli_auth_credentials_store_mode).context("write auth.json")
 }

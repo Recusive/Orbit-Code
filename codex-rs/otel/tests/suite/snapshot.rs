@@ -1,8 +1,5 @@
 use crate::harness::attributes_to_map;
 use crate::harness::find_metric;
-use opentelemetry_sdk::metrics::InMemoryMetricExporter;
-use opentelemetry_sdk::metrics::data::AggregatedMetrics;
-use opentelemetry_sdk::metrics::data::MetricData;
 use orbit_code_otel::SessionTelemetry;
 use orbit_code_otel::TelemetryAuthMode;
 use orbit_code_otel::metrics::MetricsClient;
@@ -10,6 +7,9 @@ use orbit_code_otel::metrics::MetricsConfig;
 use orbit_code_otel::metrics::Result;
 use orbit_code_protocol::ThreadId;
 use orbit_code_protocol::protocol::SessionSource;
+use opentelemetry_sdk::metrics::InMemoryMetricExporter;
+use opentelemetry_sdk::metrics::data::AggregatedMetrics;
+use opentelemetry_sdk::metrics::data::MetricData;
 use pretty_assertions::assert_eq;
 use std::collections::BTreeMap;
 
@@ -28,7 +28,7 @@ fn snapshot_collects_metrics_without_shutdown() -> Result<()> {
 
     metrics.counter(
         "codex.tool.call",
-        1,
+        /*inc*/ 1,
         &[("tool", "shell"), ("success", "true")],
     )?;
 
@@ -74,10 +74,10 @@ fn manager_snapshot_metrics_collects_without_shutdown() -> Result<()> {
         "gpt-5.1",
         "gpt-5.1",
         Some("account-id".to_string()),
-        None,
+        /*account_email*/ None,
         Some(TelemetryAuthMode::ApiKey),
         "test_originator".to_string(),
-        true,
+        /*log_user_prompts*/ true,
         "tty".to_string(),
         SessionSource::Cli,
     )
@@ -85,7 +85,7 @@ fn manager_snapshot_metrics_collects_without_shutdown() -> Result<()> {
 
     manager.counter(
         "codex.tool.call",
-        1,
+        /*inc*/ 1,
         &[("tool", "shell"), ("success", "true")],
     );
 

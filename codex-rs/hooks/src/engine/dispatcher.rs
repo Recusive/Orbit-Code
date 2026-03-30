@@ -30,13 +30,9 @@ pub(crate) fn select_handlers(
         .iter()
         .filter(|handler| handler.event_name == event_name)
         .filter(|handler| match event_name {
-            HookEventName::SessionStart => match (&handler.matcher, matcher_input) {
-                (Some(matcher), Some(input)) => regex::Regex::new(matcher)
-                    .map(|regex| regex.is_match(input))
-                    .unwrap_or(false),
-                (None, _) => true,
-                _ => false,
-            },
+            HookEventName::SessionStart => {
+                matches_matcher(handler.matcher.as_deref(), matcher_input)
+            }
             HookEventName::UserPromptSubmit | HookEventName::Stop => true,
         })
         .cloned()
@@ -103,6 +99,20 @@ pub(crate) fn completed_summary(
         completed_at: Some(run_result.completed_at),
         duration_ms: Some(run_result.duration_ms),
         entries,
+    }
+}
+
+fn matches_matcher(matcher: Option<&str>, input: Option<&str>) -> bool {
+    match matcher {
+        None => true,
+        Some(matcher) if matcher.is_empty() || matcher == "*" => true,
+        Some(matcher) => input
+            .and_then(|input| {
+                regex::Regex::new(matcher)
+                    .ok()
+                    .map(|regex| regex.is_match(input))
+            })
+            .unwrap_or(false),
     }
 }
 

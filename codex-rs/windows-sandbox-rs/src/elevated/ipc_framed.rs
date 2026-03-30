@@ -8,8 +8,8 @@
 //! through the elevated runner.
 
 use anyhow::Result;
-use base64::engine::general_purpose::STANDARD;
 use base64::Engine as _;
+use base64::engine::general_purpose::STANDARD;
 use serde::Deserialize;
 use serde::Serialize;
 use std::collections::HashMap;
@@ -55,8 +55,8 @@ pub struct SpawnRequest {
     pub env: HashMap<String, String>,
     pub policy_json_or_preset: String,
     pub sandbox_policy_cwd: PathBuf,
-    pub orbit_code_home: PathBuf,
-    pub real_orbit_code_home: PathBuf,
+    pub codex_home: PathBuf,
+    pub real_codex_home: PathBuf,
     pub cap_sids: Vec<String>,
     pub timeout_ms: Option<u64>,
     pub tty: bool,

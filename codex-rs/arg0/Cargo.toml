@@ -15,6 +15,7 @@ workspace = true
 anyhow = { workspace = true }
 orbit-code-apply-patch = { workspace = true }
 orbit-code-linux-sandbox = { workspace = true }
+orbit-code-sandboxing = { workspace = true }
 orbit-code-shell-escalation = { workspace = true }
 orbit-code-utils-home-dir = { workspace = true }
 dotenvy = { workspace = true }

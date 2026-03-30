@@ -1,6 +1,7 @@
 // GENERATED CODE! DO NOT MODIFY BY HAND!
 
 export type { AbsolutePathBuf } from "./AbsolutePathBuf";
+export type { AgentPath } from "./AgentPath";
 export type { ApplyPatchApprovalParams } from "./ApplyPatchApprovalParams";
 export type { ApplyPatchApprovalResponse } from "./ApplyPatchApprovalResponse";
 export type { AuthMode } from "./AuthMode";
@@ -23,12 +24,6 @@ export type { FuzzyFileSearchParams } from "./FuzzyFileSearchParams";
 export type { FuzzyFileSearchResponse } from "./FuzzyFileSearchResponse";
 export type { FuzzyFileSearchResult } from "./FuzzyFileSearchResult";
 export type { FuzzyFileSearchSessionCompletedNotification } from "./FuzzyFileSearchSessionCompletedNotification";
-export type { FuzzyFileSearchSessionStartParams } from "./FuzzyFileSearchSessionStartParams";
-export type { FuzzyFileSearchSessionStartResponse } from "./FuzzyFileSearchSessionStartResponse";
-export type { FuzzyFileSearchSessionStopParams } from "./FuzzyFileSearchSessionStopParams";
-export type { FuzzyFileSearchSessionStopResponse } from "./FuzzyFileSearchSessionStopResponse";
-export type { FuzzyFileSearchSessionUpdateParams } from "./FuzzyFileSearchSessionUpdateParams";
-export type { FuzzyFileSearchSessionUpdateResponse } from "./FuzzyFileSearchSessionUpdateResponse";
 export type { FuzzyFileSearchSessionUpdatedNotification } from "./FuzzyFileSearchSessionUpdatedNotification";
 export type { GetAuthStatusParams } from "./GetAuthStatusParams";
 export type { GetAuthStatusResponse } from "./GetAuthStatusResponse";
@@ -46,9 +41,6 @@ export type { InputModality } from "./InputModality";
 export type { LocalShellAction } from "./LocalShellAction";
 export type { LocalShellExecAction } from "./LocalShellExecAction";
 export type { LocalShellStatus } from "./LocalShellStatus";
-export type { MacOsAutomationPermission } from "./MacOsAutomationPermission";
-export type { MacOsContactsPermission } from "./MacOsContactsPermission";
-export type { MacOsPreferencesPermission } from "./MacOsPreferencesPermission";
 export type { MessagePhase } from "./MessagePhase";
 export type { ModeKind } from "./ModeKind";
 export type { NetworkPolicyAmendment } from "./NetworkPolicyAmendment";

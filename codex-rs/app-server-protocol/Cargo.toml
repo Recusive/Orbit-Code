@@ -14,8 +14,9 @@ workspace = true
 [dependencies]
 anyhow = { workspace = true }
 clap = { workspace = true, features = ["derive"] }
-orbit-code-protocol = { workspace = true }
 orbit-code-experimental-api-macros = { workspace = true }
+orbit-code-git-utils = { workspace = true }
+orbit-code-protocol = { workspace = true }
 orbit-code-utils-absolute-path = { workspace = true }
 schemars = { workspace = true }
 serde = { workspace = true, features = ["derive"] }

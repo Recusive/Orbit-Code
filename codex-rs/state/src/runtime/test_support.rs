@@ -37,19 +37,20 @@ pub(super) fn unique_temp_dir() -> PathBuf {
 
 #[cfg(test)]
 pub(super) fn test_thread_metadata(
-    orbit_code_home: &Path,
+    codex_home: &Path,
     thread_id: ThreadId,
     cwd: PathBuf,
 ) -> ThreadMetadata {
     let now = DateTime::<Utc>::from_timestamp(1_700_000_000, 0).expect("timestamp");
     ThreadMetadata {
         id: thread_id,
-        rollout_path: orbit_code_home.join(format!("rollout-{thread_id}.jsonl")),
+        rollout_path: codex_home.join(format!("rollout-{thread_id}.jsonl")),
         created_at: now,
         updated_at: now,
         source: "cli".to_string(),
         agent_nickname: None,
         agent_role: None,
+        agent_path: None,
         model_provider: "test-provider".to_string(),
         model: Some("gpt-5".to_string()),
         reasoning_effort: Some(ReasoningEffort::Medium),

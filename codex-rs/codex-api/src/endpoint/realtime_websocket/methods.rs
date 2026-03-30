@@ -14,12 +14,12 @@ use crate::endpoint::realtime_websocket::protocol::RealtimeTranscriptEntry;
 use crate::endpoint::realtime_websocket::protocol::parse_realtime_event;
 use crate::error::ApiError;
 use crate::provider::Provider;
+use orbit_code_client::maybe_build_rustls_client_config_with_custom_ca;
+use orbit_code_utils_rustls_provider::ensure_rustls_crypto_provider;
 use futures::SinkExt;
 use futures::StreamExt;
 use http::HeaderMap;
 use http::HeaderValue;
-use orbit_code_client::maybe_build_rustls_client_config_with_custom_ca;
-use orbit_code_utils_rustls_provider::ensure_rustls_crypto_provider;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
@@ -628,9 +628,9 @@ mod tests {
     use crate::endpoint::realtime_websocket::protocol::RealtimeHandoffRequested;
     use crate::endpoint::realtime_websocket::protocol::RealtimeTranscriptDelta;
     use crate::endpoint::realtime_websocket::protocol::RealtimeTranscriptEntry;
-    use http::HeaderValue;
     use orbit_code_protocol::protocol::RealtimeInputAudioSpeechStarted;
     use orbit_code_protocol::protocol::RealtimeResponseCancelled;
+    use http::HeaderValue;
     use pretty_assertions::assert_eq;
     use serde_json::Value;
     use serde_json::json;
@@ -967,8 +967,8 @@ mod tests {
     fn websocket_url_from_http_base_defaults_to_ws_path() {
         let url = websocket_url_from_api_url(
             "http://127.0.0.1:8011",
-            None,
-            None,
+            /*query_params*/ None,
+            /*model*/ None,
             RealtimeEventParser::V1,
             RealtimeSessionMode::Conversational,
         )
@@ -983,7 +983,7 @@ mod tests {
     fn websocket_url_from_ws_base_defaults_to_ws_path() {
         let url = websocket_url_from_api_url(
             "wss://example.com",
-            None,
+            /*query_params*/ None,
             Some("realtime-test-model"),
             RealtimeEventParser::V1,
             RealtimeSessionMode::Conversational,
@@ -999,7 +999,7 @@ mod tests {
     fn websocket_url_from_v1_base_appends_realtime_path() {
         let url = websocket_url_from_api_url(
             "https://api.openai.com/v1",
-            None,
+            /*query_params*/ None,
             Some("snapshot"),
             RealtimeEventParser::V1,
             RealtimeSessionMode::Conversational,
@@ -1015,7 +1015,7 @@ mod tests {
     fn websocket_url_from_nested_v1_base_appends_realtime_path() {
         let url = websocket_url_from_api_url(
             "https://example.com/openai/v1",
-            None,
+            /*query_params*/ None,
             Some("snapshot"),
             RealtimeEventParser::V1,
             RealtimeSessionMode::Conversational,
@@ -1050,8 +1050,8 @@ mod tests {
     fn websocket_url_v1_ignores_transcription_mode() {
         let url = websocket_url_from_api_url(
             "https://example.com",
-            None,
-            None,
+            /*query_params*/ None,
+            /*model*/ None,
             RealtimeEventParser::V1,
             RealtimeSessionMode::Transcription,
         )
@@ -1085,8 +1085,8 @@ mod tests {
     fn websocket_url_omits_intent_for_realtime_v2_transcription_mode() {
         let url = websocket_url_from_api_url(
             "https://example.com",
-            None,
-            None,
+            /*query_params*/ None,
+            /*model*/ None,
             RealtimeEventParser::RealtimeV2,
             RealtimeSessionMode::Transcription,
         )
@@ -1386,7 +1386,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn realtime_v2_session_update_includes_orbit_code_tool_and_handoff_output_item() {
+    async fn realtime_v2_session_update_includes_codex_tool_and_handoff_output_item() {
         let listener = TcpListener::bind("127.0.0.1:0").await.expect("bind");
         let addr = listener.local_addr().expect("local addr");
 

@@ -13,10 +13,6 @@ path = "src/lib.rs"
 workspace = true
 
 [features]
-## Disables the built-in default metrics exporter.
-##
-## Intended for use from `dev-dependencies` so unit/integration tests never
-## attempt to export metrics over the network.
 disable-default-metrics-exporter = []
 
 [dependencies]
@@ -24,6 +20,7 @@ chrono = { workspace = true }
 orbit-code-utils-absolute-path = { workspace = true }
 orbit-code-utils-string = { workspace = true }
 orbit-code-api = { workspace = true }
+orbit-code-app-server-protocol = { workspace = true }
 orbit-code-protocol = { workspace = true }
 eventsource-stream = { workspace = true }
 gethostname = { workspace = true }

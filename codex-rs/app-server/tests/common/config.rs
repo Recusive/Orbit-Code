@@ -1,14 +1,14 @@
-use orbit_code_core::features::FEATURES;
-use orbit_code_core::features::Feature;
+use orbit_code_features::FEATURES;
+use orbit_code_features::Feature;
 use std::collections::BTreeMap;
 use std::path::Path;
 
 pub fn write_mock_responses_config_toml(
-    orbit_code_home: &Path,
+    codex_home: &Path,
     server_uri: &str,
     feature_flags: &BTreeMap<Feature, bool>,
     auto_compact_limit: i64,
-    requires_auth: Option<bool>,
+    requires_openai_auth: Option<bool>,
     model_provider_id: &str,
     compact_prompt: &str,
 ) -> std::io::Result<()> {
@@ -30,11 +30,11 @@ pub fn write_mock_responses_config_toml(
         .collect::<Vec<_>>()
         .join("\n");
     // Phase 2: build provider-specific config bits.
-    let requires_line = match requires_auth {
-        Some(true) => "requires_auth = true\n".to_string(),
+    let requires_line = match requires_openai_auth {
+        Some(true) => "requires_openai_auth = true\n".to_string(),
         Some(false) | None => String::new(),
     };
-    let provider_name = if matches!(requires_auth, Some(true)) {
+    let provider_name = if matches!(requires_openai_auth, Some(true)) {
         "OpenAI"
     } else {
         "Mock provider for test"
@@ -57,7 +57,7 @@ supports_websockets = false
         String::new()
     };
     // Phase 3: write the final config file.
-    let config_toml = orbit_code_home.join("config.toml");
+    let config_toml = codex_home.join("config.toml");
     std::fs::write(
         config_toml,
         format!(

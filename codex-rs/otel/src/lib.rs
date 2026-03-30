@@ -31,17 +31,30 @@ pub use orbit_code_utils_string::sanitize_metric_tag_value;
 #[derive(Debug, Clone, Serialize, Display)]
 #[serde(rename_all = "snake_case")]
 pub enum ToolDecisionSource {
+    AutomatedReviewer,
     Config,
     User,
 }
 
-/// Maps to core AuthMode to avoid a circular dependency on codex-core.
+/// Maps to API/auth `AuthMode` to avoid a circular dependency on codex-core.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Display)]
 pub enum TelemetryAuthMode {
     ApiKey,
     Chatgpt,
     AnthropicApiKey,
     AnthropicOAuth,
+}
+
+impl From<orbit_code_app_server_protocol::AuthMode> for TelemetryAuthMode {
+    fn from(mode: orbit_code_app_server_protocol::AuthMode) -> Self {
+        match mode {
+            orbit_code_app_server_protocol::AuthMode::ApiKey => Self::ApiKey,
+            orbit_code_app_server_protocol::AuthMode::Chatgpt
+            | orbit_code_app_server_protocol::AuthMode::ChatgptAuthTokens => Self::Chatgpt,
+            orbit_code_app_server_protocol::AuthMode::AnthropicApiKey => Self::AnthropicApiKey,
+            orbit_code_app_server_protocol::AuthMode::AnthropicOAuth => Self::AnthropicOAuth,
+        }
+    }
 }
 
 /// Start a metrics timer using the globally installed metrics client.

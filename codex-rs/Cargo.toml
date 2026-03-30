@@ -113,6 +113,7 @@ orbit-code-core = { path = "core" }
 orbit-code-core-skills = { path = "core-skills" }
 orbit-code-environment = { path = "environment" }
 orbit-code-exec = { path = "exec" }
+orbit-code-exec-server = { path = "exec-server" }
 orbit-code-execpolicy = { path = "execpolicy" }
 orbit-code-experimental-api-macros = { path = "codex-experimental-api-macros" }
 orbit-code-feedback = { path = "feedback" }

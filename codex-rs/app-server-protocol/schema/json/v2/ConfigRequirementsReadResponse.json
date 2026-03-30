@@ -98,19 +98,16 @@
             "object",
             "null"
           ]
-        },
-        "network": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/NetworkRequirements"
-            },
-            {
-              "type": "null"
-            }
-          ]
         }
       },
       "type": "object"
+    },
+    "NetworkDomainPermission": {
+      "enum": [
+        "allow",
+        "deny"
+      ],
+      "type": "string"
     },
     "NetworkRequirements": {
       "properties": {
@@ -121,6 +118,7 @@
           ]
         },
         "allowUnixSockets": {
+          "description": "Legacy compatibility view derived from `unix_sockets`.",
           "items": {
             "type": "string"
           },
@@ -136,6 +134,7 @@
           ]
         },
         "allowedDomains": {
+          "description": "Legacy compatibility view derived from `domains`.",
           "items": {
             "type": "string"
           },
@@ -157,11 +156,22 @@
           ]
         },
         "deniedDomains": {
+          "description": "Legacy compatibility view derived from `domains`.",
           "items": {
             "type": "string"
           },
           "type": [
             "array",
+            "null"
+          ]
+        },
+        "domains": {
+          "additionalProperties": {
+            "$ref": "#/definitions/NetworkDomainPermission"
+          },
+          "description": "Canonical network permission map for `experimental_network`.",
+          "type": [
+            "object",
             "null"
           ]
         },
@@ -179,6 +189,13 @@
             "null"
           ]
         },
+        "managedAllowedDomainsOnly": {
+          "description": "When true, only managed allowlist entries are respected while managed network enforcement is active.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
         "socksPort": {
           "format": "uint16",
           "minimum": 0.0,
@@ -186,9 +203,26 @@
             "integer",
             "null"
           ]
+        },
+        "unixSockets": {
+          "additionalProperties": {
+            "$ref": "#/definitions/NetworkUnixSocketPermission"
+          },
+          "description": "Canonical unix socket permission map for `experimental_network`.",
+          "type": [
+            "object",
+            "null"
+          ]
         }
       },
       "type": "object"
+    },
+    "NetworkUnixSocketPermission": {
+      "enum": [
+        "allow",
+        "none"
+      ],
+      "type": "string"
     },
     "ResidencyRequirement": {
       "enum": [

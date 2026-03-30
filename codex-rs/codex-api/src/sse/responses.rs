@@ -3,14 +3,14 @@ use crate::common::ResponseStream;
 use crate::error::ApiError;
 use crate::rate_limits::parse_all_rate_limits;
 use crate::telemetry::SseTelemetry;
-use eventsource_stream::Eventsource;
-use futures::StreamExt;
-use futures::TryStreamExt;
 use orbit_code_client::ByteStream;
 use orbit_code_client::StreamResponse;
 use orbit_code_client::TransportError;
 use orbit_code_protocol::models::ResponseItem;
 use orbit_code_protocol::protocol::TokenUsage;
+use eventsource_stream::Eventsource;
+use futures::StreamExt;
+use futures::TryStreamExt;
 use serde::Deserialize;
 use serde_json::Value;
 use std::io::BufRead;
@@ -493,13 +493,13 @@ mod tests {
     use super::*;
     use assert_matches::assert_matches;
     use bytes::Bytes;
+    use orbit_code_client::StreamResponse;
+    use orbit_code_protocol::models::MessagePhase;
+    use orbit_code_protocol::models::ResponseItem;
     use futures::stream;
     use http::HeaderMap;
     use http::HeaderValue;
     use http::StatusCode;
-    use orbit_code_client::StreamResponse;
-    use orbit_code_protocol::models::MessagePhase;
-    use orbit_code_protocol::models::ResponseItem;
     use pretty_assertions::assert_eq;
     use serde_json::json;
     use tokio::sync::mpsc;
@@ -515,7 +515,12 @@ mod tests {
         let stream =
             ReaderStream::new(reader).map_err(|err| TransportError::Network(err.to_string()));
         let (tx, mut rx) = mpsc::channel::<Result<ResponseEvent, ApiError>>(16);
-        tokio::spawn(process_sse(Box::pin(stream), tx, idle_timeout(), None));
+        tokio::spawn(process_sse(
+            Box::pin(stream),
+            tx,
+            idle_timeout(),
+            /*telemetry*/ None,
+        ));
 
         let mut events = Vec::new();
         while let Some(ev) = rx.recv().await {
@@ -541,7 +546,12 @@ mod tests {
         let (tx, mut rx) = mpsc::channel::<Result<ResponseEvent, ApiError>>(8);
         let stream = ReaderStream::new(std::io::Cursor::new(body))
             .map_err(|err| TransportError::Network(err.to_string()));
-        tokio::spawn(process_sse(Box::pin(stream), tx, idle_timeout(), None));
+        tokio::spawn(process_sse(
+            Box::pin(stream),
+            tx,
+            idle_timeout(),
+            /*telemetry*/ None,
+        ));
 
         let mut out = Vec::new();
         while let Some(ev) = rx.recv().await {
@@ -695,7 +705,12 @@ mod tests {
         let stream: ByteStream = Box::pin(stream);
 
         let (tx, mut rx) = mpsc::channel::<Result<ResponseEvent, ApiError>>(8);
-        tokio::spawn(process_sse(stream, tx, idle_timeout(), None));
+        tokio::spawn(process_sse(
+            stream,
+            tx,
+            idle_timeout(),
+            /*telemetry*/ None,
+        ));
 
         let events = tokio::time::timeout(Duration::from_millis(1000), async {
             let mut events = Vec::new();
@@ -894,7 +909,12 @@ mod tests {
             bytes: Box::pin(bytes),
         };
 
-        let mut stream = spawn_response_stream(stream_response, idle_timeout(), None, None);
+        let mut stream = spawn_response_stream(
+            stream_response,
+            idle_timeout(),
+            /*telemetry*/ None,
+            /*turn_state*/ None,
+        );
         let event = stream
             .rx_event
             .recv()

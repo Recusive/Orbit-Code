@@ -33,10 +33,10 @@ const SKIP_DIR_SUFFIXES: &[&str] = &[
 ];
 
 fn unique_push(set: &mut HashSet<PathBuf>, out: &mut Vec<PathBuf>, p: PathBuf) {
-    if let Ok(abs) = p.canonicalize() {
-        if set.insert(abs.clone()) {
-            out.push(abs);
-        }
+    if let Ok(abs) = p.canonicalize()
+        && set.insert(abs.clone())
+    {
+        out.push(abs);
     }
 }
 
@@ -81,7 +81,7 @@ unsafe fn path_has_world_write_allow(path: &Path) -> Result<bool> {
     let mut world = world_sid()?;
     let psid_world = world.as_mut_ptr() as *mut c_void;
     let write_mask = FILE_WRITE_DATA | FILE_APPEND_DATA | FILE_WRITE_EA | FILE_WRITE_ATTRIBUTES;
-    path_mask_allows(path, &[psid_world], write_mask, false)
+    path_mask_allows(path, &[psid_world], write_mask, /*require_all_bits*/ false)
 }
 
 pub fn audit_everyone_writable(
@@ -211,7 +211,7 @@ pub fn audit_everyone_writable(
 }
 
 pub fn apply_world_writable_scan_and_denies(
-    orbit_code_home: &Path,
+    codex_home: &Path,
     cwd: &Path,
     env_map: &std::collections::HashMap<String, String>,
     sandbox_policy: &SandboxPolicy,
@@ -222,7 +222,7 @@ pub fn apply_world_writable_scan_and_denies(
         return Ok(());
     }
     if let Err(err) = apply_capability_denies_for_world_writable(
-        orbit_code_home,
+        codex_home,
         &flagged,
         sandbox_policy,
         cwd,
@@ -237,7 +237,7 @@ pub fn apply_world_writable_scan_and_denies(
 }
 
 pub fn apply_capability_denies_for_world_writable(
-    orbit_code_home: &Path,
+    codex_home: &Path,
     flagged: &[PathBuf],
     sandbox_policy: &SandboxPolicy,
     cwd: &Path,
@@ -246,9 +246,9 @@ pub fn apply_capability_denies_for_world_writable(
     if flagged.is_empty() {
         return Ok(());
     }
-    std::fs::create_dir_all(orbit_code_home)?;
-    let cap_path = cap_sid_file(orbit_code_home);
-    let caps = load_or_create_cap_sids(orbit_code_home)?;
+    std::fs::create_dir_all(codex_home)?;
+    let cap_path = cap_sid_file(codex_home);
+    let caps = load_or_create_cap_sids(codex_home)?;
     std::fs::write(&cap_path, serde_json::to_string(&caps)?)?;
     let (active_sid, workspace_roots): (*mut c_void, Vec<PathBuf>) = match sandbox_policy {
         SandboxPolicy::WorkspaceWrite { writable_roots, .. } => {

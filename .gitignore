@@ -10,6 +10,7 @@ node_modules
 # build
 dist/
 bazel-*
+user.bazelrc
 build/
 out/
 storybook-static/
@@ -93,3 +94,4 @@ __pycache__/
 reference/
 reviews/
 reference/codex-upstream
+

@@ -19,9 +19,9 @@ fn set_metrics_exporter(config: &mut orbit_code_core::config::Config) {
 
 #[tokio::test]
 async fn app_server_default_analytics_disabled_without_flag() -> Result<()> {
-    let orbit_code_home = TempDir::new()?;
+    let codex_home = TempDir::new()?;
     let mut config = ConfigBuilder::default()
-        .orbit_code_home(orbit_code_home.path().to_path_buf())
+        .orbit_code_home(codex_home.path().to_path_buf())
         .build()
         .await?;
     set_metrics_exporter(&mut config);
@@ -31,7 +31,7 @@ async fn app_server_default_analytics_disabled_without_flag() -> Result<()> {
         &config,
         SERVICE_VERSION,
         Some("codex-app-server"),
-        false,
+        /*default_analytics_enabled*/ false,
     )
     .map_err(|err| anyhow::anyhow!(err.to_string()))?;
 
@@ -44,9 +44,9 @@ async fn app_server_default_analytics_disabled_without_flag() -> Result<()> {
 
 #[tokio::test]
 async fn app_server_default_analytics_enabled_with_flag() -> Result<()> {
-    let orbit_code_home = TempDir::new()?;
+    let codex_home = TempDir::new()?;
     let mut config = ConfigBuilder::default()
-        .orbit_code_home(orbit_code_home.path().to_path_buf())
+        .orbit_code_home(codex_home.path().to_path_buf())
         .build()
         .await?;
     set_metrics_exporter(&mut config);
@@ -56,7 +56,7 @@ async fn app_server_default_analytics_enabled_with_flag() -> Result<()> {
         &config,
         SERVICE_VERSION,
         Some("codex-app-server"),
-        true,
+        /*default_analytics_enabled*/ true,
     )
     .map_err(|err| anyhow::anyhow!(err.to_string()))?;
 

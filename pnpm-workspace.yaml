@@ -1,7 +1,7 @@
 packages:
   - codex-cli
+  - codex-rs/responses-api-proxy/npm
   - sdk/typescript
-  - shell-tool-mcp
 
 ignoredBuiltDependencies:
   - esbuild

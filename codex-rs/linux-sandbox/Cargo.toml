@@ -5,7 +5,7 @@ edition.workspace = true
 license.workspace = true
 
 [[bin]]
-name = "orbit-code-linux-sandbox"
+name = "codex-linux-sandbox"
 path = "src/main.rs"
 
 [lib]
@@ -15,10 +15,11 @@ path = "src/lib.rs"
 [lints]
 workspace = true
 
-[target.'cfg(target_os = "linux")'.dependencies]
+[target."cfg(target_os = \"linux\")".dependencies]
 clap = { workspace = true, features = ["derive"] }
 orbit-code-core = { workspace = true }
 orbit-code-protocol = { workspace = true }
+orbit-code-sandboxing = { workspace = true }
 orbit-code-utils-absolute-path = { workspace = true }
 landlock = { workspace = true }
 libc = { workspace = true }
@@ -27,7 +28,7 @@ serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 url = { workspace = true }
 
-[target.'cfg(target_os = "linux")'.dev-dependencies]
+[target."cfg(target_os = \"linux\")".dev-dependencies]
 pretty_assertions = { workspace = true }
 tempfile = { workspace = true }
 tokio = { workspace = true, features = [

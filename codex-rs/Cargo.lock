@@ -410,6 +410,8 @@ dependencies = [
  "core_test_support",
  "orbit-code-app-server-protocol",
  "orbit-code-core",
+ "orbit-code-features",
+ "orbit-code-login",
  "orbit-code-protocol",
  "orbit-code-utils-cargo-bin",
  "serde",
@@ -4300,6 +4302,7 @@ dependencies = [
  "core_test_support",
  "orbit-code-core",
  "orbit-code-mcp-server",
+ "orbit-code-terminal-detection",
  "orbit-code-utils-cargo-bin",
  "os_info",
  "pretty_assertions",
@@ -5399,6 +5402,7 @@ dependencies = [
  "clap",
  "inventory",
  "orbit-code-experimental-api-macros",
+ "orbit-code-git-utils",
  "orbit-code-protocol",
  "orbit-code-utils-absolute-path",
  "orbit-code-utils-cargo-bin",
@@ -5463,6 +5467,7 @@ dependencies = [
  "dotenvy",
  "orbit-code-apply-patch",
  "orbit-code-linux-sandbox",
+ "orbit-code-sandboxing",
  "orbit-code-shell-escalation",
  "orbit-code-utils-home-dir",
  "tempfile",
@@ -5542,6 +5547,7 @@ dependencies = [
  "orbit-code-protocol",
  "orbit-code-utils-absolute-path",
  "pretty_assertions",
+ "schemars 0.8.22",
  "serde",
  "serde_json",
  "serde_path_to_error",
@@ -5955,6 +5961,7 @@ dependencies = [
  "libc",
  "orbit-code-core",
  "orbit-code-protocol",
+ "orbit-code-sandboxing",
  "orbit-code-utils-absolute-path",
  "pkg-config",
  "pretty_assertions",
@@ -5984,17 +5991,29 @@ name = "orbit-code-login"
 version = "0.0.0"
 dependencies = [
  "anyhow",
+ "async-trait",
  "base64 0.22.1",
  "chrono",
  "core_test_support",
+ "keyring",
+ "once_cell",
  "orbit-code-app-server-protocol",
  "orbit-code-client",
+ "orbit-code-config",
  "orbit-code-core",
+ "orbit-code-keyring-store",
+ "orbit-code-protocol",
+ "orbit-code-terminal-detection",
+ "orbit-code-utils-template",
+ "os_info",
  "pretty_assertions",
  "rand 0.9.2",
+ "regex-lite",
  "reqwest",
+ "schemars 0.8.22",
  "serde",
  "serde_json",
+ "serial_test",
  "sha2",
  "tempfile",
  "thiserror 2.0.18",
@@ -6016,6 +6035,8 @@ dependencies = [
  "mcp_test_support",
  "orbit-code-arg0",
  "orbit-code-core",
+ "orbit-code-exec-server",
+ "orbit-code-features",
  "orbit-code-protocol",
  "orbit-code-shell-command",
  "orbit-code-utils-cli",
@@ -6097,6 +6118,7 @@ dependencies = [
  "opentelemetry-semantic-conventions",
  "opentelemetry_sdk",
  "orbit-code-api",
+ "orbit-code-app-server-protocol",
  "orbit-code-protocol",
  "orbit-code-utils-absolute-path",
  "orbit-code-utils-string",
@@ -6264,6 +6286,7 @@ dependencies = [
  "anyhow",
  "base64 0.22.1",
  "keyring",
+ "orbit-code-git-utils",
  "orbit-code-keyring-store",
  "pretty_assertions",
  "rand 0.9.2",
@@ -6335,12 +6358,14 @@ dependencies = [
  "clap",
  "dirs",
  "log",
+ "orbit-code-git-utils",
  "orbit-code-protocol",
  "owo-colors",
  "pretty_assertions",
  "serde",
  "serde_json",
  "sqlx",
+ "strum 0.27.2",
  "tokio",
  "tracing",
  "tracing-subscriber",
@@ -9449,6 +9474,9 @@ name = "strum"
 version = "0.27.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "af23d6f6c1a224baef9d3f61e287d2761385a5b88fdab4eb4c6f11aeb54c4bcf"
+dependencies = [
+ "strum_macros 0.27.2",
+]
 
 [[package]]
 name = "strum_macros"
@@ -9460,6 +9488,18 @@ dependencies = [
  "proc-macro2",
  "quote",
  "rustversion",
+ "syn 2.0.114",
+]
+
+[[package]]
+name = "strum_macros"
+version = "0.27.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7695ce3845ea4b33927c055a39dc438a45b059f7c1b3d91d38d10355fb8cbca7"
+dependencies = [
+ "heck",
+ "proc-macro2",
+ "quote",
  "syn 2.0.114",
 ]
 
